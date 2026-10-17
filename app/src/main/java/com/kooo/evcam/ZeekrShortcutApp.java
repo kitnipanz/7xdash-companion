@@ -71,6 +71,7 @@ public class ZeekrShortcutApp extends Application {
         com.kooo.evcam.camera.StepLog.loadHistory(this);
         Languages.apply(this, new AppConfig(this).getLanguageMode());
         com.kooo.evcam.audio.CabinEqEngine.applySaved(this);
+        com.kooo.evcam.airplay.AirPlayService.applySaved(this);
         StallWatch.start(this);
         trackAppInFront();
         // 7xDash：每一页左边（或右边）那条固定控制栏

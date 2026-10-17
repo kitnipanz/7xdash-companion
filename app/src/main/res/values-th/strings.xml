@@ -1290,4 +1290,26 @@
     <string name="home_state_off">ปิด</string>
     <string name="home_state_screen">หน้าจอ</string>
     <string name="home_state_hud">HUD</string>
+
+    <!-- AirPlay 投屏 -->
+    <string name="airplay_title">AirPlay</string>
+    <string name="airplay_device_name">7xDash</string>
+    <string name="airplay_close">ปิด</string>
+    <string name="airplay_resize">ปรับขนาด</string>
+    <string name="airplay_waiting">กำลังรอภาพจาก iPhone…</string>
+    <string name="airplay_paused_driving">ซ่อนภาพขณะขับขี่ เสียงยังเล่นต่อ</string>
+    <string name="airplay_failed">เปิด AirPlay ไม่สำเร็จ</string>
+    <string name="airplay_need_overlay">อนุญาตให้ 7xDash แสดงทับแอปอื่น เพื่อแสดงหน้าจอ iPhone</string>
+    <string name="airplay_started">เริ่มสะท้อนหน้าจอ iPhone แล้ว</string>
+    <string name="airplay_state_waiting">พร้อมแล้ว ในชื่อ “%1$s”</string>
+    <string name="airplay_state_connected">เชื่อมต่อ iPhone แล้ว</string>
+    <string name="airplay_state_mirroring">กำลังสะท้อนหน้าจอ iPhone</string>
+    <string name="airplay_state_starting">กำลังเริ่ม…</string>
+    <string name="airplay_state_off">ปิดอยู่</string>
+    <string name="airplay_name_line">แสดงบน iPhone ในชื่อ “%1$s”</string>
+    <string name="airplay_how_title">สะท้อนหน้าจอ iPhone</string>
+    <string name="airplay_steps">1. ให้ iPhone และรถใช้ Wi-Fi เดียวกัน (ฮอตสปอตของรถก็ได้)\n2. บน iPhone เปิดศูนย์ควบคุม แล้วแตะ การสะท้อนหน้าจอ\n3. เลือก “%1$s”</string>
+    <string name="airplay_window_hint">หน้าจอ iPhone จะเปิดในหน้าต่างลอย ลากเพื่อย้าย ลากมุมเพื่อปรับขนาด แตะสองครั้งเพื่อสลับเล็กหรือใหญ่ และแตะ × เพื่อหยุด</string>
+    <string name="airplay_limits">ภาพจะซ่อนเมื่อรถอยู่ในเกียร์หรือกำลังเคลื่อนที่ แอปที่มีการป้องกันการคัดลอก (Netflix, Disney+, Apple TV) จะแสดงจอดำ</string>
+    <string name="airplay_notification">รอการสะท้อนหน้าจอจาก iPhone</string>
 </resources>

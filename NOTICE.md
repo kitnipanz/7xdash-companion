@@ -61,6 +61,24 @@ GPL-3.0 是传染性（copyleft）许可证。因此**本项目整体以 GPL-3.0
 | Glide | BSD / MIT / Apache 2.0（见其仓库 LICENSE） |
 | NanoHTTPD | BSD 3-Clause |
 | ZXing Core | Apache License 2.0 |
+| Oboe（AirPlay 音频输出） | Apache License 2.0 |
+
+### AirPlay 投屏接收（`app/src/main/cpp`）
+
+以下源码直接放在仓库里（不是 Gradle 拉的），各自受其上游许可证约束：
+
+| 组件 | 来源 | 许可证 |
+|------|------|--------|
+| Android 原生桥（`app/src/main/cpp/*.c/*.cpp/*.h`、`cmake/`） | [jqssun/android-airplay-server](https://github.com/jqssun/android-airplay-server) `75465c7` | GPL-3.0 |
+| UxPlay 协议库（`third_party/UxPlay/lib`，已打上上面那个仓库的补丁） | [FDH2/UxPlay](https://github.com/FDH2/UxPlay) | GPL-3.0（内含 playfair、llhttp 等，见各文件头） |
+| libplist（`third_party/libplist`） | [libimobiledevice/libplist](https://github.com/libimobiledevice/libplist) | LGPL-2.1 |
+| openssl-cmake（`third_party/openssl-cmake`） | [viaduck/openssl-cmake](https://github.com/viaduck/openssl-cmake) | MIT |
+| OpenSSL 3.4.4（构建时从官方 Release 下载，SHA-256 固定） | [openssl/openssl](https://github.com/openssl/openssl) | Apache License 2.0 |
+
+改动：`audio_decoder.h` 去掉了 FFmpeg（不做纯音乐 AirPlay，投屏的 AAC-ELD 用 MediaCodec 解）；
+OpenSSL 改从官方 Release 下载并校验哈希。Java 侧（`com.kooo.evcam.airplay`、
+`io.github.jqssun.airplay.bridge`）是照上面那个仓库的 Kotlin 代码改写的。
+AirPlay 是 Apple Inc. 的商标，本项目与 Apple 无关。
 
 `docs/evcam-upstream-douyin.jpg`、`docs/evcam-upstream-douyin2.png` 来自 EVCam，
 是其补盲功能作者（抖音 @星星舰见）的反馈群二维码，随上游一同保留以维持署名。

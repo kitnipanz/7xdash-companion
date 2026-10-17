@@ -171,6 +171,10 @@ public class SideRail extends LinearLayout {
         add(R.drawable.ic_eq, R.string.home_rail_eq,
                 () -> open(MainActivity.PAGE_EQ),
                 () -> new com.kooo.evcam.audio.CabinEqStore(getContext()).enabled(), false);
+        // AirPlay：点了进投屏那一页；接收开着时这一格点亮
+        add(R.drawable.ic_airplay, R.string.airplay_title,
+                () -> open(MainActivity.PAGE_AIRPLAY),
+                com.kooo.evcam.airplay.AirPlayService::isRunning, false);
         add(R.drawable.ic_settings, R.string.home_rail_settings,
                 () -> open(MainActivity.PAGE_SETTINGS_PREFIX + "screen_recording"), null, false);
     }

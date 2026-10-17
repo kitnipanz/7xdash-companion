@@ -36,6 +36,10 @@ jobs:
           # 白白多一个失败点。Gradle 会自行拉取真正需要的 SDK 组件。
           packages: ''
 
+      # AirPlay 接收是原生库：要 NDK 和 CMake（版本和 app/build.gradle.kts 里一致）
+      - name: Install NDK and CMake
+        run: sdkmanager --install "ndk;27.1.12297006" "cmake;3.22.1"
+
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 

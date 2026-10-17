@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.5-beta] - 2026-10-17
+
+- AirPlay screen mirroring: the head unit shows up as "7xDash" in the iPhone's Screen Mirroring list. The iPhone screen plays in a floating window: drag to move, drag the corner to resize, double-tap for small or large, × to stop. Sound plays through the car speakers.
+- AirPlay has its own page and a cell on the side rail. It stays on after a restart if you leave it on.
+- The picture hides while the car is in gear or moving; sound keeps playing.
+- Built on UxPlay through jqssun/android-airplay-server (both GPL-3.0). Music-only AirPlay and video URL casting are not included. Copy-protected apps show a black screen.
+
 ## [1.0.4-beta] - 2026-10-17
 
 - Fixed "The head unit refused the equalizer." The EQ now falls back to a setup the head unit accepts, keeping the smooth curve, headroom and limiter when it can.

@@ -64,6 +64,8 @@ public class MainActivity extends AppCompatActivity {
     public static final String PAGE_REMOTE = "remote";
     /** 均衡器（侧边栏的「EQ」）。 */
     public static final String PAGE_EQ = "eq";
+    /** AirPlay 投屏（侧边栏的「AirPlay」）。 */
+    public static final String PAGE_AIRPLAY = "airplay";
     /** 后面接设置分区的 key，比如 settings:screen_drive。 */
     public static final String PAGE_SETTINGS_PREFIX = "settings:";
 
@@ -769,6 +771,8 @@ public class MainActivity extends AppCompatActivity {
         } else if (PAGE_EQ.equals(page)) {
             showFragment(new com.kooo.evcam.audio.CabinEqFragment());
             selectNavItem(R.id.nav_eq);
+        } else if (PAGE_AIRPLAY.equals(page)) {
+            showFragment(new com.kooo.evcam.airplay.AirPlayFragment());
         } else if (PAGE_REMOTE.equals(page)) {
             showRemoteInterface();
         } else if (page.startsWith(PAGE_SETTINGS_PREFIX)) {

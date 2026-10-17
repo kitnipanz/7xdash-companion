@@ -27,6 +27,8 @@ fun gradleStringLiteral(value: String): String {
 android {
     namespace = "com.kooo.evcam"
     compileSdk = 36
+    // AirPlay 接收（app/src/main/cpp）：UxPlay 的原生库
+    ndkVersion = "27.1.12297006"
 
     // 签名配置。
     // 默认沿用仓库内的公开测试密钥（AOSP 测试签名，口令公开），方便任何人自行构建、
@@ -57,17 +59,34 @@ android {
         // versionName 会成为 Release 名称与 APK 文件名
         //
         // 7xDash 用自己的 applicationId，可以和 zeekr-shortcut-car 并排装。版本号从 1 重新起。
-        versionCode = 5
-        versionName = "1.0.4-beta"
+        versionCode = 6
+        versionName = "1.0.5-beta"
 
         buildConfigField("String", "DRIVE_CLIENT_ID", gradleStringLiteral(driveCredential("DRIVE_CLIENT_ID")))
         buildConfigField("String", "DRIVE_CLIENT_SECRET", gradleStringLiteral(driveCredential("DRIVE_CLIENT_SECRET")))
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // 车机和模拟器都是 arm64，只编这一种，OpenSSL 从源码编一次就够
+        ndk { abiFilters += "arm64-v8a" }
+        externalNativeBuild {
+            cmake {
+                arguments += "-DANDROID_STL=c++_shared"
+                arguments += "-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON"
+            }
+        }
+    }
+
+    externalNativeBuild {
+        cmake {
+            path = file("src/main/cpp/CMakeLists.txt")
+            version = "3.22.1"
+        }
     }
 
     buildFeatures {
         buildConfig = true
+        prefab = true
     }
 
     buildTypes {
@@ -122,6 +141,9 @@ dependencies {
     implementation("androidx.preference:preference:1.2.1")
     // 两栏设置的左右分栏（androidx 自己的 PreferenceHeaderFragmentCompat 也用它）
     implementation("androidx.slidingpanelayout:slidingpanelayout:1.2.0")
+
+    // AirPlay 接收的音频输出（原生库通过 prefab 链接）
+    implementation("com.google.oboe:oboe:1.9.3")
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)

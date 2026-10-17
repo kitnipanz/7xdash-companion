@@ -1312,4 +1312,26 @@ Then reopen this app.</string>
     <string name="home_state_off">Off</string>
     <string name="home_state_screen">Screen</string>
     <string name="home_state_hud">HUD</string>
+
+    <!-- AirPlay 投屏 -->
+    <string name="airplay_title">AirPlay</string>
+    <string name="airplay_device_name">7xDash</string>
+    <string name="airplay_close">Close</string>
+    <string name="airplay_resize">Resize</string>
+    <string name="airplay_waiting">Waiting for the iPhone picture…</string>
+    <string name="airplay_paused_driving">Picture hidden while driving. Sound keeps playing.</string>
+    <string name="airplay_failed">AirPlay could not start.</string>
+    <string name="airplay_need_overlay">Allow 7xDash to draw over other apps to show the iPhone screen.</string>
+    <string name="airplay_started">iPhone screen mirroring started</string>
+    <string name="airplay_state_waiting">Ready as “%1$s”</string>
+    <string name="airplay_state_connected">iPhone connected</string>
+    <string name="airplay_state_mirroring">Mirroring the iPhone</string>
+    <string name="airplay_state_starting">Starting…</string>
+    <string name="airplay_state_off">Off</string>
+    <string name="airplay_name_line">Shows on the iPhone as “%1$s”</string>
+    <string name="airplay_how_title">Mirror your iPhone</string>
+    <string name="airplay_steps">1. Put the iPhone and the car on the same Wi-Fi (the car\'s hotspot works).\n2. On the iPhone, open Control Center and tap Screen Mirroring.\n3. Choose “%1$s”.</string>
+    <string name="airplay_window_hint">The iPhone screen opens in a floating window. Drag it to move, drag the corner to resize, double-tap for small or large, and tap × to stop.</string>
+    <string name="airplay_limits">The picture hides while the car is in gear or moving. Apps with copy protection (Netflix, Disney+, Apple TV) show a black screen.</string>
+    <string name="airplay_notification">Waiting for iPhone screen mirroring</string>
 </resources>

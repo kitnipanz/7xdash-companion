@@ -23,7 +23,6 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 
-import com.kooo.evcam.AppLog;
 import com.kooo.evcam.R;
 
 /**
@@ -40,7 +39,6 @@ final class AirPlayWindow {
         void onCloseTapped();
     }
 
-    private static final String TAG = "AirPlayWindow";
     private static final String PREFS = "airplay_window";
     /** Small and large widths as a share of the screen width. */
     private static final float SMALL = 0.42f;
@@ -131,8 +129,9 @@ final class AirPlayWindow {
         paintStatus();
         try {
             wm.addView(root, lp);
+            AirPlayLog.i("floating window shown " + lp.width + "x" + lp.height + " at " + lp.x + "," + lp.y);
         } catch (RuntimeException e) {
-            AppLog.w(TAG, "floating screen refused: " + e);
+            AirPlayLog.w("floating window refused: " + e);
             root = null;
         }
     }

@@ -15,6 +15,7 @@ import android.view.Display;
 import android.view.Gravity;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -60,19 +61,27 @@ public final class HudNoticeWindow {
             WindowManager wm = window.getSystemService(WindowManager.class);
             Point size = HudDisplay.sizeOf(hud);
             int[] box = HudNotice.place(size.x, size.y);
-            View card = card(window, box[3], app, title, text);
-            WindowManager.LayoutParams lp = new WindowManager.LayoutParams(box[2], box[3],
+            // 窗口从 (0,0) 起，卡片在窗口里挪到 (x, y)。和侧视一样（SideViewPopupView.place）：
+            // 窗口若不从原点起，这台抬头显示画出来的位置会错开，卡片就跑出看得见的那一块。
+            // 不加 FLAG_LAYOUT_NO_LIMITS：窗口要被按在屏里，不许探出边。
+            FrameLayout root = new FrameLayout(window);
+            FrameLayout.LayoutParams at = new FrameLayout.LayoutParams(box[2], box[3]);
+            at.gravity = Gravity.TOP | Gravity.START;
+            at.leftMargin = box[0];
+            at.topMargin = box[1];
+            root.addView(card(window, box[3], app, title, text), at);
+            WindowManager.LayoutParams lp = new WindowManager.LayoutParams(
+                    box[0] + box[2], box[1] + box[3],
                     WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
                     WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
-                            | WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
-                            | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
+                            | WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE,
                     PixelFormat.TRANSLUCENT);
             lp.gravity = Gravity.TOP | Gravity.START;
-            lp.x = box[0];
-            lp.y = box[1];
-            wm.addView(card, lp);
+            lp.x = 0;
+            lp.y = 0;
+            wm.addView(root, lp);
             shownIn = wm;
-            shown = card;
+            shown = root;
             MAIN.postDelayed(HIDE, HudNotice.SHOW_MS);
         } catch (RuntimeException e) {
             AppLog.w(TAG, "抬头显示通知上不去: " + e.getMessage());
@@ -96,7 +105,7 @@ public final class HudNoticeWindow {
     private static View card(Context context, int height, String app, String title, String text) {
         LinearLayout card = new LinearLayout(context);
         card.setOrientation(LinearLayout.VERTICAL);
-        card.setGravity(Gravity.CENTER_VERTICAL);
+        card.setGravity(Gravity.CENTER_VERTICAL | Gravity.START);
         int pad = height / 8;
         card.setPadding(pad * 2, pad, pad * 2, pad);
         GradientDrawable bg = new GradientDrawable();
@@ -121,6 +130,8 @@ public final class HudNoticeWindow {
         view.setTextColor(color);
         view.setSingleLine(true);
         view.setEllipsize(TextUtils.TruncateAt.END);
+        view.setGravity(Gravity.START);
+        view.setTextAlignment(View.TEXT_ALIGNMENT_VIEW_START);
         if (bold) {
             view.setTypeface(Typeface.DEFAULT_BOLD);
         }

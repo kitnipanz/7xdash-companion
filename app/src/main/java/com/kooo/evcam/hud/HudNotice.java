@@ -47,17 +47,24 @@ public final class HudNotice {
         return s.substring(0, Math.max(0, max - 1)).trim() + "…";
     }
 
+    /** 离抬头显示左沿、上沿的空，和侧视（{@code HudFrame}）贴边留的一样：那一块实车看得全。 */
+    public static final int EDGE = 8;
+
     /**
-     * 卡片放在抬头显示左上角，离边留一点空。{@code [x, y, width, height]}。
+     * 卡片左对齐，从抬头显示看得见那一块的左上角起，只留 {@link #EDGE} 的空。{@code [x, y, width, height]}。
+     *
+     * <p>看得见的那一块就是整块屏：侧视、后视镜也都按整块屏摆（{@code HudFrame}、
+     * {@code RearViewMirrorView}），没有另外的内缩。宽 40%、高 36%，再大也收在屏里、四边留空。
+     * 窗口本身从 (0,0) 起，卡片在窗口里挪到 (x, y)，见 {@link HudNoticeWindow}。</p>
      */
     public static int[] place(int displayW, int displayH) {
         if (displayW < 2 || displayH < 2) {
             return new int[]{0, 0, Math.max(displayW, 1), Math.max(displayH, 1)};
         }
-        int width = displayW * 40 / 100;
-        int height = displayH * 36 / 100;
-        int x = displayW * 3 / 100;
-        int y = displayH * 8 / 100;
+        int x = Math.min(EDGE, displayW / 4);
+        int y = Math.min(EDGE, displayH / 4);
+        int width = Math.max(1, Math.min(displayW * 40 / 100, displayW - x * 2));
+        int height = Math.max(1, Math.min(displayH * 36 / 100, displayH - y * 2));
         return new int[]{x, y, width, height};
     }
 

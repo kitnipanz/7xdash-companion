@@ -5,7 +5,6 @@ import android.media.MediaFormat;
 import android.os.Build;
 import android.view.Surface;
 
-import com.kooo.evcam.AppLog;
 
 /**
  * Decodes the iPhone's mirrored screen (H.264 from UxPlay) straight onto the floating window's
@@ -17,7 +16,6 @@ import com.kooo.evcam.AppLog;
  */
 final class MirrorDecoder {
 
-    private static final String TAG = "AirPlayVideo";
     private static final String AVC = MediaFormat.MIMETYPE_VIDEO_AVC;
     private static final long FEED_WAIT_US = 20_000L;
     private static final int FEED_RETRIES = 10;
@@ -65,7 +63,7 @@ final class MirrorDecoder {
                 try {
                     startCodec();
                 } catch (Exception e) {
-                    AppLog.w(TAG, "decoder start failed: " + e);
+                    AirPlayLog.w("decoder start failed: " + e);
                     stopCodec();
                     return;
                 }
@@ -74,7 +72,7 @@ final class MirrorDecoder {
                 queue(data, ntpTimeNs);
                 drain();
             } catch (Exception e) {
-                AppLog.w(TAG, "decoder error, resetting: " + e);
+                AirPlayLog.w("decoder error, resetting: " + e);
                 stopCodec();
             }
         }
@@ -108,7 +106,7 @@ final class MirrorDecoder {
         }
         codec = c;
         firstQueued = false;
-        AppLog.i(TAG, "decoder started " + width + "x" + height + " (" + c.getName() + ")");
+        AirPlayLog.i("decoder started " + width + "x" + height + " (" + c.getName() + ")");
     }
 
     private void queue(byte[] data, long ntpTimeNs) {

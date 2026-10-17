@@ -36,12 +36,17 @@ typedef struct {
     std::shared_ptr<LogSink> log;
 } server_ctx_t;
 
+/* 7xDash: UxPlay levels are syslog-like (lower = worse). Every message also goes to the
+   Java side (onLog -> the AirPlay log file) through the server's LogSink. */
 static void _log_callback(void *cls, int level, const char *msg) {
-    int prio = ANDROID_LOG_DEBUG;
-    if (level >= 5) prio = ANDROID_LOG_ERROR;
-    else if (level >= 4) prio = ANDROID_LOG_WARN;
-    else if (level >= 3) prio = ANDROID_LOG_INFO;
-    __android_log_print(prio, TAG, "%s", msg);
+    server_ctx_t *ctx = (server_ctx_t *)cls;
+    if (ctx && ctx->log) {
+        if (level <= LOGGER_ERR) ctx->log->error("%s", msg);
+        else if (level == LOGGER_WARNING) ctx->log->warn("%s", msg);
+        else ctx->log->info("%s", msg);
+        return;
+    }
+    __android_log_print(level <= LOGGER_ERR ? ANDROID_LOG_ERROR : ANDROID_LOG_INFO, TAG, "%s", msg);
 }
 
 extern "C"
@@ -57,6 +62,10 @@ Java_io_github_jqssun_airplay_bridge_NativeBridge_nativeInit(
     if (hw_len > 6) hw_len = 6;
     env->GetByteArrayRegion(hwAddr, 0, hw_len, (jbyte *)ctx->hw_addr);
 
+    /* bind the log first so raop_init's own messages reach the AirPlay log */
+    ctx->log = std::make_shared<LogSink>();
+    ctx->log->bind(env, callback);
+
     android_callbacks_init(&ctx->cb_ctx, env, callback);
     ctx->cb_ctx.require_pin = requirePin ? 1 : 0;
     android_callbacks_fill(&ctx->callbacks, &ctx->cb_ctx);
@@ -71,8 +80,8 @@ Java_io_github_jqssun_airplay_bridge_NativeBridge_nativeInit(
     }
     ctx->cb_ctx.raop = ctx->raop;
 
-    raop_set_log_level(ctx->raop, LOGGER_ERR);
-    raop_set_log_callback(ctx->raop, _log_callback, NULL);
+    raop_set_log_level(ctx->raop, LOGGER_INFO);
+    raop_set_log_callback(ctx->raop, _log_callback, ctx);
 
     const char *keyfile_c = env->GetStringUTFChars(keyFile, NULL);
     const char *name_c = env->GetStringUTFChars(name, NULL);
@@ -86,6 +95,7 @@ Java_io_github_jqssun_airplay_bridge_NativeBridge_nativeInit(
     int ret = raop_init2(ctx->raop, nohold ? 1 : 0, device_id, keyfile_c);
     if (ret < 0) {
         LOGE("raop_init2 failed: %d", ret);
+        ctx->log->error("raop_init2 failed: %d", ret);
     }
 
     if (requirePin) {
@@ -111,9 +121,6 @@ Java_io_github_jqssun_airplay_bridge_NativeBridge_nativeInit(
     env->ReleaseStringUTFChars(keyFile, keyfile_c);
     env->ReleaseStringUTFChars(name, name_c);
 
-    ctx->log = std::make_shared<LogSink>();
-    ctx->log->bind(env, callback);
-
     ctx->cb_ctx.audio_engine = audio_engine_create(ctx->log, 44100, 2);
 
     return (jlong)(intptr_t)ctx;
@@ -131,6 +138,7 @@ Java_io_github_jqssun_airplay_bridge_NativeBridge_nativeStart(
     int ret = raop_start_httpd(ctx->raop, &port);
     if (ret < 0) {
         LOGE("raop_start_httpd failed: %d", ret);
+        if (ctx->log) ctx->log->error("could not listen on port %d (%d)", (int)port, ret);
         return -1;
     }
     /* raop_start_httpd doesn't record the bound port; without this the hls
@@ -418,4 +426,13 @@ Java_io_github_jqssun_airplay_bridge_NativeBridge_nativeServerAudioDebug(
     jlong cap = env->GetDirectBufferCapacity(buf);
     if (!addr || cap <= 0) return JNI_FALSE;
     return audio_engine_get_debug(ctx->cb_ctx.audio_engine, addr, (size_t)cap) ? JNI_TRUE : JNI_FALSE;
+}
+
+/* 7xDash: DEBUG while an iPhone connects (shows each request), INFO once video flows */
+extern "C"
+JNIEXPORT void JNICALL
+Java_io_github_jqssun_airplay_bridge_NativeBridge_nativeSetLogLevel(
+        JNIEnv *env, jobject thiz, jlong handle, jint level) {
+    server_ctx_t *ctx = (server_ctx_t *)(intptr_t)handle;
+    if (ctx && ctx->raop) raop_set_log_level(ctx->raop, level);
 }

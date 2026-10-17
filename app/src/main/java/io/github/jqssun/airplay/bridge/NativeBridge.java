@@ -13,6 +13,9 @@ public final class NativeBridge {
     public static final int FT_MIRROR = 7;
     public static final int FT_AUDIO = 9;
 
+    public static final int LOG_INFO = 6;
+    public static final int LOG_DEBUG = 7;
+
     public static final int CT_ALAC = 2;
     public static final int CT_AAC_LC = 4;
     public static final int CT_AAC_ELD = 8;
@@ -32,6 +35,9 @@ public final class NativeBridge {
     public static native void nativeStop(long handle);
 
     public static native void nativeDestroy(long handle);
+
+    /** UxPlay logger level: 6 = info, 7 = debug (7xDash addition). */
+    public static native void nativeSetLogLevel(long handle, int level);
 
     public static native void nativeSetDisplaySize(long handle, int w, int h, int fps);
 

@@ -66,14 +66,27 @@ public class AirPlayService extends Service implements RaopCallbackHandler {
     private static final String KEY_MAC = "mac";
     private static final String TELEMETRY_USER = "airplay";
     private static final int PORT = 7000;
+    /** Other ports to try when 7000 stays taken (another AirPlay receiver on the car, say). */
+    private static final int[] SPARE_PORTS = {7001, 7002, 7003};
+
+    /**
+     * One thread for every start and stop, shared by all service instances: turning AirPlay off
+     * and on again quickly used to start the new receiver while the old one still held port
+     * 7000, which ended in "AirPlay could not start".
+     */
+    private static final Handler WORK;
+
+    static {
+        HandlerThread t = new HandlerThread("airplay");
+        t.start();
+        WORK = new Handler(t.getLooper());
+    }
     private static final int FPS = 30;
 
     private static volatile AirPlayService live;
     private static volatile String state = "";
 
     private final Handler main = new Handler(Looper.getMainLooper());
-    private HandlerThread worker;
-    private Handler work;
     private long handle;
     private NsdManager nsd;
     private final List<NsdManager.RegistrationListener> registrations = new ArrayList<>();
@@ -86,6 +99,7 @@ public class AirPlayService extends Service implements RaopCallbackHandler {
     /** Set when mirroring starts; the first decoded frame clears it and shows the picture. */
     private volatile boolean firstFrame;
     private String name = "7xDash";
+    private boolean lastBlocked;
 
     // ---- public switch ----
 
@@ -129,6 +143,8 @@ public class AirPlayService extends Service implements RaopCallbackHandler {
                     new Intent(context, AirPlayService.class));
         } catch (RuntimeException e) {
             AppLog.w(TAG, "could not start: " + e);
+            AirPlayLog.init(context);
+            AirPlayLog.w("could not start the service: " + e);
         }
     }
 
@@ -150,10 +166,8 @@ public class AirPlayService extends Service implements RaopCallbackHandler {
                 endMirroring();
             }
         });
-        worker = new HandlerThread("airplay");
-        worker.start();
-        work = new Handler(worker.getLooper());
-        work.post(this::startServer);
+        AirPlayLog.init(this);
+        WORK.post(this::startServer);
     }
 
     @Override
@@ -177,17 +191,23 @@ public class AirPlayService extends Service implements RaopCallbackHandler {
             window.hide();
         }
         stopWatchingCar();
-        if (work != null) {
-            work.post(this::stopServer);
-            worker.quitSafely();
-        }
+        AirPlayLog.i("service stopping");
+        WORK.post(this::stopServer);
         super.onDestroy();
     }
 
     // ---- server ----
 
     private void startServer() {
+        if (live != this) {
+            return; // stopped again before it got going
+        }
         name = getString(R.string.airplay_device_name);
+        AirPlayLog.i("---- starting AirPlay receiver: 7xDash " + versionName()
+                + ", Android " + Build.VERSION.RELEASE + " (API " + Build.VERSION.SDK_INT + "), "
+                + Build.MANUFACTURER + " " + Build.MODEL + ", log in " + AirPlayLog.where());
+        AirPlayLog.lastExits(this);
+        AirPlayLog.networks();
         multicast = getSystemService(WifiManager.class) == null ? null
                 : getSystemService(WifiManager.class).createMulticastLock("airplay_mdns");
         if (multicast != null) {
@@ -199,11 +219,14 @@ public class AirPlayService extends Service implements RaopCallbackHandler {
                 parse(am.getProperty(AudioManager.PROPERTY_OUTPUT_SAMPLE_RATE)),
                 parse(am.getProperty(AudioManager.PROPERTY_OUTPUT_FRAMES_PER_BUFFER)));
         String keyFile = getFilesDir().getAbsolutePath() + "/airplay.pem";
-        handle = NativeBridge.nativeInit(this, hwAddr(), name, keyFile, true, false);
+        byte[] mac = hwAddr();
+        AirPlayLog.i("device id " + macText(mac));
+        handle = NativeBridge.nativeInit(this, mac, name, keyFile, true, false);
         if (handle == 0) {
             fail("native init failed");
             return;
         }
+        NativeBridge.nativeSetLogLevel(handle, NativeBridge.LOG_DEBUG);
         NativeBridge.nativeServerAudioConfigure(handle, 0, 95, 0, false, false, true, true, false);
         NativeBridge.nativeSetH265Enabled(handle, false);
         NativeBridge.nativeSetCodecs(handle, false, true);
@@ -211,29 +234,55 @@ public class AirPlayService extends Service implements RaopCallbackHandler {
         NativeBridge.nativeSetLang(handle, "", "",
                 getResources().getConfiguration().getLocales().toLanguageTags().replace(',', ':'));
         NativeBridge.nativeSetFeature(handle, NativeBridge.FT_MIRROR, true);
-        NativeBridge.nativeSetFeature(handle, NativeBridge.FT_AUDIO, false);
+        // keep the audio feature bit on: it is part of what an iPhone expects from a mirroring
+        // receiver (UxPlay's default). Music-only AirPlay still can't play (no ALAC decoder).
+        NativeBridge.nativeSetFeature(handle, NativeBridge.FT_AUDIO, true);
         NativeBridge.nativeSetPlist(handle, "maxFPS", FPS);
         NativeBridge.nativeSetPlist(handle, "overscanned", 0);
         int[] size = displaySize();
         NativeBridge.nativeSetDisplaySize(handle, size[0], size[1], FPS);
 
-        int port = NativeBridge.nativeStart(handle, PORT);
+        int port = listen();
         if (port < 0) {
-            fail("could not listen on " + PORT);
+            fail("could not listen on port " + PORT + " or the spare ports");
             return;
         }
         Map<String, String> raopTxt = NativeBridge.nativeGetRaopTxtRecords(handle);
         Map<String, String> airplayTxt = NativeBridge.nativeGetAirplayTxtRecords(handle);
         String raopName = NativeBridge.nativeGetRaopServiceName(handle);
         String serverName = NativeBridge.nativeGetServerName(handle);
+        AirPlayLog.i("airplay txt " + airplayTxt);
+        AirPlayLog.i("raop txt " + raopTxt);
         nsd = getSystemService(NsdManager.class);
         register(raopName != null ? raopName : name, "_raop._tcp", port, raopTxt);
         register(serverName != null ? serverName : name, "_airplay._tcp", port, airplayTxt);
         setState(getString(R.string.airplay_state_waiting, name));
-        AppLog.i(TAG, "receiver up on port " + port + " as " + name + " " + size[0] + "x" + size[1]);
+        AirPlayLog.i("receiver up on port " + port + " as " + name + ", offers "
+                + size[0] + "x" + size[1] + "@" + FPS);
+    }
+
+    /** Port 7000, waiting a little if the last receiver is still letting go, else a spare one. */
+    private int listen() {
+        for (int attempt = 0; attempt < 3; attempt++) {
+            int port = NativeBridge.nativeStart(handle, PORT);
+            if (port > 0) {
+                return port;
+            }
+            AirPlayLog.w("port " + PORT + " busy, try " + (attempt + 1));
+            android.os.SystemClock.sleep(700);
+        }
+        for (int spare : SPARE_PORTS) {
+            int port = NativeBridge.nativeStart(handle, spare);
+            if (port > 0) {
+                return port;
+            }
+            AirPlayLog.w("port " + spare + " busy");
+        }
+        return -1;
     }
 
     private void stopServer() {
+        AirPlayLog.i("receiver stopping");
         if (nsd != null) {
             for (NsdManager.RegistrationListener l : registrations) {
                 try {
@@ -257,7 +306,8 @@ public class AirPlayService extends Service implements RaopCallbackHandler {
     }
 
     private void fail(String why) {
-        AppLog.w(TAG, why);
+        AirPlayLog.w("start failed: " + why);
+        stopServer();
         main.post(() -> {
             Notice.makeText(this, R.string.airplay_failed, Toast.LENGTH_LONG).show();
             stopSelf();
@@ -277,12 +327,12 @@ public class AirPlayService extends Service implements RaopCallbackHandler {
         NsdManager.RegistrationListener l = new NsdManager.RegistrationListener() {
             @Override
             public void onServiceRegistered(NsdServiceInfo s) {
-                AppLog.i(TAG, type + " registered: " + s.getServiceName());
+                AirPlayLog.i(type + " announced as " + s.getServiceName());
             }
 
             @Override
             public void onRegistrationFailed(NsdServiceInfo s, int code) {
-                AppLog.w(TAG, type + " registration failed: " + code);
+                AirPlayLog.w(type + " announce failed: " + code);
             }
 
             @Override
@@ -299,8 +349,9 @@ public class AirPlayService extends Service implements RaopCallbackHandler {
 
     /** Close tapped: drop the iPhone by restarting the receiver; it stays available. */
     private void endMirroring() {
+        AirPlayLog.i("close tapped: dropping the iPhone");
         window.hide();
-        work.post(() -> {
+        WORK.post(() -> {
             stopServer();
             startServer();
         });
@@ -310,7 +361,9 @@ public class AirPlayService extends Service implements RaopCallbackHandler {
 
     private void mirrorStarted() {
         mirroring = true;
+        AirPlayLog.i("mirroring started");
         if (!OverlayCoordinator.canShowOverlay(this)) {
+            AirPlayLog.w("no permission to draw over other apps: no window");
             Notice.makeText(this, R.string.airplay_need_overlay, Toast.LENGTH_LONG).show();
             return;
         }
@@ -322,6 +375,7 @@ public class AirPlayService extends Service implements RaopCallbackHandler {
     }
 
     private void mirrorStopped() {
+        AirPlayLog.i("mirroring stopped");
         mirroring = false;
         window.hide();
         stopWatchingCar();
@@ -355,7 +409,14 @@ public class AirPlayService extends Service implements RaopCallbackHandler {
             return;
         }
         Readings r = Telemetry.get().readings();
-        window.setBlocked(DrivingGate.blocked(r.text(Signal.GEAR), Telemetry.get().latest().speedKmh));
+        String gear = r.text(Signal.GEAR);
+        Float speed = Telemetry.get().latest().speedKmh;
+        boolean blocked = DrivingGate.blocked(gear, speed);
+        if (blocked != lastBlocked) {
+            lastBlocked = blocked;
+            AirPlayLog.i((blocked ? "picture hidden" : "picture shown") + ": gear=" + gear + " speed=" + speed);
+        }
+        window.setBlocked(blocked);
     }
 
     // ---- RaopCallbackHandler (native threads) ----
@@ -368,6 +429,7 @@ public class AirPlayService extends Service implements RaopCallbackHandler {
         decoder.feed(data, ntpTimeNs);
         if (firstFrame) {
             firstFrame = false;
+            AirPlayLog.i("first video frame, " + data.length + " bytes");
             main.post(() -> window.setPlaying(true));
         }
     }
@@ -379,11 +441,16 @@ public class AirPlayService extends Service implements RaopCallbackHandler {
         }
         decoder.setSize((int) w, (int) h);
         main.post(() -> window.setVideoSize((int) w, (int) h));
-        AppLog.i(TAG, "video " + srcW + "x" + srcH + " -> " + w + "x" + h);
+        AirPlayLog.i("iPhone picture " + (int) srcW + "x" + (int) srcH + " -> " + (int) w + "x" + (int) h);
     }
 
     @Override
     public void onMirrorRunning(boolean running) {
+        AirPlayLog.i("mirror stream " + (running ? "running" : "ended"));
+        if (handle != 0) {
+            // every frame is logged at debug: quieter while video flows, chatty again after
+            NativeBridge.nativeSetLogLevel(handle, running ? NativeBridge.LOG_INFO : NativeBridge.LOG_DEBUG);
+        }
         firstFrame = running;
         if (!running) {
             decoder.release();
@@ -393,6 +460,8 @@ public class AirPlayService extends Service implements RaopCallbackHandler {
 
     @Override
     public void onAudioFormat(int ct, int spf, boolean usingScreen) {
+        AirPlayLog.i("audio format ct=" + ct + " spf=" + spf + " screen=" + usingScreen
+                + (ct == NativeBridge.CT_ALAC ? " (ALAC: not supported, no sound)" : ""));
         if (handle == 0) {
             return;
         }
@@ -402,11 +471,12 @@ public class AirPlayService extends Service implements RaopCallbackHandler {
 
     @Override
     public void onAudioTeardown() {
+        AirPlayLog.i("audio stream ended");
     }
 
     @Override
     public void onConnectionInit() {
-        connections.incrementAndGet();
+        AirPlayLog.i("iPhone connected (" + connections.incrementAndGet() + " open)");
         main.post(() -> {
             if (!mirroring) {
                 setState(getString(R.string.airplay_state_connected));
@@ -416,7 +486,9 @@ public class AirPlayService extends Service implements RaopCallbackHandler {
 
     @Override
     public void onConnectionDestroy() {
-        if (connections.updateAndGet(n -> Math.max(0, n - 1)) == 0) {
+        int left = connections.updateAndGet(n -> Math.max(0, n - 1));
+        AirPlayLog.i("iPhone connection closed (" + left + " open)");
+        if (left == 0) {
             if (handle != 0) {
                 NativeBridge.nativeServerAudioStop(handle);
             }
@@ -442,11 +514,12 @@ public class AirPlayService extends Service implements RaopCallbackHandler {
 
     @Override
     public void onConnectionReset(int reason) {
-        AppLog.i(TAG, "connection reset " + reason);
+        AirPlayLog.w("connection reset, reason " + reason);
     }
 
     @Override
     public void onDisplayPin(String pin) {
+        AirPlayLog.w("iPhone asked for a PIN (not expected)");
     }
 
     @Override
@@ -487,10 +560,29 @@ public class AirPlayService extends Service implements RaopCallbackHandler {
 
     @Override
     public void onLog(String message) {
-        AppLog.d(TAG, message);
+        AirPlayLog.nativeLine(message);
     }
 
     // ---- helpers ----
+
+    private String versionName() {
+        try {
+            return getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
+        } catch (Exception e) {
+            return "?";
+        }
+    }
+
+    private static String macText(byte[] mac) {
+        StringBuilder sb = new StringBuilder();
+        for (byte b : mac) {
+            if (sb.length() > 0) {
+                sb.append(':');
+            }
+            sb.append(String.format("%02x", b));
+        }
+        return sb.toString();
+    }
 
     private void setState(String text) {
         state = text;
@@ -533,7 +625,7 @@ public class AirPlayService extends Service implements RaopCallbackHandler {
                 }
             }
         } catch (Exception e) {
-            AppLog.w(TAG, "no hardware address: " + e);
+            AirPlayLog.w("no hardware address: " + e);
         }
         SharedPreferences prefs = getSharedPreferences(PREFS, MODE_PRIVATE);
         String saved = prefs.getString(KEY_MAC, null);

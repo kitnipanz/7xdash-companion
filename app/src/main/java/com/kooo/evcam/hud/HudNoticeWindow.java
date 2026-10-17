@@ -114,7 +114,7 @@ public final class HudNoticeWindow {
         bg.setCornerRadius(height / 6f);
         bg.setStroke(Math.max(2, height / 60), ENERGY);
         card.setBackground(bg);
-        card.addView(line(context, app, height * 0.13f, ENERGY, false));
+        // 不写应用名：抬头显示上地方小，橙色描边已经说明是 7xDash 的
         if (!TextUtils.isEmpty(title)) {
             card.addView(line(context, title, height * 0.22f, Color.WHITE, true));
         }

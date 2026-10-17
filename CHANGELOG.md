@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.0.8-beta] - 2026-10-18
+
+- AirPlay: fixed "see 7xDash but can't connect". The car's system mDNS told the iPhone an internal address (198.18.34.15). 7xDash now runs its own mDNS responder that answers each network with its own address (Wi-Fi 192.168.5.x), and stays off the car's internal links. Falls back to the system one if the mDNS port can't be shared.
+- HUD notice: no "7xDash" line on top of the card any more; it took too much room.
+
 ## [1.0.7-beta] - 2026-10-18
 
 - HUD notice: new setting (Settings > Rear view > HUD notifications, or long-press the home HUD card) to move the card right until it is fully visible; a test card shows on the HUD each time you change it. Default 20% from the left.

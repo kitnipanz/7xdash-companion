@@ -91,6 +91,7 @@ public class AirPlayService extends Service implements RaopCallbackHandler {
     private final Handler main = new Handler(Looper.getMainLooper());
     private long handle;
     private NsdManager nsd;
+    private MdnsResponder mdns;
     private final List<NsdManager.RegistrationListener> registrations = new ArrayList<>();
     private WifiManager.MulticastLock multicast;
     private final MirrorDecoder decoder = new MirrorDecoder();
@@ -288,9 +289,8 @@ public class AirPlayService extends Service implements RaopCallbackHandler {
         String serverName = NativeBridge.nativeGetServerName(handle);
         AirPlayLog.i("airplay txt " + airplayTxt);
         AirPlayLog.i("raop txt " + raopTxt);
-        nsd = getSystemService(NsdManager.class);
-        register(raopName != null ? raopName : name, "_raop._tcp", port, raopTxt);
-        register(serverName != null ? serverName : name, "_airplay._tcp", port, airplayTxt);
+        announce(raopName != null ? raopName : name, serverName != null ? serverName : name,
+                port, raopTxt, airplayTxt);
         setState(getString(R.string.airplay_state_waiting, name));
         listenPort = port;
         AirPlayLog.i("receiver up on port " + port + " as " + name + ", offers "
@@ -320,6 +320,10 @@ public class AirPlayService extends Service implements RaopCallbackHandler {
     private void stopServer() {
         AirPlayLog.i("receiver stopping");
         listenPort = 0;
+        if (mdns != null) {
+            mdns.stop();
+            mdns = null;
+        }
         if (nsd != null) {
             for (NsdManager.RegistrationListener l : registrations) {
                 try {
@@ -385,6 +389,33 @@ public class AirPlayService extends Service implements RaopCallbackHandler {
         };
         nsd.registerService(info, NsdManager.PROTOCOL_DNS_SD, l);
         registrations.add(l);
+    }
+
+    /**
+     * Tell iPhones we are here. Our own mDNS responder first, answering each network with its
+     * own address (the 7X's system one hands out an internal address on every network); the
+     * system NsdManager only when the car won't let us share the mDNS port.
+     */
+    private void announce(String raopName, String airplayName, int port,
+                          @Nullable Map<String, String> raopTxt, @Nullable Map<String, String> airplayTxt) {
+        List<MdnsResponder.Service> list = new ArrayList<>();
+        list.add(new MdnsResponder.Service(airplayName, "_airplay._tcp", port, airplayTxt));
+        list.add(new MdnsResponder.Service(raopName, "_raop._tcp", port, raopTxt));
+        MdnsResponder responder = new MdnsResponder(list);
+        try {
+            responder.start();
+            mdns = responder;
+            for (String a : addresses()) {
+                AirPlayLog.i("reachable at " + a);
+            }
+            return;
+        } catch (java.io.IOException e) {
+            AirPlayLog.w("mDNS: own responder could not open port 5353 (" + e.getMessage()
+                    + "), using the system one");
+        }
+        nsd = getSystemService(NsdManager.class);
+        register(raopName, "_raop._tcp", port, raopTxt);
+        register(airplayName, "_airplay._tcp", port, airplayTxt);
     }
 
     /** Look ourselves up the way an iPhone would, and log the address and port it gets. */

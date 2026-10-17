@@ -22,12 +22,21 @@ public class HudNoticeTest {
     }
 
     @Test
+    public void leftOffsetMovesTheCardIn() {
+        // 7X 默认往里挪 20%：1440 的 20% 是 288
+        assertArrayEquals(new int[]{288, 8, 576, 172}, HudNotice.place(1440, 480, 20));
+        assertArrayEquals(new int[]{8, 8, 576, 172}, HudNotice.place(1440, 480, 0));
+    }
+
+    @Test
     public void cardStaysInsideTheHud() {
         for (int[] size : new int[][]{{1440, 480}, {800, 120}, {40, 20}, {2, 2}}) {
-            int[] box = HudNotice.place(size[0], size[1]);
-            assertTrue(box[0] >= 0 && box[1] >= 0 && box[2] > 0 && box[3] > 0);
-            assertTrue(box[0] + box[2] <= size[0]);
-            assertTrue(box[1] + box[3] <= size[1]);
+            for (int left : new int[]{0, 20, 60, 90}) {
+                int[] box = HudNotice.place(size[0], size[1], left);
+                assertTrue(box[0] >= 0 && box[1] >= 0 && box[2] > 0 && box[3] > 0);
+                assertTrue(box[0] + box[2] <= size[0]);
+                assertTrue(box[1] + box[3] <= size[1]);
+            }
         }
     }
 }

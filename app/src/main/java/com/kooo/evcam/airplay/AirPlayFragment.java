@@ -25,6 +25,7 @@ public class AirPlayFragment extends Fragment {
     private TextView state;
     private TextView name;
     private TextView steps;
+    private TextView addresses;
     private ImageView icon;
     private SwitchCompat enabled;
 
@@ -49,6 +50,7 @@ public class AirPlayFragment extends Fragment {
         state = view.findViewById(R.id.airplay_state);
         name = view.findViewById(R.id.airplay_name);
         steps = view.findViewById(R.id.airplay_steps);
+        addresses = view.findViewById(R.id.airplay_addresses);
         icon = view.findViewById(R.id.airplay_icon);
         enabled = view.findViewById(R.id.airplay_enabled);
         view.findViewById(R.id.airplay_back).setOnClickListener(v ->
@@ -84,6 +86,19 @@ public class AirPlayFragment extends Fragment {
                 : getString(R.string.airplay_state_off));
         name.setText(getString(R.string.airplay_name_line, deviceName));
         steps.setText(getString(R.string.airplay_steps, deviceName));
+        java.util.List<String> where = AirPlayService.addresses();
+        if (where.isEmpty()) {
+            addresses.setVisibility(View.GONE);
+        } else {
+            StringBuilder sb = new StringBuilder(getString(R.string.airplay_address_title));
+            for (String line : where) {
+                sb.append('\n').append(line);
+            }
+            String first = where.get(0).substring(where.get(0).lastIndexOf(' ') + 1);
+            sb.append("\n\n").append(getString(R.string.airplay_address_test, first));
+            addresses.setText(sb);
+            addresses.setVisibility(View.VISIBLE);
+        }
         icon.setImageTintList(ColorStateList.valueOf(ContextCompat.getColor(requireContext(),
                 on ? R.color.energy : R.color.text_secondary)));
     }

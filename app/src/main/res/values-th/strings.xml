@@ -1312,4 +1312,13 @@
     <string name="airplay_window_hint">หน้าจอ iPhone จะเปิดในหน้าต่างลอย ลากเพื่อย้าย ลากมุมเพื่อปรับขนาด แตะสองครั้งเพื่อสลับเล็กหรือใหญ่ และแตะ × เพื่อหยุด</string>
     <string name="airplay_limits">ภาพจะซ่อนเมื่อรถอยู่ในเกียร์หรือกำลังเคลื่อนที่ แอปที่มีการป้องกันการคัดลอก (Netflix, Disney+, Apple TV) จะแสดงจอดำ</string>
     <string name="airplay_notification">รอการสะท้อนหน้าจอจาก iPhone</string>
+
+    <!-- 抬头显示通知的位置 -->
+    <string name="set_hud_notice_summary">แสดงข้อความของ 7xDash บน HUD</string>
+    <string name="set_hud_notice_left_title">ตำแหน่งด้านซ้าย</string>
+    <string name="set_hud_notice_left_summary">เลื่อนการ์ดไปทางขวาจนเห็นครบบน HUD ทุกครั้งที่ปรับจะแสดงการ์ดทดสอบ</string>
+    <string name="set_hud_notice_preview">ตำแหน่งการแจ้งเตือน</string>
+    <string name="set_hud_notice_preview_detail">ห่างจากซ้าย %1$d%%</string>
+    <string name="airplay_address_title">ที่อยู่ของตัวรับ</string>
+    <string name="airplay_address_test">เชื่อมต่อไม่ได้? เปิด http://%1$s/info ใน Safari บน iPhone (หน้าอาจว่างเปล่า) แล้วดูใน log ของ AirPlay บน USB ว่ามาถึงรถหรือไม่</string>
 </resources>

@@ -1334,4 +1334,13 @@ Then reopen this app.</string>
     <string name="airplay_window_hint">The iPhone screen opens in a floating window. Drag it to move, drag the corner to resize, double-tap for small or large, and tap × to stop.</string>
     <string name="airplay_limits">The picture hides while the car is in gear or moving. Apps with copy protection (Netflix, Disney+, Apple TV) show a black screen.</string>
     <string name="airplay_notification">Waiting for iPhone screen mirroring</string>
+
+    <!-- 抬头显示通知的位置 -->
+    <string name="set_hud_notice_summary">Show 7xDash messages on the HUD.</string>
+    <string name="set_hud_notice_left_title">Left position</string>
+    <string name="set_hud_notice_left_summary">Move the card right until it is fully visible on the HUD. A test card shows each time you change it.</string>
+    <string name="set_hud_notice_preview">Notice position</string>
+    <string name="set_hud_notice_preview_detail">%1$d%% from the left</string>
+    <string name="airplay_address_title">Receiver address</string>
+    <string name="airplay_address_test">Can\'t connect? Open http://%1$s/info in Safari on the iPhone (the page may stay blank). The AirPlay log on the USB drive shows whether it reached the car.</string>
 </resources>

@@ -221,7 +221,8 @@ public class HomeFragment extends Fragment {
                 R.string.home_card_shortcuts_sub, () -> startActivity(new Intent(requireContext(),
                         com.kooo.evcam.input.ShortcutListActivity.class)), null);
         addCard(grid, 2, 3, R.drawable.ic_hud, R.string.home_card_hud_notice,
-                R.string.home_card_hud_notice_sub, this::toggleHudNotices, null)
+                R.string.home_card_hud_notice_sub, this::toggleHudNotices,
+                () -> page(MainActivity.PAGE_SETTINGS_PREFIX + "screen_rearview"))
                 .onOff(() -> config.isHudNotificationsEnabled());
     }
 

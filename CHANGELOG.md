@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.7-beta] - 2026-10-18
+
+- HUD notice: new setting (Settings > Rear view > HUD notifications, or long-press the home HUD card) to move the card right until it is fully visible; a test card shows on the HUD each time you change it. Default 20% from the left.
+- AirPlay page shows the car's receiver address and port, with a Safari test for when the iPhone can't connect.
+- AirPlay log: also records the address the car announces to the iPhone and every address it can be reached at.
+
 ## [1.0.6-beta] - 2026-10-18
 
 - HUD notice: the card now sits left-aligned at the top-left of the HUD (8 px in), kept inside the screen; it no longer draws partly outside the visible HUD area.

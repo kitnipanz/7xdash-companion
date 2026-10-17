@@ -106,6 +106,7 @@ public class SettingsPreferenceFragment extends PreferenceFragmentCompat {
         bindRecording();
         bindStorage();
         bindRearView();
+        bindHudNotice();
         bindSidePopup();
         bindFloating();
         bindDim();
@@ -701,6 +702,19 @@ public class SettingsPreferenceFragment extends PreferenceFragmentCompat {
     }
 
     // ------------------------------------------------------------------ 打转向灯弹侧视
+
+    /** 抬头显示通知：开关，以及卡片离左边多远（实车最左边一截看不到）。拖完弹一张试看的。 */
+    private void bindHudNotice() {
+        bindSwitch("pref_hud_notice", appConfig.isHudNotificationsEnabled(),
+                appConfig::setHudNotificationsEnabled);
+        bindSlider("pref_hud_notice_left", AppConfig.HUD_NOTICE_LEFT_MIN, AppConfig.HUD_NOTICE_LEFT_MAX,
+                appConfig.getHudNoticeLeftPercent(), "%", value -> {
+                    appConfig.setHudNoticeLeftPercent(value);
+                    com.kooo.evcam.hud.HudNoticeWindow.show(requireContext(),
+                            getString(R.string.app_name), getString(R.string.set_hud_notice_preview),
+                            getString(R.string.set_hud_notice_preview_detail, value));
+                });
+    }
 
     private void bindSidePopup() {
         bindOverlaySwitch("pref_side_popup", appConfig.isSidePopupEnabled(),

@@ -228,6 +228,23 @@
             android:title="@string/set_rearview_reset_title"
             android:summary="@string/set_rearview_reset_summary" />
 
+        <!-- 抬头显示通知：开关（和主页那张卡同一个）+ 左边位置，调的时候抬头显示上弹一张试看卡片 -->
+        <PreferenceCategory
+            android:key="cat_hud_notice"
+            android:title="@string/home_card_hud_notice">
+
+            <SwitchPreferenceCompat
+                android:key="pref_hud_notice"
+                android:title="@string/home_card_hud_notice"
+                android:summary="@string/set_hud_notice_summary" />
+
+            <SeekBarPreference
+                android:key="pref_hud_notice_left"
+                android:title="@string/set_hud_notice_left_title"
+                android:summary="@string/set_hud_notice_left_summary"
+                app:showSeekBarValue="true" />
+        </PreferenceCategory>
+
         <!-- 打转向灯弹侧视：不依赖后视镜开关，后视镜关着也能用（开着时反而不弹） -->
         <PreferenceCategory
             android:key="cat_side_popup"

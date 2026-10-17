@@ -107,6 +107,19 @@
                 </LinearLayout>
             </LinearLayout>
 
+            <!-- 车机地址和端口：iPhone 连不上时，在 iPhone 的 Safari 里打开它试一下，日志里看到没到 -->
+            <TextView
+                android:id="@+id/airplay_addresses"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:fontFeatureSettings="tnum"
+                android:lineSpacingExtra="4dp"
+                android:textAppearance="@style/TextAppearance.Cam.Caption"
+                android:textColor="@color/text_secondary"
+                android:textIsSelectable="true"
+                android:visibility="gone" />
+
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

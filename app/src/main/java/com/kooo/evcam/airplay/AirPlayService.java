@@ -85,6 +85,8 @@ public class AirPlayService extends Service implements RaopCallbackHandler {
 
     private static volatile AirPlayService live;
     private static volatile String state = "";
+    /** Port the receiver listens on, 0 when not up. */
+    private static volatile int listenPort;
 
     private final Handler main = new Handler(Looper.getMainLooper());
     private long handle;
@@ -130,6 +132,39 @@ public class AirPlayService extends Service implements RaopCallbackHandler {
     /** One line for the AirPlay page: waiting / connected / mirroring. Empty when off. */
     public static String state() {
         return live == null ? "" : state;
+    }
+
+    /**
+     * Where an iPhone can reach the receiver: "wlan2  192.168.5.79:7001" per IPv4 address, Wi-Fi
+     * and hotspot interfaces first. Empty when the receiver is not up.
+     */
+    public static List<String> addresses() {
+        List<String> wifi = new ArrayList<>();
+        List<String> other = new ArrayList<>();
+        int port = listenPort;
+        if (live == null || port <= 0) {
+            return wifi;
+        }
+        try {
+            for (NetworkInterface iface : Collections.list(NetworkInterface.getNetworkInterfaces())) {
+                if (!iface.isUp() || iface.isLoopback()) {
+                    continue;
+                }
+                for (java.net.InetAddress a : Collections.list(iface.getInetAddresses())) {
+                    if (!(a instanceof java.net.Inet4Address)) {
+                        continue;
+                    }
+                    String n = iface.getName();
+                    String line = n + "  " + a.getHostAddress() + ":" + port;
+                    boolean isWifi = n.startsWith("wlan") || n.startsWith("ap") || n.startsWith("swlan");
+                    (isWifi ? wifi : other).add(line);
+                }
+            }
+        } catch (Exception ignored) {
+            // nothing to show
+        }
+        wifi.addAll(other);
+        return wifi;
     }
 
     public static String deviceName() {
@@ -257,6 +292,7 @@ public class AirPlayService extends Service implements RaopCallbackHandler {
         register(raopName != null ? raopName : name, "_raop._tcp", port, raopTxt);
         register(serverName != null ? serverName : name, "_airplay._tcp", port, airplayTxt);
         setState(getString(R.string.airplay_state_waiting, name));
+        listenPort = port;
         AirPlayLog.i("receiver up on port " + port + " as " + name + ", offers "
                 + size[0] + "x" + size[1] + "@" + FPS);
     }
@@ -283,6 +319,7 @@ public class AirPlayService extends Service implements RaopCallbackHandler {
 
     private void stopServer() {
         AirPlayLog.i("receiver stopping");
+        listenPort = 0;
         if (nsd != null) {
             for (NsdManager.RegistrationListener l : registrations) {
                 try {
@@ -328,6 +365,9 @@ public class AirPlayService extends Service implements RaopCallbackHandler {
             @Override
             public void onServiceRegistered(NsdServiceInfo s) {
                 AirPlayLog.i(type + " announced as " + s.getServiceName());
+                if ("_airplay._tcp".equals(type)) {
+                    resolveSelf(s.getServiceName(), type);
+                }
             }
 
             @Override
@@ -345,6 +385,32 @@ public class AirPlayService extends Service implements RaopCallbackHandler {
         };
         nsd.registerService(info, NsdManager.PROTOCOL_DNS_SD, l);
         registrations.add(l);
+    }
+
+    /** Look ourselves up the way an iPhone would, and log the address and port it gets. */
+    private void resolveSelf(String serviceName, String type) {
+        NsdServiceInfo info = new NsdServiceInfo();
+        info.setServiceName(serviceName);
+        info.setServiceType(type);
+        try {
+            nsd.resolveService(info, new NsdManager.ResolveListener() {
+                @Override
+                public void onResolveFailed(NsdServiceInfo s, int code) {
+                    AirPlayLog.w("self lookup failed: " + code);
+                }
+
+                @Override
+                public void onServiceResolved(NsdServiceInfo s) {
+                    AirPlayLog.i("self lookup: " + s.getServiceName() + " -> "
+                            + (s.getHost() != null ? s.getHost().getHostAddress() : "?") + ":" + s.getPort());
+                }
+            });
+        } catch (RuntimeException e) {
+            AirPlayLog.w("self lookup error: " + e);
+        }
+        for (String a : addresses()) {
+            AirPlayLog.i("reachable at " + a);
+        }
     }
 
     /** Close tapped: drop the iPhone by restarting the receiver; it stays available. */

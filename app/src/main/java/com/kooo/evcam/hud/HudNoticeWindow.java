@@ -60,7 +60,8 @@ public final class HudNoticeWindow {
                     WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY, null);
             WindowManager wm = window.getSystemService(WindowManager.class);
             Point size = HudDisplay.sizeOf(hud);
-            int[] box = HudNotice.place(size.x, size.y);
+            int[] box = HudNotice.place(size.x, size.y,
+                    new com.kooo.evcam.AppConfig(context).getHudNoticeLeftPercent());
             // 窗口从 (0,0) 起，卡片在窗口里挪到 (x, y)。和侧视一样（SideViewPopupView.place）：
             // 窗口若不从原点起，这台抬头显示画出来的位置会错开，卡片就跑出看得见的那一块。
             // 不加 FLAG_LAYOUT_NO_LIMITS：窗口要被按在屏里，不许探出边。

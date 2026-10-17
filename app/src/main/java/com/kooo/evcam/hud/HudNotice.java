@@ -51,19 +51,29 @@ public final class HudNotice {
     public static final int EDGE = 8;
 
     /**
-     * 卡片左对齐，从抬头显示看得见那一块的左上角起，只留 {@link #EDGE} 的空。{@code [x, y, width, height]}。
+     * 卡片左对齐，贴着整块屏的左上角，只留 {@link #EDGE} 的空。{@code [x, y, width, height]}。
      *
-     * <p>看得见的那一块就是整块屏：侧视、后视镜也都按整块屏摆（{@code HudFrame}、
-     * {@code RearViewMirrorView}），没有另外的内缩。宽 40%、高 36%，再大也收在屏里、四边留空。
-     * 窗口本身从 (0,0) 起，卡片在窗口里挪到 (x, y)，见 {@link HudNoticeWindow}。</p>
+     * <p>实车上整块屏最左边那一截看不到，所以真正用的是下面带 {@code leftPercent} 的那个。
+     * 宽 40%、高 36%，再大也收在屏里。窗口本身从 (0,0) 起，卡片在窗口里挪到 (x, y)，
+     * 见 {@link HudNoticeWindow}。</p>
      */
     public static int[] place(int displayW, int displayH) {
+        return place(displayW, displayH, 0);
+    }
+
+    /**
+     * Same, with the card's left edge moved in by {@code leftPercent} of the width: on the 7X
+     * the leftmost part of the HUD panel is not visible, and how much is hidden is set in
+     * Settings (AppConfig.getHudNoticeLeftPercent).
+     */
+    public static int[] place(int displayW, int displayH, int leftPercent) {
         if (displayW < 2 || displayH < 2) {
             return new int[]{0, 0, Math.max(displayW, 1), Math.max(displayH, 1)};
         }
-        int x = Math.min(EDGE, displayW / 4);
+        int inset = displayW * Math.max(0, Math.min(90, leftPercent)) / 100;
+        int x = Math.min(Math.max(EDGE, inset), Math.max(0, displayW - displayW / 4 - 1));
         int y = Math.min(EDGE, displayH / 4);
-        int width = Math.max(1, Math.min(displayW * 40 / 100, displayW - x * 2));
+        int width = Math.max(1, Math.min(displayW * 40 / 100, displayW - x - EDGE));
         int height = Math.max(1, Math.min(displayH * 36 / 100, displayH - y * 2));
         return new int[]{x, y, width, height};
     }

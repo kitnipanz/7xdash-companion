@@ -130,4 +130,11 @@ public class VersionNameTest {
         assertTrue(VersionName.isNewer("2.0.1-kd", "2.0.0-kd"));
         assertFalse(VersionName.isNewer("2.0.0", "2.0.0-kd"));
     }
+
+    @Test
+    public void twoDigitPartIsNewerThanOneDigit() {
+        // 1.0.10-beta came after 1.0.9-beta: compared as numbers, not text
+        org.junit.Assert.assertTrue(VersionName.isNewer("v1.0.10-beta", "1.0.9-beta"));
+        org.junit.Assert.assertFalse(VersionName.isNewer("v1.0.9-beta", "1.0.10-beta"));
+    }
 }

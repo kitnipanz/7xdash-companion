@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.0.10-beta] - 2026-10-18
+
+- HUD notice: new Right position setting (default 20% in from the right), next to Left position, with a test card; the card runs between the two, so long notices no longer go past the right edge of the visible HUD.
+
 ## [1.0.9-beta] - 2026-10-18
 
 - AirPlay video casting: tap the AirPlay button in a video's player on the iPhone and choose 7xDash. Only the video plays, in the floating window (ExoPlayer, HLS); play, pause and seeking follow the iPhone's controls. Copy-protected apps still won't play.

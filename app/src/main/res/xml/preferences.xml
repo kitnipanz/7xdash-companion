@@ -243,6 +243,12 @@
                 android:title="@string/set_hud_notice_left_title"
                 android:summary="@string/set_hud_notice_left_summary"
                 app:showSeekBarValue="true" />
+
+            <SeekBarPreference
+                android:key="pref_hud_notice_right"
+                android:title="@string/set_hud_notice_right_title"
+                android:summary="@string/set_hud_notice_right_summary"
+                app:showSeekBarValue="true" />
         </PreferenceCategory>
 
         <!-- 打转向灯弹侧视：不依赖后视镜开关，后视镜关着也能用（开着时反而不弹） -->

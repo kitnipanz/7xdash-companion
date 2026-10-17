@@ -33,7 +33,8 @@ public class AppConfig {
     private static final String KEY_FOOTAGE_LOCK = "footage_lock";  // 锁定影像
     private static final String KEY_FOOTAGE_LOCK_FLASH = "footage_lock_flash";  // 闪远光时自动锁定当前录像
     private static final String KEY_HUD_NOTIFICATIONS = "hud_notifications";
-    private static final String KEY_HUD_NOTICE_LEFT = "hud_notice_left_pct";  // 抬头显示通知离左边多少（%）  // 别的应用的通知投到抬头显示
+    private static final String KEY_HUD_NOTICE_LEFT = "hud_notice_left_pct";  // 抬头显示通知离左边多少（%）
+    private static final String KEY_HUD_NOTICE_RIGHT = "hud_notice_right_pct";  // 离右边多少（%）  // 别的应用的通知投到抬头显示
     private static final String KEY_SETTINGS_SHOW_ALL = "settings_show_all";  // 设置显示「全部」而不是「常用」
     private static final String KEY_UI_LEFT_FOR_SCREEN_OFF = "ui_left_for_screen_off";  // 主界面是因为熄屏才退下去的
     
@@ -459,6 +460,18 @@ public class AppConfig {
 
     public void setHudNoticeLeftPercent(int percent) {
         prefs.edit().putInt(KEY_HUD_NOTICE_LEFT, percent).apply();
+    }
+
+    /** 卡片右边离屏右沿多少（屏宽的百分比）：实车最右边一截也看不到。 */
+    public static final int HUD_NOTICE_RIGHT_DEFAULT = 20;
+
+    public int getHudNoticeRightPercent() {
+        int v = prefs.getInt(KEY_HUD_NOTICE_RIGHT, HUD_NOTICE_RIGHT_DEFAULT);
+        return Math.max(HUD_NOTICE_LEFT_MIN, Math.min(HUD_NOTICE_LEFT_MAX, v));
+    }
+
+    public void setHudNoticeRightPercent(int percent) {
+        prefs.edit().putInt(KEY_HUD_NOTICE_RIGHT, percent).apply();
     }
 
     /** 设置页显示全部设置项；默认关（只显示常用的，见 {@code SettingsLevel}）。 */

@@ -57,7 +57,11 @@ public final class HudNotice {
      * 见 {@link HudNoticeWindow}。</p>
      */
     public static int[] place(int displayW, int displayH) {
-        return place(displayW, displayH, 0);
+        return place(displayW, displayH, 0, 0);
+    }
+
+    public static int[] place(int displayW, int displayH, int leftPercent) {
+        return place(displayW, displayH, leftPercent, 0);
     }
 
     /**
@@ -65,7 +69,12 @@ public final class HudNotice {
      * the leftmost part of the HUD panel is not visible, and how much is hidden is set in
      * Settings (AppConfig.getHudNoticeLeftPercent).
      */
-    public static int[] place(int displayW, int displayH, int leftPercent) {
+    /**
+     * And the right edge moved in by {@code rightPercent}: the rightmost part of the 7X HUD panel
+     * is not visible either (AppConfig.getHudNoticeRightPercent). The card keeps at least a
+     * quarter of the width however the two are set.
+     */
+    public static int[] place(int displayW, int displayH, int leftPercent, int rightPercent) {
         if (displayW < 2 || displayH < 2) {
             return new int[]{0, 0, Math.max(displayW, 1), Math.max(displayH, 1)};
         }
@@ -73,7 +82,9 @@ public final class HudNotice {
         int x = Math.min(Math.max(EDGE, inset), Math.max(0, displayW - displayW / 4 - 1));
         int y = Math.min(EDGE, displayH / 4);
         // full width from the left position to the right edge: notices can be long
-        int width = Math.max(1, displayW - x - EDGE);
+        int right = Math.max(EDGE, displayW * Math.max(0, Math.min(90, rightPercent)) / 100);
+        int width = Math.max(Math.min(displayW / 4, displayW - x - EDGE), displayW - x - right);
+        width = Math.max(1, Math.min(width, displayW - x));
         int height = Math.max(1, Math.min(displayH * 36 / 100, displayH - y * 2));
         return new int[]{x, y, width, height};
     }

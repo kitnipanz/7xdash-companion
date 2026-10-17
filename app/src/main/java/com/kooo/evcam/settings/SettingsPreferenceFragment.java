@@ -714,6 +714,13 @@ public class SettingsPreferenceFragment extends PreferenceFragmentCompat {
                             getString(R.string.app_name), getString(R.string.set_hud_notice_preview),
                             getString(R.string.set_hud_notice_preview_detail, value));
                 });
+        bindSlider("pref_hud_notice_right", AppConfig.HUD_NOTICE_LEFT_MIN, AppConfig.HUD_NOTICE_LEFT_MAX,
+                appConfig.getHudNoticeRightPercent(), "%", value -> {
+                    appConfig.setHudNoticeRightPercent(value);
+                    com.kooo.evcam.hud.HudNoticeWindow.show(requireContext(),
+                            getString(R.string.app_name), getString(R.string.set_hud_notice_preview),
+                            getString(R.string.set_hud_notice_preview_right, value));
+                });
     }
 
     private void bindSidePopup() {

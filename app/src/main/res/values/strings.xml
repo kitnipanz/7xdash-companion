@@ -1347,4 +1347,7 @@ Then reopen this app.</string>
     <string name="airplay_drive_warning">For passengers. Watching video while you drive is dangerous and illegal in many places. When this is off, the picture hides while the car is in gear or moving.</string>
     <string name="airplay_state_casting">Playing a video from the iPhone</string>
     <string name="airplay_cast_started">Playing the iPhone\'s video</string>
+    <string name="set_hud_notice_right_title">Right position</string>
+    <string name="set_hud_notice_right_summary">Move the card\'s right edge in until long notices stay fully visible on the HUD. A test card shows each time you change it.</string>
+    <string name="set_hud_notice_preview_right">%1$d%% from the right. A long line shows where the card ends on the right side of the HUD.</string>
 </resources>

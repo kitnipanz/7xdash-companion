@@ -1325,4 +1325,7 @@
     <string name="airplay_drive_warning">สำหรับผู้โดยสาร การดูวิดีโอขณะขับขี่เป็นอันตรายและผิดกฎหมายในหลายประเทศ เมื่อปิดไว้ ภาพจะซ่อนเมื่อรถอยู่ในเกียร์หรือกำลังเคลื่อนที่</string>
     <string name="airplay_state_casting">กำลังเล่นวิดีโอจาก iPhone</string>
     <string name="airplay_cast_started">กำลังเล่นวิดีโอจาก iPhone</string>
+    <string name="set_hud_notice_right_title">ตำแหน่งด้านขวา</string>
+    <string name="set_hud_notice_right_summary">เลื่อนขอบขวาของการ์ดเข้ามาจนข้อความยาวๆ เห็นครบบน HUD ทุกครั้งที่ปรับจะแสดงการ์ดทดสอบ</string>
+    <string name="set_hud_notice_preview_right">ห่างจากขวา %1$d%% ข้อความยาวนี้แสดงว่าการ์ดจบตรงไหนทางด้านขวาของ HUD</string>
 </resources>

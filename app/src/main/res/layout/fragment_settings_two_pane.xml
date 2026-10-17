@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  设置：统一骨架的 ① 标题区 · ② 列表栏 · ③ 内容区 · ⑤ 状态条（见 docs/ui-spec.md）。
+
+  ① 横跨两栏，因为「设置」是一屏，不是两屏。它的左键跟着深度变：
+  停在分区层是菜单（拉开抽屉），进了二级界面是返回（退一层）——
+  位置永远是这一个，规范第一条原则。
+
+  ② 左栏固定宽度（list_width，和车机系统设置的左栏同一比例）：分区名都很短，
+  给它一个稳定的宽度，右栏才不会因为换分区而变宽变窄。
+-->
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/bg_home_wallpaper"
+    android:orientation="vertical"
+    android:padding="16dp">
+    <!--
+  7xDash：和主页一个样子 —— 页边 16dp，标题下面不画分隔线，内容放在一张大圆角卡片上（bg_surface_card）。
+-->
+    <!-- ① 标题区 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/title_bar_height"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="10dp"
+        android:paddingEnd="16dp">
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/settings_nav"
+            style="@style/Widget.Cam.IconButton"
+            android:layout_width="@dimen/icon_button_size"
+            android:layout_height="@dimen/icon_button_size"
+            android:contentDescription="@string/cd_menu"
+            app:icon="@drawable/ic_menu" />
+        <TextView
+            android:id="@+id/settings_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="14dp"
+            android:layout_weight="1"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:text="@string/nav_settings"
+            android:textAppearance="@style/TextAppearance.Cam.Title"
+            android:textColor="@color/text_primary"
+            android:textStyle="bold" />
+        <!-- 常用 / 全部：极氪 OS 7 那种两段开关，见 SettingsLevel。
+             贴右边：标题长短不一，跟在标题后面每一页的位置都不一样 -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="54dp"
+            android:layout_marginStart="16dp"
+            android:background="@drawable/bg_segment_track"
+            android:orientation="horizontal"
+            android:padding="4dp">
+            <TextView
+                android:id="@+id/settings_level_basic"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:background="@drawable/bg_segment"
+                android:gravity="center"
+                android:minWidth="112dp"
+                android:paddingStart="20dp"
+                android:paddingEnd="20dp"
+                android:text="@string/settings_level_basic"
+                android:textAppearance="@style/TextAppearance.Cam.Body" />
+            <TextView
+                android:id="@+id/settings_level_all"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:background="@drawable/bg_segment"
+                android:gravity="center"
+                android:minWidth="112dp"
+                android:paddingStart="20dp"
+                android:paddingEnd="20dp"
+                android:text="@string/settings_level_all"
+                android:textAppearance="@style/TextAppearance.Cam.Body" />
+        </LinearLayout>
+    </LinearLayout>
+    <androidx.slidingpanelayout.widget.SlidingPaneLayout
+        android:id="@+id/settings_sliding_pane"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+        <!-- 左栏：顶上一张主卡（应用名 + 版本，极氪 OS 7 设置页的样子），下面是分区列表 -->
+        <LinearLayout
+            android:layout_width="@dimen/list_width"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
+            <LinearLayout
+                android:id="@+id/settings_hero"
+                android:layout_width="match_parent"
+                android:layout_height="120dp"
+                android:layout_marginStart="12dp"
+                android:layout_marginTop="4dp"
+                android:layout_marginEnd="12dp"
+                android:layout_marginBottom="12dp"
+                android:background="@drawable/bg_settings_hero"
+                android:gravity="center_vertical"
+                android:orientation="vertical"
+                android:paddingStart="20dp"
+                android:paddingEnd="20dp">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/app_name"
+                    android:textAppearance="@style/TextAppearance.Cam.Display" />
+                <TextView
+                    android:id="@+id/settings_hero_version"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:textAppearance="@style/TextAppearance.Cam.Caption"
+                    android:textColor="@color/text_secondary" />
+            </LinearLayout>
+            <androidx.fragment.app.FragmentContainerView
+                android:id="@+id/settings_headers"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1" />
+        </LinearLayout>
+        <androidx.fragment.app.FragmentContainerView
+            android:id="@+id/settings_detail"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="match_parent" />
+    </androidx.slidingpanelayout.widget.SlidingPaneLayout>
+    <!-- ⑤ 状态条：和主界面同一条 -->
+    <include
+        layout="@layout/layout_status_bar"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/status_bar_height" />
+</LinearLayout>

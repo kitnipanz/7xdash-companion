@@ -1,0 +1,62 @@
+package com.kooo.evcam.ui;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+/**
+ * 哪些布局算「核心界面」。
+ *
+ * <p>规范（`docs/ui-spec.md`）管的是用户用得到的那些界面。排查用的界面不参与设计体系 —— 名单写在这一处，几条测试共用，
+ * 不各抄一份（抄三份的下场是改了两份、忘了第三份）。</p>
+ *
+ * <p>要扫<b>所有</b> layout 变体目录，不只是 `layout/`：车机屏走的曾经是
+ * `layout-sw600dp/`，而重做只做在 `layout/` 上，于是界面改了四个月、车上一直是旧的。</p>
+ */
+final class CoreLayouts {
+
+    /** 排查用的界面，不参与设计体系。1.44.0 把最后几个（补盲、副屏、日志查看）删掉之后暂时是空的。 */
+    private static final Set<String> TROUBLESHOOTING = new HashSet<>();
+
+    private CoreLayouts() {
+    }
+
+    /** `app/src/main/res`，从模块目录或仓库根目录跑都能找到；找不到返回 null。 */
+    static File resRoot() {
+        for (String candidate : new String[]{".", "app"}) {
+            File res = new File(candidate, "src/main/res");
+            if (new File(res, "values/type.xml").isFile()) {
+                return res;
+            }
+        }
+        return null;
+    }
+
+    /** 所有 layout 目录下的布局，含 layout-sw600dp 这类变体。 */
+    static List<Path> all(File res) throws IOException {
+        try (Stream<Path> stream = Files.walk(res.toPath())) {
+            return stream.filter(p -> p.toString().endsWith(".xml"))
+                    .filter(p -> p.getParent().getFileName().toString().startsWith("layout"))
+                    .collect(Collectors.toList());
+        }
+    }
+
+    static boolean isCore(Path path) {
+        return !TROUBLESHOOTING.contains(path.getFileName().toString());
+    }
+
+    static String name(File res, Path path) {
+        return res.toPath().relativize(path).toString().replace(File.separatorChar, '/');
+    }
+
+    static String read(Path path) throws IOException {
+        return new String(Files.readAllBytes(path), StandardCharsets.UTF_8).replace("\r\n", "\n");
+    }
+}

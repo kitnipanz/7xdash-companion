@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 7xDash 主页卡片：极氪 OS 7 的半透明灰卡，压在壁纸上。开着的功能（activated）垫一层橙色淡底、描一圈橙边，和极氪 OS 7 桌面卡片的「开」一致。 -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_activated="true">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/energy_quiet" />
+            <stroke android:width="2dp" android:color="@color/energy" />
+            <corners android:radius="@dimen/corner_radius" />
+        </shape>
+    </item>
+    <item android:state_pressed="true">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/sunken" />
+            <corners android:radius="@dimen/corner_radius" />
+        </shape>
+    </item>
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@color/glass_surface" />
+            <corners android:radius="@dimen/corner_radius" />
+        </shape>
+    </item>
+</selector>

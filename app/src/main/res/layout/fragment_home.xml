@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  7xDash 主页，照极氪 OS 7 的「沉浸壁纸桌面」排：
+  控制栏不在这里：每一页都有的那条在 home.SideRail；
+  左边一列小组件：大时钟、行车记录（状态 + 开始 / 停止 + 打开画面）；
+  右边是壁纸，壁纸上 4×3 半透明功能卡片，每个功能一张。
+  卡片点一下进去或者开关，长按进它在设置里的那一段。HomeFragment 往里填。
+  盖在预览上面（和远程观看一样不藏预览）：底色不透明、整页可点，免得点穿到下面的画面。
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/bg_home_wallpaper"
+    android:clickable="true"
+    android:focusable="true"
+    android:orientation="horizontal"
+    android:padding="16dp">
+
+    <!-- 小组件列 -->
+    <LinearLayout
+        android:layout_width="360dp"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_home_card"
+            android:orientation="vertical"
+            android:padding="24dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/app_name"
+                android:textAppearance="@style/TextAppearance.Cam.Caption"
+                android:textColor="@color/energy_text" />
+
+            <TextClock
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFeatureSettings="tnum"
+                android:format12Hour="h:mm"
+                android:format24Hour="HH:mm"
+                android:includeFontPadding="false"
+                android:textAppearance="@style/TextAppearance.Cam.Clock"
+                android:textColor="@color/text_primary" />
+
+            <TextClock
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:format12Hour="EEEE, d MMMM"
+                android:format24Hour="EEEE, d MMMM"
+                android:textAppearance="@style/TextAppearance.Cam.Body"
+                android:textColor="@color/text_secondary" />
+        </LinearLayout>
+
+        <!-- 行车记录：长按进录像设置 -->
+        <LinearLayout
+            android:id="@+id/home_rec_card"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_marginTop="16dp"
+            android:layout_weight="1"
+            android:background="@drawable/bg_home_card"
+            android:clickable="true"
+            android:focusable="true"
+            android:orientation="vertical"
+            android:padding="24dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <FrameLayout
+                    android:layout_width="56dp"
+                    android:layout_height="56dp"
+                    android:background="@drawable/bg_home_icon">
+
+                    <ImageView
+                        android:id="@+id/home_rec_icon"
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
+                        android:layout_gravity="center"
+                        android:importantForAccessibility="no"
+                        android:src="@drawable/ic_record" />
+                </FrameLayout>
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:layout_weight="1"
+                    android:text="@string/home_card_camera"
+                    android:textAppearance="@style/TextAppearance.Cam.Title" />
+            </LinearLayout>
+
+            <!-- 实时小画面（前后左右 2×2），点一下进画面。相机没起来时显示一行字 -->
+            <FrameLayout
+                android:id="@+id/home_rec_preview_frame"
+                android:layout_width="match_parent"
+                android:layout_height="176dp"
+                android:layout_marginTop="16dp"
+                android:background="@drawable/bg_surface_card">
+
+                <TextView
+                    android:id="@+id/home_rec_preview_wait"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:text="@string/home_preview_wait"
+                    android:textAppearance="@style/TextAppearance.Cam.Caption"
+                    android:textColor="@color/text_tertiary" />
+
+                <ImageView
+                    android:id="@+id/home_rec_preview"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:contentDescription="@string/home_action_camera"
+                    android:scaleType="centerCrop" />
+            </FrameLayout>
+
+            <TextView
+                android:id="@+id/home_rec_state"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:textAppearance="@style/TextAppearance.Cam.Display" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:text="@string/home_card_camera_sub"
+                android:textAppearance="@style/TextAppearance.Cam.Caption"
+                android:textColor="@color/text_secondary" />
+
+            <View
+                android:layout_width="1dp"
+                android:layout_height="0dp"
+                android:layout_weight="1" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/home_rec_toggle"
+                android:layout_width="match_parent"
+                android:layout_height="72dp"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:textAppearance="@style/TextAppearance.Cam.Row"
+                app:cornerRadius="@dimen/corner_radius" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/home_rec_open"
+                style="@style/Widget.Cam.RailSmall"
+                android:layout_width="match_parent"
+                android:layout_height="64dp"
+                android:layout_marginTop="12dp"
+                android:text="@string/home_action_camera"
+                app:icon="@drawable/ic_camera" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- 壁纸 + 功能卡片 -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_marginStart="16dp"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <!-- 三行四列：HomeFragment 一行一个横排、一格一个权重 -->
+        <LinearLayout
+            android:id="@+id/home_grid"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="3"
+            android:orientation="vertical" />
+    </LinearLayout>
+</LinearLayout>

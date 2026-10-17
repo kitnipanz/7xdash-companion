@@ -1,0 +1,103 @@
+name: Build 7xDash
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      DRIVE_CLIENT_ID: ${{ secrets.DRIVE_CLIENT_ID }}
+      DRIVE_CLIENT_SECRET: ${{ secrets.DRIVE_CLIENT_SECRET }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          # 默认会装模拟器，我们只是编译 APK 用不到它；
+          # 而且它下载失败过一次（Error on ZipFile unknown archive），
+          # 白白多一个失败点。Gradle 会自行拉取真正需要的 SDK 组件。
+          packages: ''
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      # 纯 JVM 单元测试：合成流几何拆分与相机选择逻辑
+      - name: Run unit tests
+        run: ./gradlew :app:testDebugUnitTest --stacktrace
+
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-report
+          path: app/build/reports/tests/
+          if-no-files-found: ignore
+
+      - name: Build release APK
+        run: ./gradlew assembleRelease --stacktrace
+
+      - name: Rename APK
+        id: apk
+        run: |
+          set -euo pipefail
+          SRC=$(find app/build/outputs/apk/release -name '*.apk' | head -1)
+          VERSION=$(grep -E '^[[:space:]]*versionName[[:space:]]*=' app/build.gradle.kts | head -1 | cut -d'"' -f2)
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          OUT="7xDash-${VERSION}-${SHORT_SHA}.apk"
+          cp "$SRC" "$OUT"
+          echo "path=$OUT" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          ls -lh "$OUT"
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: 7xDash-apk
+          path: ${{ steps.apk.outputs.path }}
+          if-no-files-found: error
+
+      # 打 tag 时自动发布 Release，车机/手机可直接下载安装
+      # Release 正文由 CHANGELOG.md 里对应版本的小节自动生成，
+      # 这样每个版本的说明就是它自己的改动，而不是每次都一样的模板。
+      - name: Build release notes
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          PYTHONIOENCODING: utf-8
+        run: |
+          set -euo pipefail
+          python3 .github/scripts/release_notes.py "${{ steps.apk.outputs.version }}" > RELEASE_NOTES.md
+          echo "----- release notes -----"
+          cat RELEASE_NOTES.md
+
+      - name: Publish release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ steps.apk.outputs.path }}
+          # -alpha / -beta 是测试版（GitHub 上标成 Pre-release）。车机「检查更新」默认也收 beta。
+          prerelease: ${{ contains(steps.apk.outputs.version, '-alpha') || contains(steps.apk.outputs.version, '-beta') }}
+          # 检查更新读的是公开 Release。草稿对 api.github.com 不可见，车机永远查不到。
+          draft: false
+          name: ${{ steps.apk.outputs.version }}
+          body_path: RELEASE_NOTES.md

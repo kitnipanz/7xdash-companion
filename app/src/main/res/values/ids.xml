@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 7xDash 固定控制栏（home.SideRail）：既是它自己的 id，也是「这一页已经包过」的标记 -->
+    <item name="side_rail" type="id" />
+</resources>

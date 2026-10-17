@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 设置左栏顶上那张主卡：极氪 OS 7 设置页「系统版本」那种带光带的渐变卡。圆角靠代码里 clipToOutline 裁 -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:angle="0"
+                android:endColor="@color/sunken"
+                android:startColor="@color/surface" />
+            <corners android:radius="@dimen/corner_radius" />
+        </shape>
+    </item>
+    <item android:drawable="@drawable/home_ribbon" android:gravity="fill" />
+</layer-list>

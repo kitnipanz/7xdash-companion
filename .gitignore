@@ -1,0 +1,25 @@
+.DS_Store
+.idea/
+*.iml
+.gradle/
+build/
+*/build/
+local.properties
+.cxx/
+.externalNativeBuild/
+*.log
+captures/
+.trae/
+
+# 只在本机保留的材料：待办、未验证项、路线图。
+# 仓库对外只呈现已经做完并验证过的东西，没做完的不对外讲。
+docs/local/
+
+# 设计稿只留在本地，不入库
+design/
+
+# 设计画布同样只在本地，不入库
+design-canvas/
+
+# 本地跑过 tools/ 里的脚本留下的
+__pycache__/

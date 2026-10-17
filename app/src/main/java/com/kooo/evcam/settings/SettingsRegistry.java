@@ -1,0 +1,105 @@
+package com.kooo.evcam.settings;
+
+import static com.kooo.evcam.settings.SettingSpec.entry;
+
+import com.kooo.evcam.R;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
+/**
+ * 全部枚举型设置项的唯一声明处。
+ *
+ * <p>这些设置以前被声明三遍：{@code AppConfig} 的 getter 里一份默认值、
+ * {@code SettingsFragment} 里一份选项数组、布局 XML 里一份显示文字。三处靠人工同步，
+ * 任何一处对不上，界面就会显示一个程序不会遵守的值 —— 「设置写着四宫格、录出来是长条」
+ * 就是这么来的。</p>
+ *
+ * <p>现在选项列表、默认值、显示名、启动自检全部从这里派生。</p>
+ *
+ * <p><b>只收枚举型</b>：布尔开关、数值、路径这些没有「选项列表」，不存在这一类错位，
+ * 保持原样即可。硬塞进来只会让这份声明变得难读。</p>
+ *
+ * <p>相机与视频流的参数（排列、帧率、码率、编码、分段、每一路的尺寸）不在这里 ——
+ * 它们按路存在配置里，入口是设置 → 录制 →「配置编辑」。</p>
+ */
+public final class SettingsRegistry {
+
+    private SettingsRegistry() {
+    }
+
+    /** 录制模式。 */
+    public static final SettingSpec RECORDING_MODE = SettingSpec.of(
+            "recording_mode", "录制模式", "auto",
+            entry("auto", "自动（推荐）", R.string.opt_mode_auto),
+            entry("media_recorder", "MediaRecorder"),
+            entry("codec", "MediaCodec"));
+
+    /**
+     * 车型（视频流配置）。
+     *
+     * <p>只列出本项目实际提供的两项。上游那些银河/星舰/手机车型的常量与分支代码都还在，
+     * 但不出现在这里 —— 不提供的选项就不该出现在合法取值里，否则自检会把它们放行。</p>
+     */
+    public static final SettingSpec CAR_MODEL = SettingSpec.of(
+            "car_model", "车型", "zeekr_7x",
+            entry("zeekr_7x", "极氪7X（环视合成流）", R.string.opt_model_zeekr),
+            entry("zeekr_7x_multi", "极氪7X（环视 + 前后座舱）", R.string.opt_model_zeekr_multi));
+
+    /**
+     * 界面语言。
+     *
+     * <p>默认<b>跟随系统</b> —— 车机本来是什么语言，这个应用就该是什么语言。
+     * 其余几档是明确指定，用于系统语言和使用者的偏好不一致的情况。</p>
+     */
+    public static final SettingSpec LANGUAGE = SettingSpec.of(
+            "language", "语言", "auto",
+            entry("auto", "跟随系统", R.string.lang_auto),
+            entry("en", "English", R.string.lang_en),
+            entry("th", "ไทย", R.string.lang_th));
+
+    /**
+     * 鱼眼校正用哪种投影。
+     *
+     * <p>取值必须和 {@code FisheyeProjection.PROJECTION_*} 对得上 —— 那边是算法，
+     * 这边是界面，中间只隔着这一个字符串。{@code FisheyeProjectionTest} 钉着这一条。</p>
+     *
+     * <p>默认直线投影：它把直线掰得笔直，是大多数人说「矫正」时想要的那个样子。
+     * 主界面预览、图片回看、视频回看共用；超级后视镜不用它。</p>
+     */
+    public static final SettingSpec FISHEYE_PROJECTION = SettingSpec.of(
+            "fisheye_projection", "鱼眼校正方式", "rectilinear",
+            entry("rectilinear", "直线投影", R.string.opt_projection_rectilinear),
+            entry("cylindrical", "柱面投影", R.string.opt_projection_cylindrical),
+            entry("stereographic", "立体投影", R.string.opt_projection_stereographic));
+
+    /**
+     * 动作栏（录制、拍照那一列）放在屏幕哪一侧。
+     *
+     * <p>左舵车和右舵车伸手够屏幕的方向正好相反。只挪这一列，别的区不动 ——
+     * 标题、内容、状态条的位置不因舵位而变，换一台车也不用重新认界面。</p>
+     */
+    public static final SettingSpec ACTION_RAIL_SIDE = SettingSpec.of(
+            "action_rail_side", "操作按钮位置", "right",
+            entry("right", "右侧", R.string.opt_rail_right),
+            entry("left", "左侧", R.string.opt_rail_left));
+
+    /**
+     * 7xDash 的侧边菜单（主页控制栏、侧滑抽屉、设置分区列表）放哪边。
+     * 默认左边；右舵车可以整套挪到右边，三处一起挪，不用各设一次。
+     */
+    public static final SettingSpec MENU_SIDE = SettingSpec.of(
+            "menu_side", "侧边菜单位置", "left",
+            entry("left", "左侧", R.string.opt_rail_left),
+            entry("right", "右侧", R.string.opt_rail_right));
+
+    /** 全部枚举型设置项，启动自检会逐个走一遍。 */
+    public static final List<SettingSpec> ALL = Collections.unmodifiableList(Arrays.asList(
+            RECORDING_MODE,
+            CAR_MODEL,
+            LANGUAGE,
+            FISHEYE_PROJECTION,
+            ACTION_RAIL_SIDE,
+            MENU_SIDE));
+}

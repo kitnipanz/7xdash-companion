@@ -1,0 +1,259 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  极氪 7X 合成流布局。统一骨架：① 标题区 · ③ 内容区 · ④ 动作栏 · ⑤ 状态条。
+
+  与其他车型最大的不同：车机只给一路四联合成流，所以这里只有一个
+  普通 TextureView，四宫格由父容器 FourLaneContainer 重画子视图实现。
+  id 仍沿用 texture_front，这样上游相机管线不用改。
+  四个角标是容器的兄弟节点，浮在上层，不参与容器的重画逻辑。
+
+  动作栏在 layout_action_rail.xml，几份主界面布局共用；按钮 id 一个没改。
+  左舵 / 右舵只把动作栏挪到另一侧（MainActivity.applyActionRailSide），其余区不动。
+-->
+<androidx.drawerlayout.widget.DrawerLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/drawer_layout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:id="@+id/main"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@color/bg"
+            android:orientation="vertical"
+            android:padding="@dimen/gutter">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@drawable/bg_surface_card"
+                android:orientation="vertical">
+
+                <!-- ③ 内容区 + ④ 动作栏 -->
+                <LinearLayout
+                    android:id="@+id/main_row"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:orientation="horizontal"
+                    android:padding="@dimen/gutter">
+                    <!--
+                      ③ 内容区。整块是一个 FrameLayout：画面铺满，菜单键、录制角标和
+                      ⑤ 状态条都浮在它上面。
+
+                      标题栏没有了 —— 那一条 64dp 里只有一个菜单键、一个应用名和一个
+                      配置名，三样东西各自都有更该待的地方，而这块屏幕上真正稀缺的是
+                      画面的高度。
+                    -->
+                    <FrameLayout
+                        android:id="@+id/preview_stage"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:orientation="horizontal">
+                            <FrameLayout
+                                android:id="@+id/composite_wrapper"
+                                android:layout_width="0dp"
+                                android:layout_height="match_parent"
+                                android:layout_weight="1"
+                                android:background="@drawable/bg_preview_frame">
+
+                                <!--
+                                  FourLaneContainer 里只放一个普通的 AutoFitTextureView，
+                                  它是相机唯一的消费者、完全不被改造；容器只负责把这个子视图
+                                  重复画进四个格子。这套结构在实车上验证过
+                                  （另一条路——用 GL 自建 SurfaceTexture 顶替生产者——据公开资料会崩溃）。
+                                  角标是容器的兄弟节点，浮在上层。
+                                -->
+                                <com.kooo.evcam.zeekr.FourLaneContainer
+                                    android:id="@+id/composite_container"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="match_parent">
+
+                                    <com.kooo.evcam.AutoFitTextureView
+                                        android:id="@+id/texture_front"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="match_parent" />
+                                </com.kooo.evcam.zeekr.FourLaneContainer>
+
+                                <!-- 四个角标：跟着各自那一格走（MainActivity.positionLaneLabels） -->
+                                <TextView
+                                    android:id="@+id/label_front"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="36dp"
+                                    android:layout_gravity="top|start"
+                                    android:layout_marginStart="12dp"
+                                    android:layout_marginTop="8dp"
+                                    android:background="@drawable/camera_label_background"
+                                    android:gravity="center"
+                                    android:paddingStart="12dp"
+                                    android:paddingEnd="12dp"
+                                    android:text="@string/zeekr_lane_front"
+                                    android:textColor="#FFFFFF"
+                                    android:textAppearance="@style/TextAppearance.Cam.Body" />
+
+                                <TextView
+                                    android:id="@+id/label_back"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="36dp"
+                                    android:layout_gravity="top|end"
+                                    android:layout_marginTop="8dp"
+                                    android:layout_marginEnd="12dp"
+                                    android:background="@drawable/camera_label_background"
+                                    android:gravity="center"
+                                    android:paddingStart="12dp"
+                                    android:paddingEnd="12dp"
+                                    android:text="@string/zeekr_lane_back"
+                                    android:textColor="#FFFFFF"
+                                    android:textAppearance="@style/TextAppearance.Cam.Body" />
+
+                                <TextView
+                                    android:id="@+id/label_left"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="36dp"
+                                    android:layout_gravity="bottom|start"
+                                    android:layout_marginStart="12dp"
+                                    android:layout_marginBottom="8dp"
+                                    android:background="@drawable/camera_label_background"
+                                    android:gravity="center"
+                                    android:paddingStart="12dp"
+                                    android:paddingEnd="12dp"
+                                    android:text="@string/zeekr_lane_left"
+                                    android:textColor="#FFFFFF"
+                                    android:textAppearance="@style/TextAppearance.Cam.Body" />
+
+                                <TextView
+                                    android:id="@+id/label_right"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="36dp"
+                                    android:layout_gravity="bottom|end"
+                                    android:layout_marginEnd="12dp"
+                                    android:layout_marginBottom="8dp"
+                                    android:background="@drawable/camera_label_background"
+                                    android:gravity="center"
+                                    android:paddingStart="12dp"
+                                    android:paddingEnd="12dp"
+                                    android:text="@string/zeekr_lane_right"
+                                    android:textColor="#FFFFFF"
+                                    android:textAppearance="@style/TextAppearance.Cam.Body" />
+                            </FrameLayout>
+                        </LinearLayout>
+
+                        <!--
+                          菜单键。其他界面的 ① 里它是「左 10dp、在 64dp 里垂直居中」
+                          （即上 8dp），这里照抄同一组数，只是量的起点从卡片边变成
+                          画面边 —— 卡片的左上角在左舵时是动作栏，不能放它。
+                        -->
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btn_menu"
+                            style="@style/Widget.Cam.IconButton"
+                            android:layout_width="@dimen/icon_button_size"
+                            android:layout_height="@dimen/icon_button_size"
+                            android:layout_gravity="top|start"
+                            android:layout_marginStart="10dp"
+                            android:layout_marginTop="8dp"
+                            android:contentDescription="@string/cd_menu"
+                            app:icon="@drawable/ic_menu" />
+
+                        <!-- 录制角标：原来在标题栏右侧，现在在画面右上角 -->
+                        <TextView
+                            android:id="@+id/tv_recording_stats"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="top|end"
+                            android:layout_marginTop="8dp"
+                            android:layout_marginEnd="16dp"
+                            android:background="@drawable/bg_chip_recording"
+                            android:drawableStart="@drawable/chip_dot_recording"
+                            android:drawablePadding="8dp"
+                            android:fontFeatureSettings="tnum"
+                            android:gravity="center_vertical"
+                            android:paddingStart="14dp"
+                            android:paddingTop="7dp"
+                            android:paddingEnd="14dp"
+                            android:paddingBottom="7dp"
+                            android:textColor="@color/recording_text"
+                            android:textAppearance="@style/TextAppearance.Cam.Body"
+                            android:visibility="gone" />
+
+                        <!--
+                          ⑤ 状态条压在画面底边上（见 docs/ui-spec.md）。它在这一层，
+                          所以横跨整个画面区，而不是只盖住环视那一格。
+                        -->
+                        <include
+                            layout="@layout/layout_status_bar"
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/status_bar_height"
+                            android:layout_gravity="bottom" />
+                    </FrameLayout>
+                    <include
+                        layout="@layout/layout_action_rail"
+                        android:layout_width="@dimen/rail_width"
+                        android:layout_height="match_parent"
+                        android:layout_marginStart="@dimen/gutter" />
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- 调试信息覆盖层 -->
+        <TextView
+            android:id="@+id/tv_debug_overlay"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top|start"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="84dp"
+            android:background="@drawable/camera_label_background"
+            android:fontFamily="monospace"
+            android:paddingStart="10dp"
+            android:paddingTop="6dp"
+            android:paddingEnd="10dp"
+            android:paddingBottom="6dp"
+            android:text=""
+            android:textColor="#AAFFFFFF"
+            android:textAppearance="@style/TextAppearance.Cam.Micro"
+            android:visibility="gone" />
+
+        <FrameLayout
+            android:id="@+id/fragment_container"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="gone" />
+
+    </FrameLayout>
+
+    <com.google.android.material.navigation.NavigationView
+        android:id="@+id/nav_view"
+        android:layout_width="320dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="start"
+        android:background="@color/bg"
+        android:elevation="8dp"
+        android:fitsSystemWindows="false"
+        app:dividerInsetEnd="16dp"
+        app:dividerInsetStart="16dp"
+        app:headerLayout="@layout/nav_header"
+        app:itemBackground="@drawable/bg_nav_item"
+        app:itemHorizontalPadding="16dp"
+        app:itemIconPadding="16dp"
+        app:itemIconSize="24dp"
+        app:itemIconTint="@color/nav_icon_color_selector"
+        app:itemTextAppearance="@style/NavigationMenuTextAppearance"
+        app:itemTextColor="@color/nav_text_color_selector"
+        app:itemVerticalPadding="18dp"
+        app:menu="@menu/navigation_menu"
+        app:subheaderInsetStart="16dp"
+        app:subheaderTextAppearance="@style/NavigationSubheaderTextAppearance" />
+
+</androidx.drawerlayout.widget.DrawerLayout>

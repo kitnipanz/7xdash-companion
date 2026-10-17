@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  诊断信息。统一骨架：① 标题区（返回在左上）+ 一排操作 + ③ 报告正文。
+
+  返回键接用了原来行末那个「关闭」的 id（diagnostics_close），点击逻辑不用改；
+  那个「关闭」本身就不再需要了 —— 同一件事有两个入口，只会让人找哪个才是。
+  颜色走语义色、文字走 strings：以前是写死的白字和中文，日间看不见、英文界面读不懂。
+-->
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg"
+    android:orientation="vertical"
+    android:padding="16dp">
+    <!--
+  7xDash：和主页一个样子 —— 页边 16dp，标题下面不画分隔线，内容放在一张大圆角卡片上（bg_surface_card）。
+-->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/title_bar_height"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="10dp"
+        android:paddingEnd="16dp">
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/diagnostics_close"
+            style="@style/Widget.Cam.IconButton"
+            android:layout_width="@dimen/icon_button_size"
+            android:layout_height="@dimen/icon_button_size"
+            android:contentDescription="@string/action_back"
+            app:icon="@drawable/ic_back" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="14dp"
+            android:text="@string/set_diagnostics_title"
+            android:textColor="@color/text_primary"
+            android:textAppearance="@style/TextAppearance.Cam.Title"
+            android:textStyle="bold" />
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="14dp"
+            android:layout_weight="1"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:text="@string/diag_subtitle"
+            android:textColor="@color/text_tertiary"
+            android:textAppearance="@style/TextAppearance.Cam.Caption" />
+    </LinearLayout>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_marginTop="8dp"
+        android:background="@drawable/bg_surface_card"
+        android:orientation="vertical"
+        android:padding="12dp">
+        <!-- 操作按钮 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingStart="16dp"
+            android:paddingTop="12dp"
+            android:paddingEnd="16dp"
+            android:paddingBottom="12dp">
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/diagnostics_save"
+                style="@style/Widget.Cam.RailSmall"
+                android:layout_width="0dp"
+                android:layout_height="52dp"
+                android:layout_marginEnd="8dp"
+                android:layout_weight="1"
+                android:text="@string/diag_btn_save" />
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/diagnostics_copy"
+                style="@style/Widget.Cam.RailSmall"
+                android:layout_width="0dp"
+                android:layout_height="52dp"
+                android:layout_marginEnd="8dp"
+                android:layout_weight="1"
+                android:text="@string/diag_btn_copy" />
+            <!-- 和照片、视频回看同一个「发送到手机」：扫码，手机上点下载 -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/diagnostics_send_phone"
+                style="@style/Widget.Cam.RailSmall"
+                android:layout_width="0dp"
+                android:layout_height="52dp"
+                android:layout_marginEnd="8dp"
+                android:layout_weight="1"
+                android:text="@string/action_send_to_phone" />
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/diagnostics_save_usb"
+                style="@style/Widget.Cam.RailSmall"
+                android:layout_width="0dp"
+                android:layout_height="52dp"
+                android:layout_marginEnd="8dp"
+                android:layout_weight="1"
+                android:text="@string/action_save_to_usb" />
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/diagnostics_upload_drive"
+                style="@style/Widget.Cam.RailSmall"
+                android:layout_width="0dp"
+                android:layout_height="52dp"
+                android:layout_marginEnd="8dp"
+                android:layout_weight="1"
+                android:text="@string/action_upload_drive" />
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/diagnostics_refresh"
+                style="@style/Widget.Cam.RailSmall"
+                android:layout_width="0dp"
+                android:layout_height="52dp"
+                android:layout_marginEnd="8dp"
+                android:layout_weight="1"
+                android:text="@string/diag_btn_refresh" />
+        </LinearLayout>
+        <!-- 报告正文：等宽字体，横竖都能滚，垫在一块卡片上 -->
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginBottom="16dp"
+            android:layout_weight="1"
+            android:background="@drawable/bg_pref_row_static"
+            android:padding="12dp">
+            <HorizontalScrollView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+                <TextView
+                    android:id="@+id/diagnostics_report"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="monospace"
+                    android:textColor="@color/text_primary"
+                    android:textIsSelectable="true"
+                    android:textAppearance="@style/TextAppearance.Cam.Micro" />
+            </HorizontalScrollView>
+        </ScrollView>
+    </LinearLayout>
+</LinearLayout>

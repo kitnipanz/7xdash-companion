@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 录像开着时控制栏那一格：录制红，和别的「开」分开。 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="@color/recording" />
+    <corners android:radius="@dimen/corner_radius" />
+</shape>

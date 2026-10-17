@@ -1,0 +1,329 @@
+package com.kooo.evcam.zeekr;
+
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.view.View;
+import android.widget.Button;
+import android.widget.TextView;
+import android.widget.Toast;
+
+
+import com.kooo.evcam.AppLog;
+import com.kooo.evcam.R;
+import com.kooo.evcam.StorageHelper;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStreamWriter;
+import java.nio.charset.Charset;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Map;
+import java.util.List;
+import java.util.Locale;
+
+/**
+ * 诊断页：一次性列出相机、屏幕、存储、黑匣子与最近日志，并支持导出。
+ *
+ * <p>导出提供三种方式，因为车机上能用哪种不一定：</p>
+ * <ul>
+ *   <li><b>保存到存储</b>——写成 .json，U 盘拔下来就能拷走，最可靠；</li>
+ *   <li><b>复制到剪贴板</b>——车机上没有文件管理器时的退路；</li>
+ *   <li><b>发送到手机</b>——扫码下载，只在开发者模式下有。</li>
+ * </ul>
+ *
+ * <p>以前还有一个系统「分享」：车机上没有能接收分享的应用，每次都失败，删了（1.43.0）。</p>
+ *
+ * <p>导出的是 JSON 而不是纯文本：屏幕上那份为了能翻，每块有条数上限、长值会截断，
+ * 而这些上限对事后分析是有害的 —— <b>被截掉的那部分恰恰可能是要找的东西</b>。
+ * JSON 那份不设上限、不截断，人看的完整文本也一并放在 {@code text_report} 字段里，
+ * 一个文件两用。</p>
+ */
+import androidx.appcompat.app.AppCompatActivity;
+
+public class DiagnosticsActivity extends AppCompatActivity {
+
+    private static final String TAG = "DiagnosticsActivity";
+
+    private TextView reportView;
+    private Button saveButton;
+    private Button copyButton;
+    private Button sendPhoneButton;
+    private Button saveUsbButton;
+    private Button uploadDriveButton;
+    private Button refreshButton;
+
+
+    private final Handler mainHandler = new Handler(Looper.getMainLooper());
+    private volatile String report = "";
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_diagnostics);
+
+        reportView = findViewById(R.id.diagnostics_report);
+        saveButton = findViewById(R.id.diagnostics_save);
+        copyButton = findViewById(R.id.diagnostics_copy);
+        sendPhoneButton = findViewById(R.id.diagnostics_send_phone);
+        saveUsbButton = findViewById(R.id.diagnostics_save_usb);
+        uploadDriveButton = findViewById(R.id.diagnostics_upload_drive);
+        refreshButton = findViewById(R.id.diagnostics_refresh);
+
+        View close = findViewById(R.id.diagnostics_close);
+        if (close != null) {
+            close.setOnClickListener(v -> finish());
+        }
+        if (refreshButton != null) {
+            refreshButton.setOnClickListener(v -> runCollection());
+        }
+        if (saveButton != null) {
+            saveButton.setOnClickListener(v -> saveInBackground(null));
+        }
+        if (copyButton != null) {
+            copyButton.setOnClickListener(v -> copyReport());
+        }
+        if (sendPhoneButton != null) {
+            sendPhoneButton.setOnClickListener(v -> sendToPhone());
+        }
+        if (saveUsbButton != null) {
+            saveUsbButton.setOnClickListener(v -> saveToUsb());
+        }
+        if (uploadDriveButton != null) {
+            uploadDriveButton.setOnClickListener(v -> uploadToDrive());
+        }
+
+        runCollection();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // 发送到手机对所有人开放（上游 2.10.10）。U 盘和 Drive 仍只在开发者选项打开时显示。
+        int developerTools = com.kooo.evcam.settings.DeveloperMode.isUnlocked()
+                ? View.VISIBLE : View.GONE;
+        if (saveUsbButton != null) {
+            saveUsbButton.setVisibility(developerTools);
+        }
+        if (uploadDriveButton != null) {
+            uploadDriveButton.setVisibility(developerTools);
+        }
+    }
+
+    /** 采集可能读 logcat 和文件系统，放后台线程。 */
+    private void runCollection() {
+        setButtonsEnabled(false);
+        if (reportView != null) {
+            reportView.setText(R.string.diag_collecting);
+        }
+        final FrameGapWatch gaps = new FrameGapWatch();
+        gaps.start();
+        new Thread(() -> {
+            String result;
+            try {
+                result = DiagnosticsCollector.collect(getApplicationContext());
+            } catch (Throwable t) {
+                // 采集失败是代码的问题，异常原文只进日志
+                AppLog.e(TAG, "采集诊断信息失败", t);
+                result = getString(R.string.diag_collect_failed);
+            }
+            final String finalResult = result;
+            mainHandler.post(() -> {
+                report = finalResult;
+                if (reportView != null) {
+                    long setStart = android.os.SystemClock.uptimeMillis();
+                    reportView.setText(finalResult);
+                    AppLog.i(TAG, "report text set in "
+                            + (android.os.SystemClock.uptimeMillis() - setStart)
+                            + "ms (" + finalResult.length() + " chars)");
+                }
+                setButtonsEnabled(true);
+                // 贴上去之后还要排版、画第一帧，再多看两秒
+                gaps.stopAfter(2000L);
+            });
+        }).start();
+    }
+
+    /**
+     * 生成报告时「卡一下」卡在哪：记下这段时间里界面两帧之间最长隔了多久。
+     *
+     * <p>从开始采集看到结果贴上去之后两秒，然后自己停，把结果写进日志。
+     * 主线程被堵住时下一帧就来得晚，隔多久就是卡了多久。</p>
+     */
+    private final class FrameGapWatch implements android.view.Choreographer.FrameCallback {
+        private final long startMs = android.os.SystemClock.uptimeMillis();
+        private long stopAtMs = Long.MAX_VALUE;
+        private long lastFrameNanos;
+        private long longestGapMs;
+        private int gapsOver100Ms;
+
+        void start() {
+            android.view.Choreographer.getInstance().postFrameCallback(this);
+        }
+
+        void stopAfter(long delayMs) {
+            stopAtMs = android.os.SystemClock.uptimeMillis() + delayMs;
+        }
+
+        @Override
+        public void doFrame(long frameTimeNanos) {
+            if (lastFrameNanos != 0L) {
+                long gapMs = (frameTimeNanos - lastFrameNanos) / 1_000_000L;
+                longestGapMs = Math.max(longestGapMs, gapMs);
+                if (gapMs > 100L) {
+                    gapsOver100Ms++;
+                }
+            }
+            lastFrameNanos = frameTimeNanos;
+            if (android.os.SystemClock.uptimeMillis() < stopAtMs && !isDestroyed()) {
+                android.view.Choreographer.getInstance().postFrameCallback(this);
+            } else {
+                AppLog.i(TAG, "UI while generating the report: longest gap between frames "
+                        + longestGapMs + "ms, " + gapsOver100Ms + " gaps over 100ms, watched "
+                        + (android.os.SystemClock.uptimeMillis() - startMs) + "ms");
+            }
+        }
+    }
+
+    private void setButtonsEnabled(boolean enabled) {
+        if (saveButton != null) {
+            saveButton.setEnabled(enabled);
+        }
+        if (copyButton != null) {
+            copyButton.setEnabled(enabled);
+        }
+        if (sendPhoneButton != null) {
+            sendPhoneButton.setEnabled(enabled);
+        }
+        if (saveUsbButton != null) {
+            saveUsbButton.setEnabled(enabled);
+        }
+        if (uploadDriveButton != null) {
+            uploadDriveButton.setEnabled(enabled);
+        }
+        if (refreshButton != null) {
+            refreshButton.setEnabled(enabled);
+        }
+    }
+
+    /**
+     * 写到日志目录（跟随当前存储位置设置，通常就是 U 盘），方便直接拷走。
+     */
+    /**
+     * 写出诊断报告。
+     *
+     * <p>写文件是 I/O，调用方必须在后台线程上调它 —— 主线程卡住在车机上立刻能感觉到。</p>
+     */
+    private File saveReport() {
+        if (report == null || report.isEmpty()) {
+            toast(getString(R.string.diag_not_ready));
+            return null;
+        }
+        try {
+            boolean useExternal = new com.kooo.evcam.AppConfig(this).isUsingExternalSdCard();
+            File dir = StorageHelper.getLogDir(this, useExternal);
+            if (dir == null) {
+                dir = getExternalFilesDir(null);
+            }
+            if (dir != null && !dir.exists() && !dir.mkdirs()) {
+                toast(getString(R.string.diag_mkdir_failed, dir.getAbsolutePath()));
+                return null;
+            }
+            String name = "zeekr_diagnostics_"
+                    + new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new Date())
+                    + ".json";
+            File out = new File(dir, name);
+
+            String json = DiagnosticsJson.build(this, report);
+
+            FileOutputStream fos = new FileOutputStream(out);
+            OutputStreamWriter writer = new OutputStreamWriter(fos, Charset.forName("UTF-8"));
+            try {
+                writer.write(json);
+                writer.flush();
+            } finally {
+                writer.close();
+            }
+
+            AppLog.i(TAG, "诊断报告已保存: " + out.getAbsolutePath()
+                    + "（" + out.length() / 1024 + " KB）");
+            toast(getString(R.string.diag_saved, out.getAbsolutePath()));
+            return out;
+        } catch (Exception e) {
+            AppLog.e(TAG, "保存诊断报告失败", e);
+            String reason = com.kooo.evcam.ui.FailureReason.of(this, e);
+            toast(reason != null ? getString(R.string.diag_save_failed, reason)
+                    : getString(R.string.diag_cannot_save));
+            return null;
+        }
+    }
+
+    private void copyReport() {
+        if (report == null || report.isEmpty()) {
+            toast(getString(R.string.diag_not_ready));
+            return;
+        }
+        try {
+            ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+            if (cm == null) {
+                toast(getString(R.string.diag_clipboard_unavailable));
+                return;
+            }
+            cm.setPrimaryClip(ClipData.newPlainText(getString(R.string.diag_clip_label), report));
+            toast(getString(R.string.diag_copied));
+        } catch (Exception e) {
+            AppLog.e(TAG, "复制失败", e);
+            toast(getString(R.string.diag_copy_failed));
+        }
+    }
+
+    /**
+     * 保存到后台线程上去做，完成后回到主线程。
+     *
+     * @param then 保存完要做的事（例如接着发到手机）；不需要就传 null
+     */
+    private void saveInBackground(java.util.function.Consumer<File> then) {
+        toast(getString(R.string.diag_exporting));
+        new Thread(() -> {
+            File out = saveReport();
+            mainHandler.post(() -> {
+                if (then != null && out != null) {
+                    then.accept(out);
+                }
+            });
+        }, "diagnostics-save").start();
+    }
+
+    /**
+     * 扫码发到手机：和照片、视频回看的「发送到手机」同一套。
+     *
+     * <p>每次都重新存一份：页面上的报告可能刚刷新过，发出去的要和眼前看到的一样。</p>
+     */
+    private void sendToPhone() {
+        saveInBackground(file -> com.kooo.evcam.share.PhoneShare.show(this, file,
+                getString(R.string.diag_send_phone_note)));
+    }
+
+    /** 和 {@link #sendToPhone()} 同一份报告，落到 U 盘的 exports。 */
+    private void saveToUsb() {
+        saveInBackground(file -> com.kooo.evcam.share.UsbExport.save(this, file));
+    }
+
+    private void uploadToDrive() {
+        saveInBackground(file -> com.kooo.evcam.share.DriveExport.upload(this, file));
+    }
+
+    /**
+     * saveReport 在后台线程上跑，也会走到这里。没有 Looper 的线程上 Toast.makeText 直接抛异常，
+     * 而后台线程的异常会让整个进程崩掉 —— 诊断报告每存一次，应用就被重启一次
+     * （2026-09-15 那几份报告的进程号各不相同，就是这个）。一律抛回主线程。
+     */
+    private void toast(String message) {
+        Context app = getApplicationContext();
+        mainHandler.post(() -> Toast.makeText(app, message, Toast.LENGTH_LONG).show());
+    }
+}

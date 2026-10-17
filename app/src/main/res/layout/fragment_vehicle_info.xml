@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  系统信息（试验性）：车机能读到的车辆信号和此刻的状态。
+
+  和设置的其他页一个长相：分组名是小号灰字，每一项是一张卡片，名字在左、值在右。
+  行是代码按信号表（telemetry.Signal）生成的，这里只放外壳和顶上的说明。
+-->
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg"
+    android:clipToPadding="false">
+
+    <LinearLayout
+        android:id="@+id/vehicle_info_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingStart="20dp"
+        android:paddingTop="16dp"
+        android:paddingEnd="20dp"
+        android:paddingBottom="24dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:background="@drawable/bg_pref_row_static"
+            android:orientation="vertical"
+            android:paddingStart="20dp"
+            android:paddingTop="14dp"
+            android:paddingEnd="20dp"
+            android:paddingBottom="14dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/vi_legend"
+                android:textColor="@color/pref_title"
+                android:textAppearance="@style/TextAppearance.Cam.Body" />
+
+            <TextView
+                android:id="@+id/vehicle_info_status"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                android:textColor="@color/pref_summary"
+                android:textAppearance="@style/TextAppearance.Cam.Micro" />
+        </LinearLayout>
+    </LinearLayout>
+</ScrollView>

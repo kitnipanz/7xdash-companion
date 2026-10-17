@@ -1,0 +1,93 @@
+package com.kooo.evcam.settings;
+
+import android.content.Context;
+import android.content.res.Configuration;
+import android.os.LocaleList;
+
+import androidx.appcompat.app.AppCompatDelegate;
+import androidx.core.os.LocaleListCompat;
+
+import com.kooo.evcam.AppLog;
+
+/**
+ * 界面语言：跟随系统 / English / ไทย（7xDash 只做英文和泰文两份）。
+ *
+ * <h3>用系统自己的「按应用设定语言」</h3>
+ *
+ * <p>走 {@link AppCompatDelegate#setApplicationLocales}，也就是 Android 13 起系统设置里
+ * 那个「应用语言」。系统负责重新加载资源并重建界面，<b>不需要自己写一套「重启后生效」</b>——
+ * 自己写的那种，最容易变成「设置里已经改了、界面还是旧的」。</p>
+ *
+ * <p>appcompat 会把这套能力向下兼容到 Android 13 之前的版本，所以这台车机上同样有效。</p>
+ *
+ * <h3>为什么默认跟随系统</h3>
+ *
+ * <p>车机本来是什么语言，这个应用就该是什么语言 —— 这是不需要任何人做决定的默认。
+ * 其余几档留给「系统语言和使用者的偏好不一致」的情况。</p>
+ *
+ * <p>默认资源（{@code values/}）是英文，泰文在 {@code values-th/}。
+ * 系统语言是别的（中文、马来语……）时落到英文。</p>
+ */
+public final class Languages {
+
+    private static final String TAG = "Languages";
+
+    /** 跟随系统。 */
+    public static final String AUTO = "auto";
+    /** 英文。 */
+    public static final String ENGLISH = "en";
+    /** 泰文。 */
+    public static final String THAI = "th";
+
+    private Languages() {
+    }
+
+    /**
+     * 一个模式对应的 BCP-47 语言标签。
+     *
+     * <p>「跟随系统」是<b>空字符串</b>，不是某个具体语言 —— 空表示「不指定」，
+     * 系统于是回到自己的语言。填一个具体语言就等于永远锁死，那不是跟随。</p>
+     *
+     * <p>纯函数，不碰 Android，可以单独测。</p>
+     */
+    public static String tagsFor(String mode) {
+        if (ENGLISH.equals(mode)) {
+            return "en";
+        }
+        if (THAI.equals(mode)) {
+            return "th";
+        }
+        // 包括 auto 和任何不认识的值：不指定，交回给系统
+        return "";
+    }
+
+    /**
+     * 按「应用语言」取字串的 Context，给不在界面上的地方用（录像里的信息条在编码线程上画）。
+     * Application 的 Context 在 Android 13 以下给的是系统语言（见 {@code CameraNames}）：
+     * 这里按 appcompat 记着的应用语言另起一份配置；跟随系统时就是 Application 的那份。
+     */
+    public static Context localized(Context context) {
+        Context app = context.getApplicationContext();
+        LocaleListCompat locales = AppCompatDelegate.getApplicationLocales();
+        if (locales.isEmpty()) {
+            return app;
+        }
+        Configuration config = new Configuration(app.getResources().getConfiguration());
+        config.setLocales(LocaleList.forLanguageTags(locales.toLanguageTags()));
+        return app.createConfigurationContext(config);
+    }
+
+    /** 把设置里的选择真正应用到界面上。 */
+    public static void apply(String mode) {
+        String tags = tagsFor(mode);
+        try {
+            AppCompatDelegate.setApplicationLocales(tags.isEmpty()
+                    ? LocaleListCompat.getEmptyLocaleList()
+                    : LocaleListCompat.forLanguageTags(tags));
+            AppLog.d(TAG, "界面语言: " + mode + (tags.isEmpty() ? "（跟随系统）" : " -> " + tags));
+        } catch (Throwable t) {
+            // 语言没切成不该让应用起不来
+            AppLog.w(TAG, "设置界面语言失败: " + t);
+        }
+    }
+}

@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  均衡器，和其他页面一个样子：页头（返回 + 页名 + 开关），下面一张卡片。
+  卡片里：上面一行是预设（两段开关）和「平直」，下面十五段竖推子横着排，像调音台；
+  最左边一列标出 +12 / 0 / −12 dB。
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg"
+    android:clickable="true"
+    android:focusable="true"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/title_bar_height"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="10dp"
+        android:paddingEnd="16dp">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/eq_back"
+            style="@style/Widget.Cam.IconButton"
+            android:layout_width="@dimen/icon_button_size"
+            android:layout_height="@dimen/icon_button_size"
+            android:contentDescription="@string/action_back"
+            app:icon="@drawable/ic_back" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="14dp"
+            android:layout_weight="1"
+            android:text="@string/nav_eq"
+            android:textAppearance="@style/TextAppearance.Cam.Title"
+            android:textColor="@color/text_primary"
+            android:textStyle="bold" />
+
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/eq_enabled"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="16dp"
+            android:switchPadding="16dp"
+            android:text="@string/eq_on"
+            android:textAppearance="@style/TextAppearance.Cam.Row"
+            android:textColor="@color/text_primary" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginTop="8dp"
+        android:layout_weight="1"
+        android:background="@drawable/bg_surface_card"
+        android:orientation="vertical"
+        android:padding="24dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <!-- 预设：两段开关，和设置页「常用 / 全部」一样 -->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="54dp"
+                android:background="@drawable/bg_segment_track"
+                android:orientation="horizontal"
+                android:padding="4dp">
+
+                <TextView
+                    android:id="@+id/eq_preset_0"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:background="@drawable/bg_segment"
+                    android:gravity="center"
+                    android:minWidth="128dp"
+                    android:paddingStart="20dp"
+                    android:paddingEnd="20dp"
+                    android:text="@string/eq_preset_1"
+                    android:textAppearance="@style/TextAppearance.Cam.Body" />
+
+                <TextView
+                    android:id="@+id/eq_preset_1"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:background="@drawable/bg_segment"
+                    android:gravity="center"
+                    android:minWidth="128dp"
+                    android:paddingStart="20dp"
+                    android:paddingEnd="20dp"
+                    android:text="@string/eq_preset_2"
+                    android:textAppearance="@style/TextAppearance.Cam.Body" />
+            </LinearLayout>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/eq_flat"
+                style="@style/Widget.Cam.RailSmall"
+                android:layout_width="wrap_content"
+                android:layout_height="54dp"
+                android:layout_marginStart="16dp"
+                android:text="@string/eq_flat" />
+
+            <TextView
+                android:id="@+id/eq_hint"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="24dp"
+                android:layout_weight="1"
+                android:maxLines="2"
+                android:ellipsize="end"
+                android:text="@string/eq_hint"
+                android:textAppearance="@style/TextAppearance.Cam.Caption"
+                android:textColor="@color/text_secondary" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/eq_status"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="8dp"
+            android:text="@string/eq_refused"
+            android:textAppearance="@style/TextAppearance.Cam.Caption"
+            android:textColor="@color/recording_text"
+            android:visibility="gone" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_marginTop="20dp"
+            android:layout_weight="1"
+            android:orientation="horizontal">
+
+            <!-- dB 刻度：上 +12、中 0、下 −12，数字在代码里填 -->
+            <LinearLayout
+                android:layout_width="48dp"
+                android:layout_height="match_parent"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/eq_scale_top"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:gravity="top|end"
+                    android:paddingTop="34dp"
+                    android:textAppearance="@style/TextAppearance.Cam.Micro"
+                    android:textColor="@color/text_tertiary" />
+
+                <TextView
+                    android:id="@+id/eq_scale_mid"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="end"
+                    android:textAppearance="@style/TextAppearance.Cam.Micro"
+                    android:textColor="@color/text_tertiary" />
+
+                <TextView
+                    android:id="@+id/eq_scale_bottom"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:gravity="bottom|end"
+                    android:paddingBottom="44dp"
+                    android:textAppearance="@style/TextAppearance.Cam.Micro"
+                    android:textColor="@color/text_tertiary" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/eq_bands"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:orientation="horizontal" />
+        </LinearLayout>
+    </LinearLayout>
+</LinearLayout>

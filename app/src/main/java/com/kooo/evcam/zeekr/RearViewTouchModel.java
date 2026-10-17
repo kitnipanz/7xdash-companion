@@ -1,0 +1,368 @@
+package com.kooo.evcam.zeekr;
+
+/**
+ * 超级后视镜的手势规则。
+ *
+ * <p>把「摸在哪里、拖多远、变成什么」这套换算单独拎出来，是因为它决定手感，
+ * 而手感错了在车上只会觉得「怪」，说不清哪里怪。放在这里可以直接跑单元测试。</p>
+ *
+ * <p>横向分三段：</p>
+ *
+ * <pre>
+ *   ┌────────┬────────┬────────┐
+ *   │  左1/3  │  中1/3  │  右1/3  │
+ *   │  拖动   │ 上下滑  │  拖动   │
+ *   │  窗口   │ 调取景  │  窗口   │
+ *   └────────┴────────┴────────┘
+ * </pre>
+ */
+public final class RearViewTouchModel {
+
+    /** 触摸落在哪一段。 */
+    public enum Zone {
+        /** 左右三分之一：拖动窗口本身。 */
+        MOVE_WINDOW,
+        /** 中间三分之一：上下滑调整取景范围，窗口不动。 */
+        ADJUST_CROP
+    }
+
+    /** 停靠到哪一边。 */
+    public enum Dock {
+        NONE, LEFT, RIGHT
+    }
+
+    private RearViewTouchModel() {
+    }
+
+    /**
+     * 触摸点落在哪一段。
+     *
+     * @param x         触摸点在视图内的横坐标
+     * @param viewWidth 视图宽度
+     */
+    public static Zone zoneFor(float x, int viewWidth) {
+        if (viewWidth <= 0) {
+            return Zone.MOVE_WINDOW;
+        }
+        float third = viewWidth / 3f;
+        return (x >= third && x < third * 2f) ? Zone.ADJUST_CROP : Zone.MOVE_WINDOW;
+    }
+
+    /**
+     * 现在是不是贴着边、贴的哪一边。
+     *
+     * <p>不额外存状态，直接看位置 —— 有一部分在屏幕外就是贴边了。
+     * 存一个「已贴边」的布尔量迟早会和实际位置对不上。</p>
+     */
+    public static Dock dockedAt(int x, int width, int screenW) {
+        if (width <= 0 || screenW <= 0) {
+            return Dock.NONE;
+        }
+        if (x < 0) {
+            return Dock.LEFT;
+        }
+        if (x + width > screenW) {
+            return Dock.RIGHT;
+        }
+        return Dock.NONE;
+    }
+
+    /**
+     * 放回来之后该停在哪：<b>整个滑进屏幕，贴着刚才藏进去的那条边</b>。
+     *
+     * <p>不是回到贴边前的位置 —— 那个位置多半就在边上一点点，
+     * 放回来还是半吊子。贴着边是个明确、可预期的落点。</p>
+     */
+    public static int flushX(Dock dock, int width, int screenW) {
+        switch (dock) {
+            case LEFT:
+                return 0;
+            case RIGHT:
+                return screenW - width;
+            default:
+                return 0;
+        }
+    }
+
+    /**
+     * 贴边之后，这一下拖动算不算「要把它拉回来」。
+     *
+     * <p>门槛比贴边低得多，而且是<b>固定像素</b>而不是窗口宽度的比例。
+     * 贴边用比例是对的：推出去一半才算数，不容易误触发。
+     * 但反过来用比例就荒唐了 —— 窗口越大越难拉回来，
+     * 而一个大窗口恰恰是最想拉回来的那个。</p>
+     *
+     * <p>藏起来的东西要容易拿回来，代价只是偶尔多滑一次；
+     * 而藏错了却拿不回来，那是个死结。两边的代价不对称，门槛也就不该对称。</p>
+     *
+     * @param dx 总横向位移（像素，向右为正）
+     */
+    public static boolean shouldUndock(Dock dock, float dx, float velocityX,
+                                       int minDistancePx, float minFlingVelocity) {
+        if (dock == Dock.NONE) {
+            return false;
+        }
+        // 往屏幕里边拉才算：右边贴着的要往左拉，左边贴着的要往右拉
+        float inward = dock == Dock.RIGHT ? -dx : dx;
+        float inwardVelocity = dock == Dock.RIGHT ? -velocityX : velocityX;
+        if (inward >= minDistancePx) {
+            return true;
+        }
+        return minFlingVelocity > 0 && inwardVelocity >= minFlingVelocity;
+    }
+
+    /**
+     * 滑回去要用多久。
+     *
+     * <p>甩得越快回得越快 —— 手上使了多大劲，画面就该多快跟上，
+     * 不然会觉得「它没听我的」。没有甩动时按一个中庸的速度走。</p>
+     *
+     * @param distancePx      要走的距离
+     * @param velocityPxPerSec 松手时的速度绝对值；0 表示不是甩动
+     */
+    public static long glideDurationMs(int distancePx, float velocityPxPerSec,
+                                       long minMs, long maxMs) {
+        int distance = Math.abs(distancePx);
+        if (distance == 0) {
+            return minMs;
+        }
+        float speed = Math.abs(velocityPxPerSec);
+        if (speed < 1f) {
+            speed = DEFAULT_GLIDE_SPEED;
+        }
+        long duration = (long) (distance * 1000f / speed);
+        return Math.max(minMs, Math.min(maxMs, duration));
+    }
+
+    /** 没有甩动时的滑回速度（px/s）。 */
+    private static final float DEFAULT_GLIDE_SPEED = 2600f;
+
+    /** 双指缩放的结果：新的位置与尺寸。 */
+    public static final class PinchResult {
+        public final int x;
+        public final int y;
+        public final int width;
+        public final int height;
+
+        PinchResult(int x, int y, int width, int height) {
+            this.x = x;
+            this.y = y;
+            this.width = width;
+            this.height = height;
+        }
+    }
+
+    /**
+     * 双指缩放，按系统相册那套来：<b>以两指中点为锚</b>，缩放的同时还能挪位置。
+     *
+     * <p>以前是固定左上角、只改宽高，于是窗口总往右下角长 —— 手指明明在中间捏，
+     * 画面却从角上撑开，很反直觉。</p>
+     *
+     * <p>这里的做法是：按下时记住「两指中点落在窗口的哪个相对位置」，
+     * 之后无论怎么缩放、两指怎么移动，都让<b>那个点始终待在两指中点底下</b>。
+     * 于是「以触点为中心缩放」和「两指拖着走」是同一个公式的两种表现 ——
+     * 不用分别处理，也就不会互相打架。</p>
+     *
+     * <p>倍数是夹在<b>倍数</b>上而不是分别夹宽和高的：分别夹的话，
+     * 宽先撞到屏幕边就会被压住而高还在长，比例就变了。</p>
+     *
+     * @param startX,startY,startWidth,startHeight 按下那一刻的窗口
+     * @param anchorRatioX,anchorRatioY            两指中点在窗口里的相对位置，0..1
+     * @param focusX,focusY                        当前两指中点（屏幕坐标）
+     * @param rawFactor                            当前跨距 / 起始跨距
+     */
+    public static PinchResult pinch(int startX, int startY, int startWidth, int startHeight,
+                                    float anchorRatioX, float anchorRatioY,
+                                    float focusX, float focusY, float rawFactor,
+                                    int minSize, int screenWidth, int screenHeight) {
+        if (startWidth <= 0 || startHeight <= 0) {
+            return new PinchResult(startX, startY, startWidth, startHeight);
+        }
+        float smallest = Math.max((float) minSize / startWidth, (float) minSize / startHeight);
+        float largest = Math.min((float) Math.max(screenWidth, minSize) / startWidth,
+                (float) Math.max(screenHeight, minSize) / startHeight);
+        // 下限优先：屏幕比最小尺寸还小这种荒唐情况下，也不能让窗口小到抓不住
+        largest = Math.max(largest, smallest);
+        float factor = Math.max(smallest, Math.min(largest, rawFactor));
+
+        int width = Math.round(startWidth * factor);
+        int height = Math.round(startHeight * factor);
+        int x = Math.round(focusX - anchorRatioX * width);
+        int y = Math.round(focusY - anchorRatioY * height);
+        return new PinchResult(x, y, width, height);
+    }
+
+    /**
+     * 中间三分之一的这一下，是「左右划着换一路」还是「上下挪取景」。
+     *
+     * <p>一开始就把方向锁死，而不是等松手再判断：不锁的话，横着划的过程中
+     * 那一点点竖直位移会让画面上下抖 —— 明明在换路，取景却动了。</p>
+     *
+     * @return true 表示这一下按横向处理
+     */
+    public static boolean isHorizontalIntent(float dx, float dy) {
+        return Math.abs(dx) > Math.abs(dy);
+    }
+
+    /**
+     * 横向的这一下够不够「明显」，够了才换路。
+     *
+     * <p>两条任选其一：划得够远，或者划得够快。慢慢挪一点点不算 ——
+     * 换路是个明确的动作，不该被手指的轻微横移触发。</p>
+     *
+     * @param dx               总横向位移（像素，向右为正）
+     * @param velocityX        松手时的横向速度（px/s）
+     * @param minDistancePx    够远的门槛
+     * @param minFlingVelocity 够快的门槛，取自 ViewConfiguration
+     */
+    public static boolean isDeliberateSwipe(float dx, float velocityX,
+                                            int minDistancePx, float minFlingVelocity) {
+        if (Math.abs(dx) >= minDistancePx) {
+            return true;
+        }
+        // 快速甩的方向必须和位移方向一致，否则是划出去又拉回来
+        return minFlingVelocity > 0
+                && Math.abs(velocityX) >= minFlingVelocity
+                && Math.signum(velocityX) == Math.signum(dx)
+                && dx != 0f;
+    }
+
+    /**
+     * 中间三分之一上下拖动时，取景要平移多少。
+     *
+     * <p>方向是反的：手指往下拖，是想看画面<b>上方</b>的内容，取景要往上走。</p>
+     *
+     * <p>换算成 0..1 的平移量而不是像素：可挪的总距离取决于窗口的形状
+     * （框越扁能挪的越多），用比例表示才能让手指划过整个窗口高度
+     * 正好等于把取景从最上挪到最下 —— 不管窗口是什么形状。</p>
+     *
+     * @param dy         手指竖直位移（像素，向下为正）
+     * @param viewHeight 窗口高度
+     * @param headroom   还能挪的归一化距离，见 {@link RearViewGeometry.Viewport#verticalHeadroom}
+     * @return 平移量的增量，加到当前 pan 上；headroom 为 0 时返回 0
+     */
+    public static float panShiftForDrag(float dy, int viewHeight, float headroom) {
+        if (viewHeight <= 0 || headroom <= 0f) {
+            // 窗口是方的，整幅都看得见，没有可挪的余地
+            return 0f;
+        }
+        return -(dy / viewHeight);
+    }
+
+    /**
+     * 拖到边缘后停靠到哪一侧。
+     *
+     * @param windowX   窗口左边缘
+     * @param width     窗口宽度
+     * @param screenW   屏幕宽度
+     * @param threshold 距离边缘多少像素以内算贴边
+     */
+    /**
+     * 窗口被拖出屏幕多少比例才算「想把它收起来」。
+     *
+     * <p>一半 —— 拖到这个程度已经不像是手滑了。</p>
+     */
+    public static final float DOCK_OFFSCREEN_FRACTION = 0.5f;
+
+    /**
+     * 松手时该不该贴边。
+     *
+     * <p><b>窗口只要还整个在屏幕里，就一定不贴边。</b>这是这条规则的重点：
+     * 之前判断的是「离屏幕边缘多近」，于是窗口明明还完整可见就被吸走了 ——
+     * 「还没到边就隐藏了」说的就是这个。贴边应当是<b>做出来的动作</b>，
+     * 不是靠近某个位置的副作用。</p>
+     *
+     * <p>两种算「做出来了」：</p>
+     * <ul>
+     *   <li>已经推出去一半以上 —— 拖到这个程度不会是手滑；</li>
+     *   <li>朝着那条边甩了一下，而且窗口确实已经压到边上 ——
+     *       快速甩出去，不用一路拖到底。</li>
+     * </ul>
+     *
+     * @param velocityX        松手时的横向速度（px/s），右为正
+     * @param minFlingVelocity 系统认定的最小甩动速度，取自
+     *                         {@code ViewConfiguration.getScaledMinimumFlingVelocity()} ——
+     *                         用平台自己的阈值，手感和其他应用一致，也省得自己编一个数字
+     */
+    public static Dock deliberateDock(int windowX, int width, int screenW,
+                                      float velocityX, float minFlingVelocity) {
+        if (screenW <= 0 || width <= 0) {
+            return Dock.NONE;
+        }
+        int offLeft = Math.max(0, -windowX);
+        int offRight = Math.max(0, windowX + width - screenW);
+
+        // 还整个在屏幕里 —— 不管甩得多快都不贴边
+        if (offLeft == 0 && offRight == 0) {
+            return Dock.NONE;
+        }
+
+        float needed = width * DOCK_OFFSCREEN_FRACTION;
+        if (offLeft >= needed) {
+            return Dock.LEFT;
+        }
+        if (offRight >= needed) {
+            return Dock.RIGHT;
+        }
+
+        if (minFlingVelocity > 0) {
+            if (velocityX <= -minFlingVelocity && offLeft > 0) {
+                return Dock.LEFT;
+            }
+            if (velocityX >= minFlingVelocity && offRight > 0) {
+                return Dock.RIGHT;
+            }
+        }
+        return Dock.NONE;
+    }
+
+    /**
+     * 停靠后窗口的横坐标：只露出一条边，其余推到屏幕外。
+     *
+     * @param dock       停靠方向
+     * @param width      窗口宽度
+     * @param screenW    屏幕宽度
+     * @param peekWidth  贴边后仍然露出的宽度，用来再把它拖回来
+     * @return 停靠后的 x；{@link Dock#NONE} 时返回原值
+     */
+    public static int dockedX(Dock dock, int windowX, int width, int screenW, int peekWidth) {
+        switch (dock) {
+            case LEFT:
+                return peekWidth - width;
+            case RIGHT:
+                return screenW - peekWidth;
+            default:
+                return windowX;
+        }
+    }
+
+
+    /**
+     * 把窗口夹回屏幕内，允许贴边时露出一部分在外面。
+     *
+     * <p>窗口比屏幕还宽时（当前尺寸上限装不下，但公式不该因此失效）另算：
+     * 此时它必然覆盖整个屏幕，能做的只是左右平移去看两端，所以左边缘限制在
+     * {@code [screenW - width, 0]}。不这样分情况的话，通用公式会允许把一个
+     * 超宽窗口拖到几乎完全移出屏幕。</p>
+     */
+    public static int clampX(int x, int width, int screenW, int peekWidth) {
+        if (width >= screenW) {
+            return Math.max(screenW - width, Math.min(0, x));
+        }
+        int min = peekWidth - width;
+        int max = screenW - peekWidth;
+        if (max < min) {
+            return min;
+        }
+        return Math.max(min, Math.min(max, x));
+    }
+
+    /** 竖直方向不允许移出屏幕 —— 上下没有停靠行为，划出去就找不回来了。 */
+    public static int clampY(int y, int height, int screenH) {
+        int max = screenH - height;
+        if (max < 0) {
+            return 0;
+        }
+        return Math.max(0, Math.min(max, y));
+    }
+}

@@ -1,0 +1,239 @@
+package com.kooo.evcam.playback;
+
+import java.io.File;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+
+/**
+ * 图片分组模型
+ * 将同一时间戳拍摄的多路图片组合在一起（前/后/左/右）
+ * 文件命名格式：yyyyMMdd_HHmmss_{position}.jpg
+ */
+public class PhotoGroup {
+
+    /** 摄像头位置常量 */
+    /**
+     * 这四个是<b>对外的槽位名</b>，见 {@link com.kooo.evcam.camera.CameraSlots}。
+     *
+     * <p>改名之前的文件写的是 front / back / left，解析时会被归一到这里，
+     * 所以新旧文件落进同一组，不会把一次拍摄拆成两份。</p>
+     */
+    public static final String POSITION_FRONT = com.kooo.evcam.camera.CameraSlots.SURROUND;
+    public static final String POSITION_BACK = com.kooo.evcam.camera.CameraSlots.CABIN_FRONT;
+    public static final String POSITION_LEFT = com.kooo.evcam.camera.CameraSlots.CABIN_REAR;
+    public static final String POSITION_RIGHT = com.kooo.evcam.camera.CameraSlots.KEY_FOURTH;
+
+    /** 时间戳前缀，如 "20260131_1254" */
+    private final String timestampPrefix;
+
+    /** 拍摄时间（解析自文件名） */
+    private final Date captureTime;
+
+    /** 各位置的图片文件 */
+    private final Map<String, File> photoFiles;
+
+    /** 总文件大小（所有位置之和） */
+    private long totalSize;
+
+    public PhotoGroup(String timestampPrefix) {
+        this.timestampPrefix = timestampPrefix;
+        this.photoFiles = new HashMap<>();
+        this.totalSize = 0;
+        this.captureTime = parseTimestamp(timestampPrefix);
+    }
+
+    /**
+     * 添加图片文件到分组
+     */
+    public void addFile(File file) {
+        String position = extractPosition(file.getName());
+        if (position != null) {
+            photoFiles.put(position, file);
+            totalSize += file.length();
+        }
+    }
+
+    /**
+     * 从文件名提取时间戳前缀
+     */
+    public static String extractTimestampPrefix(String fileName) {
+        String nameWithoutExt = fileName;
+        int dotIndex = fileName.lastIndexOf('.');
+        if (dotIndex > 0) {
+            nameWithoutExt = fileName.substring(0, dotIndex);
+        }
+
+        int lastUnderscore = nameWithoutExt.lastIndexOf('_');
+        if (lastUnderscore > 0) {
+            return nameWithoutExt.substring(0, lastUnderscore);
+        }
+        return nameWithoutExt;
+    }
+
+    /**
+     * 从文件名提取摄像头位置，并<b>归一到对外的槽位名</b>。
+     *
+     * <p>改名之前的文件写的是 front / back / left，这里把它们归一成
+     * surround / cabinfront / cabinrear —— 新旧文件因此落进同一组，
+     * 同一次拍摄不会被拆成两份。见 {@link com.kooo.evcam.camera.CameraSlots}。</p>
+     */
+    public static String extractPosition(String fileName) {
+        String nameWithoutExt = fileName;
+        int dotIndex = fileName.lastIndexOf('.');
+        if (dotIndex > 0) {
+            nameWithoutExt = fileName.substring(0, dotIndex);
+        }
+
+        int lastUnderscore = nameWithoutExt.lastIndexOf('_');
+        if (lastUnderscore > 0 && lastUnderscore < nameWithoutExt.length() - 1) {
+            return com.kooo.evcam.camera.CameraSlots.canonical(
+                    nameWithoutExt.substring(lastUnderscore + 1).toLowerCase(Locale.US));
+        }
+        return null;
+    }
+
+    private Date parseTimestamp(String timestamp) {
+        try {
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault());
+            return sdf.parse(timestamp);
+        } catch (ParseException e) {
+            return new Date(0);
+        }
+    }
+
+    // Getters
+
+    public String getTimestampPrefix() {
+        return timestampPrefix;
+    }
+
+    public Date getCaptureTime() {
+        return captureTime;
+    }
+
+    public String getFormattedDateTime() {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
+        return sdf.format(captureTime);
+    }
+
+    public String getFormattedDate() {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+        return sdf.format(captureTime);
+    }
+
+    public String getFormattedTime() {
+        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm", Locale.getDefault());
+        return sdf.format(captureTime);
+    }
+
+    public File getPhotoFile(String position) {
+        return photoFiles.get(position);
+    }
+
+    public File getFrontPhoto() {
+        return photoFiles.get(POSITION_FRONT);
+    }
+
+    public File getBackPhoto() {
+        return photoFiles.get(POSITION_BACK);
+    }
+
+    public File getLeftPhoto() {
+        return photoFiles.get(POSITION_LEFT);
+    }
+
+    public File getRightPhoto() {
+        return photoFiles.get(POSITION_RIGHT);
+    }
+
+    public Map<String, File> getAllPhotoFiles() {
+        return new HashMap<>(photoFiles);
+    }
+
+    public File getThumbnailFile() {
+        if (photoFiles.containsKey(POSITION_FRONT)) {
+            return photoFiles.get(POSITION_FRONT);
+        } else if (photoFiles.containsKey(POSITION_BACK)) {
+            return photoFiles.get(POSITION_BACK);
+        } else if (photoFiles.containsKey(POSITION_LEFT)) {
+            return photoFiles.get(POSITION_LEFT);
+        } else if (photoFiles.containsKey(POSITION_RIGHT)) {
+            return photoFiles.get(POSITION_RIGHT);
+        }
+        return null;
+    }
+
+    public int getPhotoCount() {
+        return photoFiles.size();
+    }
+
+    public long getTotalSize() {
+        return totalSize;
+    }
+
+    public String getFormattedSize() {
+        if (totalSize < 1024) {
+            return totalSize + " B";
+        } else if (totalSize < 1024 * 1024) {
+            return String.format(Locale.getDefault(), "%.2f KB", totalSize / 1024.0);
+        } else if (totalSize < 1024L * 1024 * 1024) {
+            return String.format(Locale.getDefault(), "%.2f MB", totalSize / (1024.0 * 1024.0));
+        } else {
+            return String.format(Locale.getDefault(), "%.2f GB", totalSize / (1024.0 * 1024.0 * 1024.0));
+        }
+    }
+
+    public boolean hasPhoto(String position) {
+        return photoFiles.containsKey(position);
+    }
+
+    /** 这一组的文件名（锁定影像按文件名记）。 */
+    public List<String> fileNames() {
+        List<String> names = new ArrayList<>();
+        for (File file : photoFiles.values()) {
+            names.add(file.getName());
+        }
+        return names;
+    }
+
+    /** 有没有锁定的（{@code locked} 是锁定的文件名）。 */
+    public boolean isLocked(Set<String> locked) {
+        for (File file : photoFiles.values()) {
+            if (locked.contains(file.getName())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 删掉这一组里不在 {@code keep} 里的文件（锁定的留下）。删掉的从组里拿掉，留下的还在。
+     *
+     * @return 删掉了几个
+     */
+    public int deleteAllExcept(Set<String> keep) {
+        int deleted = 0;
+        Iterator<Map.Entry<String, File>> it = photoFiles.entrySet().iterator();
+        while (it.hasNext()) {
+            File file = it.next().getValue();
+            if (keep.contains(file.getName())) {
+                continue;
+            }
+            long size = file.length();
+            if (file.delete()) {
+                deleted++;
+                totalSize -= size;
+                it.remove();
+            }
+        }
+        return deleted;
+    }
+}

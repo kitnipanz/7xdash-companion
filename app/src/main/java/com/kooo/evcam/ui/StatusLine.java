@@ -1,0 +1,144 @@
+package com.kooo.evcam.ui;
+
+import android.content.Context;
+import android.view.View;
+import android.widget.TextView;
+
+import androidx.core.content.ContextCompat;
+
+import com.kooo.evcam.R;
+import com.kooo.evcam.StorageHelper;
+import com.kooo.evcam.profile.Profile;
+import com.kooo.evcam.profile.RecordSpecs;
+import com.kooo.evcam.profile.StreamSpec;
+
+
+/**
+ * 填 ⑤ 状态条。
+ *
+ * <h3>为什么要传一棵树进来</h3>
+ *
+ * <p>状态条是 {@code <include>} 进各界面的，所以同一个界面里可能同时存在两份
+ * （主界面那份被设置界面盖住时两份都在树上）。从 Activity 上 findViewById 会
+ * 拿到遍历顺序里的第一份 —— 可能正是看不见的那一份。所以调用方给出自己那棵树。</p>
+ */
+public final class StatusLine {
+
+    private StatusLine() {
+    }
+
+    /**
+     * 把这一条摆成压在画面上的那一条：半透明渐变底、固定浅色字。
+     *
+     * <h3>为什么不写在布局里</h3>
+     *
+     * <p>同一份 {@code layout_status_bar} 也用在设置界面，那里它贴在页面底部、
+     * 下面是界面底色 —— 给它蒙一层深色渐变就成了一条莫名其妙的黑边。压在画面上
+     * 和贴在页面底部是两种处境，字色也就不能是同一套：画面上必须固定浅色，
+     * 页面上必须跟日夜走。</p>
+     *
+     * <p>只需要在界面建好时调一次，之后 {@link #fill} 只换文字。</p>
+     */
+    public static void overlay(View root) {
+        if (root == null) {
+            return;
+        }
+        View bar = root.findViewById(R.id.status_bar);
+        if (bar == null) {
+            return;
+        }
+        bar.setBackgroundResource(R.drawable.bg_status_scrim);
+        Context context = bar.getContext();
+        int bright = ContextCompat.getColor(context, R.color.status_overlay_text);
+        int dim = ContextCompat.getColor(context, R.color.status_overlay_text_dim);
+        tint(root, R.id.tv_status_stream, bright);
+        tint(root, R.id.tv_status_storage, bright);
+        tint(root, R.id.tv_composite_info, dim);
+    }
+
+    private static void tint(View root, int id, int colour) {
+        TextView view = root.findViewById(id);
+        if (view != null) {
+            view.setTextColor(colour);
+        }
+    }
+
+    /** 卷名写短：B905-2EDD → B905；内置存储写成字。 */
+    private static String volumeLabel(Context context, String volume) {
+        if (volume == null || volume.isEmpty()) {
+            return "?";
+        }
+        if ("emulated".equals(volume)) {
+            return context.getString(R.string.status_internal_storage);
+        }
+        int dash = volume.indexOf('-');
+        return dash > 0 ? volume.substring(0, dash) : volume;
+    }
+
+    /**
+     * 现在生效的那份配置叫什么；读不出来就空着，不编一个名字。
+     *
+     * <p>预设的按 id 取本地化的名字：存进配置里的名字是迁移时写的中文，照抄它的话
+     * 英文、马来文界面下这里也是一行中文。</p>
+     */
+    private static String profileName(Context context) {
+        try {
+            Profile profile = new com.kooo.evcam.profile.ProfileStore(context).current();
+            if (Profile.PRESET_COMPOSITE.equals(profile.id)) {
+                return context.getString(R.string.status_profile_composite);
+            }
+            if (Profile.PRESET_COMPOSITE_MULTI.equals(profile.id)) {
+                return context.getString(R.string.status_profile_composite_multi);
+            }
+            String name = profile.name;
+            return name == null ? "" : name.trim();
+        } catch (Exception e) {
+            return "";
+        }
+    }
+
+    /** 把「这次按什么录」和「还剩多少空间」两格填好；其余两格是录制状态，由主界面自己管。 */
+    public static void fill(View root) {
+        if (root == null) {
+            return;
+        }
+        Context context = root.getContext();
+        TextView stream = root.findViewById(R.id.tv_status_stream);
+        if (stream != null) {
+            StreamSpec spec = RecordSpecs.forCameraKey(context, "front");
+            String fps = spec.fps == null || spec.fps.isEmpty()
+                    || StreamSpec.FPS_UNLIMITED.equals(spec.fps)
+                    ? context.getString(R.string.opt_fps_auto_unknown)
+                    : context.getString(R.string.status_fps, spec.fps);
+            int level = RecordSpecs.qualityLevel(spec.bitrate);
+            int bitrate = level == 0 ? R.string.status_bitrate_very_low
+                    : level == 1 ? R.string.status_bitrate_low
+                    : level == 3 ? R.string.status_bitrate_high
+                    : R.string.status_bitrate_medium;
+            // 配置名原来在标题栏里（「极氪7X（环视 + 前后座舱）」那一行）。标题栏拆了之后
+            // 它归到这里 —— 它本来就是一条「现在按什么在跑」的状态，和帧率码率同类
+            String profile = profileName(context);
+            NumberRoll.set(stream, (profile.isEmpty() ? "" : profile + " · ")
+                    + fps + " · " + context.getString(bitrate));
+            stream.setVisibility(View.VISIBLE);
+        }
+        TextView storage = root.findViewById(R.id.tv_status_storage);
+        String[] fallback = StorageHelper.recordingFallback();
+        if (storage != null && fallback != null) {
+            // 录像改写到了别的盘：这一格一直说明，直到这次录像停止
+            NumberRoll.set(storage, context.getString(R.string.status_recording_fallback,
+                    volumeLabel(context, fallback[0]), volumeLabel(context, fallback[1])));
+            storage.setVisibility(View.VISIBLE);
+        } else if (storage != null) {
+            // 只读快照，不碰盘（探测在 StorageState 的后台线程上）；还没探测过就先不写
+            com.kooo.evcam.storage.StorageState.Snapshot state = com.kooo.evcam.storage.StorageState.current();
+            if (state.known) {
+                long free = state.root != null ? state.freeBytes : -1;
+                NumberRoll.set(storage, free >= 0
+                        ? context.getString(R.string.status_storage_free, StorageHelper.formatSize(free))
+                        : context.getString(R.string.status_storage_none));
+                storage.setVisibility(View.VISIBLE);
+            }
+        }
+    }
+}

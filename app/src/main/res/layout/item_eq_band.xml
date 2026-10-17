@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 均衡器的一段：上面是当前 dB，中间竖推子（EqBarView），下面是频率。十五段横着排 -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="0dp"
+    android:layout_height="match_parent"
+    android:layout_weight="1"
+    android:gravity="center_horizontal"
+    android:orientation="vertical">
+
+    <TextView
+        android:id="@+id/eq_db"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFeatureSettings="tnum"
+        android:textAppearance="@style/TextAppearance.Cam.Caption"
+        android:textColor="@color/text_secondary" />
+
+    <com.kooo.evcam.audio.EqBarView
+        android:id="@+id/eq_slider"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="4dp"
+        android:layout_weight="1" />
+
+    <TextView
+        android:id="@+id/eq_freq"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFeatureSettings="tnum"
+        android:textAppearance="@style/TextAppearance.Cam.Body"
+        android:textColor="@color/text_primary" />
+</LinearLayout>

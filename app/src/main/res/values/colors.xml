@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  日间配色。由脚本同时生成日间与夜间两份，名字与数量必须一致
+  （ColorResourceParityTest 钉着）。界面里只该认上面那组语义色；
+  下面的旧名字全部指向语义色，是为了不动几十个布局就把整套换掉。
+-->
+<resources>
+    <!-- 语义色 -->
+    <color name="bg">#FFF2F2F3</color>  <!-- 整屏底色：不带蓝，近白 / 近黑 -->
+    <color name="surface">#FFFAFAFB</color>  <!-- 承载内容的面（夜间是中灰卡片，和系统一致） -->
+    <color name="sunken">#FFE6E6E8</color>  <!-- 次级按钮、选中项的中性灰块 -->
+    <color name="line">#FFDDDDE0</color>  <!-- 1px 分隔线 -->
+    <color name="text_primary">#FF2A2B2E</color>  <!-- 正文：不用纯黑 / 纯白 -->
+    <color name="text_secondary">#FF76787D</color>  <!-- 说明、状态 -->
+    <color name="text_tertiary">#FF9EA0A5</color>  <!-- 最弱一级 -->
+    <color name="energy">#FFF0622D</color>  <!-- 能量色 = 极氪橙：开关、指示、选中下划线 -->
+    <color name="energy_text">#FFC9491A</color>  <!-- 橙色文字用它；实心按钮一律用 energy -->
+    <color name="energy_quiet">#FFFDEDE6</color>  <!-- 橙色的淡底 -->
+    <color name="on_energy">#FFFFFFFF</color>  <!-- 能量色上面的字 -->
+    <color name="recording">#FFE0393E</color>  <!-- 只标「正在录」与不可逆操作；比极氪橙更偏红，两者不混 -->
+    <color name="recording_quiet">#FFFCEBEB</color>  <!-- 录制中那一块的底 -->
+    <color name="recording_track">#FFF3D3D4</color>  <!-- 分段进度环的轨道 -->
+    <color name="recording_text">#FFB32A2F</color>  <!-- 录制状态文字 -->
+    <color name="locked">#FFE0A100</color>  <!-- 锁定的影像（回放进度条下面那条）：琥珀色，和录制红、极氪橙都分得开 -->
+
+    <!-- 昼夜各自取值的 -->
+    <color name="preview_frame_background">#FFE2E2E4</color>
+    <color name="nav_ripple_color">#1F2A2B2E</color>
+    <color name="dialog_guide_button_ripple">#30000000</color>
+
+    <!-- 旧名字 → 语义色 -->
+    <color name="text_hint">@color/text_tertiary</color>
+    <color name="input_background">@color/sunken</color>
+    <color name="nav_background">@color/surface</color>
+    <color name="nav_header_text">@color/text_primary</color>
+    <color name="nav_header_text_secondary">@color/text_secondary</color>
+    <color name="nav_item_selected_background">@color/sunken</color>
+    <color name="nav_item_pressed_background">@color/sunken</color>
+    <color name="nav_icon_tint">@color/text_secondary</color>
+    <color name="nav_icon_tint_selected">@color/text_primary</color>
+    <color name="nav_text_primary">@color/text_primary</color>
+    <color name="nav_section_title">@color/text_tertiary</color>
+    <color name="preview_background">@color/bg</color>
+    <color name="preview_placeholder_text">@color/text_secondary</color>
+    <color name="preview_controls_background">@color/bg</color>
+    <color name="dialog_guide_background">@color/surface</color>
+    <color name="dialog_guide_title">@color/text_primary</color>
+    <color name="dialog_guide_content">@color/text_primary</color>
+    <color name="dialog_guide_accent">@color/energy_text</color>
+    <color name="dialog_guide_button_bg">@color/energy</color>
+    <color name="dialog_guide_button_text">@color/on_energy</color>
+
+    <!-- 常量 -->
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+
+    <!--
+      压在摄像头画面上的字。日夜同色 —— 它下面永远是画面，不是界面底色，
+      跟着日夜翻会在白天变成深色字压在深色蒙版上。
+    -->
+    <color name="status_overlay_text">#F2FFFFFF</color>
+    <color name="status_overlay_text_dim">#B3FFFFFF</color>
+</resources>

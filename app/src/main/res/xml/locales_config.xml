@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  应用支持的语言。Android 13 起，系统设置里的「应用语言」列表就是从这里读的。
+  7xDash：默认（values/）是英文，values-th/ 是泰文。只做这两种。
+-->
+<locale-config xmlns:android="http://schemas.android.com/apk/res/android">
+    <locale android:name="en" />
+    <locale android:name="th" />
+</locale-config>

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 抽屉里的一行：bg_side_item 往里收一圈，行与行之间留出缝，像主页卡片那样一张一张 -->
+<inset xmlns:android="http://schemas.android.com/apk/res/android"
+    android:drawable="@drawable/bg_side_item"
+    android:insetBottom="4dp"
+    android:insetLeft="12dp"
+    android:insetRight="12dp"
+    android:insetTop="4dp" />

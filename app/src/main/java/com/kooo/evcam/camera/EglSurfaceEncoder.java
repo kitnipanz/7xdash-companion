@@ -1,0 +1,1519 @@
+package com.kooo.evcam.camera;
+
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.SurfaceTexture;
+import android.graphics.Typeface;
+import android.opengl.EGL14;
+import android.opengl.EGLConfig;
+import android.opengl.EGLContext;
+import android.opengl.EGLDisplay;
+import android.opengl.EGLExt;
+import android.opengl.EGLSurface;
+import android.opengl.GLES11Ext;
+import android.opengl.GLES20;
+import android.opengl.GLUtils;
+import android.opengl.Matrix;
+import android.view.Surface;
+
+import com.kooo.evcam.AppLog;
+
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.FloatBuffer;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
+
+/**
+ * EGL/OpenGL 渲染桥接类
+ * 用于将 SurfaceTexture（来自 Camera）的内容渲染到 MediaCodec 的输入 Surface
+ * 
+ * 工作流程：
+ * 1. Camera 输出到 SurfaceTexture（用于 TextureView 预览）
+ * 2. 本类监听 SurfaceTexture 的 onFrameAvailable 回调
+ * 3. 使用 OpenGL 将 SurfaceTexture 的内容渲染到 MediaCodec 的输入 Surface
+ * 4. MediaCodec 编码后通过 MediaMuxer 写入文件
+ */
+public class EglSurfaceEncoder {
+    private static final String TAG = "EglSurfaceEncoder";
+
+    // Vertex shader - 简单的顶点变换
+    private static final String VERTEX_SHADER =
+            "uniform mat4 uMVPMatrix;\n" +
+            "uniform mat4 uTexMatrix;\n" +
+            "attribute vec4 aPosition;\n" +
+            "attribute vec4 aTextureCoord;\n" +
+            "varying vec2 vTextureCoord;\n" +
+            "void main() {\n" +
+            "    gl_Position = uMVPMatrix * aPosition;\n" +
+            "    vTextureCoord = (uTexMatrix * aTextureCoord).xy;\n" +
+            "}\n";
+
+    // Fragment shader - 使用外部纹理（OES）采样（无水印版本）
+    private static final String FRAGMENT_SHADER =
+            "#extension GL_OES_EGL_image_external : require\n" +
+            "precision mediump float;\n" +
+            "varying vec2 vTextureCoord;\n" +
+            "uniform samplerExternalOES sTexture;\n" +
+            "void main() {\n" +
+            "    gl_FragColor = texture2D(sTexture, vTextureCoord);\n" +
+            "}\n";
+
+    // Fragment shader - 带时间水印版本
+    private static final String FRAGMENT_SHADER_WITH_WATERMARK =
+            "#extension GL_OES_EGL_image_external : require\n" +
+            "precision mediump float;\n" +
+            "varying vec2 vTextureCoord;\n" +
+            "uniform samplerExternalOES sTexture;\n" +
+            "uniform sampler2D sWatermarkTexture;\n" +
+            "uniform vec4 uWatermarkRect;\n" +  // x, y, width, height (归一化坐标)
+            "void main() {\n" +
+            "    vec4 videoColor = texture2D(sTexture, vTextureCoord);\n" +
+            "    // 检查是否在水印区域内\n" +
+            "    if (vTextureCoord.x >= uWatermarkRect.x && vTextureCoord.x <= uWatermarkRect.x + uWatermarkRect.z &&\n" +
+            "        vTextureCoord.y >= uWatermarkRect.y && vTextureCoord.y <= uWatermarkRect.y + uWatermarkRect.w) {\n" +
+            "        // 计算水印纹理坐标\n" +
+            "        vec2 watermarkCoord = vec2(\n" +
+            "            (vTextureCoord.x - uWatermarkRect.x) / uWatermarkRect.z,\n" +
+            "            (vTextureCoord.y - uWatermarkRect.y) / uWatermarkRect.w\n" +
+            "        );\n" +
+            "        vec4 watermarkColor = texture2D(sWatermarkTexture, watermarkCoord);\n" +
+            "        // Alpha 混合\n" +
+            "        gl_FragColor = mix(videoColor, watermarkColor, watermarkColor.a);\n" +
+            "    } else {\n" +
+            "        gl_FragColor = videoColor;\n" +
+            "    }\n" +
+            "}\n";
+
+    // 2D 叠加着色器：每一路左上角的应用名、四宫格的时间水印、信息条都用它。
+    //
+    // 为什么不能复用 FRAGMENT_SHADER_WITH_WATERMARK：那个着色器是靠 vTextureCoord
+    // （纹理坐标）判断像素是否落在水印矩形内的。四宫格模式下每个画面只采样纹理的
+    // 一个子区间，这个判断会在错误的位置命中。所以水印改为独立一遍，直接在 NDC
+    // 里画一个小四边形，只采样水印位图并做 alpha 混合。
+    // 单路画应用名也不用那个着色器：它按纹理坐标贴，跟着相机矩阵走（后座舱曾因此左右反），
+    // 这里直接在画面区的 NDC 里画，位置只看输出尺寸。
+    private static final String WATERMARK_OVERLAY_VERTEX_SHADER =
+            "attribute vec4 aPosition;\n" +
+            "attribute vec2 aTexCoord;\n" +
+            "varying vec2 vTexCoord;\n" +
+            "void main() {\n" +
+            "    gl_Position = aPosition;\n" +
+            "    vTexCoord = aTexCoord;\n" +
+            "}\n";
+
+    private static final String WATERMARK_OVERLAY_FRAGMENT_SHADER =
+            "precision mediump float;\n" +
+            "varying vec2 vTexCoord;\n" +
+            "uniform sampler2D sWatermark;\n" +
+            "void main() {\n" +
+            "    gl_FragColor = texture2D(sWatermark, vTexCoord);\n" +
+            "}\n";
+
+    // 顶点坐标（全屏四边形）
+    private static final float[] VERTICES = {
+            -1.0f, -1.0f,  // 左下
+             1.0f, -1.0f,  // 右下
+            -1.0f,  1.0f,  // 左上
+             1.0f,  1.0f,  // 右上
+    };
+
+    // 纹理坐标
+    private static final float[] TEXTURE_COORDS = {
+            0.0f, 0.0f,  // 左下
+            1.0f, 0.0f,  // 右下
+            0.0f, 1.0f,  // 左上
+            1.0f, 1.0f,  // 右上
+    };
+
+    private final String cameraId;
+    private final int width;
+    private final int height;
+
+    // ---- 四宫格录制 ----
+    /** 非 null 时启用四宫格录制：把合成流拆成 4 个画面渲染成 2x2。 */
+    private volatile com.kooo.evcam.zeekr.CompositeStreamGeometry.Plan fourLanePlan;
+    /** laneOrder[格子位置] = 合成流中的画面序号。 */
+    private volatile int[] fourLaneOrder = {0, 1, 2, 3};
+    private java.nio.FloatBuffer laneVertexBuffer;
+    private java.nio.FloatBuffer laneTexCoordBuffer;
+    private final float[] laneVertexScratch = new float[8];
+    private final float[] laneTexScratch = new float[8];
+    private int watermarkOverlayProgram;
+    private int overlayPositionHandle;
+    private int overlayTexCoordHandle;
+    private int overlayTextureHandle;
+
+    // EGL 相关
+    private EGLDisplay eglDisplay = EGL14.EGL_NO_DISPLAY;
+    private EGLContext eglContext = EGL14.EGL_NO_CONTEXT;
+    private EGLSurface eglSurface = EGL14.EGL_NO_SURFACE;
+    private EGLConfig eglConfig;
+
+    // OpenGL 相关
+    private int program;
+    private int textureId;
+    private FloatBuffer vertexBuffer;
+    private FloatBuffer texCoordBuffer;
+
+    // Shader 变量位置
+    private int positionHandle;
+    private int texCoordHandle;
+    private int mvpMatrixHandle;
+    private int texMatrixHandle;
+    private int textureHandle;
+
+    // 变换矩阵
+    private final float[] mvpMatrix = new float[16];
+    private final float[] texMatrix = new float[16];
+
+    /** 左右翻回来：纹理坐标 x → 1 − x。 */
+    private static final float[] FLIP_X = {
+            -1f, 0f, 0f, 0f,
+            0f, 1f, 0f, 0f,
+            0f, 0f, 1f, 0f,
+            1f, 0f, 0f, 1f,
+    };
+    private final float[] unmirroredMatrix = new float[16];
+    /** 输入带不带左右镜像；null 表示还没看过。只在变化时写日志。 */
+    private Boolean inputMirrored;
+
+    // ---- 行驶信息条（画面下方）----
+    /**
+     * 非 null 时输出的最下面 {@link #barHeight} 像素是信息条，相机画面（含角标）画在
+     * 上面 {@link #contentHeight} 高的区域里 —— 两块各用各的视口，画面那边的代码不用知道有它。
+     */
+    private com.kooo.evcam.telemetry.InfoBarRenderer infoBar;
+    private int barHeight;
+    private int contentHeight;
+    private int infoBarTextureId;
+
+    // 输入 SurfaceTexture（来自 Camera）
+    private SurfaceTexture inputSurfaceTexture;
+
+    // 状态
+    private boolean isInitialized = false;
+    private boolean isReleased = false;
+
+    // 角标：右上角时间水印（跟开关走）+ 左上角应用名（每一路都画）
+    private boolean watermarkEnabled = false;
+    private int watermarkProgram;
+    private int watermarkTextureId;
+    private int watermarkTextureHandle;
+    private int watermarkRectHandle;
+    private int watermarkPositionHandle;
+    private int watermarkTexCoordHandle;
+    private int watermarkMvpMatrixHandle;
+    private int watermarkTexMatrixHandle;
+    private int watermarkOesTextureHandle;
+    private Bitmap watermarkBitmap;
+    /** 左上角那块：应用名 + 版本号（填了车牌号跟在后面）。每一路都画，和时间水印无关；一次录制里不变，画一次就够。 */
+    private int brandTextureId;
+    private String brandLine = "";
+    private String lastWatermarkTime = "";
+    /** 角标第二行：录制规格。为空表示只显示时间。 */
+    private volatile String watermarkInfoLine = "";
+    private static final int WATERMARK_WIDTH = 560;   // 需容纳规格行（比 19 字符的时间戳长）
+    private static final int WATERMARK_HEIGHT = 80;   // 两行
+    private static final int WATERMARK_LINE_HEIGHT = 34;
+    /**
+     * 角标贴图的高度。宽度<b>按文字实际宽度算</b>，不写死 ——
+     * 原来固定 420px，填了车牌号之后这一行变长，超出的部分被直接裁掉，
+     * 表现就是「开了车牌号但画面上看不到」。
+     */
+    private static final int BRAND_HEIGHT = 40;
+
+    /** 角标文字大小；量文字宽度和真正画的时候必须用同一个值。 */
+    private static final float BRAND_TEXT_SIZE = 26f;
+
+    /** 实际生成的角标贴图尺寸，画四边形时要用它，不能用常量。 */
+    private int brandWidthPx;
+    private final SimpleDateFormat watermarkDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
+    
+    // 性能优化：水印更新控制
+    private long lastWatermarkUpdateMs = 0;
+    private static final long WATERMARK_UPDATE_INTERVAL_MS = 1000; // 每秒更新一次水印
+    
+    // 性能优化：跳帧控制（仅用于录制编码，不影响预览质量）
+    private int frameSkipCounter = 0;
+    private static final int FRAME_SKIP_THRESHOLD = 2; // 每3帧渲染1次（当CPU高负载时）
+    private boolean enableFrameSkip = false; // 默认不跳帧
+    
+    // 性能优化：异步渲染支持
+    private volatile boolean hasPendingFrame = false; // 是否有待处理的帧
+    private final Object frameLock = new Object(); // 帧处理锁
+    private volatile long lastFrameTimeNs = 0; // 上一帧时间戳
+    /** 默认上限约 30fps，防止过度渲染；由 {@link #setFrameRate(int)} 按用户选择收紧。 */
+    private static final long DEFAULT_MIN_FRAME_INTERVAL_NS = 33_000_000L;
+    /**
+     * 渲染的最小帧间隔。
+     *
+     * <p>这里才是真正决定录制帧率的地方。MediaFormat 的 KEY_FRAME_RATE 对
+     * Surface 输入的编码器只是码率分配的提示，<b>不会丢帧</b> —— 编码器输出多少帧，
+     * 取决于我们隔多久 eglSwapBuffers 一次。之前这个值写死成 33ms，
+     * 所以设置里选 10fps 也照样按 30fps 出帧。</p>
+     */
+    private volatile long minFrameIntervalNs = DEFAULT_MIN_FRAME_INTERVAL_NS;
+
+    /** 真正做「渲不渲这一帧」判断的地方。 */
+    private final FrameThrottle throttle = new FrameThrottle(DEFAULT_MIN_FRAME_INTERVAL_NS);
+
+    /** 相机送来的帧数（drawFrame 被调用的次数）。 */
+    private long deliveredFrames;
+    /** 真正渲染出去、进了编码器的帧数。 */
+    private long renderedFrames;
+    private long rateWindowStartNs;
+
+    /** 帧率统计的窗口。5 秒足够平滑，又不至于要等很久才看到第一条。 */
+    private static final long RATE_WINDOW_NS = 5_000_000_000L;
+
+    /** 渲染跟得上时，隔多少个窗口才打一行（12 × 5 秒 = 一分钟）。 */
+    private static final int QUIET_WINDOWS = 12;
+    private int windowsSinceLog;
+
+    /**
+     * 把两个帧率打进日志：渲染跟不上时每个窗口都打，跟得上时一分钟一行。
+     *
+     * <p><b>为什么要两个数：</b>「录出来只有 15fps」有两种完全不同的原因 ——
+     * 相机就只给了 15 帧，或者相机给了 25 帧而我们只渲染得出 15 帧。
+     * 前者是这条视频流本身的上限，改设置没有用；后者是我们的开销问题，
+     * 降分辨率或关水印可能就好了。只看最终文件分不出这两种。</p>
+     */
+    private void reportFrameRates(long nowNs) {
+        if (rateWindowStartNs == 0) {
+            rateWindowStartNs = nowNs;
+            return;
+        }
+        long elapsed = nowNs - rateWindowStartNs;
+        if (elapsed < RATE_WINDOW_NS) {
+            return;
+        }
+        float seconds = elapsed / 1_000_000_000f;
+        float delivered = deliveredFrames / seconds;
+        float rendered = renderedFrames / seconds;
+        boolean behind = delivered - rendered > 1f;
+        if (behind || ++windowsSinceLog >= QUIET_WINDOWS) {
+            windowsSinceLog = 0;
+            AppLog.i(TAG, String.format(java.util.Locale.US,
+                    "Camera %s 帧率：相机送来 %.1f fps，实际渲染 %.1f fps（上限 %.0f fps，0=不限制）%s",
+                    cameraId, delivered, rendered,
+                    minFrameIntervalNs > 0 ? 1_000_000_000f / minFrameIntervalNs : 0f,
+                    behind ? "  << 渲染跟不上" : ""));
+        }
+        lastDeliveredFps = delivered;
+        lastRenderedFps = rendered;
+        deliveredFrames = 0;
+        renderedFrames = 0;
+        rateWindowStartNs = nowNs;
+    }
+
+    private volatile float lastDeliveredFps;
+    private volatile float lastRenderedFps;
+
+    /** 最近一次统计到的相机出帧率；0 表示还没统计出来。 */
+    public float getDeliveredFps() {
+        return lastDeliveredFps;
+    }
+
+    /** 最近一次统计到的实际渲染帧率。 */
+    public float getRenderedFps() {
+        return lastRenderedFps;
+    }
+    
+    // 性能优化：复用缓冲区，减少GC
+    private final float[] tempMatrix = new float[16];
+    private long frameCount = 0;
+
+    // 优化：控制何时需要清除缓冲（避免闪屏）
+    private boolean needsClear = true;  // 初始需要清除
+
+    public EglSurfaceEncoder(String cameraId, int width, int height) {
+        this.cameraId = cameraId;
+        this.width = width;
+        this.height = height;
+        this.contentHeight = height;
+
+        // 初始化 MVP 矩阵为单位矩阵
+        Matrix.setIdentityM(mvpMatrix, 0);
+    }
+
+    /**
+     * 录像下方的行驶信息条。要在 {@link #initialize} 之前设：画面区域按它的高让出来，
+     * 编码尺寸（构造时的 height）必须已经包含它。
+     */
+    public void setInfoBar(com.kooo.evcam.telemetry.InfoBarRenderer bar) {
+        this.infoBar = bar;
+        this.barHeight = bar == null ? 0
+                : Math.min(com.kooo.evcam.telemetry.InfoBar.HEIGHT, Math.max(0, height - 2));
+        this.contentHeight = height - barHeight;
+    }
+
+    /**
+     * 初始化 EGL 和 OpenGL
+     * @param outputSurface MediaCodec 的输入 Surface
+     * @return 创建的 OES 纹理 ID（用于创建 SurfaceTexture 供 Camera 输出）
+     */
+    public int initialize(Surface outputSurface) {
+        if (isInitialized) {
+            AppLog.w(TAG, "Camera " + cameraId + " EglSurfaceEncoder already initialized");
+            return textureId;
+        }
+
+        AppLog.d(TAG, "Camera " + cameraId + " Initializing EglSurfaceEncoder " + width + "x" + height);
+
+        try {
+            // 初始化 EGL
+            initEgl(outputSurface);
+
+            // 初始化 OpenGL
+            initGl();
+
+            isInitialized = true;
+            AppLog.d(TAG, "Camera " + cameraId + " EglSurfaceEncoder initialized, textureId=" + textureId);
+
+            return textureId;
+
+        } catch (Exception e) {
+            AppLog.e(TAG, "Camera " + cameraId + " Failed to initialize EglSurfaceEncoder", e);
+            release();
+            throw new RuntimeException("Failed to initialize EglSurfaceEncoder", e);
+        }
+    }
+
+    /**
+     * 设置输入 SurfaceTexture
+     */
+    public void setInputSurfaceTexture(SurfaceTexture surfaceTexture) {
+        this.inputSurfaceTexture = surfaceTexture;
+        AppLog.d(TAG, "Camera " + cameraId + " Input SurfaceTexture set");
+    }
+
+    /**
+     * 左上角的应用名 + 版本号（填了车牌号跟在后面）。要在 {@link #initialize} 之前设：
+     * 贴图在 initGl 里画一次，每一路、每一帧都盖。空串表示不画。
+     */
+    public void setBrandLine(String line) {
+        this.brandLine = line == null ? "" : line;
+    }
+
+    /**
+     * 设置角标第二行（录制规格）。传空串则只画时间那一行。
+     *
+     * <p>规格在一次录制中是不变的，所以这里只是存下来；真正重绘由每秒一次的
+     * 时间更新顺带完成 —— 清空 {@code lastWatermarkTime} 是为了不必等到秒数变化。</p>
+     */
+    public void setWatermarkInfoLine(String line) {
+        this.watermarkInfoLine = line == null ? "" : line;
+        this.lastWatermarkTime = "";
+    }
+
+    /**
+     * 设置是否启用时间水印。只管右上角时间 + 规格；左上角应用名不看它。
+     * @param enabled true 表示启用水印
+     */
+    public void setWatermarkEnabled(boolean enabled) {
+        this.watermarkEnabled = enabled;
+        AppLog.d(TAG, "Camera " + cameraId + " Watermark " + (enabled ? "enabled" : "disabled"));
+        
+        // 如果已初始化且启用水印，需要初始化水印相关资源
+        if (isInitialized && enabled && watermarkProgram == 0) {
+            initWatermarkGl();
+        }
+    }
+
+    /**
+     * 检查是否启用了时间水印
+     */
+    public boolean isWatermarkEnabled() {
+        return watermarkEnabled;
+    }
+
+    /**
+     * 设置是否启用跳帧（用于降低CPU占用）
+     * @param enabled true 表示启用跳帧
+     */
+    public void setFrameSkipEnabled(boolean enabled) {
+        this.enableFrameSkip = enabled;
+        this.frameSkipCounter = 0;
+        AppLog.d(TAG, "Camera " + cameraId + " Frame skip " + (enabled ? "enabled" : "disabled"));
+    }
+
+    /**
+     * 检查是否启用了跳帧
+     */
+    public boolean isFrameSkipEnabled() {
+        return enableFrameSkip;
+    }
+
+    /**
+     * 渲染一帧到输出 Surface
+     * 应该在 SurfaceTexture.onFrameAvailable 回调中调用
+     * @param presentationTimeNs 帧的呈现时间（纳秒）
+     */
+    /**
+     * 设置录制帧率。这会改变实际的出帧节奏，而不只是编码器的码率提示。
+     *
+     * @param fps 目标帧率；<= 0 表示恢复默认上限（约 30fps）
+     */
+    public void setFrameRate(int fps) {
+        if (fps <= 0) {
+            // 不限制：视频流给多少就渲多少。
+            // 以前这里回落到一个 30fps 的默认上限 —— 那不是「不限制」，
+            // 而是「换了一个我们自己定的限制」。
+            minFrameIntervalNs = 0;
+            throttle.setMinIntervalNs(0);
+            AppLog.i(TAG, "Camera " + cameraId + " 渲染帧率不限制，跟随视频流");
+            return;
+        }
+        int clamped = Math.max(1, Math.min(60, fps));
+        minFrameIntervalNs = 1_000_000_000L / clamped;
+        throttle.setMinIntervalNs(minFrameIntervalNs);
+        AppLog.i(TAG, "Camera " + cameraId + " 渲染帧率目标 " + clamped
+                + " fps（间隔 " + (minFrameIntervalNs / 1_000_000L) + "ms，"
+                + "允许提前 " + Math.round((1 - FrameThrottle.EARLY_TOLERANCE) * 100) + "%）");
+    }
+
+    public void drawFrame(long presentationTimeNs) {
+        if (!isInitialized || isReleased) {
+            return;
+        }
+
+        if (inputSurfaceTexture == null) {
+            AppLog.w(TAG, "Camera " + cameraId + " No input SurfaceTexture set");
+            return;
+        }
+
+        // 这个方法每来一帧就被调一次 —— 所以它的调用频率就是相机的出帧率
+        deliveredFrames++;
+
+        // 帧率控制。判断本身在 FrameThrottle 里（有单元测试）——
+        // 原来那句「距上一帧不足一个间隔就跳过」在源速率不是目标整数倍时
+        // 会直接把帧率砍一半：相机 29fps、目标 25fps，正好每两帧渲一帧，
+        // 得到 14.5fps。「选 25 录出 15」就是这么来的，和相机无关。
+        long currentTimeNs = System.nanoTime();
+        reportFrameRates(currentTimeNs);
+        if (!throttle.shouldRender(currentTimeNs)) {
+            // 帧间隔太短，跳过渲染但消费帧
+            try {
+                makeCurrent();
+                inputSurfaceTexture.updateTexImage();
+            } catch (Exception e) {
+                // 忽略
+            }
+            return;
+        }
+
+        // 性能优化：跳帧控制（当启用时，每3帧渲染1次）
+        if (enableFrameSkip) {
+            frameSkipCounter++;
+            if (frameSkipCounter < FRAME_SKIP_THRESHOLD) {
+                // 跳过渲染，但更新时间戳
+                try {
+                    makeCurrent();
+                    inputSurfaceTexture.updateTexImage();
+                } catch (Exception e) {
+                    // 忽略
+                }
+                return;
+            }
+            frameSkipCounter = 0;
+        }
+
+        try {
+            // 首先绑定 EGL context（必须在 updateTexImage 之前）
+            makeCurrent();
+
+            // 更新纹理（需要在正确的 EGL context 中）
+            inputSurfaceTexture.updateTexImage();
+            inputSurfaceTexture.getTransformMatrix(texMatrix);
+            toNormalView(texMatrix);
+            // 节流由 throttle 记账，这个字段只留给日志/诊断看「上一帧什么时候画的」
+            lastFrameTimeNs = currentTimeNs;
+            renderedFrames++;   // 过了节流这一关，这一帧才真的进编码器
+
+            // 画面的视口：有信息条时让出下面那一条
+            GLES20.glViewport(0, barHeight, width, contentHeight);
+
+            // 优化：只在必要时清除缓冲，避免闪屏
+            if (needsClear) {
+                GLES20.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+                GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
+                needsClear = false;
+            }
+
+            // 四宫格模式优先：拆成 2x2 渲染，时间水印另走一遍叠加
+            com.kooo.evcam.zeekr.CompositeStreamGeometry.Plan plan = fourLanePlan;
+            if (plan != null) {
+                drawFourLanes(plan);
+                if (watermarkEnabled) {
+                    drawWatermarkOverlay();
+                }
+            } else if (watermarkEnabled && watermarkProgram != 0) {
+                drawFrameWithWatermark();
+            } else {
+                drawFrameWithoutWatermark();
+            }
+            // 左上角应用名（+ 车牌号）：三条路径画完都走这一步，和时间水印开不开无关。
+            // 视口还是画面区，要在信息条之前画（信息条会把视口换到下面那一条）
+            drawBrandOverlay();
+            drawInfoBar();
+
+            // 设置呈现时间戳并交换缓冲区
+            EGLExt.eglPresentationTimeANDROID(eglDisplay, eglSurface, presentationTimeNs);
+            EGL14.eglSwapBuffers(eglDisplay, eglSurface);
+
+        } catch (Exception e) {
+            AppLog.e(TAG, "Camera " + cameraId + " Error drawing frame", e);
+        }
+    }
+
+    /**
+     * 启用四宫格录制。
+     *
+     * <p>传入的 plan 必须是按<b>合成流真实尺寸</b>算出来的（见 CompositeStreamGeometry），
+     * 因为它用的是归一化坐标，与编码输出尺寸无关。传 null 关闭，恢复整帧录制。</p>
+     *
+     * @param plan  四画面拆分方案；null 表示不拆分
+     * @param order 长度为 4 的排列，order[格子位置] = 画面序号；null 表示默认顺序
+     */
+    public void setFourLanePlan(com.kooo.evcam.zeekr.CompositeStreamGeometry.Plan plan, int[] order) {
+        this.fourLanePlan = (plan != null && plan.isComposite()) ? plan : null;
+        if (order != null && order.length == 4) {
+            this.fourLaneOrder = order.clone();
+        }
+        AppLog.i(TAG, "Camera " + cameraId + " 四宫格录制: "
+                + (this.fourLanePlan != null ? "启用 (" + this.fourLanePlan + ")" : "关闭"));
+    }
+
+    public boolean isFourLaneEnabled() {
+        return fourLanePlan != null;
+    }
+
+    /**
+     * 四宫格渲染：把同一张 OES 纹理的四个子区域画进 2x2 的四个格子。
+     *
+     * <p>输出是正方形、每个画面也是正方形，所以不需要额外的比例修正。</p>
+     */
+    private void drawFourLanes(com.kooo.evcam.zeekr.CompositeStreamGeometry.Plan plan) {
+        GLES20.glUseProgram(program);
+        GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+        GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, textureId);
+        GLES20.glUniformMatrix4fv(mvpMatrixHandle, 1, false, mvpMatrix, 0);
+        GLES20.glUniformMatrix4fv(texMatrixHandle, 1, false, texMatrix, 0);
+        GLES20.glUniform1i(textureHandle, 0);
+
+        GLES20.glEnableVertexAttribArray(positionHandle);
+        GLES20.glEnableVertexAttribArray(texCoordHandle);
+
+        int[] order = fourLaneOrder;
+        for (int cell = 0; cell < 4; cell++) {
+            int laneIndex = order[cell];
+            if (laneIndex >= plan.laneCount()) {
+                continue;
+            }
+            com.kooo.evcam.zeekr.CompositeStreamGeometry.Lane lane = plan.lane(laneIndex);
+
+            // 目标格子（NDC）：格子 0 左上、1 右上、2 左下、3 右下
+            float left = -1.0f + (cell % 2);
+            float right = left + 1.0f;
+            float top = 1.0f - (cell / 2);
+            float bottom = top - 1.0f;
+
+            // 几何坐标以左上为原点，GL 纹理坐标以左下为原点，这里翻一次
+            float u0 = lane.u0;
+            float u1 = lane.u1;
+            float v0 = 1.0f - lane.v1;
+            float v1 = 1.0f - lane.v0;
+
+            // triangle strip: 左下 -> 右下 -> 左上 -> 右上
+            laneVertexScratch[0] = left;  laneVertexScratch[1] = bottom;
+            laneVertexScratch[2] = right; laneVertexScratch[3] = bottom;
+            laneVertexScratch[4] = left;  laneVertexScratch[5] = top;
+            laneVertexScratch[6] = right; laneVertexScratch[7] = top;
+
+            laneTexScratch[0] = u0; laneTexScratch[1] = v0;
+            laneTexScratch[2] = u1; laneTexScratch[3] = v0;
+            laneTexScratch[4] = u0; laneTexScratch[5] = v1;
+            laneTexScratch[6] = u1; laneTexScratch[7] = v1;
+
+            laneVertexBuffer.clear();
+            laneVertexBuffer.put(laneVertexScratch);
+            laneVertexBuffer.position(0);
+            laneTexCoordBuffer.clear();
+            laneTexCoordBuffer.put(laneTexScratch);
+            laneTexCoordBuffer.position(0);
+
+            GLES20.glVertexAttribPointer(positionHandle, 2, GLES20.GL_FLOAT, false, 0, laneVertexBuffer);
+            GLES20.glVertexAttribPointer(texCoordHandle, 2, GLES20.GL_FLOAT, false, 0, laneTexCoordBuffer);
+            GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
+        }
+
+        GLES20.glDisableVertexAttribArray(positionHandle);
+        GLES20.glDisableVertexAttribArray(texCoordHandle);
+    }
+
+    /**
+     * 系统给的这一帧要是带着左右翻转，把它翻回正常视角。
+     *
+     * <p>安卓对朝向为「前置」的相机，默认把给 SurfaceTexture 的画面左右翻一次，好让预览
+     * 像照镜子。这台车上后座舱那一路报的就是前置。录像不该带这一下：照着这个矩阵画，
+     * 画面是反的，时间角标（它按纹理坐标贴）也跟着反。安卓 13 起可以用
+     * {@code OutputConfiguration.setMirrorMode} 关掉，这台车是 12，只能自己翻回来。</p>
+     *
+     * <p>不按「前置 / 后置」去猜，直接看这一帧的矩阵：SurfaceTexture 的矩阵本来就带一次
+     * 上下翻转（GL 的原点在左下），左上角 2×2 的行列式是负的；再多一次左右翻转就成了正的。
+     * 翻回来之后，所有相机的矩阵都是同一种形状，水印的位置和朝向也就一样了。</p>
+     */
+    private void toNormalView(float[] m) {
+        boolean mirrored = m[0] * m[5] - m[4] * m[1] > 0f;
+        if (inputMirrored == null || inputMirrored != mirrored) {
+            inputMirrored = mirrored;
+            AppLog.i(TAG, "Camera " + cameraId + (mirrored
+                    ? " 录像输入带左右镜像（系统对前置相机的默认翻转），翻回正常视角再编码"
+                    : " 录像输入不带镜像"));
+        }
+        if (mirrored) {
+            android.opengl.Matrix.multiplyMM(unmirroredMatrix, 0, m, 0, FLIP_X, 0);
+            System.arraycopy(unmirroredMatrix, 0, m, 0, 16);
+        }
+    }
+
+    /**
+     * 四宫格模式下的时间水印：单独一遍，画在画面区右上角。
+     * 左上角应用名不在这里画，见 {@link #drawBrandOverlay}。
+     */
+    private void drawWatermarkOverlay() {
+        if (watermarkOverlayProgram == 0 || watermarkTextureId == 0) {
+            return;
+        }
+        long currentTimeMs = System.currentTimeMillis();
+        if (currentTimeMs - lastWatermarkUpdateMs >= WATERMARK_UPDATE_INTERVAL_MS) {
+            updateWatermarkBitmap();
+            lastWatermarkUpdateMs = currentTimeMs;
+        }
+
+        GLES20.glUseProgram(watermarkOverlayProgram);
+        GLES20.glEnable(GLES20.GL_BLEND);
+        GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
+
+        // 右上角：时间 + 规格 + 实时码率（和应用名并排放不下时在它下面一行，见 timeBlockDropPx）
+        drawOverlayQuad(watermarkTextureId, WATERMARK_WIDTH, WATERMARK_HEIGHT, true,
+                timeBlockDropPx());
+
+        GLES20.glDisable(GLES20.GL_BLEND);
+    }
+
+    /**
+     * 左上角：应用名 + 版本号（填了车牌号跟在后面）。三条画面路径画完都走这一步，
+     * 和时间水印开不开无关。叠加程序或贴图没建起来（见 initGl）就不画。
+     */
+    private void drawBrandOverlay() {
+        if (watermarkOverlayProgram == 0 || brandTextureId == 0) {
+            return;
+        }
+        GLES20.glUseProgram(watermarkOverlayProgram);
+        GLES20.glEnable(GLES20.GL_BLEND);
+        GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
+
+        drawOverlayQuad(brandTextureId, brandWidthPx, BRAND_HEIGHT, false, 0);
+
+        // 关掉混合：后面的信息条和下一帧的整幅画面都是不透明的，不该再混
+        GLES20.glDisable(GLES20.GL_BLEND);
+    }
+
+    /**
+     * 右上角时间那块往下让多少像素。两块角标都贴在画面区顶上：这一路够宽就并排；
+     * 并排放不下（窄的座舱尺寸，或填了车牌号让应用名那一行变长）就让时间那块挪到应用名下面一行，
+     * 不叠在一起。单路（按纹理坐标贴）和四宫格（NDC 里画）都按它摆。
+     */
+    private int timeBlockDropPx() {
+        if (brandTextureId == 0) {
+            return 0;
+        }
+        // 左右边距各 1%，两块中间再隔 1%
+        return brandWidthPx + WATERMARK_WIDTH + 0.03f * width > width ? BRAND_HEIGHT : 0;
+    }
+
+    /**
+     * 无水印渲染
+     */
+    private void drawFrameWithoutWatermark() {
+        // 使用着色器程序
+        GLES20.glUseProgram(program);
+        checkGlError("glUseProgram");
+
+        // 绑定纹理
+        GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+        GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, textureId);
+
+        // 设置 uniform 变量
+        GLES20.glUniformMatrix4fv(mvpMatrixHandle, 1, false, mvpMatrix, 0);
+        GLES20.glUniformMatrix4fv(texMatrixHandle, 1, false, texMatrix, 0);
+        GLES20.glUniform1i(textureHandle, 0);
+
+        // 设置顶点属性
+        GLES20.glEnableVertexAttribArray(positionHandle);
+        GLES20.glVertexAttribPointer(positionHandle, 2, GLES20.GL_FLOAT, false, 0, vertexBuffer);
+
+        GLES20.glEnableVertexAttribArray(texCoordHandle);
+        GLES20.glVertexAttribPointer(texCoordHandle, 2, GLES20.GL_FLOAT, false, 0, texCoordBuffer);
+
+        // 绘制
+        GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
+        checkGlError("glDrawArrays");
+
+        // 禁用顶点属性
+        GLES20.glDisableVertexAttribArray(positionHandle);
+        GLES20.glDisableVertexAttribArray(texCoordHandle);
+    }
+
+    // 性能优化：缓存水印位置（只需计算一次）
+    private float watermarkX, watermarkY, watermarkW, watermarkH;
+    private boolean watermarkPositionCached = false;
+    
+    /**
+     * 带水印渲染（优化版）
+     */
+    private void drawFrameWithWatermark() {
+        // 性能优化：控制水印更新频率（每秒最多更新一次）
+        long currentTimeMs = System.currentTimeMillis();
+        if (currentTimeMs - lastWatermarkUpdateMs >= WATERMARK_UPDATE_INTERVAL_MS) {
+            updateWatermarkBitmap();
+            lastWatermarkUpdateMs = currentTimeMs;
+        }
+
+        // 使用水印着色器程序
+        GLES20.glUseProgram(watermarkProgram);
+        checkGlError("glUseProgram watermark");
+
+        // 绑定视频纹理到纹理单元0
+        GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+        GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, textureId);
+        GLES20.glUniform1i(watermarkOesTextureHandle, 0);
+
+        // 绑定水印纹理到纹理单元1
+        GLES20.glActiveTexture(GLES20.GL_TEXTURE1);
+        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, watermarkTextureId);
+        GLES20.glUniform1i(watermarkTextureHandle, 1);
+
+        // 设置 uniform 变量
+        GLES20.glUniformMatrix4fv(watermarkMvpMatrixHandle, 1, false, mvpMatrix, 0);
+        GLES20.glUniformMatrix4fv(watermarkTexMatrixHandle, 1, false, texMatrix, 0);
+
+        // 性能优化：缓存水印位置计算结果
+        if (!watermarkPositionCached) {
+            watermarkW = (float) WATERMARK_WIDTH / width;   // 水印宽度占比
+            watermarkH = (float) WATERMARK_HEIGHT / contentHeight; // 水印高度占比（画面区，不含信息条）
+            watermarkX = 1.0f - watermarkW - 0.01f;  // 右边距 1%
+            // 上边距 1%；和左上角应用名并排放不下时挪到它下面一行（见 timeBlockDropPx）
+            watermarkY = 0.01f + (float) timeBlockDropPx() / contentHeight;
+            watermarkPositionCached = true;
+        }
+        GLES20.glUniform4f(watermarkRectHandle, watermarkX, watermarkY, watermarkW, watermarkH);
+
+        // 设置顶点属性
+        GLES20.glEnableVertexAttribArray(watermarkPositionHandle);
+        GLES20.glVertexAttribPointer(watermarkPositionHandle, 2, GLES20.GL_FLOAT, false, 0, vertexBuffer);
+
+        GLES20.glEnableVertexAttribArray(watermarkTexCoordHandle);
+        GLES20.glVertexAttribPointer(watermarkTexCoordHandle, 2, GLES20.GL_FLOAT, false, 0, texCoordBuffer);
+
+        // 绘制
+        GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
+        checkGlError("glDrawArrays watermark");
+
+        // 禁用顶点属性
+        GLES20.glDisableVertexAttribArray(watermarkPositionHandle);
+        GLES20.glDisableVertexAttribArray(watermarkTexCoordHandle);
+    }
+
+    /**
+     * 更新输出 Surface（用于分段切换时）
+     * 销毁旧的 EGL Surface，创建新的绑定到新的 MediaCodec 输入 Surface
+     * @param newOutputSurface 新的 MediaCodec 输入 Surface
+     */
+    public void updateOutputSurface(Surface newOutputSurface) {
+        if (!isInitialized || isReleased) {
+            AppLog.w(TAG, "Camera " + cameraId + " Cannot update output surface: not initialized or released");
+            return;
+        }
+
+        AppLog.d(TAG, "Camera " + cameraId + " Updating output surface");
+
+        try {
+            // 销毁旧的 EGL Surface
+            // 注意：当 surface 为 EGL_NO_SURFACE 时，context 必须也是 EGL_NO_CONTEXT，否则会报 EGL_BAD_MATCH
+            if (eglSurface != EGL14.EGL_NO_SURFACE) {
+                EGL14.eglMakeCurrent(eglDisplay, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_CONTEXT);
+                EGL14.eglDestroySurface(eglDisplay, eglSurface);
+                eglSurface = EGL14.EGL_NO_SURFACE;
+            }
+
+            // 创建新的 EGL Surface
+            int[] surfaceAttribList = {
+                    EGL14.EGL_NONE
+            };
+            eglSurface = EGL14.eglCreateWindowSurface(eglDisplay, eglConfig, newOutputSurface, surfaceAttribList, 0);
+            if (eglSurface == EGL14.EGL_NO_SURFACE) {
+                throw new RuntimeException("Unable to create new EGL window surface");
+            }
+
+            // 设置为当前上下文
+            makeCurrent();
+
+            // 标记需要清除缓冲，因为新 Surface 没有之前的内容
+            needsClear = true;
+
+            AppLog.d(TAG, "Camera " + cameraId + " Output surface updated successfully");
+
+        } catch (Exception e) {
+            AppLog.e(TAG, "Camera " + cameraId + " Failed to update output surface", e);
+            throw new RuntimeException("Failed to update output surface", e);
+        }
+    }
+
+    /**
+     * 仅消费帧而不渲染（用于非录制状态时保持 SurfaceTexture 正常工作）
+     * 关键：必须调用 updateTexImage() 来消费帧，否则 SurfaceTexture 会保持 pending 状态，
+     * 不再触发后续的 onFrameAvailable 回调
+     */
+    public void consumeFrame() {
+        if (!isInitialized || isReleased) {
+            return;
+        }
+
+        if (inputSurfaceTexture == null) {
+            return;
+        }
+
+        try {
+            // 绑定 EGL context（必须在 updateTexImage 之前）
+            makeCurrent();
+            // 只消费帧，不渲染
+            inputSurfaceTexture.updateTexImage();
+        } catch (Exception e) {
+            // 非录制状态下的错误不需要记录
+        }
+    }
+
+    /**
+     * 释放资源。
+     *
+     * <p><b>只能在建它的那个线程（编码线程）上调</b>：EGL 上下文只在那个线程上是当前的。
+     * 在别的线程上调，下面的 glDelete* 全是空操作，eglDestroyContext 也只是把上下文记成「待删」，
+     * 而编码线程那边可能正在画一帧。CodecVideoRecorder 把它排到编码线程上（releaseGlOnEncoderThread）；
+     * initialize 失败时本来就在编码线程上。</p>
+     */
+    public void release() {
+        if (isReleased) {
+            return;
+        }
+
+        AppLog.d(TAG, "Camera " + cameraId + " Releasing EglSurfaceEncoder");
+
+        isReleased = true;
+        isInitialized = false;
+
+        try {
+            // 释放 OpenGL 资源
+            if (program != 0) {
+                try {
+                    GLES20.glDeleteProgram(program);
+                } catch (Exception e) {
+                    AppLog.w(TAG, "Camera " + cameraId + " Error deleting program: " + e.getMessage());
+                }
+                program = 0;
+            }
+
+            if (textureId != 0) {
+                try {
+                    int[] textures = {textureId};
+                    GLES20.glDeleteTextures(1, textures, 0);
+                } catch (Exception e) {
+                    AppLog.w(TAG, "Camera " + cameraId + " Error deleting texture: " + e.getMessage());
+                }
+                textureId = 0;
+            }
+
+            // 释放水印相关资源
+            if (watermarkProgram != 0) {
+                try {
+                    GLES20.glDeleteProgram(watermarkProgram);
+                } catch (Exception e) {
+                    AppLog.w(TAG, "Camera " + cameraId + " Error deleting watermark program: " + e.getMessage());
+                }
+                watermarkProgram = 0;
+            }
+
+            if (watermarkTextureId != 0) {
+                try {
+                    int[] textures = {watermarkTextureId};
+                    GLES20.glDeleteTextures(1, textures, 0);
+                } catch (Exception e) {
+                    AppLog.w(TAG, "Camera " + cameraId + " Error deleting watermark texture: " + e.getMessage());
+                }
+                watermarkTextureId = 0;
+            }
+
+            if (brandTextureId != 0) {
+                GLES20.glDeleteTextures(1, new int[]{brandTextureId}, 0);
+                brandTextureId = 0;
+            }
+            if (infoBarTextureId != 0) {
+                GLES20.glDeleteTextures(1, new int[]{infoBarTextureId}, 0);
+                infoBarTextureId = 0;
+            }
+            if (watermarkBitmap != null) {
+                watermarkBitmap.recycle();
+                watermarkBitmap = null;
+            }
+
+            // 释放 EGL 资源
+            if (eglDisplay != EGL14.EGL_NO_DISPLAY) {
+                try {
+                    EGL14.eglMakeCurrent(eglDisplay, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_CONTEXT);
+                } catch (Exception e) {
+                    AppLog.w(TAG, "Camera " + cameraId + " Error making EGL no current: " + e.getMessage());
+                }
+
+                if (eglSurface != EGL14.EGL_NO_SURFACE) {
+                    try {
+                        EGL14.eglDestroySurface(eglDisplay, eglSurface);
+                    } catch (Exception e) {
+                        AppLog.w(TAG, "Camera " + cameraId + " Error destroying EGL surface: " + e.getMessage());
+                    }
+                    eglSurface = EGL14.EGL_NO_SURFACE;
+                }
+
+                if (eglContext != EGL14.EGL_NO_CONTEXT) {
+                    try {
+                        EGL14.eglDestroyContext(eglDisplay, eglContext);
+                    } catch (Exception e) {
+                        AppLog.w(TAG, "Camera " + cameraId + " Error destroying EGL context: " + e.getMessage());
+                    }
+                    eglContext = EGL14.EGL_NO_CONTEXT;
+                }
+
+                try {
+                    EGL14.eglTerminate(eglDisplay);
+                } catch (Exception e) {
+                    AppLog.w(TAG, "Camera " + cameraId + " Error terminating EGL: " + e.getMessage());
+                }
+                eglDisplay = EGL14.EGL_NO_DISPLAY;
+            }
+        } catch (Exception e) {
+            AppLog.e(TAG, "Camera " + cameraId + " Error during release", e);
+        }
+
+        inputSurfaceTexture = null;
+
+        AppLog.d(TAG, "Camera " + cameraId + " EglSurfaceEncoder released");
+    }
+
+    /**
+     * 获取纹理 ID
+     */
+    public int getTextureId() {
+        return textureId;
+    }
+
+    /**
+     * 检查是否已初始化
+     */
+    public boolean isInitialized() {
+        return isInitialized && !isReleased;
+    }
+
+    // ===== 私有方法 =====
+
+    /**
+     * 初始化 EGL
+     */
+    private void initEgl(Surface outputSurface) {
+        // 获取 EGL Display
+        eglDisplay = EGL14.eglGetDisplay(EGL14.EGL_DEFAULT_DISPLAY);
+        if (eglDisplay == EGL14.EGL_NO_DISPLAY) {
+            throw new RuntimeException("Unable to get EGL14 display");
+        }
+
+        // 初始化 EGL
+        int[] version = new int[2];
+        if (!EGL14.eglInitialize(eglDisplay, version, 0, version, 1)) {
+            throw new RuntimeException("Unable to initialize EGL14");
+        }
+        AppLog.d(TAG, "Camera " + cameraId + " EGL initialized: " + version[0] + "." + version[1]);
+
+        // 选择 EGL 配置
+        int[] attribList = {
+                EGL14.EGL_RED_SIZE, 8,
+                EGL14.EGL_GREEN_SIZE, 8,
+                EGL14.EGL_BLUE_SIZE, 8,
+                EGL14.EGL_ALPHA_SIZE, 8,
+                EGL14.EGL_RENDERABLE_TYPE, EGL14.EGL_OPENGL_ES2_BIT,
+                EGL14.EGL_SURFACE_TYPE, EGL14.EGL_PBUFFER_BIT | EGL14.EGL_WINDOW_BIT,
+                EGLExt.EGL_RECORDABLE_ANDROID, 1,  // 重要：支持录制
+                EGL14.EGL_NONE
+        };
+
+        EGLConfig[] configs = new EGLConfig[1];
+        int[] numConfigs = new int[1];
+        if (!EGL14.eglChooseConfig(eglDisplay, attribList, 0, configs, 0, 1, numConfigs, 0)) {
+            throw new RuntimeException("Unable to find suitable EGL config");
+        }
+        eglConfig = configs[0];
+
+        // 创建 EGL Context
+        int[] contextAttribList = {
+                EGL14.EGL_CONTEXT_CLIENT_VERSION, 2,
+                EGL14.EGL_NONE
+        };
+        eglContext = EGL14.eglCreateContext(eglDisplay, eglConfig, EGL14.EGL_NO_CONTEXT, contextAttribList, 0);
+        if (eglContext == EGL14.EGL_NO_CONTEXT) {
+            throw new RuntimeException("Unable to create EGL context");
+        }
+
+        // 创建 EGL Surface（绑定到 MediaCodec 的输入 Surface）
+        int[] surfaceAttribList = {
+                EGL14.EGL_NONE
+        };
+        eglSurface = EGL14.eglCreateWindowSurface(eglDisplay, eglConfig, outputSurface, surfaceAttribList, 0);
+        if (eglSurface == EGL14.EGL_NO_SURFACE) {
+            throw new RuntimeException("Unable to create EGL window surface");
+        }
+
+        // 设置为当前上下文
+        makeCurrent();
+
+        AppLog.d(TAG, "Camera " + cameraId + " EGL setup complete");
+    }
+
+    /**
+     * 初始化 OpenGL
+     */
+    private void initGl() {
+        // 创建着色器程序
+        program = createProgram(VERTEX_SHADER, FRAGMENT_SHADER);
+        if (program == 0) {
+            throw new RuntimeException("Unable to create shader program");
+        }
+
+        // 获取属性位置
+        positionHandle = GLES20.glGetAttribLocation(program, "aPosition");
+        texCoordHandle = GLES20.glGetAttribLocation(program, "aTextureCoord");
+        mvpMatrixHandle = GLES20.glGetUniformLocation(program, "uMVPMatrix");
+        texMatrixHandle = GLES20.glGetUniformLocation(program, "uTexMatrix");
+        textureHandle = GLES20.glGetUniformLocation(program, "sTexture");
+
+        // 创建 OES 纹理
+        int[] textures = new int[1];
+        GLES20.glGenTextures(1, textures, 0);
+        textureId = textures[0];
+
+        GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, textureId);
+        GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_LINEAR);
+        GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR);
+        GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE);
+        GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE);
+
+        // 创建顶点缓冲
+        vertexBuffer = createFloatBuffer(VERTICES);
+        texCoordBuffer = createFloatBuffer(TEXTURE_COORDS);
+
+        // 四宫格模式每帧要改写顶点/纹理坐标，单独准备可写缓冲
+        laneVertexBuffer = createFloatBuffer(new float[8]);
+        laneTexCoordBuffer = createFloatBuffer(new float[8]);
+
+        // 叠加程序：左上角应用名（每一路）、四宫格的时间水印、信息条共用（失败不致命，只是这几样画不了）
+        watermarkOverlayProgram = createProgram(
+                WATERMARK_OVERLAY_VERTEX_SHADER, WATERMARK_OVERLAY_FRAGMENT_SHADER);
+        if (watermarkOverlayProgram != 0) {
+            overlayPositionHandle = GLES20.glGetAttribLocation(watermarkOverlayProgram, "aPosition");
+            overlayTexCoordHandle = GLES20.glGetAttribLocation(watermarkOverlayProgram, "aTexCoord");
+            overlayTextureHandle = GLES20.glGetUniformLocation(watermarkOverlayProgram, "sWatermark");
+            // 左上角应用名（+ 车牌号）：每一路都画，和时间水印开不开无关，
+            // 所以在这里建（每次录制一次），不放进 initWatermarkGl
+            createBrandTexture();
+        } else {
+            AppLog.w(TAG, "Camera " + cameraId + " 叠加着色器创建失败：左上角应用名、四宫格的时间水印和信息条都画不了");
+        }
+
+        // 行驶信息条的贴图（用同一个叠加程序画）
+        if (infoBar != null) {
+            if (watermarkOverlayProgram == 0) {
+                AppLog.w(TAG, "Camera " + cameraId + " 叠加着色器没建起来，信息条画不了，画面按整幅录");
+                infoBar = null;
+                barHeight = 0;
+                contentHeight = height;
+            } else {
+                int[] barTextures = new int[1];
+                GLES20.glGenTextures(1, barTextures, 0);
+                infoBarTextureId = barTextures[0];
+                GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, infoBarTextureId);
+                GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_LINEAR);
+                GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR);
+                GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE);
+                GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE);
+                AppLog.i(TAG, "Camera " + cameraId + " 行驶信息条 " + width + "x" + barHeight
+                        + "，" + infoBar.cellCount() + " 格；画面区 " + width + "x" + contentHeight);
+            }
+        }
+
+        AppLog.d(TAG, "Camera " + cameraId + " OpenGL setup complete, textureId=" + textureId);
+    }
+
+    /**
+     * 信息条：画面下面那一条，自己的视口。快照版本变了才重画、重新上传。
+     */
+    private void drawInfoBar() {
+        com.kooo.evcam.telemetry.InfoBarRenderer bar = infoBar;
+        if (bar == null || infoBarTextureId == 0 || watermarkOverlayProgram == 0) {
+            return;
+        }
+        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, infoBarTextureId);
+        if (bar.renderIfDue(com.kooo.evcam.telemetry.Telemetry.get().latest())) {
+            GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, bar.bitmap(), 0);
+        }
+        GLES20.glViewport(0, 0, width, barHeight);
+        GLES20.glUseProgram(watermarkOverlayProgram);
+
+        // 铺满这个视口；位图左上为原点，贴图上下翻
+        laneVertexScratch[0] = -1f; laneVertexScratch[1] = -1f;
+        laneVertexScratch[2] = 1f;  laneVertexScratch[3] = -1f;
+        laneVertexScratch[4] = -1f; laneVertexScratch[5] = 1f;
+        laneVertexScratch[6] = 1f;  laneVertexScratch[7] = 1f;
+        laneTexScratch[0] = 0f; laneTexScratch[1] = 1f;
+        laneTexScratch[2] = 1f; laneTexScratch[3] = 1f;
+        laneTexScratch[4] = 0f; laneTexScratch[5] = 0f;
+        laneTexScratch[6] = 1f; laneTexScratch[7] = 0f;
+        laneVertexBuffer.clear();
+        laneVertexBuffer.put(laneVertexScratch);
+        laneVertexBuffer.position(0);
+        laneTexCoordBuffer.clear();
+        laneTexCoordBuffer.put(laneTexScratch);
+        laneTexCoordBuffer.position(0);
+
+        GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, infoBarTextureId);
+        GLES20.glUniform1i(overlayTextureHandle, 0);
+        GLES20.glEnableVertexAttribArray(overlayPositionHandle);
+        GLES20.glVertexAttribPointer(overlayPositionHandle, 2, GLES20.GL_FLOAT, false, 0, laneVertexBuffer);
+        GLES20.glEnableVertexAttribArray(overlayTexCoordHandle);
+        GLES20.glVertexAttribPointer(overlayTexCoordHandle, 2, GLES20.GL_FLOAT, false, 0, laneTexCoordBuffer);
+        GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
+        GLES20.glDisableVertexAttribArray(overlayPositionHandle);
+        GLES20.glDisableVertexAttribArray(overlayTexCoordHandle);
+    }
+
+    /**
+     * 初始化时间水印相关的 OpenGL 资源（左上角应用名不在这里建，见 initGl）
+     */
+    private void initWatermarkGl() {
+        if (watermarkProgram != 0) {
+            return;  // 已经初始化过了
+        }
+
+        AppLog.d(TAG, "Camera " + cameraId + " Initializing watermark OpenGL resources");
+
+        // 创建带水印的着色器程序
+        watermarkProgram = createProgram(VERTEX_SHADER, FRAGMENT_SHADER_WITH_WATERMARK);
+        if (watermarkProgram == 0) {
+            AppLog.e(TAG, "Camera " + cameraId + " Failed to create watermark shader program");
+            return;
+        }
+
+        // 获取属性位置
+        watermarkPositionHandle = GLES20.glGetAttribLocation(watermarkProgram, "aPosition");
+        watermarkTexCoordHandle = GLES20.glGetAttribLocation(watermarkProgram, "aTextureCoord");
+        watermarkMvpMatrixHandle = GLES20.glGetUniformLocation(watermarkProgram, "uMVPMatrix");
+        watermarkTexMatrixHandle = GLES20.glGetUniformLocation(watermarkProgram, "uTexMatrix");
+        watermarkOesTextureHandle = GLES20.glGetUniformLocation(watermarkProgram, "sTexture");
+        watermarkTextureHandle = GLES20.glGetUniformLocation(watermarkProgram, "sWatermarkTexture");
+        watermarkRectHandle = GLES20.glGetUniformLocation(watermarkProgram, "uWatermarkRect");
+
+        // 创建水印纹理
+        int[] textures = new int[1];
+        GLES20.glGenTextures(1, textures, 0);
+        watermarkTextureId = textures[0];
+
+        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, watermarkTextureId);
+        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_LINEAR);
+        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR);
+        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE);
+        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE);
+
+        // 创建初始水印位图
+        watermarkBitmap = Bitmap.createBitmap(WATERMARK_WIDTH, WATERMARK_HEIGHT, Bitmap.Config.ARGB_8888);
+        updateWatermarkBitmap();
+
+        AppLog.d(TAG, "Camera " + cameraId + " Watermark OpenGL resources initialized, textureId=" + watermarkTextureId);
+    }
+
+    /**
+     * 生成左上角那块贴图。
+     *
+     * <p>只在 initGl 里画一次：应用名、版本号和车牌号在一次录制里不变（车牌号改了从下一次开始录制起生效），
+     * 没有理由每帧甚至每秒重画。</p>
+     *
+     * <p>失败不致命，和叠加程序、信息条一个规矩：记一条日志，这一路不画应用名，照常录。</p>
+     */
+    private void createBrandTexture() {
+        if (brandLine.isEmpty()) {
+            return;
+        }
+        Bitmap bitmap = null;
+        try {
+            int[] textures = new int[1];
+            GLES20.glGenTextures(1, textures, 0);
+            brandTextureId = textures[0];
+
+            GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, brandTextureId);
+            GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_LINEAR);
+            GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR);
+            GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE);
+            GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE);
+
+            Paint shadow = new Paint();
+            shadow.setColor(Color.BLACK);
+            shadow.setTextSize(BRAND_TEXT_SIZE);
+            shadow.setAntiAlias(true);
+            shadow.setTypeface(Typeface.MONOSPACE);
+
+            Paint text = new Paint();
+            text.setColor(Color.WHITE);
+            text.setTextSize(BRAND_TEXT_SIZE);
+            text.setAntiAlias(true);
+            text.setTypeface(Typeface.MONOSPACE);
+
+            // 量出来再建贴图：车牌号让这一行长短不定，写死宽度就会把尾巴裁掉。
+            // 左右各留出画阴影和描边的余量。
+            brandWidthPx = (int) Math.ceil(text.measureText(brandLine)) + 16;
+            bitmap = Bitmap.createBitmap(brandWidthPx, BRAND_HEIGHT, Bitmap.Config.ARGB_8888);
+            bitmap.eraseColor(Color.TRANSPARENT);
+            Canvas canvas = new Canvas(bitmap);
+
+            canvas.drawText(brandLine, 8, 30, shadow);
+            canvas.drawText(brandLine, 6, 28, text);
+
+            GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, bitmap, 0);
+        } catch (Exception e) {
+            AppLog.w(TAG, "Camera " + cameraId + " 左上角应用名贴图创建失败，这一路不画应用名: " + e);
+            // 已经生成的纹理删掉；brandTextureId 归零，drawBrandOverlay 就跳过
+            if (brandTextureId != 0) {
+                GLES20.glDeleteTextures(1, new int[]{brandTextureId}, 0);
+                brandTextureId = 0;
+            }
+        } finally {
+            if (bitmap != null) {
+                bitmap.recycle();
+            }
+        }
+    }
+
+    /**
+     * 画一块角标。
+     *
+     * @param alignRight true 贴右上角，false 贴左上角
+     * @param dropPx     从顶边距再往下让多少像素（见 {@link #timeBlockDropPx}）
+     */
+    private void drawOverlayQuad(int textureId, int bitmapWidth, int bitmapHeight,
+                                 boolean alignRight, int dropPx) {
+        if (textureId == 0) {
+            return;
+        }
+        float w = 2.0f * bitmapWidth / width;
+        float h = 2.0f * bitmapHeight / contentHeight;
+        float margin = 0.02f;
+        float left = alignRight ? (1.0f - margin - w) : (-1.0f + margin);
+        float right = left + w;
+        float top = 1.0f - margin - 2.0f * dropPx / contentHeight;
+        float bottom = top - h;
+
+        laneVertexScratch[0] = left;  laneVertexScratch[1] = bottom;
+        laneVertexScratch[2] = right; laneVertexScratch[3] = bottom;
+        laneVertexScratch[4] = left;  laneVertexScratch[5] = top;
+        laneVertexScratch[6] = right; laneVertexScratch[7] = top;
+
+        // 位图左上为原点，贴图要上下翻转
+        laneTexScratch[0] = 0f; laneTexScratch[1] = 1f;
+        laneTexScratch[2] = 1f; laneTexScratch[3] = 1f;
+        laneTexScratch[4] = 0f; laneTexScratch[5] = 0f;
+        laneTexScratch[6] = 1f; laneTexScratch[7] = 0f;
+
+        laneVertexBuffer.clear();
+        laneVertexBuffer.put(laneVertexScratch);
+        laneVertexBuffer.position(0);
+        laneTexCoordBuffer.clear();
+        laneTexCoordBuffer.put(laneTexScratch);
+        laneTexCoordBuffer.position(0);
+
+        GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureId);
+        GLES20.glUniform1i(overlayTextureHandle, 0);
+
+        GLES20.glEnableVertexAttribArray(overlayPositionHandle);
+        GLES20.glVertexAttribPointer(overlayPositionHandle, 2, GLES20.GL_FLOAT, false, 0,
+                laneVertexBuffer);
+        GLES20.glEnableVertexAttribArray(overlayTexCoordHandle);
+        GLES20.glVertexAttribPointer(overlayTexCoordHandle, 2, GLES20.GL_FLOAT, false, 0,
+                laneTexCoordBuffer);
+
+        GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
+
+        GLES20.glDisableVertexAttribArray(overlayPositionHandle);
+        GLES20.glDisableVertexAttribArray(overlayTexCoordHandle);
+    }
+
+    /**
+     * 更新水印位图（每秒调用一次）
+     */
+    private void updateWatermarkBitmap() {
+        if (watermarkBitmap == null) {
+            return;
+        }
+
+        String currentTime = watermarkDateFormat.format(new Date());
+        
+        // 只有时间变化时才更新
+        if (currentTime.equals(lastWatermarkTime)) {
+            return;
+        }
+        lastWatermarkTime = currentTime;
+
+        // 清除位图
+        watermarkBitmap.eraseColor(Color.TRANSPARENT);
+
+        Canvas canvas = new Canvas(watermarkBitmap);
+
+        // 设置画笔 - 阴影
+        Paint shadowPaint = new Paint();
+        shadowPaint.setColor(Color.BLACK);
+        shadowPaint.setTextSize(28);
+        shadowPaint.setAntiAlias(true);
+        shadowPaint.setTypeface(Typeface.MONOSPACE);
+
+        // 设置画笔 - 主文字
+        Paint textPaint = new Paint();
+        textPaint.setColor(Color.WHITE);
+        textPaint.setTextSize(28);
+        textPaint.setAntiAlias(true);
+        textPaint.setTypeface(Typeface.MONOSPACE);
+
+        // 第一行：时间
+        canvas.drawText(currentTime, 8, 32, shadowPaint);
+        canvas.drawText(currentTime, 6, 30, textPaint);
+
+        // 第二行：录制规格。字号小一点 —— 它是参考信息，不该抢时间那一行的位置
+        String info = watermarkInfoLine;
+        if (info != null && !info.isEmpty()) {
+            shadowPaint.setTextSize(22);
+            textPaint.setTextSize(22);
+            float baseline = 30 + WATERMARK_LINE_HEIGHT;
+            canvas.drawText(info, 8, baseline + 2, shadowPaint);
+            canvas.drawText(info, 6, baseline, textPaint);
+        }
+
+        // 上传纹理到 GPU
+        if (watermarkTextureId != 0) {
+            GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, watermarkTextureId);
+            GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, watermarkBitmap, 0);
+        }
+    }
+
+    /**
+     * 设置为当前 EGL 上下文
+     */
+    private void makeCurrent() {
+        if (!EGL14.eglMakeCurrent(eglDisplay, eglSurface, eglSurface, eglContext)) {
+            throw new RuntimeException("eglMakeCurrent failed");
+        }
+    }
+
+    /**
+     * 创建着色器程序
+     */
+    private int createProgram(String vertexSource, String fragmentSource) {
+        int vertexShader = loadShader(GLES20.GL_VERTEX_SHADER, vertexSource);
+        if (vertexShader == 0) {
+            return 0;
+        }
+
+        int fragmentShader = loadShader(GLES20.GL_FRAGMENT_SHADER, fragmentSource);
+        if (fragmentShader == 0) {
+            GLES20.glDeleteShader(vertexShader);
+            return 0;
+        }
+
+        int program = GLES20.glCreateProgram();
+        if (program == 0) {
+            AppLog.e(TAG, "Could not create program");
+            return 0;
+        }
+
+        GLES20.glAttachShader(program, vertexShader);
+        GLES20.glAttachShader(program, fragmentShader);
+        GLES20.glLinkProgram(program);
+
+        int[] linkStatus = new int[1];
+        GLES20.glGetProgramiv(program, GLES20.GL_LINK_STATUS, linkStatus, 0);
+        if (linkStatus[0] != GLES20.GL_TRUE) {
+            AppLog.e(TAG, "Could not link program: " + GLES20.glGetProgramInfoLog(program));
+            GLES20.glDeleteProgram(program);
+            return 0;
+        }
+
+        // 删除着色器（已链接到程序）
+        GLES20.glDeleteShader(vertexShader);
+        GLES20.glDeleteShader(fragmentShader);
+
+        return program;
+    }
+
+    /**
+     * 加载着色器
+     */
+    private int loadShader(int shaderType, String source) {
+        int shader = GLES20.glCreateShader(shaderType);
+        if (shader == 0) {
+            AppLog.e(TAG, "Could not create shader type " + shaderType);
+            return 0;
+        }
+
+        GLES20.glShaderSource(shader, source);
+        GLES20.glCompileShader(shader);
+
+        int[] compiled = new int[1];
+        GLES20.glGetShaderiv(shader, GLES20.GL_COMPILE_STATUS, compiled, 0);
+        if (compiled[0] == 0) {
+            AppLog.e(TAG, "Could not compile shader " + shaderType + ": " + GLES20.glGetShaderInfoLog(shader));
+            GLES20.glDeleteShader(shader);
+            return 0;
+        }
+
+        return shader;
+    }
+
+    /**
+     * 创建 FloatBuffer
+     */
+    private FloatBuffer createFloatBuffer(float[] data) {
+        ByteBuffer bb = ByteBuffer.allocateDirect(data.length * 4);
+        bb.order(ByteOrder.nativeOrder());
+        FloatBuffer fb = bb.asFloatBuffer();
+        fb.put(data);
+        fb.position(0);
+        return fb;
+    }
+
+    /**
+     * 检查 OpenGL 错误
+     */
+    private void checkGlError(String op) {
+        int error;
+        while ((error = GLES20.glGetError()) != GLES20.GL_NO_ERROR) {
+            AppLog.e(TAG, "Camera " + cameraId + " " + op + ": glError " + error);
+        }
+    }
+}

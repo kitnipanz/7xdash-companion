@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  抽屉头：7xDash 照极氪 OS 7 设置页的主卡（和设置左栏顶上那张一样，带光带的渐变卡）。
+  圆角由 MainActivity.applyMenuSideToDrawer 用 clipToOutline 裁。
+  三个 id（nav_header_title / subtitle / version）MainActivity 会去填，保留。
+
+  标题只用当前语言的应用名。另一种语言的名字不再并排，避免一屏里中英夹杂。
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingStart="12dp"
+    android:paddingTop="16dp"
+    android:paddingEnd="12dp"
+    android:paddingBottom="12dp">
+    <LinearLayout
+        android:id="@+id/nav_header_hero"
+        android:layout_width="match_parent"
+        android:layout_height="132dp"
+        android:background="@drawable/bg_settings_hero"
+        android:gravity="center_vertical"
+        android:orientation="vertical"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp">
+
+    <TextView
+        android:id="@+id/nav_header_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/app_name"
+        android:textColor="@color/nav_header_text"
+        android:textAppearance="@style/TextAppearance.Cam.Title"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/nav_header_subtitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="@string/nav_header_subtitle"
+        android:textColor="@color/nav_header_text_secondary"
+        android:textAppearance="@style/TextAppearance.Cam.Caption" />
+
+    <TextView
+        android:id="@+id/nav_header_version"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:fontFeatureSettings="tnum"
+        android:textColor="@color/nav_header_text_secondary"
+        android:textAppearance="@style/TextAppearance.Cam.Micro"
+        tools:text="Version 0.38.0" />
+    </LinearLayout>
+</LinearLayout>

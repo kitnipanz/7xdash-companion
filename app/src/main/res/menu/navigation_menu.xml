@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  抽屉菜单。三组：看（界面之间跳）、开关（直接在这里拨）、系统。
+
+  「超级后视镜」是一个开关而不是一个界面：以前要进设置 → 超级后视镜 → 拨开关，
+  三步才能做一件「开 / 关」的事。现在行尾就是开关，点这一行就拨，抽屉不收起 ——
+  拨完还看得见它变了没有。
+
+  图标全部是统一图标集里的矢量图（24dp 网格、线宽 1.7），随抽屉的着色走。
+-->
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <group android:checkableBehavior="single">
+        <item
+            android:id="@+id/nav_home"
+            android:icon="@drawable/ic_home"
+            android:title="@string/nav_home" />
+        <item
+            android:id="@+id/nav_recording"
+            android:icon="@drawable/ic_record"
+            android:title="@string/nav_recording" />
+        <item
+            android:id="@+id/nav_playback"
+            android:icon="@drawable/ic_video"
+            android:title="@string/nav_video_playback" />
+        <item
+            android:id="@+id/nav_photo_playback"
+            android:icon="@drawable/ic_photo"
+            android:title="@string/nav_photo_playback" />
+        <item
+            android:id="@+id/nav_remote"
+            android:icon="@drawable/ic_camera"
+            android:title="@string/nav_remote" />
+        <item
+            android:id="@+id/nav_eq"
+            android:icon="@drawable/ic_eq"
+            android:title="@string/nav_eq" />
+    </group>
+
+    <item android:title="@string/nav_group_switches">
+        <menu>
+            <item
+                android:id="@+id/nav_rearview"
+                android:checkable="false"
+                android:icon="@drawable/ic_rearview"
+                android:title="@string/set_section_rearview"
+                app:actionLayout="@layout/nav_switch" />
+            <item
+                android:id="@+id/nav_floating_button"
+                android:checkable="false"
+                android:icon="@drawable/ic_floating"
+                android:title="@string/set_section_floating"
+                app:actionLayout="@layout/nav_switch" />
+        </menu>
+    </item>
+
+    <item android:title="@string/nav_group_system">
+        <menu>
+            <item
+                android:id="@+id/nav_settings"
+                android:checkable="true"
+                android:icon="@drawable/ic_settings"
+                android:title="@string/nav_settings" />
+            <item
+                android:id="@+id/nav_about"
+                android:checkable="true"
+                android:icon="@drawable/ic_info"
+                android:title="@string/about_title" />
+            <!-- 最底下：和主界面那个「隐藏到后台」分开，真要退出往下找得到 -->
+            <item
+                android:id="@+id/nav_exit"
+                android:checkable="false"
+                android:icon="@drawable/ic_power"
+                android:title="@string/nav_exit" />
+        </menu>
+    </item>
+
+</menu>

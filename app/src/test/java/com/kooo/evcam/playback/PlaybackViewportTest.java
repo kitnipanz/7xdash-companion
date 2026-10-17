@@ -1,0 +1,260 @@
+package com.kooo.evcam.playback;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
+import org.junit.Test;
+
+/**
+ * {@link PlaybackViewport} 的单元测试。
+ *
+ * <p>取景算错的表现是「画面偏了一格」或「拉变形了」—— 都属于看着别扭但说不清
+ * 哪里不对的那类问题，钉在这里比在车上盯着屏幕猜要省事得多。</p>
+ */
+public class PlaybackViewportTest {
+
+    private static final float TOLERANCE = 0.01f;
+
+    /** 一块 1600×900 的视图，放一段 2560×2560 的环视录像。 */
+    private static final int VIEW_W = 1600;
+    private static final int VIEW_H = 900;
+    private static final int VIDEO = 2560;
+
+    @Test
+    public void tapsMapToTheExpectedQuadrant() {
+        assertEquals(0, PlaybackViewport.cellAt(10, 10, VIEW_W, VIEW_H));
+        assertEquals(1, PlaybackViewport.cellAt(VIEW_W - 10, 10, VIEW_W, VIEW_H));
+        assertEquals(2, PlaybackViewport.cellAt(10, VIEW_H - 10, VIEW_W, VIEW_H));
+        assertEquals(3, PlaybackViewport.cellAt(VIEW_W - 10, VIEW_H - 10, VIEW_W, VIEW_H));
+    }
+
+    /** 正中间算右下 —— 边界归属得是确定的，不能两格都认或都不认。 */
+    @Test
+    public void theExactCentreBelongsToOneQuadrant() {
+        assertEquals(3, PlaybackViewport.cellAt(VIEW_W / 2f, VIEW_H / 2f, VIEW_W, VIEW_H));
+    }
+
+    @Test
+    public void anInvalidViewYieldsNoCell() {
+        assertEquals(PlaybackViewport.NO_CELL, PlaybackViewport.cellAt(10, 10, 0, 0));
+        assertNull(PlaybackViewport.transformRects(PlaybackViewport.NO_CELL, 0, 0, VIEW_W, VIEW_H));
+        assertNull(PlaybackViewport.transformRects(PlaybackViewport.NO_CELL, VIDEO, VIDEO, 0, 0));
+        assertNull(PlaybackViewport.imageRects(PlaybackViewport.NO_CELL, 0, 0, VIEW_W, VIEW_H));
+        assertNull(PlaybackViewport.imageRects(PlaybackViewport.NO_CELL, VIDEO, VIDEO, 0, 0));
+    }
+
+    /**
+     * 照片上点哪一路：黑边不算。
+     *
+     * <p>网格里环视那一格是横的、照片是方的，两边的黑边可以很宽。按视图中线分四块
+     * 的话，点在左边那条黑边上会被算成「左侧那一路」—— 而那里根本没有画面。</p>
+     */
+    @Test
+    public void tapsOutsideThePictureBelongToNoCell() {
+        // 1600x900 的视图里，方形照片占中间 900 宽，左右各 350 的黑边
+        assertEquals("左黑边不算", PlaybackViewport.NO_CELL,
+                PlaybackViewport.cellAtInPicture(10, 450, VIDEO, VIDEO, VIEW_W, VIEW_H));
+        assertEquals("右黑边不算", PlaybackViewport.NO_CELL,
+                PlaybackViewport.cellAtInPicture(VIEW_W - 10, 450, VIDEO, VIDEO, VIEW_W, VIEW_H));
+        assertEquals("尺寸不知道时不算", PlaybackViewport.NO_CELL,
+                PlaybackViewport.cellAtInPicture(800, 450, 0, 0, VIEW_W, VIEW_H));
+    }
+
+    /** 画面之内还是按四等分，四个角各归各的。 */
+    @Test
+    public void tapsInsideThePictureMapToTheirLane() {
+        assertEquals(0, PlaybackViewport.cellAtInPicture(360, 10, VIDEO, VIDEO, VIEW_W, VIEW_H));
+        assertEquals(1, PlaybackViewport.cellAtInPicture(1240, 10, VIDEO, VIDEO, VIEW_W, VIEW_H));
+        assertEquals(2, PlaybackViewport.cellAtInPicture(360, 890, VIDEO, VIDEO, VIEW_W, VIEW_H));
+        assertEquals(3, PlaybackViewport.cellAtInPicture(1240, 890, VIDEO, VIDEO, VIEW_W, VIEW_H));
+    }
+
+    /**
+     * 竖着的视图里，黑边在上下 —— 边在哪一侧要跟着视图走，不能只认左右。
+     */
+    @Test
+    public void theBandsFollowTheViewsShape() {
+        int wide = 600;
+        int tall = 1000;
+        assertEquals("上黑边不算", PlaybackViewport.NO_CELL,
+                PlaybackViewport.cellAtInPicture(300, 10, VIDEO, VIDEO, wide, tall));
+        assertEquals("正中偏上一点点算左上", 0,
+                PlaybackViewport.cellAtInPicture(299, 299, VIDEO, VIDEO, wide, tall));
+    }
+
+    /**
+     * 照片这边的源矩形用<b>图片像素</b>，不是视图坐标。
+     *
+     * <p>这一条就是那个 bug 的形状：把视图坐标当图片坐标喂给 ImageView 的矩阵，
+     * 画面只是挪了挪位置，该放大的一点没大。</p>
+     */
+    @Test
+    public void imageRectsSourceTheImagesOwnPixels() {
+        float[] r = PlaybackViewport.imageRects(3, VIDEO, VIDEO, VIEW_W, VIEW_H);
+        assertEquals("右下那一格从图片正中间开始", VIDEO / 2f, r[0], TOLERANCE);
+        assertEquals(VIDEO / 2f, r[1], TOLERANCE);
+        assertEquals("一直到图片的右下角", VIDEO, r[2], TOLERANCE);
+        assertEquals(VIDEO, r[3], TOLERANCE);
+    }
+
+    /** 放大一格，画面得真的大一倍 —— 2×2 里的一格占的边长正好是整张的一半。 */
+    @Test
+    public void zoomingAnImageCellActuallyEnlargesIt() {
+        float[] whole = PlaybackViewport.imageRects(
+                PlaybackViewport.NO_CELL, VIDEO, VIDEO, VIEW_W, VIEW_H);
+        float wholeScale = (whole[6] - whole[4]) / (whole[2] - whole[0]);
+        for (int cell = 0; cell < PlaybackViewport.CELL_COUNT; cell++) {
+            float[] zoomed = PlaybackViewport.imageRects(cell, VIDEO, VIDEO, VIEW_W, VIEW_H);
+            float scale = (zoomed[6] - zoomed[4]) / (zoomed[2] - zoomed[0]);
+            assertEquals("第 " + cell + " 格应当正好放大一倍", wholeScale * 2f, scale, TOLERANCE);
+        }
+    }
+
+    /** 放大前后占的那块屏幕是同一块，画面不会跳到别处去。 */
+    @Test
+    public void zoomingAnImageKeepsTheSameDestination() {
+        float[] whole = PlaybackViewport.imageRects(
+                PlaybackViewport.NO_CELL, VIDEO, VIDEO, VIEW_W, VIEW_H);
+        for (int cell = 0; cell < PlaybackViewport.CELL_COUNT; cell++) {
+            float[] zoomed = PlaybackViewport.imageRects(cell, VIDEO, VIDEO, VIEW_W, VIEW_H);
+            for (int i = 4; i < 8; i++) {
+                assertEquals("目标矩形不该动", whole[i], zoomed[i], TOLERANCE);
+            }
+        }
+    }
+
+    /**
+     * 两套取景的源在不同的坐标系里，不能互相替用。
+     *
+     * <p>写成测试是因为它们长得太像：同样的参数、同样的返回，
+     * 只有源的单位不一样 —— 混用了编译器不会说话，屏幕上也只是「有点不对」。</p>
+     */
+    @Test
+    public void theTwoViewportsDoNotShareACoordinateSpace() {
+        float[] forTexture = PlaybackViewport.transformRects(3, VIDEO, VIDEO, VIEW_W, VIEW_H);
+        float[] forImage = PlaybackViewport.imageRects(3, VIDEO, VIDEO, VIEW_W, VIEW_H);
+        assertNotEquals("TextureView 那套的源是视图坐标", forImage[0], forTexture[0], TOLERANCE);
+        assertEquals("视图坐标里右下格从视图中线起", VIEW_W / 2f, forTexture[0], TOLERANCE);
+    }
+
+    /** 方形视频放进宽视图，应当留左右黑边而不是横向拉伸。 */
+    @Test
+    public void aSquareVideoIsLetterboxedRatherThanStretched() {
+        float[] r = PlaybackViewport.transformRects(
+                PlaybackViewport.NO_CELL, VIDEO, VIDEO, VIEW_W, VIEW_H);
+        float destWidth = r[6] - r[4];
+        float destHeight = r[7] - r[5];
+        assertEquals("方形视频的目标区域也应当是方的", destHeight, destWidth, TOLERANCE);
+        assertEquals("高度应当吃满视图", VIEW_H, destHeight, TOLERANCE);
+        assertTrue("左右应当有黑边", r[4] > 0);
+        assertEquals("应当左右居中", r[4], VIEW_W - r[6], TOLERANCE);
+    }
+
+    /** 不放大时，源矩形就是整块视图。 */
+    @Test
+    public void theWholePictureSourcesTheEntireView() {
+        float[] r = PlaybackViewport.transformRects(
+                PlaybackViewport.NO_CELL, VIDEO, VIDEO, VIEW_W, VIEW_H);
+        assertEquals(0f, r[0], TOLERANCE);
+        assertEquals(0f, r[1], TOLERANCE);
+        assertEquals(VIEW_W, r[2], TOLERANCE);
+        assertEquals(VIEW_H, r[3], TOLERANCE);
+    }
+
+    /** 每一格的源矩形应当正好是视图的四分之一。 */
+    @Test
+    public void eachQuadrantSourcesItsOwnCorner() {
+        float halfWidth = VIEW_W / 2f;
+        float halfHeight = VIEW_H / 2f;
+        float[][] expected = {
+                {0, 0}, {halfWidth, 0}, {0, halfHeight}, {halfWidth, halfHeight},
+        };
+        for (int cell = 0; cell < PlaybackViewport.CELL_COUNT; cell++) {
+            float[] r = PlaybackViewport.transformRects(cell, VIDEO, VIDEO, VIEW_W, VIEW_H);
+            assertEquals("格 " + cell + " 左边界", expected[cell][0], r[0], TOLERANCE);
+            assertEquals("格 " + cell + " 上边界", expected[cell][1], r[1], TOLERANCE);
+            assertEquals("格 " + cell + " 宽", halfWidth, r[2] - r[0], TOLERANCE);
+            assertEquals("格 " + cell + " 高", halfHeight, r[3] - r[1], TOLERANCE);
+        }
+    }
+
+    /** 放大一路与整幅显示占的位置一样大 —— 2×2 等分，比例不变。 */
+    @Test
+    public void zoomingKeepsTheSameDestination() {
+        float[] whole = PlaybackViewport.transformRects(
+                PlaybackViewport.NO_CELL, VIDEO, VIDEO, VIEW_W, VIEW_H);
+        for (int cell = 0; cell < PlaybackViewport.CELL_COUNT; cell++) {
+            float[] zoomed = PlaybackViewport.transformRects(cell, VIDEO, VIDEO, VIEW_W, VIEW_H);
+            for (int i = 4; i < 8; i++) {
+                assertEquals("格 " + cell + " 目标矩形应与整幅一致", whole[i], zoomed[i], TOLERANCE);
+            }
+        }
+    }
+
+    /** 反过来：宽视频放进窄视图，应当留上下黑边。 */
+    @Test
+    public void aWideVideoIsLetterboxedTopAndBottom() {
+        float[] r = PlaybackViewport.transformRects(
+                PlaybackViewport.NO_CELL, 1920, 1080, 800, 800);
+        assertEquals("宽度应当吃满视图", 800f, r[6] - r[4], TOLERANCE);
+        assertTrue("上下应当有黑边", r[5] > 0);
+        assertEquals("应当上下居中", r[5], 800 - r[7], TOLERANCE);
+        assertEquals("应当保持 16:9", 16f / 9f, (r[6] - r[4]) / (r[7] - r[5]), 0.01f);
+    }
+
+    /** 视图正好就是视频比例时，不该留黑边。 */
+    @Test
+    public void aMatchingAspectFillsTheView() {
+        float[] r = PlaybackViewport.transformRects(
+                PlaybackViewport.NO_CELL, VIDEO, VIDEO, 900, 900);
+        assertEquals(0f, r[4], TOLERANCE);
+        assertEquals(0f, r[5], TOLERANCE);
+        assertEquals(900f, r[6], TOLERANCE);
+        assertEquals(900f, r[7], TOLERANCE);
+    }
+
+    /** 只有每格是正方形的 2×2 才是四路鱼眼：环视录像 2560×2560 算，座舱 16:9 不算。 */
+    @Test
+    public void onlySquareCellsCountAsFourFisheyeLanes() {
+        assertTrue(PlaybackViewport.hasSquareCells(2560, 2560));
+        assertTrue(PlaybackViewport.hasSquareCells(2560, 2500));
+        assertFalse(PlaybackViewport.hasSquareCells(3840, 2160));
+        assertFalse(PlaybackViewport.hasSquareCells(1920, 1080));
+        assertFalse(PlaybackViewport.hasSquareCells(0, 0));
+        assertFalse(PlaybackViewport.hasSquareCells(2560, -1));
+    }
+
+    /** 带行驶信息条的环视录像：减掉 100 像素格子更方，那 100 像素就是信息条。 */
+    @Test
+    public void anInfoBarUnderTheGridIsRecognisedByItsGeometry() {
+        assertEquals(0, PlaybackViewport.infoBarInset(2560, 2560, true));
+        assertEquals(0, PlaybackViewport.infoBarInset(2560, 2570, true));
+        assertEquals(100, PlaybackViewport.infoBarInset(2560, 2660, true));
+        assertEquals(100, PlaybackViewport.infoBarInset(2560, 2670, true));
+        assertEquals(100, PlaybackViewport.infoBarInset(1280, 1385, true));
+        assertEquals("整幅录像没有格子可比", 0, PlaybackViewport.infoBarInset(1920, 1180, false));
+        assertEquals(0, PlaybackViewport.infoBarInset(0, 0, true));
+    }
+
+    /** 放大一格时，格子只占信息条以上的部分；点在信息条上不算任何一格。 */
+    @Test
+    public void cellsAboveAnInfoBarStopAtTheBar() {
+        // 2560x2660 的视频铺在同样大的视图上（1:1），下面 100 是信息条
+        float[] r = PlaybackViewport.transformRects(2, 2560, 2660, 100, 2560, 2660);
+        assertEquals(0f, r[0], TOLERANCE);
+        assertEquals(1280f, r[1], TOLERANCE);
+        assertEquals(1280f, r[2], TOLERANCE);
+        assertEquals(2560f, r[3], TOLERANCE);
+        assertEquals(PlaybackViewport.NO_CELL,
+                PlaybackViewport.cellAtInPicture(100, 2620, 2560, 2660, 100, 2560, 2660));
+        assertEquals(2, PlaybackViewport.cellAtInPicture(100, 2000, 2560, 2660, 100, 2560, 2660));
+        assertEquals(1, PlaybackViewport.cellAtInPicture(2000, 100, 2560, 2660, 100, 2560, 2660));
+        // 没有信息条时和原来一样
+        float[] plain = PlaybackViewport.transformRects(2, 2560, 2560, 0, 2560, 2560);
+        assertEquals(1280f, plain[1], TOLERANCE);
+        assertEquals(2560f, plain[3], TOLERANCE);
+    }
+}

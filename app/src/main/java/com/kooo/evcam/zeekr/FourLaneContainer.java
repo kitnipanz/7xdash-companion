@@ -1,0 +1,967 @@
+package com.kooo.evcam.zeekr;
+
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
+import android.animation.ValueAnimator;
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.graphics.Canvas;
+import android.graphics.Matrix;
+import android.graphics.Paint;
+import android.graphics.RectF;
+import android.util.AttributeSet;
+import android.util.Size;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.animation.PathInterpolator;
+
+import androidx.core.content.ContextCompat;
+
+import com.kooo.evcam.AppConfig;
+import com.kooo.evcam.AppLog;
+import com.kooo.evcam.camera.LaneOrientation;
+import com.kooo.evcam.AutoFitTextureView;
+import com.kooo.evcam.R;
+import com.kooo.evcam.ui.MotionPolicy;
+
+/**
+ * 把一路四联合成流显示成 2x2 四宫格的容器。
+ *
+ * <h3>为什么是「重画子视图」而不是 OpenGL</h3>
+ *
+ * <p>直觉上更省事的做法，是自己在 GL 线程建一个外部纹理（OES）交给相机，
+ * 再用着色器把四个画面渲染出来。<b>不要走这条路。</b>公开资料里记录过在真车上的结果：
+ * 用 GL 自建的 SurfaceTexture 顶替原本正常工作的生产者之后，预览会崩溃。
+ * <b>本项目没有独立验证这一条</b> —— 它没被验证过的代价是一次实车翻车，
+ * 而下面这套结构本项目验证过，那就够了。</p>
+ *
+ * <p>本类采用的就是后者这套<b>已在真车验证过的结构</b>：</p>
+ *
+ * <pre>
+ *   Camera2 ──写入──&gt; 一个<b>普通的</b> AutoFitTextureView（唯一的相机消费者，不被改造）
+ *                              │
+ *                              │ 父容器在 dispatchDraw 里把同一个子视图画 4 次，
+ *                              │ 每次裁剪到一个格子、并把该画面的源矩形映射过去
+ *                              ▼
+ *                        2x2 四宫格
+ * </pre>
+ *
+ * <p>关键点：相机链路完全没被动过。子视图就是一个标准 TextureView，
+ * 上游 SingleCamera 拿到的是它自己的 SurfaceTexture，行为与其他车型一模一样。
+ * 我们只改变「这个已经在正常工作的子视图怎么被画出来」。</p>
+ *
+ * <h3>为什么用源尺寸而不是缓冲区尺寸算几何</h3>
+ *
+ * <p>车机 HAL 有时只声明一个较小的 Surface 提示尺寸（例如 640x480），但内部送来的
+ * 仍是同一份四联合成内容，只是被压扁了。因此拆分几何必须按<b>合成流的真实尺寸</b>
+ * （如 1280x5140）计算，得到归一化窗口后再套到子视图的实际绘制区域上。
+ * 这样无论缓冲区多大，四个画面的位置和比例都正确。</p>
+ *
+ * <h3>鱼眼校正</h3>
+ *
+ * <p>开着的时候，每一格不再是一个矩阵画一次，而是切成小格逐格反投影（{@link FisheyeMesh}），
+ * 画的仍然是同一个子视图，相机链路照样没动。开关和图片回看、视频回看是同一个
+ * （{@link AppConfig#isFisheyeCorrection}），投影、视野、强度也用同一套设置。
+ * 容器自己听开关：拨开关的是动作栏上那个按钮自己，MainActivity 不用接线。</p>
+ *
+ * <p>开发者选项里还有一种算法：GPU 逐像素（{@link PreviewDewarp}）。那时子视图里的画面
+ * 在进来之前就已经校正好了，这里照常按矩阵画，不再分格。</p>
+ */
+public class FourLaneContainer extends ViewGroup {
+
+    private static final String TAG = "FourLaneContainer";
+
+    /**
+     * 每个画面在格子里的缩放方式。
+     *
+     * <p>这是容器级的默认值；每一格可以在 {@link Cell#fit} 里单独说，
+     * 说了就以那一格的为准。</p>
+     */
+    public enum ScaleMode {
+        /** 保持画面原始比例，格子内留黑边。合成流画面是正方形，默认用这个。 */
+        FIT,
+        /** 填满格子，比例不变，超出的那一边居中裁切。 */
+        FILL
+    }
+
+    /** 显示模式。 */
+    public enum DisplayMode {
+        /** 2x2 四宫格。 */
+        GRID,
+        /** 只显示某一个画面，铺满整个容器。 */
+        SINGLE,
+        /** 不拆分，原样显示整条合成流。用于排查问题。 */
+        RAW
+    }
+
+    /**
+     * 一格怎么摆、怎么显示。
+     *
+     * <h3>为什么这里再定义一遍</h3>
+     *
+     * <p>配置里那份是 {@code profile.LaneLayout}。这个容器属于「怎么画」，
+     * 不该反过来依赖「配置怎么存」—— 中间隔一层，配置的字段改名不会波及绘制。
+     * 调用方负责翻译，就一行的事。</p>
+     */
+    public static final class Cell {
+        /** 显示合成流里的哪一格。 */
+        public int laneIndex;
+        /** 这一格自己的缩放方式；null 表示跟容器走。 */
+        public ScaleMode fit;
+        /** 鱼眼校正开着时这一格的缩放方式；null 表示跟容器走（默认填充）。 */
+        public ScaleMode fitCorrected;
+        /** 在容器里的位置与大小，容器宽高的比例。 */
+        public float x;
+        public float y;
+        public float width = 1f;
+        public float height = 1f;
+        /** 顺时针旋转 0/90/180/270。 */
+        public int rotation;
+        /** 左右镜像。 */
+        public boolean mirrored;
+        /** 四边各裁掉多少，这一格画面宽高的比例。 */
+        public float cropTop;
+        public float cropBottom;
+        public float cropLeft;
+        public float cropRight;
+        /** 画面在格子里的缩放与平移。 */
+        public float scaleX = 1f;
+        public float scaleY = 1f;
+        public float translateX;
+        public float translateY;
+    }
+
+    /** 每一格的摆法；为空时退回 2×2 等分。 */
+    private Cell[] cells;
+
+    private final Matrix drawMatrix = new Matrix();
+    private final RectF sourceRect = new RectF();
+    private final RectF destinationRect = new RectF();
+
+    private AutoFitTextureView textureView;
+
+    /** 合成流的真实尺寸（不是缓冲区尺寸）。 */
+    private int sourceWidth;
+    private int sourceHeight;
+    private CompositeStreamGeometry.Plan plan;
+
+    private ScaleMode scaleMode = ScaleMode.FIT;
+    /**
+     * 鱼眼校正开着时的容器级默认值。校正后上下是天和地，裁掉一点换中间更大；
+     * 只开环视时每格比画面宽，「适应」会在左右留两条黑。见 {@code LaneLayout.fitCorrected}。
+     */
+    private final ScaleMode correctedScaleMode = ScaleMode.FILL;
+    private DisplayMode displayMode = DisplayMode.GRID;
+    private int focusedLane;
+    /** laneOrder[格子位置] = 合成流中的画面序号。 */
+    private int[] laneOrder = {0, 1, 2, 3};
+
+    /** 最近一次按下的位置：点画面放大时，靠它知道点的是哪一格。 */
+    private float lastTouchX = -1f;
+    private float lastTouchY = -1f;
+
+    /**
+     * 四宫格 ⇄ 单画面的过渡。
+     *
+     * <p>点开一格时，那一格从自己的位置<b>长</b>到铺满，而不是一下切过去；收回时反过来。
+     * 相机没有重新取流 —— 动的只是同一个子视图被画进去的那个矩形，不额外占资源。
+     * 模式本身（{@link #getDisplayMode}）立刻就是新的，过渡只管画。</p>
+     */
+    private static final long GROW_MS = 280;
+    private ValueAnimator growAnimator;
+    private boolean transitioning;
+    private int transitionLane;
+    /** 0 = 在自己的格子里，1 = 铺满。 */
+    private float growProgress = 1f;
+    private final RectF gridRect = new RectF();
+    /** 长大中的那一格先垫一块底，免得留边的地方透出后面的格子。 */
+    private final Paint backdrop = new Paint();
+
+    /**
+     * 最近一个挂上窗口的实例。
+     *
+     * <p>「从诊断页回来，四宫格变成了一整幅」这种事，事后问不出是哪个实例、为什么。
+     * 卡顿报告和诊断报告靠它说出主界面上的四宫格此刻在画什么。</p>
+     */
+    private static volatile java.lang.ref.WeakReference<FourLaneContainer> lastAttached;
+
+    /** 上一帧走的是哪条绘制路径。变了才记日志 —— 每帧都记会把日志冲掉。 */
+    private String drawPath = "";
+    /** [四宫格 / 单画面 / 过渡][不校正 / 分格校正 / GPU 校正]。都是常量，每帧比较不分配。 */
+    private static final String[][] DRAW_PATHS = {
+            {"grid", "grid, fisheye corrected", "grid, fisheye on GPU"},
+            {"single lane", "single lane, fisheye corrected", "single lane, fisheye on GPU"},
+            {"grow transition", "grow transition, fisheye corrected", "grow transition, fisheye on GPU"},
+    };
+
+    /** 屏幕上的鱼眼校正开没开。挂上窗口时读，之后开关或设置一变就重读。 */
+    private boolean fisheye;
+    /**
+     * 这一帧要不要分格。GPU 逐像素校正的管线接着的时候（{@link PreviewDewarp}），
+     * 子视图里的画面已经是校正过的，再分格就校正了两遍。每次 dispatchDraw 开头定一次。
+     */
+    private boolean meshThisFrame;
+    private final FisheyeMesh mesh = new FisheyeMesh();
+    private final FisheyeMesh.Painter paintTexture =
+            canvas -> drawChild(canvas, textureView, getDrawingTime());
+    /** 这一格的旋转、镜像。校正时它先作用在画布上，格子在转之前的框里切。 */
+    private final Matrix cellMatrix = new Matrix();
+    /** 拿住它：SharedPreferences 只弱引用监听器。 */
+    private SharedPreferences.OnSharedPreferenceChangeListener fisheyeListener;
+
+    public FourLaneContainer(Context context) {
+        this(context, null);
+    }
+
+    public FourLaneContainer(Context context, AttributeSet attrs) {
+        super(context, attrs);
+        // ViewGroup 默认不调用 onDraw，但我们要自己控制子视图的绘制
+        setWillNotDraw(false);
+        setClipChildren(true);
+        backdrop.setColor(ContextCompat.getColor(context, R.color.preview_frame_background));
+    }
+
+    @Override
+    protected void onFinishInflate() {
+        super.onFinishInflate();
+        // 布局里唯一的 TextureView 子视图就是相机的消费者
+        for (int i = 0; i < getChildCount(); i++) {
+            View child = getChildAt(i);
+            if (child instanceof AutoFitTextureView) {
+                textureView = (AutoFitTextureView) child;
+                break;
+            }
+        }
+        if (textureView == null) {
+            AppLog.e(TAG, "布局里没有 AutoFitTextureView 子视图，四宫格无法工作");
+        }
+    }
+
+    /** 相机预览用的 TextureView。上游相机管线直接用它，不要替换。 */
+    public AutoFitTextureView getTextureView() {
+        return textureView;
+    }
+
+    // ------------------------------------------------------------------
+    // 配置
+    // ------------------------------------------------------------------
+
+    /**
+     * 设置合成流的<b>真实</b>尺寸（来自 {@link ZeekrCameraLocator} 的探测结果）。
+     *
+     * <p>不要传预览缓冲区的尺寸——HAL 可能给一个压扁的小尺寸提示。
+     * 传进来的尺寸如果不像合成流，会被忽略，以免把已经正确的几何降级掉。</p>
+     */
+    public void setSourceSize(Size size) {
+        if (size != null) {
+            setSourceSize(size.getWidth(), size.getHeight());
+        }
+    }
+
+    /** @see #setSourceSize(Size) */
+    public void setSourceSize(int width, int height) {
+        if (width <= 0 || height <= 0) {
+            return;
+        }
+        if (!CompositeStreamGeometry.looksLikeComposite(StreamLayoutTable.compositeCameraId(), width, height)) {
+            AppLog.d(TAG, "忽略非合成流尺寸 " + width + "x" + height + "（可能是 HAL 的小尺寸提示）"
+                    + " compositeCamera=" + StreamLayoutTable.compositeCameraId() + " " + instanceTag());
+            return;
+        }
+        if (width == sourceWidth && height == sourceHeight) {
+            return;
+        }
+        sourceWidth = width;
+        sourceHeight = height;
+        rebuildPlan();
+    }
+
+    public void setScaleMode(ScaleMode mode) {
+        if (mode != null && mode != scaleMode) {
+            scaleMode = mode;
+            invalidate();
+        }
+    }
+
+    public ScaleMode getScaleMode() {
+        return scaleMode;
+    }
+
+    public DisplayMode getDisplayMode() {
+        return displayMode;
+    }
+
+    public int getFocusedLane() {
+        return focusedLane;
+    }
+
+    @Override
+    public boolean onTouchEvent(android.view.MotionEvent event) {
+        if (event.getActionMasked() == android.view.MotionEvent.ACTION_DOWN) {
+            lastTouchX = event.getX();
+            lastTouchY = event.getY();
+        }
+        return super.onTouchEvent(event);
+    }
+
+    /** 最近一次按下的地方是哪一路；不在四宫格、或者按在空处，返回 -1。 */
+    public int laneAtLastTouch() {
+        return laneAt(lastTouchX, lastTouchY);
+    }
+
+    /**
+     * 这个点落在哪一路上（合成流里的画面序号）。只在四宫格时有意义。
+     *
+     * <p>有配置时按每一格的位置和大小找，后画的盖在上面，所以从后往前找 ——
+     * 点到的是看得见的那一格。没有配置时就是 2×2 等分。</p>
+     */
+    public int laneAt(float x, float y) {
+        int width = getWidth();
+        int height = getHeight();
+        if (displayMode != DisplayMode.GRID || width <= 0 || height <= 0 || x < 0f || y < 0f) {
+            return -1;
+        }
+        Cell[] activeCells = cells;
+        if (activeCells != null) {
+            for (int i = activeCells.length - 1; i >= 0; i--) {
+                Cell cell = activeCells[i];
+                if (cell == null || cell.laneIndex < 0
+                        || cell.laneIndex >= CompositeStreamGeometry.LANE_COUNT) {
+                    continue;
+                }
+                if (x >= cell.x * width && x < (cell.x + cell.width) * width
+                        && y >= cell.y * height && y < (cell.y + cell.height) * height) {
+                    return cell.laneIndex;
+                }
+            }
+            return -1;
+        }
+        int column = x < width / 2f ? 0 : 1;
+        int row = y < height / 2f ? 0 : 1;
+        return laneOrder[row * 2 + column];
+    }
+
+    /** 切到只看某一个画面。从四宫格点开时，那一格长到铺满。 */
+    public void focusLane(int index) {
+        focusLane(index, true);
+    }
+
+    /**
+     * @param animate false 时不在容器里做「从格子长出来」的过渡。三路布局里放大时长大的是
+     *                整块环视，过渡由主界面按实际位置做；容器里再长一次就是两层动画叠在一起
+     */
+    public void focusLane(int index, boolean animate) {
+        if (index < 0 || index >= CompositeStreamGeometry.LANE_COUNT) {
+            return;
+        }
+        boolean fromGrid = displayMode == DisplayMode.GRID;
+        focusedLane = index;
+        displayMode = DisplayMode.SINGLE;
+        if (fromGrid && animate) {
+            animateGrow(0f, 1f);
+        } else {
+            // 单画面里点一下换下一路：同一个位置换内容，不需要过渡
+            stopGrow();
+            invalidate();
+        }
+    }
+
+    /** 回到 2x2 四宫格。从单画面收回时，那一格缩回自己的格子。 */
+    public void showGrid() {
+        showGrid(true);
+    }
+
+    /** @param animate false 时直接回到四宫格，理由同 {@link #focusLane(int, boolean)} */
+    public void showGrid(boolean animate) {
+        boolean fromSingle = displayMode == DisplayMode.SINGLE;
+        displayMode = DisplayMode.GRID;
+        if (fromSingle && animate) {
+            animateGrow(1f, 0f);
+        } else {
+            stopGrow();
+            invalidate();
+        }
+    }
+
+    /** 不拆分，原样显示整条合成流（排查用）。 */
+    public void showRaw() {
+        stopGrow();
+        displayMode = DisplayMode.RAW;
+        invalidate();
+    }
+
+    private void animateGrow(float from, float to) {
+        stopGrow();
+        if (getWidth() <= 0 || getHeight() <= 0 || !MotionPolicy.decorative(getContext())) {
+            invalidate();
+            return;
+        }
+        transitionLane = focusedLane;
+        growProgress = from;
+        transitioning = true;
+        growAnimator = ValueAnimator.ofFloat(from, to);
+        growAnimator.setDuration(GROW_MS);
+        growAnimator.setInterpolator(new PathInterpolator(0.4f, 0f, 0.2f, 1f));
+        growAnimator.addUpdateListener(animation -> {
+            growProgress = (float) animation.getAnimatedValue();
+            invalidate();
+        });
+        growAnimator.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                transitioning = false;
+                invalidate();
+            }
+        });
+        growAnimator.start();
+    }
+
+    private void stopGrow() {
+        if (growAnimator != null) {
+            growAnimator.cancel();
+            growAnimator = null;
+        }
+        transitioning = false;
+    }
+
+    /**
+     * 调整画面在四宫格中的排列。
+     *
+     * @param order 长度为 4 的数组，order[格子位置] = 合成流中的画面序号
+     */
+    public void setLaneOrder(int[] order) {
+        if (order == null || order.length != CompositeStreamGeometry.LANE_COUNT) {
+            return;
+        }
+        boolean[] seen = new boolean[CompositeStreamGeometry.LANE_COUNT];
+        for (int value : order) {
+            if (value < 0 || value >= CompositeStreamGeometry.LANE_COUNT || seen[value]) {
+                AppLog.w(TAG, "忽略非法的画面排列");
+                return;
+            }
+            seen[value] = true;
+        }
+        laneOrder = order.clone();
+        invalidate();
+    }
+
+    public int[] getLaneOrder() {
+        return laneOrder.clone();
+    }
+
+    /**
+     * 四路在合成帧里的归一化窗口，按画面序号排：每路 u0,v0,u1,v1。
+     * 远程预览用它把长条拆开。不是合成流时返回 false。
+     */
+    public boolean copyLaneWindows(float[] out) {
+        CompositeStreamGeometry.Plan current = plan;
+        if (current == null || !current.isComposite()
+                || out == null || out.length < CompositeStreamGeometry.LANE_COUNT * 4) {
+            return false;
+        }
+        for (int i = 0; i < CompositeStreamGeometry.LANE_COUNT; i++) {
+            CompositeStreamGeometry.Lane lane = current.lane(i);
+            int at = i * 4;
+            out[at] = lane.u0;
+            out[at + 1] = lane.v0;
+            out[at + 2] = lane.u1;
+            out[at + 3] = lane.v1;
+        }
+        return true;
+    }
+
+    /**
+     * 每一格摆在哪、怎么显示。
+     *
+     * <p>传 null 或空数组就退回 2×2 等分 —— 这也是没有配置时的样子，
+     * 和这个功能存在之前完全一致。</p>
+     */
+    public void setCells(Cell[] value) {
+        cells = value == null || value.length == 0 ? null : value.clone();
+        invalidate();
+    }
+
+    /** 当前是否真的按四联合成流在拆分显示。 */
+    public boolean isCompositeActive() {
+        return plan != null && plan.isComposite() && displayMode != DisplayMode.RAW;
+    }
+
+    /** 当前拆分结果的可读描述。只进日志和诊断报告；状态条上的那一行由主界面按当前语言拼。 */
+    public String describePlan() {
+        return plan == null ? "no composite size yet" : plan.toString();
+    }
+
+    /** 这个实例此刻的状态，一行。 */
+    public String describeState() {
+        CompositeStreamGeometry.Plan current = plan;
+        Cell[] activeCells = cells;
+        return instanceTag()
+                + " attached=" + isAttachedToWindow()
+                + " shown=" + isShown()
+                + " size=" + getWidth() + "x" + getHeight()
+                + " source=" + sourceWidth + "x" + sourceHeight
+                + " compositeCamera=" + StreamLayoutTable.compositeCameraId()
+                + " plan=" + (current == null ? "none"
+                        : current.isComposite() ? "split into " + current.laneCount() : "not split")
+                + " mode=" + displayMode
+                + " cells=" + (activeCells == null ? "default 2x2" : String.valueOf(activeCells.length))
+                + " fisheye=" + (!fisheye ? "off"
+                        : PreviewDewarp.isActive(textureView) ? "gpu" : "mesh")
+                + " drawing=" + (drawPath.isEmpty() ? "not drawn yet" : drawPath);
+    }
+
+    /** 主界面上那个四宫格此刻的状态。 */
+    public static String describeAttached() {
+        java.lang.ref.WeakReference<FourLaneContainer> ref = lastAttached;
+        FourLaneContainer container = ref == null ? null : ref.get();
+        return container == null ? "no container attached" : container.describeState();
+    }
+
+    private String instanceTag() {
+        return "container@" + Integer.toHexString(System.identityHashCode(this));
+    }
+
+    @Override
+    protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        lastAttached = new java.lang.ref.WeakReference<>(this);
+        readFisheye();
+        fisheyeListener = new AppConfig(getContext()).onFisheyeChanged(this::readFisheye);
+        AppLog.i(TAG, "attached: " + describeState());
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        AppLog.i(TAG, "detached: " + describeState());
+        new AppConfig(getContext()).removeFisheyeListener(fisheyeListener);
+        fisheyeListener = null;
+        super.onDetachedFromWindow();
+    }
+
+    /** 读鱼眼校正的开关和参数。挂上窗口时读一次，之后开关或设置一变再读。 */
+    private void readFisheye() {
+        AppConfig config = new AppConfig(getContext());
+        fisheye = config.isFisheyeCorrection();
+        mesh.setCorrection(config.getFisheyeFov(), config.getFisheyeProjection());
+        AppLog.i(TAG, "鱼眼校正 " + (fisheye
+                ? "开：" + mesh.projection() + " " + mesh.fovDegrees() + "°"
+                : "关") + " " + instanceTag());
+        invalidate();
+    }
+
+    /** 绘制路径变了就记一笔。传进来的都是常量字符串，每帧比较不分配。 */
+    private void noteDrawPath(String path) {
+        if (!path.equals(drawPath)) {
+            drawPath = path;
+            AppLog.i(TAG, "now drawing " + path + ": " + describeState());
+        }
+    }
+
+    private void rebuildPlan() {
+        if (sourceWidth > 0 && sourceHeight > 0) {
+            plan = CompositeStreamGeometry.analyse(
+                    StreamLayoutTable.compositeCameraId(), sourceWidth, sourceHeight);
+            AppLog.i(TAG, "合成流拆分方案: " + plan);
+        } else {
+            plan = null;
+        }
+        invalidate();
+    }
+
+    // ------------------------------------------------------------------
+    // 布局与绘制
+    // ------------------------------------------------------------------
+
+    @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        int width = MeasureSpec.getSize(widthMeasureSpec);
+        int height = MeasureSpec.getSize(heightMeasureSpec);
+        // 子视图铺满容器：合成流整帧被拉伸到这块区域，
+        // 之后按归一化窗口取每个画面，比例由绘制阶段还原
+        int childWidth = MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY);
+        int childHeight = MeasureSpec.makeMeasureSpec(height, MeasureSpec.EXACTLY);
+        for (int i = 0; i < getChildCount(); i++) {
+            View child = getChildAt(i);
+            if (child.getVisibility() != GONE) {
+                child.measure(childWidth, childHeight);
+            }
+        }
+        setMeasuredDimension(width, height);
+    }
+
+    @Override
+    protected void onLayout(boolean changed, int l, int t, int r, int b) {
+        int width = r - l;
+        int height = b - t;
+        for (int i = 0; i < getChildCount(); i++) {
+            View child = getChildAt(i);
+            if (child.getVisibility() != GONE) {
+                child.layout(0, 0, width, height);
+            }
+        }
+    }
+
+    @Override
+    protected void dispatchDraw(Canvas canvas) {
+        CompositeStreamGeometry.Plan current = plan;
+        if (textureView == null || current == null || !current.isComposite()
+                || displayMode == DisplayMode.RAW) {
+            // 尺寸未知、不是合成流，或用户选了原样显示：走默认绘制
+            noteDrawPath(textureView == null ? "whole frame (no texture view)"
+                    : current == null ? "whole frame (no source size set on this container)"
+                    : !current.isComposite() ? "whole frame (plan says not composite)"
+                    : "whole frame (raw mode)");
+            super.dispatchDraw(canvas);
+            return;
+        }
+
+        int width = getWidth();
+        int height = getHeight();
+        if (width <= 0 || height <= 0) {
+            return;
+        }
+        boolean gpu = PreviewDewarp.isActive(textureView);
+        meshThisFrame = fisheye && !gpu;
+        noteDrawPath(DRAW_PATHS[transitioning ? 2 : displayMode == DisplayMode.SINGLE ? 1 : 0]
+                [!fisheye ? 0 : gpu ? 2 : 1]);
+
+        if (transitioning) {
+            // 过渡中：先照常画四宫格（主角那一格除外），再把主角从它自己的格子
+            // 插值到铺满。它盖在别的格子上面「长」出来，收回时反过来缩回去
+            int index = Math.min(transitionLane, current.laneCount() - 1);
+            drawGrid(canvas, current, width, height, index);
+            gridRectFor(index, width, height, gridRect);
+            float t = growProgress;
+            float left = gridRect.left * (1f - t);
+            float top = gridRect.top * (1f - t);
+            float right = gridRect.right + (width - gridRect.right) * t;
+            float bottom = gridRect.bottom + (height - gridRect.bottom) * t;
+            canvas.drawRect(left, top, right, bottom, backdrop);
+            drawLane(canvas, current.lane(index), cellFor(index),
+                    left, top, right - left, bottom - top, ScaleMode.FILL);
+            return;
+        }
+
+        if (displayMode == DisplayMode.SINGLE) {
+            int index = Math.min(focusedLane, current.laneCount() - 1);
+            drawLane(canvas, current.lane(index), cellFor(index), 0f, 0f, width, height,
+                    ScaleMode.FILL);
+            return;
+        }
+
+        drawGrid(canvas, current, width, height, -1);
+    }
+
+    /** 四宫格。{@code skipLane} 那一格不画（过渡时它由上面单独画）；-1 表示都画。 */
+    private void drawGrid(Canvas canvas, CompositeStreamGeometry.Plan current,
+                          int width, int height, int skipLane) {
+        Cell[] activeCells = cells;
+        if (activeCells != null) {
+            for (Cell cell : activeCells) {
+                if (cell == null || cell.laneIndex < 0
+                        || cell.laneIndex >= current.laneCount()
+                        || cell.laneIndex == skipLane) {
+                    continue;
+                }
+                drawLane(canvas, current.lane(cell.laneIndex), cell,
+                        cell.x * width, cell.y * height,
+                        cell.width * width, cell.height * height, null);
+            }
+            return;
+        }
+
+        // 没有配置时的样子：2×2 等分
+        float cellWidth = width / 2f;
+        float cellHeight = height / 2f;
+        for (int cell = 0; cell < CompositeStreamGeometry.LANE_COUNT; cell++) {
+            int laneIndex = laneOrder[cell];
+            if (laneIndex >= current.laneCount() || laneIndex == skipLane) {
+                continue;
+            }
+            float left = (cell % 2) * cellWidth;
+            float top = (cell / 2) * cellHeight;
+            drawLane(canvas, current.lane(laneIndex), null, left, top, cellWidth, cellHeight, null);
+        }
+    }
+
+    /**
+     * 某一路此刻在容器里占的矩形（容器坐标）；还没量出尺寸时返回 false。
+     * 放大过渡拿它当起点：按配置里的摆位算，不假设 2×2。
+     */
+    public boolean laneBounds(int laneIndex, RectF out) {
+        int width = getWidth();
+        int height = getHeight();
+        if (width <= 0 || height <= 0) {
+            return false;
+        }
+        gridRectFor(laneIndex, width, height, out);
+        return true;
+    }
+
+    /** 某一路在四宫格里占的那块矩形 —— 过渡的起点（或终点）。 */
+    private void gridRectFor(int laneIndex, int width, int height, RectF out) {
+        if (cells != null) {
+            Cell cell = cellFor(laneIndex);
+            if (cell != null) {
+                out.set(cell.x * width, cell.y * height,
+                        (cell.x + cell.width) * width, (cell.y + cell.height) * height);
+            } else {
+                out.set(0f, 0f, width, height);
+            }
+            return;
+        }
+        float cellWidth = width / 2f;
+        float cellHeight = height / 2f;
+        for (int position = 0; position < CompositeStreamGeometry.LANE_COUNT; position++) {
+            if (laneOrder[position] == laneIndex) {
+                float left = (position % 2) * cellWidth;
+                float top = (position / 2) * cellHeight;
+                out.set(left, top, left + cellWidth, top + cellHeight);
+                return;
+            }
+        }
+        out.set(0f, 0f, width, height);
+    }
+
+    /**
+     * 裁切与缩放平移都作用在<b>源矩形</b>上，返回裁切之后这一格的真实长宽比。
+     *
+     * <h3>为什么动源矩形而不是目标矩形</h3>
+     *
+     * <p>目标矩形是「这一格在屏幕上占多大」，那是布局说了算的。要表达「这幅画面
+     * 少看一点边、或者放大一点」，动的是<b>取画面的哪一块</b> —— 也就是源矩形。
+     * 放大 2 倍就是只取中间一半，向右平移就是把取景窗往左挪。</p>
+     *
+     * <h3>为什么先过一次 LaneOrientation</h3>
+     *
+     * <p>源矩形在<b>转之前</b>，而用户填那几个数时看的是<b>转之后</b>的画面。
+     * 不换算的话，一格转 90° 之后「上边裁 20%」裁掉的是屏幕上的左边 ——
+     * 在车上看，这和「裁剪根本没生效」长得一模一样。</p>
+     */
+    private float applyCropAndPan(Cell cell, int rotation, float laneAspectPx) {
+        // 裁剪停用期间一律当 0：存着的值不动，只是不生效
+        boolean crop = LaneOrientation.CROP_SUPPORTED;
+        LaneOrientation o = LaneOrientation.sourceSpace(rotation,
+                crop ? cell.cropTop : 0f, crop ? cell.cropBottom : 0f,
+                crop ? cell.cropLeft : 0f, crop ? cell.cropRight : 0f,
+                cell.scaleX, cell.scaleY, cell.translateX, cell.translateY);
+        float keepX = 1f - clampFraction(o.cropLeft) - clampFraction(o.cropRight);
+        float keepY = 1f - clampFraction(o.cropTop) - clampFraction(o.cropBottom);
+        if (keepX <= 0.01f || keepY <= 0.01f) {
+            return laneAspectPx;   // 全裁光了，当作没裁
+        }
+        float width = sourceRect.width();
+        float height = sourceRect.height();
+        float left = sourceRect.left + width * clampFraction(o.cropLeft);
+        float top = sourceRect.top + height * clampFraction(o.cropTop);
+        sourceRect.set(left, top, left + width * keepX, top + height * keepY);
+
+        float scaleX = o.scaleX > 0.05f ? o.scaleX : 1f;
+        float scaleY = o.scaleY > 0.05f ? o.scaleY : 1f;
+        if (scaleX != 1f || scaleY != 1f) {
+            float cx = sourceRect.centerX();
+            float cy = sourceRect.centerY();
+            float halfW = sourceRect.width() / 2f / scaleX;
+            float halfH = sourceRect.height() / 2f / scaleY;
+            sourceRect.set(cx - halfW, cy - halfH, cx + halfW, cy + halfH);
+        }
+        if (o.translateX != 0f || o.translateY != 0f) {
+            // 画面往右挪 = 取景窗往左挪
+            sourceRect.offset(-o.translateX * sourceRect.width(),
+                    -o.translateY * sourceRect.height());
+        }
+        return laneAspectPx * (keepX / keepY);
+    }
+
+    private static float clampFraction(float value) {
+        return value < 0f ? 0f : (value > 0.9f ? 0.9f : value);
+    }
+
+    /** 这一格的摆法；没有配置就返回 null（走默认）。 */
+    private Cell cellFor(int laneIndex) {
+        if (cells == null) {
+            return null;
+        }
+        for (Cell cell : cells) {
+            if (cell != null && cell.laneIndex == laneIndex) {
+                return cell;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * 把合成流里的一个画面画进一个矩形区域。
+     *
+     * <p>做法是裁剪到目标格子，再用一个矩阵把该画面在子视图中的源矩形映射过去，
+     * 然后把<b>同一个</b>子视图重新画一遍。子视图本身不知道自己被画了几次。</p>
+     */
+    private void drawLane(Canvas canvas, CompositeStreamGeometry.Lane lane, Cell cell,
+                          float cellLeft, float cellTop, float cellWidth, float cellHeight,
+                          ScaleMode forced) {
+        if (cellWidth <= 0f || cellHeight <= 0f) {
+            return;
+        }
+        // 画面在子视图坐标系中的位置：归一化窗口 x 子视图尺寸。
+        // 用归一化坐标是关键——HAL 给的缓冲区可能被压扁，但比例关系不变。
+        float childWidth = getWidth();
+        float childHeight = getHeight();
+        sourceRect.set(
+                lane.u0 * childWidth,
+                lane.v0 * childHeight,
+                lane.u1 * childWidth,
+                lane.v1 * childHeight);
+        if (sourceRect.width() <= 0f || sourceRect.height() <= 0f) {
+            return;
+        }
+
+        int rotation = cell == null ? 0 : LaneOrientation.normalise(cell.rotation);
+        boolean quarterTurn = LaneOrientation.quarterTurn(rotation);
+
+        // 这一格的真实长宽比。裁切会改变它（切掉的是画面的一部分），
+        // 缩放平移不会（那只是把同一幅画面挪一挪、放大一点）。
+        //
+        // 0.45 试过「框按没裁之前的比例定、裁完的部分填满同一个框」，想让裁剪
+        // 不带着画面跳位置。车上试出来是一格雪花 —— 原因还没查清，所以先退回
+        // 这一版：画面会跟着裁剪改大小和位置，但它是画面。
+        float laneAspectPx = lane.aspect();
+        if (cell != null) {
+            laneAspectPx = applyCropAndPan(cell, rotation, laneAspectPx);
+        }
+
+        float destLeft = cellLeft;
+        float destTop = cellTop;
+        float destWidth = cellWidth;
+        float destHeight = cellHeight;
+
+        // 画面的真实比例来自源像素（合成流里是正方形），不是被压扁的缓冲区比例。
+        // 转了 90°/270° 的话，占地的长宽也跟着对调。
+        float laneAspect = quarterTurn && laneAspectPx > 0f ? 1f / laneAspectPx : laneAspectPx;
+        float cellAspect = cellWidth / cellHeight;
+        // 放大时由调用方指定（一律填充）；否则这一格自己说了算，没说才跟容器走。
+        // 鱼眼校正开着时看另一份：校正前后适合的缩放方式不一样
+        ScaleMode own = cell == null ? null : fisheye ? cell.fitCorrected : cell.fit;
+        ScaleMode mode = forced != null ? forced
+                : own != null ? own : fisheye ? correctedScaleMode : scaleMode;
+        if (mode == ScaleMode.FIT && laneAspect > 0f && cellAspect > 0f) {
+            if (laneAspect < cellAspect) {
+                destWidth = cellHeight * laneAspect;
+                destLeft = cellLeft + (cellWidth - destWidth) / 2f;
+            } else if (laneAspect > cellAspect) {
+                destHeight = cellWidth / laneAspect;
+                destTop = cellTop + (cellHeight - destHeight) / 2f;
+            }
+        } else if (mode == ScaleMode.FILL && laneAspect > 0f && cellAspect > 0f) {
+            // 填满：反过来收窄源矩形，居中裁切
+            if (laneAspect < cellAspect) {
+                float keep = laneAspect / cellAspect;
+                float centre = sourceRect.centerY();
+                float half = sourceRect.height() / 2f * keep;
+                sourceRect.top = centre - half;
+                sourceRect.bottom = centre + half;
+            } else if (laneAspect > cellAspect) {
+                float keep = cellAspect / laneAspect;
+                float centre = sourceRect.centerX();
+                float half = sourceRect.width() / 2f * keep;
+                sourceRect.left = centre - half;
+                sourceRect.right = centre + half;
+            }
+        }
+
+        destinationRect.set(destLeft, destTop, destLeft + destWidth, destTop + destHeight);
+        if (quarterTurn) {
+            // 转四分之一圈时，先按「转之前」的形状去映射：
+            // 目标框的长宽在旋转后才互换，所以这里要用互换回来的那个框
+            float cx = destinationRect.centerX();
+            float cy = destinationRect.centerY();
+            float halfW = destinationRect.height() / 2f;
+            float halfH = destinationRect.width() / 2f;
+            destinationRect.set(cx - halfW, cy - halfH, cx + halfW, cy + halfH);
+        }
+        if (sourceRect.width() <= 0f || sourceRect.height() <= 0f
+                || destinationRect.width() <= 0f || destinationRect.height() <= 0f) {
+            // 空矩形喂给 setRectToRect 会得到一个单位阵 —— 那一格就会画成整条
+            // 合成流，而不是什么都不画。宁可这一格空着
+            return;
+        }
+        if (meshThisFrame) {
+            drawLaneCorrected(canvas, lane, cell, rotation, childWidth, childHeight,
+                    cellLeft, cellTop, cellWidth, cellHeight);
+            return;
+        }
+        drawMatrix.setRectToRect(sourceRect, destinationRect, Matrix.ScaleToFit.FILL);
+        if (cell != null) {
+            float cx = destinationRect.centerX();
+            float cy = destinationRect.centerY();
+            if (rotation != 0) {
+                drawMatrix.postRotate(rotation, cx, cy);
+            }
+            if (cell.mirrored) {
+                // 左右镜像：后视看到的本来就是反的
+                drawMatrix.postScale(-1f, 1f, cx, cy);
+            }
+        }
+
+        int save = canvas.save();
+        // 裁到格子：子视图的其他部分不能溢到相邻格子里
+        canvas.clipRect(cellLeft, cellTop, cellLeft + cellWidth, cellTop + cellHeight);
+        // 画面比例和格子形状对不上时，格子里会有留白。留白得是黑的 ——
+        // 不画的话那里留着上一帧
+        canvas.drawRect(cellLeft, cellTop, cellLeft + cellWidth, cellTop + cellHeight, backdrop);
+        canvas.concat(drawMatrix);
+        // 再裁到这一格自己的取景窗。
+        //
+        // 留白装的是<b>同一张条带上相邻画面</b>的像素：条带竖着跑的时候，留白在
+        // 左右两侧，那两侧正好没有内容，所以一直看不出来；一转 90°，条带横过来，
+        // 留白里就长出别人的画面。裁到格子挡不住它 —— 它本来就在格子里。
+        //
+        // 0.45.2 试过把这次裁剪挪到 concat <b>之前</b>（改裁屏幕上的那一块），
+        // 想绕开裁剪时出的雪花。结果是旋转也跟着坏了：四格全变成整条竖长条。
+        // 两次改动、两次坏在不同的地方 —— 所以退回这一版，它的旋转是在车上
+        // 验证过的。裁剪则整个停用，见 LaneOrientation.CROP_SUPPORTED。
+        canvas.clipRect(sourceRect);
+        drawChild(canvas, textureView, getDrawingTime());
+        canvas.restoreToCount(save);
+    }
+
+    /**
+     * 带鱼眼校正地画一路。{@link #drawLane} 把源矩形和目标框都算好之后才走到这里。
+     *
+     * <p>摆位、缩放方式、裁切平移都和不校正时一样算：算出来的源矩形换成「这一路里的
+     * 归一化窗口」，就是校正后的画面里要看的那一块。每一路是正方形，校正后也是正方形，
+     * 所以按比例摆放那一套不用改。</p>
+     *
+     * <p>不需要不校正时那第二次「裁到这一路的取景窗」：每一小格的四个源点都夹在这一路之内，
+     * 格内是透视映射，画出来的东西落不到这一路外面去。</p>
+     */
+    private void drawLaneCorrected(Canvas canvas, CompositeStreamGeometry.Lane lane, Cell cell,
+                                   int rotation, float childWidth, float childHeight,
+                                   float cellLeft, float cellTop, float cellWidth, float cellHeight) {
+        float laneLeft = lane.u0 * childWidth;
+        float laneTop = lane.v0 * childHeight;
+        float laneWidth = (lane.u1 - lane.u0) * childWidth;
+        float laneHeight = (lane.v1 - lane.v0) * childHeight;
+        mesh.prepare(FisheyeMesh.divisionsFor(
+                        Math.max(destinationRect.width(), destinationRect.height())),
+                laneLeft, laneTop, laneWidth, laneHeight,
+                (sourceRect.left - laneLeft) / laneWidth, (sourceRect.top - laneTop) / laneHeight,
+                sourceRect.width() / laneWidth, sourceRect.height() / laneHeight);
+
+        int save = canvas.save();
+        canvas.clipRect(cellLeft, cellTop, cellLeft + cellWidth, cellTop + cellHeight);
+        canvas.drawRect(cellLeft, cellTop, cellLeft + cellWidth, cellTop + cellHeight, backdrop);
+        if (cell != null && (rotation != 0 || cell.mirrored)) {
+            // 和不校正时同一个顺序：先转，再镜像，都绕目标框的中心
+            float cx = destinationRect.centerX();
+            float cy = destinationRect.centerY();
+            cellMatrix.setRotate(rotation, cx, cy);
+            if (cell.mirrored) {
+                cellMatrix.postScale(-1f, 1f, cx, cy);
+            }
+            canvas.concat(cellMatrix);
+        }
+        mesh.draw(canvas, destinationRect.left, destinationRect.top,
+                destinationRect.width(), destinationRect.height(), paintTexture);
+        canvas.restoreToCount(save);
+    }
+}

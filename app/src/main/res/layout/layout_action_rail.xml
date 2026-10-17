@@ -1,0 +1,289 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ④ 动作栏：这个界面能做的事，按重要性从上往下。三份主界面布局 <include> 同一份。
+  7xDash：页头（回主页 + 页名）、录制卡、两列功能方块，样子和主页、设置一致。
+
+  按钮：btn_start_record / btn_take_photo / btn_video_playback / btn_photo_playback /
+  btn_instant_captures /
+  btn_remote / btn_fisheye / vehicle_status_panel / btn_settings / btn_minimize。四宫格键撤了 —— 放大哪一格改成直接点那一格，
+  再点还原（MainActivity.setupCompositeControls），拍照因此独占一行。右下角原来的「×」改成
+  「隐藏到后台」；真正的退出在抽屉和设置左栏的最底下。
+
+  主操作只有录制一个：它大一档（132dp），状态由左侧的点（圆 ⇄ 方）和外圈分段进度环表示，
+  红色只出现在那一小块上 —— 红标的是「正在录」这件事，不是这个按钮。
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/action_rail"
+    android:layout_width="@dimen/rail_width"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <!--
+      7xDash：页头和其他页面一样 —— 左边一个回主页的键，右边是这一页的名字（行车记录）。
+      应用名不再挂在这里，主页上已经有了。
+    -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/icon_button_size"
+        android:layout_marginBottom="@dimen/gutter"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_home"
+            style="@style/Widget.Cam.IconButton"
+            android:layout_width="@dimen/icon_button_size"
+            android:layout_height="@dimen/icon_button_size"
+            android:contentDescription="@string/nav_home"
+            app:icon="@drawable/ic_home" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="14dp"
+            android:layout_weight="1"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:text="@string/home_card_camera"
+            android:textAppearance="@style/TextAppearance.Cam.Title"
+            android:textColor="@color/text_primary"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/btn_start_record"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/record_button_height"
+        android:clickable="true"
+        android:contentDescription="@string/record_start"
+        android:focusable="true"
+        app:cardBackgroundColor="@color/sunken"
+        app:cardCornerRadius="@dimen/corner_radius"
+        app:cardElevation="0dp"
+        app:rippleColor="@color/nav_ripple_color"
+        app:strokeWidth="0dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="22dp"
+            android:paddingEnd="16dp">
+
+            <FrameLayout
+                android:layout_width="@dimen/record_ring_size"
+                android:layout_height="@dimen/record_ring_size">
+
+                <com.google.android.material.progressindicator.CircularProgressIndicator
+                    android:id="@+id/record_ring"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:max="1000"
+                    android:progress="0"
+                    app:indicatorColor="@color/recording"
+                    app:indicatorSize="@dimen/record_ring_size"
+                    app:trackColor="@color/recording_track"
+                    app:trackCornerRadius="2dp"
+                    app:trackThickness="4dp" />
+
+                <!-- 形状在代码里画：圆角半径和缩放一起动，就是圆 ⇄ 方 -->
+                <View
+                    android:id="@+id/record_dot"
+                    android:layout_width="26dp"
+                    android:layout_height="26dp"
+                    android:layout_gravity="center" />
+            </FrameLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="18dp"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/record_title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:maxLines="1"
+                    android:text="@string/record_start"
+                    android:textColor="@color/text_primary"
+                    android:textAppearance="@style/TextAppearance.Cam.Title"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/record_detail"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:fontFeatureSettings="tnum"
+                    android:maxLines="1"
+                    android:textColor="@color/text_secondary"
+                    android:textAppearance="@style/TextAppearance.Cam.Caption" />
+
+                <!-- 录制中才有：熄屏后这段录像会怎样（自己读设置和这一次录像里有没有环视，熄屏 v3 起不看哨兵模式；RecordButtonUi 管显隐） -->
+                <com.kooo.evcam.ui.ScreenOffHintView
+                    android:id="@+id/record_hint"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="3dp"
+                    android:maxLines="2"
+                    android:textColor="@color/text_secondary"
+                    android:textAppearance="@style/TextAppearance.Cam.Micro"
+                    android:visibility="gone" />
+            </LinearLayout>
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <!--
+      动作：两列方块，和主页的功能卡片一个样子（面色卡片、图标在上、字在下）。
+      常用的在上：拍照、即时抓拍；然后回看；然后抓拍列表和远程观看。
+    -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/gutter"
+        android:orientation="horizontal">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_take_photo"
+            style="@style/Widget.Cam.HomeTile"
+            android:layout_width="0dp"
+            android:layout_height="@dimen/rail_tile_height"
+            android:layout_marginEnd="6dp"
+            android:layout_weight="1"
+            android:text="@string/rail_photo"
+            app:icon="@drawable/ic_camera" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_instant_capture"
+            style="@style/Widget.Cam.HomeTile"
+            android:layout_width="0dp"
+            android:layout_height="@dimen/rail_tile_height"
+            android:layout_marginStart="6dp"
+            android:layout_weight="1"
+            android:text="@string/home_card_capture"
+            app:icon="@drawable/ic_flash" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/gutter"
+        android:orientation="horizontal">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_video_playback"
+            style="@style/Widget.Cam.HomeTile"
+            android:layout_width="0dp"
+            android:layout_height="@dimen/rail_tile_height"
+            android:layout_marginEnd="6dp"
+            android:layout_weight="1"
+            android:text="@string/nav_video_playback"
+            app:icon="@drawable/ic_video" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_photo_playback"
+            style="@style/Widget.Cam.HomeTile"
+            android:layout_width="0dp"
+            android:layout_height="@dimen/rail_tile_height"
+            android:layout_marginStart="6dp"
+            android:layout_weight="1"
+            android:text="@string/nav_photo_playback"
+            app:icon="@drawable/ic_photo" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/gutter"
+        android:orientation="horizontal">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_instant_captures"
+            style="@style/Widget.Cam.HomeTile"
+            android:layout_width="0dp"
+            android:layout_height="@dimen/rail_tile_height"
+            android:layout_marginEnd="6dp"
+            android:layout_weight="1"
+            android:text="@string/rail_captures_list"
+            app:icon="@drawable/ic_play" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_remote"
+            style="@style/Widget.Cam.HomeTile"
+            android:layout_width="0dp"
+            android:layout_height="@dimen/rail_tile_height"
+            android:layout_marginStart="6dp"
+            android:layout_weight="1"
+            android:text="@string/nav_remote"
+            app:icon="@drawable/ic_remote" />
+    </LinearLayout>
+
+    <!--
+      环视画面的鱼眼校正，和图片回看、视频回看上那个是同一个开关。只改屏幕上的样子，
+      录像不动。按钮自己管点击和颜色（FisheyeToggleButton）：开着时和主页「开着」的卡片一样，
+      橙色淡底加一圈橙边。
+    -->
+    <com.kooo.evcam.ui.FisheyeToggleButton
+        android:id="@+id/btn_fisheye"
+        style="@style/Widget.Cam.HomeTileWide"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/rail_small_height"
+        android:layout_marginTop="@dimen/gutter"
+        android:text="@string/photo_fisheye" />
+
+    <!--
+      车辆状态（试验性，设置 → 界面）：用信息条的图标显示哨兵模式、刹车 / 油门、驾驶辅助、喇叭。
+      控件自己管开关和收信号（VehicleStatusPanel），关着就不占地方，MainActivity 不用接线。
+    -->
+    <!-- 鱼眼校正和设置之间剩下的那块：面板放在里面，放不下就按比例缩小，不会把设置那一行挤出去 -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <com.kooo.evcam.ui.VehicleStatusPanel
+            android:id="@+id/vehicle_status_panel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top|center_horizontal"
+            android:layout_marginTop="@dimen/gutter"
+            android:layout_marginBottom="@dimen/gutter"
+            android:visibility="gone" />
+    </FrameLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_settings"
+            style="@style/Widget.Cam.HomeTileWide"
+            android:layout_width="0dp"
+            android:layout_height="@dimen/rail_small_height"
+            android:layout_marginEnd="@dimen/gutter"
+            android:layout_weight="1"
+            android:text="@string/rail_settings"
+            app:icon="@drawable/ic_settings" />
+
+        <!--
+          隐藏到后台：录制、悬浮按钮照旧，只把界面收起来。
+          原来这里是「×退出」，× 既像「关掉这一页」又像「全部退出」，按之前猜不到是哪个。
+          真正的退出挪到抽屉和设置左栏的最底下 —— 往下找得到，手滑点不到。
+          长按这个键也是退出：长按不会是手滑碰出来的。
+        -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_minimize"
+            style="@style/Widget.Cam.IconButton"
+            android:layout_width="@dimen/rail_small_height"
+            android:layout_height="@dimen/rail_small_height"
+            android:contentDescription="@string/cd_minimize"
+            app:icon="@drawable/ic_minimize"
+            app:iconTint="@color/text_secondary" />
+    </LinearLayout>
+</LinearLayout>

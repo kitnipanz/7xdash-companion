@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg"
+    android:orientation="vertical"
+    android:padding="16dp">
+    <!--
+  7xDash：和主页一个样子 —— 页边 16dp，标题下面不画分隔线，内容放在一张大圆角卡片上（bg_surface_card）。
+-->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/title_bar_height"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="10dp"
+        android:paddingEnd="16dp">
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/controller_close"
+            style="@style/Widget.Cam.IconButton"
+            android:layout_width="@dimen/icon_button_size"
+            android:layout_height="@dimen/icon_button_size"
+            android:contentDescription="@string/action_back"
+            app:icon="@drawable/ic_back" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="14dp"
+            android:text="@string/set_controller_title"
+            android:textAppearance="@style/TextAppearance.Cam.Title"
+            android:textColor="@color/text_primary"
+            android:textStyle="bold" />
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="14dp"
+            android:layout_weight="1"
+            android:ellipsize="end"
+            android:maxLines="2"
+            android:text="@string/ctrl_subtitle"
+            android:textAppearance="@style/TextAppearance.Cam.Caption"
+            android:textColor="@color/text_tertiary" />
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/controller_clear"
+            style="@style/Widget.Cam.RailSmall"
+            android:layout_width="wrap_content"
+            android:layout_height="52dp"
+            android:text="@string/ctrl_clear" />
+    </LinearLayout>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_marginTop="8dp"
+        android:background="@drawable/bg_surface_card"
+        android:orientation="vertical"
+        android:padding="12dp">
+        <TextView
+            android:id="@+id/controller_devices"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:fontFamily="monospace"
+            android:paddingStart="16dp"
+            android:paddingTop="12dp"
+            android:paddingEnd="16dp"
+            android:paddingBottom="8dp"
+            android:textAppearance="@style/TextAppearance.Cam.Caption"
+            android:textColor="@color/text_secondary" />
+        <TextView
+            android:id="@+id/controller_live"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:fontFamily="monospace"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:paddingBottom="8dp"
+            android:text="@string/ctrl_waiting"
+            android:textAppearance="@style/TextAppearance.Cam.Row"
+            android:textColor="@color/text_primary" />
+        <HorizontalScrollView
+            android:id="@+id/controller_register"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingBottom="8dp"
+            android:scrollbars="none"
+            android:visibility="gone">
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:paddingStart="16dp"
+                android:paddingEnd="8dp">
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/controller_press_tap"
+                    style="@style/Widget.Cam.RailSmall"
+                    android:layout_width="wrap_content"
+                    android:layout_height="52dp"
+                    android:layout_marginEnd="8dp"
+                    android:text="@string/shortcut_press_tap" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/controller_press_long"
+                    style="@style/Widget.Cam.RailSmall"
+                    android:layout_width="wrap_content"
+                    android:layout_height="52dp"
+                    android:layout_marginEnd="8dp"
+                    android:text="@string/shortcut_press_long" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/controller_press_double"
+                    style="@style/Widget.Cam.RailSmall"
+                    android:layout_width="wrap_content"
+                    android:layout_height="52dp"
+                    android:layout_marginEnd="16dp"
+                    android:text="@string/shortcut_press_double" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/controller_action_record"
+                    style="@style/Widget.Cam.RailSmall"
+                    android:layout_width="wrap_content"
+                    android:layout_height="52dp"
+                    android:layout_marginEnd="8dp"
+                    android:text="@string/shortcut_action_record" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/controller_action_mirror"
+                    style="@style/Widget.Cam.RailSmall"
+                    android:layout_width="wrap_content"
+                    android:layout_height="52dp"
+                    android:layout_marginEnd="8dp"
+                    android:text="@string/shortcut_action_mirror" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/controller_action_mirror_hud"
+                    style="@style/Widget.Cam.RailSmall"
+                    android:layout_width="wrap_content"
+                    android:layout_height="52dp"
+                    android:layout_marginEnd="8dp"
+                    android:text="@string/shortcut_action_mirror_hud" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/controller_action_both_mirrors"
+                    style="@style/Widget.Cam.RailSmall"
+                    android:layout_width="wrap_content"
+                    android:layout_height="52dp"
+                    android:layout_marginEnd="8dp"
+                    android:text="@string/shortcut_action_both_mirrors" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/controller_action_app"
+                    style="@style/Widget.Cam.RailSmall"
+                    android:layout_width="wrap_content"
+                    android:layout_height="52dp"
+                    android:layout_marginEnd="8dp"
+                    android:text="@string/shortcut_action_app" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/controller_action_dim"
+                    style="@style/Widget.Cam.RailSmall"
+                    android:layout_width="wrap_content"
+                    android:layout_height="52dp"
+                    android:layout_marginEnd="8dp"
+                    android:text="@string/shortcut_action_dim" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/controller_action_save"
+                    style="@style/Widget.Cam.RailSmall"
+                    android:layout_width="wrap_content"
+                    android:layout_height="52dp"
+                    android:layout_marginEnd="8dp"
+                    android:text="@string/shortcut_action_save" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/controller_action_lock_save"
+                    style="@style/Widget.Cam.RailSmall"
+                    android:layout_width="wrap_content"
+                    android:layout_height="52dp"
+                    android:layout_marginEnd="8dp"
+                    android:text="@string/shortcut_action_lock_save" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/controller_action_instant_capture"
+                    style="@style/Widget.Cam.RailSmall"
+                    android:layout_width="wrap_content"
+                    android:layout_height="52dp"
+                    android:layout_marginEnd="8dp"
+                    android:text="@string/shortcut_action_instant_capture" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/controller_action_hold_speak"
+                    style="@style/Widget.Cam.RailSmall"
+                    android:layout_width="wrap_content"
+                    android:layout_height="52dp"
+                    android:layout_marginEnd="8dp"
+                    android:text="@string/shortcut_action_hold_speak" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/controller_action_toggle_speak"
+                    style="@style/Widget.Cam.RailSmall"
+                    android:layout_width="wrap_content"
+                    android:layout_height="52dp"
+                    android:layout_marginEnd="8dp"
+                    android:text="@string/shortcut_action_toggle_speak" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/controller_action_cabin"
+                    style="@style/Widget.Cam.RailSmall"
+                    android:layout_width="wrap_content"
+                    android:layout_height="52dp"
+                    android:layout_marginEnd="8dp"
+                    android:text="@string/shortcut_action_cabin" />
+            </LinearLayout>
+        </HorizontalScrollView>
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:fillViewport="true">
+            <TextView
+                android:id="@+id/controller_log"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:fontFamily="monospace"
+                android:padding="16dp"
+                android:textAppearance="@style/TextAppearance.Cam.Body"
+                android:textColor="@color/text_primary" />
+        </ScrollView>
+    </LinearLayout>
+</LinearLayout>

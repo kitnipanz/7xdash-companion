@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  主页壁纸上的光带：照极氪 OS 7「沉浸壁纸桌面」那种从右下卷上来的橙色和银色流线。
+  自己画的抽象形状，不用任何官方素材。
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="1600dp"
+    android:height="900dp"
+    android:viewportWidth="1600"
+    android:viewportHeight="900">
+    <!-- 银色宽带 -->
+    <path android:pathData="M1600,120 C1300,160 1080,380 900,560 C760,700 560,820 260,900 L620,900 C820,830 1000,700 1160,560 C1320,420 1460,330 1600,300 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:endX="700"
+                android:endY="900"
+                android:startX="1600"
+                android:startY="200"
+                android:type="linear">
+                <item android:color="#00B9BEC6" android:offset="0" />
+                <item android:color="#55B9BEC6" android:offset="0.45" />
+                <item android:color="#00B9BEC6" android:offset="1" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <!-- 橙色细带 -->
+    <path android:pathData="M1600,330 C1440,360 1300,450 1150,590 C1000,730 860,830 700,900 L780,900 C930,840 1070,750 1210,630 C1350,510 1470,430 1600,400 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:endX="760"
+                android:endY="900"
+                android:startX="1600"
+                android:startY="360"
+                android:type="linear">
+                <item android:color="#00F26B38" android:offset="0" />
+                <item android:color="#CCF26B38" android:offset="0.5" />
+                <item android:color="#00F26B38" android:offset="1" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <!-- 右上角一团暗光 -->
+    <path android:pathData="M1600,0 L1600,420 C1400,330 1180,200 1060,0 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:centerX="1500"
+                android:centerY="80"
+                android:gradientRadius="520"
+                android:type="radial">
+                <item android:color="#332C3440" android:offset="0" />
+                <item android:color="#002C3440" android:offset="1" />
+            </gradient>
+        </aapt:attr>
+    </path>
+</vector>

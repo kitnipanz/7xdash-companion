@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  侧边菜单的一行（设置分区列表、侧滑抽屉）：和主页卡片一个样子 ——
+  平时是半透明灰卡，选中的那一行垫橙色淡底、描一圈橙边（主页卡片「开着」也是这样）。
+  设置列表用 activated 标选中，抽屉用 checked，两种都认。
+-->
+<ripple xmlns:android="http://schemas.android.com/apk/res/android"
+    android:color="@color/nav_ripple_color">
+    <item android:id="@android:id/mask">
+        <shape android:shape="rectangle">
+            <corners android:radius="@dimen/corner_radius" />
+            <solid android:color="@color/white" />
+        </shape>
+    </item>
+    <item>
+        <selector>
+            <item android:state_activated="true">
+                <shape android:shape="rectangle">
+                    <solid android:color="@color/energy_quiet" />
+                    <stroke android:width="2dp" android:color="@color/energy" />
+                    <corners android:radius="@dimen/corner_radius" />
+                </shape>
+            </item>
+            <item android:state_checked="true">
+                <shape android:shape="rectangle">
+                    <solid android:color="@color/energy_quiet" />
+                    <stroke android:width="2dp" android:color="@color/energy" />
+                    <corners android:radius="@dimen/corner_radius" />
+                </shape>
+            </item>
+            <item>
+                <shape android:shape="rectangle">
+                    <solid android:color="@color/glass_surface" />
+                    <corners android:radius="@dimen/corner_radius" />
+                </shape>
+            </item>
+        </selector>
+    </item>
+</ripple>

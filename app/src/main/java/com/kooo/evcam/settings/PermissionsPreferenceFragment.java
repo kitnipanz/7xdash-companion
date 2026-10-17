@@ -215,7 +215,7 @@ public class PermissionsPreferenceFragment extends PreferenceFragmentCompat {
             startActivity(intent);
         } catch (Throwable t) {
             AppLog.w("PermissionsPreference", "打不开系统设置页: " + t);
-            android.widget.Toast.makeText(getContext(),
+            com.kooo.evcam.ui.Notice.makeText(getContext(),
                     R.string.dev_perm_settings_unavailable, android.widget.Toast.LENGTH_SHORT).show();
         }
     }

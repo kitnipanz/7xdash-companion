@@ -28,6 +28,8 @@ public class AboutActivity extends AppCompatActivity {
     private static final String TAG = "AboutActivity";
 
     public static final String EVCAM_URL = "https://github.com/suyunkai/EVCam";
+    /** 7xDash 的直接上游：dts88 维护的 zeekr-shortcut-car。 */
+    public static final String UPSTREAM_URL = "https://github.com/dts88/zeekr-shortcut-car";
     public static final String GPL_URL = "https://www.gnu.org/licenses/gpl-3.0.html";
     public static final String PROJECT_URL = "https://github.com/kitnipanz/7xdash-companion";
 
@@ -48,6 +50,7 @@ public class AboutActivity extends AppCompatActivity {
 
         bindLink(R.id.about_link_project, PROJECT_URL);
         bindLink(R.id.about_link_evcam, EVCAM_URL);
+        bindLink(R.id.about_link_upstream, UPSTREAM_URL);
         bindLink(R.id.about_link_gpl, GPL_URL);
 
         setUpDeveloperUnlock();
@@ -83,7 +86,7 @@ public class AboutActivity extends AppCompatActivity {
         } catch (ActivityNotFoundException | SecurityException e) {
             // 车机上常常没有浏览器，退而把链接显示出来让用户自己抄
             AppLog.w(TAG, "无法打开链接: " + url, e);
-            Toast.makeText(this, url, Toast.LENGTH_LONG).show();
+            com.kooo.evcam.ui.Notice.makeText(this, url, Toast.LENGTH_LONG).show();
         }
     }
 
@@ -126,10 +129,10 @@ public class AboutActivity extends AppCompatActivity {
                 .setView(input)
                 .setPositiveButton(R.string.action_ok, (dialog, which) -> {
                     if (com.kooo.evcam.settings.DeveloperMode.unlock(this, input.getText().toString())) {
-                        Toast.makeText(this, R.string.dev_unlocked,
+                        com.kooo.evcam.ui.Notice.makeText(this, R.string.dev_unlocked,
                                 Toast.LENGTH_LONG).show();
                     } else {
-                        Toast.makeText(this, R.string.dev_wrong_password, Toast.LENGTH_SHORT).show();
+                        com.kooo.evcam.ui.Notice.makeText(this, R.string.dev_wrong_password, Toast.LENGTH_SHORT).show();
                     }
                 })
                 .setNegativeButton(R.string.action_cancel, null));
@@ -142,7 +145,7 @@ public class AboutActivity extends AppCompatActivity {
                 .setMessage(R.string.dev_lock_msg)
                 .setPositiveButton(R.string.dev_lock_confirm, (dialog, which) -> {
                     com.kooo.evcam.settings.DeveloperMode.lock(this);
-                    Toast.makeText(this, R.string.dev_locked, Toast.LENGTH_SHORT).show();
+                    com.kooo.evcam.ui.Notice.makeText(this, R.string.dev_locked, Toast.LENGTH_SHORT).show();
                 })
                 .setNegativeButton(R.string.action_cancel, null));
     }

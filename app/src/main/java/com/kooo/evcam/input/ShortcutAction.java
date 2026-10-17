@@ -20,7 +20,11 @@ public enum ShortcutAction {
     HOLD_SPEAK("hold_to_speak", R.string.shortcut_action_hold_speak),
     /** One click opens the mic, the next click closes it. For buttons that cannot be held. */
     TOGGLE_SPEAK("click_to_speak", R.string.shortcut_action_toggle_speak),
-    CABIN_PASSENGER("cabin_passenger", R.string.shortcut_action_cabin);
+    CABIN_PASSENGER("cabin_passenger", R.string.shortcut_action_cabin),
+    /** 只拍环视那一路，不换页。 */
+    PHOTO_SURROUND("photo_surround", R.string.shortcut_action_photo_surround),
+    /** 只拍座舱（前、后座舱），不换页。 */
+    PHOTO_CABIN("photo_cabin", R.string.shortcut_action_photo_cabin);
 
     public final String key;
     public final int labelRes;

@@ -218,7 +218,7 @@
     <string name="shortcut_hud_channel">HUD ของผู้ขับ</string>
     <string name="shortcut_action_save">บันทึกช่วงเวลานี้</string>
     <string name="shortcut_action_lock_save">ล็อกและบันทึก</string>
-    <string name="shortcut_action_instant_capture">จับภาพทันที (เหมือนกะพริบไฟสูง)</string>
+    <string name="shortcut_action_instant_capture">จับภาพทันที</string>
     <string name="shortcut_action_hold_speak">กดค้างเพื่อพูดออกนอกรถ</string>
     <string name="shortcut_action_toggle_speak">คลิกเพื่อพูดออกนอกรถ (คลิกอีกครั้งเพื่อหยุด)</string>
     <string name="megaphone_channel">กดค้างเพื่อพูด</string>
@@ -249,9 +249,9 @@
     <string name="instant_capture_failed">บันทึกการจับภาพทันทีไม่ได้</string>
     <string name="instant_capture_need_recording">เริ่มบันทึกก่อนจึงจะจับภาพทันทีได้</string>
     <string name="instant_capture_upload_failed">อัปโหลดการจับภาพทันทีไม่ได้</string>
-    <string name="instant_captures_title">การจับภาพทันที</string>
-    <string name="instant_captures_summary">ดูคลิปรอบคันที่บันทึกจากการกะพริบไฟสูง เล่นหรือลบได้ที่นี่</string>
-    <string name="instant_captures_empty">ยังไม่มีการจับภาพทันที</string>
+    <string name="instant_captures_title">ภาพที่จับไว้</string>
+    <string name="instant_captures_summary">ดูหรือลบคลิปที่บันทึกด้วยการจับภาพทันที (จากการแตะ ปุ่มลัด หรือการกะพริบไฟสูง)</string>
+    <string name="instant_captures_empty">ยังไม่มีภาพที่จับไว้</string>
     <string name="instant_captures_no_usb">ไม่มี USB</string>
     <string name="instant_captures_delete_all">ลบทั้งหมด</string>
     <string name="instant_captures_delete_title">ลบคลิปนี้ไหม</string>
@@ -434,7 +434,7 @@
     <string name="vi_v_ign_driving">กำลังขับ</string>
     <string name="vi_v_screen_off">จอดับ</string>
     <string name="vi_v_screen_on">จอเปิด</string>
-    <string name="set_language_title">ภาษา / Language</string>
+    <string name="set_language_title">ภาษา</string>
     <string name="lang_auto">ตามระบบ</string>
         <string name="lang_en">English</string>
     <string name="lang_th">ไทย</string>
@@ -562,8 +562,8 @@
         <item quantity="other">มี %1$d ไฟล์ที่ล็อกอยู่ (%2$s) เมื่อปิด ไฟล์เหล่านี้จะไม่ได้รับการป้องกันอีก การล้างอัตโนมัติจะลบไฟล์ที่เก่าที่สุดก่อนเหมือนไฟล์อื่น และไฟล์ที่ลบแล้วกู้คืนไม่ได้</item>
     </plurals>
     <string name="dlg_footage_lock_off_ok">ปิด</string>
-    <string name="set_footage_lock_flash_title">ล็อกไฟล์เมื่อกะพริบไฟสูง</string>
-    <string name="set_footage_lock_flash_summary">ขณะบันทึก กะพริบไฟสูงเพื่อล็อกคลิปช่วง 10 วินาทีก่อนและหลังของทุกกล้อง เฉพาะภาพรอบคัน 20 วินาทีนั้นจะบันทึกลงโฟลเดอร์การจับภาพทันที ไฟล์บันทึกอื่นอยู่ในโฟลเดอร์วิดีโอ ถ้าไฟล์ที่ล็อกเต็มพื้นที่ การบันทึกจะหยุด</string>
+    <string name="set_footage_lock_flash_title">กะพริบไฟสูงเพื่อจับภาพทันที</string>
+    <string name="set_footage_lock_flash_summary">ขณะบันทึก การกะพริบไฟสูงทำงานเหมือนการจับภาพทันที: บันทึกภาพรอบคันตั้งแต่ 10 วินาทีก่อนถึง 10 วินาทีหลังไว้ในภาพที่จับไว้ และล็อกคลิปช่วงนั้นของทุกกล้อง ถ้าไฟล์ที่ล็อกเต็มพื้นที่ การบันทึกจะหยุด</string>
     <string name="set_footage_lock_horn_title">ล็อกไฟล์เมื่อบีบแตร</string>
     <string name="set_footage_lock_horn_summary">หัวเครื่องยังอ่านสัญญาณแตรไม่ได้ จึงยังใช้ไม่ได้</string>
     <string name="msg_flash_locked">กะพริบไฟสูง: ล็อกคลิปช่วง 10 วินาทีก่อนและหลังแล้ว</string>
@@ -1243,7 +1243,7 @@
     <string name="home_card_blind">จุดบอด</string>
     <string name="home_card_blind_sub">เปิดไฟเลี้ยวเพื่อดูด้านข้าง แตะ: ปิด หน้าจอ HUD</string>
     <string name="home_card_capture">จับภาพทันที</string>
-    <string name="home_card_capture_sub">บันทึก 10 วินาทีก่อนและหลัง กดค้างเพื่อดูภาพที่จับไว้</string>
+    <string name="home_card_capture_sub">บันทึก 10 วินาทีก่อนและหลัง แตะที่นี่ กดปุ่มลัด หรือกะพริบไฟสูง</string>
     <string name="home_card_flash">จับภาพด้วยไฟสูง</string>
     <string name="home_card_flash_sub">ขณะบันทึก กะพริบไฟสูงเพื่อจับภาพ</string>
     <string name="home_card_remote">ดูจากระยะไกล</string>
@@ -1255,7 +1255,7 @@
     <string name="home_card_shortcuts">ปุ่มลัด</string>
     <string name="home_card_shortcuts_sub">กำหนดการทำงานให้ปุ่มและสติกเกอร์</string>
     <string name="home_card_hud_notice">การแจ้งเตือนบน HUD</string>
-    <string name="home_card_hud_notice_sub">แสดงการแจ้งเตือนของแอปอื่นบน HUD</string>
+    <string name="home_card_hud_notice_sub">แสดงการแจ้งเตือนของ 7xDash บน HUD</string>
     <string name="home_action_start">เริ่มบันทึก</string>
     <string name="home_action_stop">หยุดบันทึก</string>
     <string name="home_action_camera">เปิดหน้าจอกล้อง</string>
@@ -1268,6 +1268,10 @@
     <string name="set_menu_side_summary">ตำแหน่งของแถบควบคุมหน้าหลัก เมนูเลื่อน และรายการการตั้งค่า</string>
     <string name="home_preview_wait">กำลังเปิดกล้อง…</string>
     <string name="rail_captures_list">ภาพที่จับไว้</string>
+    <string name="shortcut_action_photo_surround">ถ่ายภาพ (รอบคัน)</string>
+    <string name="shortcut_action_photo_cabin">ถ่ายภาพ (ห้องโดยสาร)</string>
+    <string name="home_capture_flash">กะพริบไฟสูง: %1$s</string>
+    <string name="home_card_saved_sub">ดูและลบภาพที่จับไว้</string>
     <string name="home_rail_record">บันทึก</string>
     <string name="home_rail_rear">กล้องหลัง</string>
     <string name="home_rail_capture">จับภาพ</string>
@@ -1278,6 +1282,4 @@
     <string name="home_state_off">ปิด</string>
     <string name="home_state_screen">หน้าจอ</string>
     <string name="home_state_hud">HUD</string>
-    <string name="hud_notice_need_access">ต้องได้รับสิทธิ์เข้าถึงการแจ้งเตือน จากคอมพิวเตอร์ ให้รัน: %1$s</string>
-    <string name="hud_notice_service_label">การแจ้งเตือนบน HUD ของ 7xDash</string>
 </resources>

@@ -89,7 +89,7 @@ public final class PhoneShare {
     }
 
     private static void toast(Activity activity, String text) {
-        Toast.makeText(activity, text, Toast.LENGTH_LONG).show();
+        com.kooo.evcam.ui.Notice.makeText(activity, text, Toast.LENGTH_LONG).show();
     }
 
     /** 对话框本身。拆出来是因为「切换地址」要改二维码，得留着几个引用。 */

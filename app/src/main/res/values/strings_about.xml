@@ -18,4 +18,6 @@
     <string name="about_credits_evcam">Released under the GNU GPL v3.0 and based on EVCam by suyunkai, which provides the camera, recording and floating window foundations. As the GPL requires, the source code is public.</string>
     <string name="about_coffee_title">Buy the author a coffee</string>
     <string name="about_coffee_body">PayNow to 9271 6786. Optional; every feature works without it.</string>
+    <string name="about_upstream_title">Thank you, dts88</string>
+    <string name="about_upstream_body">7xDash is built on zeekr-shortcut-car, made and maintained by dts88. Nearly everything in this app comes from that work: recording, the surround view, Super mirror, the blind-spot view, smart stickers, shortcuts, the megaphone, remote view and Google Drive upload. Huge thanks to dts88 for building it and keeping it open source.</string>
 </resources>

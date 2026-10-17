@@ -69,13 +69,13 @@ public class ScreenProbeFragment extends Fragment {
             return;
         }
         if (row.closed) {
-            Toast.makeText(getContext(), R.string.screen_probe_closed, Toast.LENGTH_LONG).show();
+            com.kooo.evcam.ui.Notice.makeText(getContext(), R.string.screen_probe_closed, Toast.LENGTH_LONG).show();
             return;
         }
         boolean ok = ScreenProbe.toggle(requireContext(), row.id);
         if (!ok) {
             String failure = ScreenProbe.failure(row.id);
-            Toast.makeText(getContext(), getString(R.string.screen_probe_failed, failure),
+            com.kooo.evcam.ui.Notice.makeText(getContext(), getString(R.string.screen_probe_failed, failure),
                     Toast.LENGTH_LONG).show();
         }
         fill();

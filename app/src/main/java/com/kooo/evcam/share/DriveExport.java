@@ -545,10 +545,10 @@ public final class DriveExport {
     /** 字从界面上取。Application 上下文不认应用内语言，取出来的是默认中文。 */
     private static void say(Activity activity, Context fallback, int res, Object... args) {
         Context ui = activity != null && !activity.isDestroyed() ? activity : fallback;
-        Toast.makeText(fallback, ui.getString(res, args), Toast.LENGTH_LONG).show();
+        com.kooo.evcam.ui.Notice.makeText(fallback, ui.getString(res, args), Toast.LENGTH_LONG).show();
     }
 
     private static void toast(Context context, String text) {
-        Toast.makeText(context, text, Toast.LENGTH_LONG).show();
+        com.kooo.evcam.ui.Notice.makeText(context, text, Toast.LENGTH_LONG).show();
     }
 }

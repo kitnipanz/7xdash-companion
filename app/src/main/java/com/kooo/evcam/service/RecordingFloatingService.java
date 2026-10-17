@@ -532,7 +532,7 @@ public class RecordingFloatingService extends Service {
         // Tap to start listening again from scratch, instead of quitting the app.
         label.setOnClickListener(v -> {
             StickerHub.restartListening(this);
-            android.widget.Toast.makeText(this, R.string.sticker_ble_restarting,
+            com.kooo.evcam.ui.Notice.makeText(this, R.string.sticker_ble_restarting,
                     android.widget.Toast.LENGTH_SHORT).show();
         });
         return label;
@@ -826,7 +826,7 @@ public class RecordingFloatingService extends Service {
         dimShown = level;
         if (!appConfig.isDimOverlayEnabled()) {
             if (!OverlayCoordinator.setDimOverlayEnabled(this, true)) {
-                Toast.makeText(this, R.string.msg_need_overlay, Toast.LENGTH_SHORT).show();
+                com.kooo.evcam.ui.Notice.makeText(this, R.string.msg_need_overlay, Toast.LENGTH_SHORT).show();
                 return;
             }
             if (dimButton != null) {
@@ -840,7 +840,7 @@ public class RecordingFloatingService extends Service {
     private void toggleDim() {
         boolean on = !appConfig.isDimOverlayEnabled();
         if (!OverlayCoordinator.setDimOverlayEnabled(this, on)) {
-            Toast.makeText(this, R.string.msg_need_overlay, Toast.LENGTH_SHORT).show();
+            com.kooo.evcam.ui.Notice.makeText(this, R.string.msg_need_overlay, Toast.LENGTH_SHORT).show();
             return;
         }
         if (dimButton != null) {
@@ -895,7 +895,7 @@ public class RecordingFloatingService extends Service {
     private void toggleMirror() {
         boolean on = appConfig.isRearViewEnabled();
         if (!com.kooo.evcam.overlay.OverlayCoordinator.setRearViewEnabled(this, !on)) {
-            Toast.makeText(this, R.string.msg_need_overlay,
+            com.kooo.evcam.ui.Notice.makeText(this, R.string.msg_need_overlay,
                     Toast.LENGTH_SHORT).show();
         }
     }
@@ -930,7 +930,7 @@ public class RecordingFloatingService extends Service {
                 intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
                 intent.putExtra("auto_start_recording", true);
                 startActivity(intent);
-                Toast.makeText(this, R.string.msg_starting_recording,
+                com.kooo.evcam.ui.Notice.makeText(this, R.string.msg_starting_recording,
                         Toast.LENGTH_SHORT).show();
                 return;
         }
@@ -989,7 +989,7 @@ public class RecordingFloatingService extends Service {
         } else {
             // 重试次数耗尽，显示错误
             AppLog.e(TAG, "Failed to bind recording service after " + MAX_RETRIES + " retries");
-            Toast.makeText(this, R.string.msg_recording_service_failed,
+            com.kooo.evcam.ui.Notice.makeText(this, R.string.msg_recording_service_failed,
                     Toast.LENGTH_SHORT).show();
         }
     }

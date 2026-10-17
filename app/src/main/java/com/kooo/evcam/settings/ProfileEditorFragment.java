@@ -1052,7 +1052,7 @@ public class ProfileEditorFragment extends Fragment {
 
     private void toast(String text) {
         if (getContext() != null) {
-            Toast.makeText(getContext(), text, Toast.LENGTH_SHORT).show();
+            com.kooo.evcam.ui.Notice.makeText(getContext(), text, Toast.LENGTH_SHORT).show();
         }
     }
 }

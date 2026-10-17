@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- 7xDash 应用图标：近黑底、橙色仪表弧套着行车记录仪镜头、缺口处一个录制点 -->
 <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
-    <background android:drawable="@color/ic_launcher_background"/>
-    <foreground android:drawable="@drawable/ic_launcher_foreground_zeekr"/>
+    <background android:drawable="@drawable/ic_launcher_background_7x"/>
+    <foreground android:drawable="@drawable/ic_launcher_foreground_7x"/>
     <monochrome android:drawable="@drawable/ic_launcher_monochrome"/>
 </adaptive-icon>

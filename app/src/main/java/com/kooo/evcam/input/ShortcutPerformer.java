@@ -37,8 +37,11 @@ public final class ShortcutPerformer {
                         return;
                     }
                 }
-                if (!OverlayCoordinator.setRearViewEnabled(context, !config.isRearViewEnabled())) {
+                boolean mirrorOn = !config.isRearViewEnabled();
+                if (!OverlayCoordinator.setRearViewEnabled(context, mirrorOn)) {
                     toast(context);
+                } else {
+                    hud(context, R.string.home_card_rear, mirrorOn);
                 }
                 return;
             case MIRROR_HUD:
@@ -58,8 +61,11 @@ public final class ShortcutPerformer {
                 return;
             case DIM:
                 AppConfig dim = new AppConfig(context);
-                if (!OverlayCoordinator.setDimOverlayEnabled(context, !dim.isDimOverlayEnabled())) {
+                boolean dimOn = !dim.isDimOverlayEnabled();
+                if (!OverlayCoordinator.setDimOverlayEnabled(context, dimOn)) {
                     toast(context);
+                } else {
+                    hud(context, R.string.home_rail_dim, dimOn);
                 }
                 return;
             case HUD:
@@ -80,6 +86,12 @@ public final class ShortcutPerformer {
             case TOGGLE_SPEAK:
                 MegaphoneService.toggle(context);
                 return;
+            case PHOTO_SURROUND:
+                photo(context, com.kooo.evcam.camera.MultiCameraManager.PHOTO_SURROUND);
+                return;
+            case PHOTO_CABIN:
+                photo(context, com.kooo.evcam.camera.MultiCameraManager.PHOTO_CABIN);
+                return;
             case CABIN_PASSENGER:
                 AppConfig cabin = new AppConfig(context);
                 if (!OverlayCoordinator.setCabinPassengerEnabled(context, !cabin.isCabinPassengerEnabled())) {
@@ -94,7 +106,7 @@ public final class ShortcutPerformer {
     /** Open the super mirror on the HUD; if it is already there, close it. */
     private static void toggleMirrorOnHud(Context context) {
         if (com.kooo.evcam.zeekr.HudDisplay.find(context) == null) {
-            Toast.makeText(context, R.string.msg_no_hud, Toast.LENGTH_SHORT).show();
+            com.kooo.evcam.ui.Notice.makeText(context, R.string.msg_no_hud, Toast.LENGTH_SHORT).show();
             return;
         }
         AppConfig config = new AppConfig(context);
@@ -129,7 +141,19 @@ public final class ShortcutPerformer {
         HudCue.show(context, on);
     }
 
+    /** 拍一张，只拍 {@code only} 认的那几路。结果照常弹提示（开着抬头显示通知时也上抬头显示）。 */
+    private static void photo(Context context, java.util.function.Predicate<String> only) {
+        com.kooo.evcam.camera.CameraManagerHolder.getInstance().getOrInit(context)
+                .takePhoto(new com.kooo.evcam.ui.PhotoFeedback(context), only);
+    }
+
+    /** 「调暗：开」这样的一句放到抬头显示上（开着「抬头显示通知」时）。 */
+    private static void hud(Context context, int what, boolean on) {
+        com.kooo.evcam.hud.HudNotice.post(context, context.getString(what),
+                context.getString(on ? R.string.home_state_on : R.string.home_state_off));
+    }
+
     private static void toast(Context context) {
-        Toast.makeText(context, R.string.msg_need_overlay, Toast.LENGTH_SHORT).show();
+        com.kooo.evcam.ui.Notice.makeText(context, R.string.msg_need_overlay, Toast.LENGTH_SHORT).show();
     }
 }

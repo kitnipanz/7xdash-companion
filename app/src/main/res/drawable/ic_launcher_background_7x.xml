@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 7xDash 图标底：极氪 OS 7 那种近黑，左上略亮、右下更暗，和主页壁纸同一个调子 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path android:pathData="M0,0 H108 V108 H0 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:endX="108"
+                android:endY="108"
+                android:startX="0"
+                android:startY="0"
+                android:type="linear">
+                <item android:color="#FF2A2D33" android:offset="0" />
+                <item android:color="#FF0B0C0E" android:offset="1" />
+            </gradient>
+        </aapt:attr>
+    </path>
+</vector>

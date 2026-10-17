@@ -250,7 +250,7 @@ public class StorageCleanupManager {
             String message = Languages.localized(context).getResources().getQuantityString(
                     R.plurals.msg_cleanup_photos, result.deletedCount,
                     result.deletedCount, StorageHelper.formatSize(result.deletedSize));
-            Toast.makeText(context, message, Toast.LENGTH_LONG).show();
+            com.kooo.evcam.ui.Notice.makeText(context, message, Toast.LENGTH_LONG).show();
             AppLog.d(TAG, "清理通知: " + message);
         });
     }

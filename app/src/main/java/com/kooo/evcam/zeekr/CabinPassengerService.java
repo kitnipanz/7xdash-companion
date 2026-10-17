@@ -94,7 +94,7 @@ public class CabinPassengerService extends Service {
             window = new CabinPassengerView(this, appConfig);
             window.setSurfaceReady(this::onSurface);
             window.show();
-            Toast.makeText(this, R.string.msg_cabin_on, Toast.LENGTH_SHORT).show();
+            com.kooo.evcam.ui.Notice.makeText(this, R.string.msg_cabin_on, Toast.LENGTH_SHORT).show();
         }
         startWatchdog();
         return START_STICKY;

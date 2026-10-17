@@ -5388,8 +5388,17 @@ public class MultiCameraManager {
     /** 正在拍的那一张；同一时刻只拍一张。 */
     private PhotoJob photoJob;
 
+    /** 拍照只拍环视那一路（快捷键「拍照（环视）」）。 */
+    public static final java.util.function.Predicate<String> PHOTO_SURROUND =
+            key -> CameraSlots.KEY_SURROUND.equals(key);
+    /** 拍照只拍座舱（前座舱、后座舱）（快捷键「拍照（座舱）」）。 */
+    public static final java.util.function.Predicate<String> PHOTO_CABIN =
+            key -> CameraSlots.KEY_CABIN_FRONT.equals(key) || CameraSlots.KEY_CABIN_REAR.equals(key);
+
     private static final class PhotoJob {
         final PhotoCallback callback;
+        /** 只拍这几路；null 是全部。 */
+        java.util.function.Predicate<String> only;
         final long startedAt = android.os.SystemClock.uptimeMillis();
         final long readyDeadline = startedAt + PHOTO_READY_TIMEOUT_MS;
         boolean toldWaiting;
@@ -5423,8 +5432,13 @@ public class MultiCameraManager {
      * @return false：上一张还在拍，这一次不接
      */
     public boolean takePhoto(PhotoCallback callback) {
+        return takePhoto(callback, null);
+    }
+
+    /** 同上，只拍 {@code only} 认的那几路（{@link #PHOTO_SURROUND} / {@link #PHOTO_CABIN}）；null 是全部。 */
+    public boolean takePhoto(PhotoCallback callback, java.util.function.Predicate<String> only) {
         if (android.os.Looper.myLooper() != android.os.Looper.getMainLooper()) {
-            mainHandler.post(() -> takePhoto(callback));
+            mainHandler.post(() -> takePhoto(callback, only));
             return true;
         }
         if (photoJob != null) {
@@ -5436,6 +5450,7 @@ public class MultiCameraManager {
             return false;
         }
         final PhotoJob job = new PhotoJob(callback);
+        job.only = only;
         photoJob = job;
         com.kooo.evcam.storage.StorageState.refresh(context, "photo", snapshot -> {
             if (photoJob != job) {
@@ -5469,6 +5484,9 @@ public class MultiCameraManager {
             return;
         }
         List<String> keys = getActiveCameraKeys();
+        if (job.only != null) {
+            keys.removeIf(key -> !job.only.test(key));
+        }
         // 调度判出被别的程序拿着（含被拿着的另一路挡着）、救了 3 轮停手的那几路这一张不拍、也不算在该拍的里面
         // （2026-10-10）：它们等到点也出不了画面 —— 以前每一张都白等满 10 秒，再报「有几路没出画面」。
         // 熄屏放开的座舱也一样（项目所有者 2026-10-12 D2，设计 v3.1 C4）：熄屏拍的那一张只有环视。

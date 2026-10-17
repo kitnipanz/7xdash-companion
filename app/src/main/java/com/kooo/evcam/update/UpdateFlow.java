@@ -360,6 +360,6 @@ public final class UpdateFlow {
     }
 
     private static void toast(Context context, String text) {
-        Toast.makeText(context, text, Toast.LENGTH_LONG).show();
+        com.kooo.evcam.ui.Notice.makeText(context, text, Toast.LENGTH_LONG).show();
     }
 }

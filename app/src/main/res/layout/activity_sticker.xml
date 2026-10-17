@@ -216,6 +216,20 @@
                         android:layout_marginBottom="8dp"
                         android:text="@string/shortcut_action_instant_capture" />
                     <com.google.android.material.button.MaterialButton
+                        android:id="@+id/sticker_action_photo_surround"
+                        style="@style/Widget.Cam.RailSmall"
+                        android:layout_width="match_parent"
+                        android:layout_height="52dp"
+                        android:layout_marginBottom="8dp"
+                        android:text="@string/shortcut_action_photo_surround" />
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/sticker_action_photo_cabin"
+                        style="@style/Widget.Cam.RailSmall"
+                        android:layout_width="match_parent"
+                        android:layout_height="52dp"
+                        android:layout_marginBottom="8dp"
+                        android:text="@string/shortcut_action_photo_cabin" />
+                    <com.google.android.material.button.MaterialButton
                         android:id="@+id/sticker_action_hold_speak"
                         style="@style/Widget.Cam.RailSmall"
                         android:layout_width="match_parent"

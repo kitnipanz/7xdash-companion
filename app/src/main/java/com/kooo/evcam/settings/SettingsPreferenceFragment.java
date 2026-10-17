@@ -1128,7 +1128,7 @@ public class SettingsPreferenceFragment extends PreferenceFragmentCompat {
         bindEnum("pref_language", SettingsRegistry.LANGUAGE, appConfig.getLanguageMode(),
                 value -> {
                     appConfig.setLanguageMode(value);
-                    Languages.apply(value);
+                    Languages.apply(requireContext(), value);
                 });
     }
 
@@ -1763,7 +1763,7 @@ public class SettingsPreferenceFragment extends PreferenceFragmentCompat {
 
     private void toast(String message) {
         if (getContext() != null) {
-            Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
+            com.kooo.evcam.ui.Notice.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
         }
     }
 

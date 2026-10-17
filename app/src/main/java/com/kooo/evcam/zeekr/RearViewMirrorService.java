@@ -714,7 +714,7 @@ public class RearViewMirrorService extends Service {
                 : getString(R.string.mirror_resume_failed, error == null ? "?" : error);
         AppLog.w(TAG, "点击恢复之后画面仍然没回来: 环视 " + condition + "，最后一次报错 " + error);
         try {
-            android.widget.Toast.makeText(this, message, android.widget.Toast.LENGTH_LONG).show();
+            com.kooo.evcam.ui.Notice.makeText(this, message, android.widget.Toast.LENGTH_LONG).show();
         } catch (Exception e) {
             AppLog.w(TAG, "提示弹不出来: " + e);
         }

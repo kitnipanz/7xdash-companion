@@ -434,7 +434,7 @@ public class AppConfig {
         prefs.edit().putBoolean(KEY_FOOTAGE_LOCK_FLASH, enabled).apply();
     }
 
-    /** 别的应用的通知投到抬头显示（7xDash 主页的开关，默认关）。还要有读通知的权限，见 {@code NotificationGate}。 */
+    /** 7xDash 自己的提示也写到抬头显示上（主页的开关，默认关）。见 {@code HudNotice}。 */
     public boolean isHudNotificationsEnabled() {
         return prefs.getBoolean(KEY_HUD_NOTIFICATIONS, false);
     }

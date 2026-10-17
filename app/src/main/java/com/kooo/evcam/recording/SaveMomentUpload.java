@@ -127,7 +127,7 @@ public final class SaveMomentUpload {
             finished += files.size();
             if (copied > 0) {
                 final int count = copied;
-                MAIN.post(() -> Toast.makeText(app,
+                MAIN.post(() -> com.kooo.evcam.ui.Notice.makeText(app,
                         app.getString(R.string.save_moment_usb, count),
                         Toast.LENGTH_SHORT).show());
             }
@@ -139,7 +139,7 @@ public final class SaveMomentUpload {
             AppLog.i(TAG, "保存瞬间上传完成 " + sent + "/" + files.size());
             if (sent > 0) {
                 final int count = sent;
-                MAIN.post(() -> Toast.makeText(app,
+                MAIN.post(() -> com.kooo.evcam.ui.Notice.makeText(app,
                         app.getString(R.string.save_moment_uploaded, count),
                         Toast.LENGTH_SHORT).show());
             }
@@ -156,7 +156,7 @@ public final class SaveMomentUpload {
         File root = StorageHelper.getExternalSdCardRoot(app);
         if (root == null) {
             AppLog.w(TAG, "要存到 U 盘，但没有 U 盘");
-            MAIN.post(() -> Toast.makeText(app, R.string.save_moment_no_usb, Toast.LENGTH_SHORT).show());
+            MAIN.post(() -> com.kooo.evcam.ui.Notice.makeText(app, R.string.save_moment_no_usb, Toast.LENGTH_SHORT).show());
             return 0;
         }
         File destDir = UsbExport.moments(root);

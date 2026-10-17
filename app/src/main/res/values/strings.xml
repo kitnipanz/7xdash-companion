@@ -218,7 +218,7 @@
     <string name="shortcut_hud_channel">Driver HUD</string>
     <string name="shortcut_action_save">Save this moment</string>
     <string name="shortcut_action_lock_save">Lock and save</string>
-    <string name="shortcut_action_instant_capture">Instant capture (same as flash-to-pass)</string>
+    <string name="shortcut_action_instant_capture">Instant capture</string>
     <string name="shortcut_action_hold_speak">Hold to speak outside</string>
     <string name="shortcut_action_toggle_speak">Click to speak outside (click again to stop)</string>
     <string name="megaphone_channel">Hold to speak</string>
@@ -249,9 +249,9 @@
     <string name="instant_capture_failed">Could not save the instant capture</string>
     <string name="instant_capture_need_recording">Start recording first to make an instant capture</string>
     <string name="instant_capture_upload_failed">Could not upload the instant capture</string>
-    <string name="instant_captures_title">Instant captures</string>
-    <string name="instant_captures_summary">View the surround clips saved by flash-to-pass. Play or delete them here</string>
-    <string name="instant_captures_empty">No instant captures yet</string>
+    <string name="instant_captures_title">Saved captures</string>
+    <string name="instant_captures_summary">Watch or delete the clips saved by Instant capture (from a tap, a shortcut or flash-to-pass)</string>
+    <string name="instant_captures_empty">No saved captures yet</string>
     <string name="instant_captures_no_usb">No USB stick</string>
     <string name="instant_captures_delete_all">Delete all</string>
     <string name="instant_captures_delete_title">Delete this clip?</string>
@@ -434,7 +434,7 @@ Then reopen this app.</string>
     <string name="vi_v_ign_driving">Driving</string>
     <string name="vi_v_screen_off">Screen off</string>
     <string name="vi_v_screen_on">Screen on</string>
-    <string name="set_language_title">Language / ภาษา</string>
+    <string name="set_language_title">Language</string>
     <string name="lang_auto">Follow system</string>
         <string name="lang_en">English</string>
     <string name="lang_th">ไทย</string>
@@ -564,8 +564,8 @@ Then reopen this app.</string>
         <item quantity="other">%1$d files are locked (%2$s). When off, they are no longer protected: automatic cleanup deletes them oldest first like any other file, and deleted files can\'t be recovered.</item>
     </plurals>
     <string name="dlg_footage_lock_off_ok">Turn off</string>
-    <string name="set_footage_lock_flash_title">Lock footage on flash-to-pass</string>
-    <string name="set_footage_lock_flash_summary">While recording, flash the high beams to lock the clips covering 10 seconds before and after, on every camera. Only the surround view of those 20 seconds is saved to the instant captures folder. Other recordings stay in the video folder. If locked footage fills the space, recording stops.</string>
+    <string name="set_footage_lock_flash_title">Flash-to-pass triggers Instant capture</string>
+    <string name="set_footage_lock_flash_summary">While recording, flashing the high beam does the same as Instant capture: the surround view from 10 seconds before to 10 seconds after is saved to Saved captures, and those clips are locked on every camera. If locked footage fills the space, recording stops.</string>
     <string name="set_footage_lock_horn_title">Lock footage on horn</string>
     <string name="set_footage_lock_horn_summary">The head unit can\'t read the horn signal yet, so this is unavailable</string>
     <string name="msg_flash_locked">Flash-to-pass: locked the clips covering 10 seconds before and after</string>
@@ -1265,7 +1265,7 @@ Then reopen this app.</string>
     <string name="home_card_blind">Blind spot</string>
     <string name="home_card_blind_sub">Turn signal shows the side. Tap: off, screen, HUD</string>
     <string name="home_card_capture">Instant capture</string>
-    <string name="home_card_capture_sub">Saves 10 s either side. Hold to see captures</string>
+    <string name="home_card_capture_sub">Saves 10 s before and after. Tap here, press a shortcut, or flash the high beam</string>
     <string name="home_card_flash">Flash-to-pass capture</string>
     <string name="home_card_flash_sub">While recording, flash the high beam to capture</string>
     <string name="home_card_remote">Remote view</string>
@@ -1277,7 +1277,7 @@ Then reopen this app.</string>
     <string name="home_card_shortcuts">Shortcuts</string>
     <string name="home_card_shortcuts_sub">Give buttons and stickers an action</string>
     <string name="home_card_hud_notice">HUD notifications</string>
-    <string name="home_card_hud_notice_sub">Show other apps\' notifications on the HUD</string>
+    <string name="home_card_hud_notice_sub">Show 7xDash alerts on the HUD</string>
     <string name="home_action_start">Start recording</string>
     <string name="home_action_stop">Stop recording</string>
     <string name="home_action_camera">Open camera view</string>
@@ -1290,6 +1290,10 @@ Then reopen this app.</string>
     <string name="set_menu_side_summary">Where the home control bar, the slide-out menu and the settings list sit</string>
     <string name="home_preview_wait">Camera starting…</string>
     <string name="rail_captures_list">Saved captures</string>
+    <string name="shortcut_action_photo_surround">Take photo (surround)</string>
+    <string name="shortcut_action_photo_cabin">Take photo (cabin)</string>
+    <string name="home_capture_flash">Flash-to-pass: %1$s</string>
+    <string name="home_card_saved_sub">Watch and delete instant captures</string>
     <string name="home_rail_record">Record</string>
     <string name="home_rail_rear">Rear</string>
     <string name="home_rail_capture">Capture</string>
@@ -1300,6 +1304,4 @@ Then reopen this app.</string>
     <string name="home_state_off">Off</string>
     <string name="home_state_screen">Screen</string>
     <string name="home_state_hud">HUD</string>
-    <string name="hud_notice_need_access">Needs notification access. From a computer, run: %1$s</string>
-    <string name="hud_notice_service_label">7xDash HUD notifications</string>
 </resources>

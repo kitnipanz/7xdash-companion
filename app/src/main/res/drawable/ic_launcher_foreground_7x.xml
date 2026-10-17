@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  7xDash 图标前景：行车记录仪的镜头，套在一圈仪表盘一样的橙色弧里（缺口朝下），
+  缺口处一个「正在录」的小圆点。一眼是「车 + 摄像头」，和别的应用分得开。
+
+  108x108 是自适应图标的画布，桌面只露出中间 72x72；安全区是以 (54,54) 为心、半径 33 的圆。
+  外弧半径 26（含笔画到 28.5），任何遮罩形状下都切不到。
+  改几何时 ic_launcher_monochrome（主题图标）和 ic_stat_app（通知栏）要一起改。
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- 仪表弧：左下起、经过顶上、到右下，270° -->
+    <path
+        android:pathData="M35.62,72.38 A26,26 0 1 1 72.38,72.38"
+        android:strokeLineCap="round"
+        android:strokeWidth="5">
+        <aapt:attr name="android:strokeColor">
+            <gradient
+                android:endX="80"
+                android:endY="28"
+                android:startX="28"
+                android:startY="80"
+                android:type="linear">
+                <item android:color="#FFFFB35C" android:offset="0" />
+                <item android:color="#FFF26B38" android:offset="1" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- 镜头外圈 -->
+    <path
+        android:pathData="M54,40 A14,14 0 1 1 53.99,40 Z"
+        android:strokeColor="#FFF0F1F2"
+        android:strokeWidth="4" />
+
+    <!-- 镜片：深色，带一点高光 -->
+    <path
+        android:fillColor="#FF1E2026"
+        android:pathData="M54,46 A8,8 0 1 1 53.99,46 Z" />
+    <path
+        android:fillColor="#FFF0F1F2"
+        android:pathData="M50.5,49 A2.2,2.2 0 1 1 50.49,49 Z" />
+
+    <!-- 缺口处的录制点 -->
+    <path
+        android:fillColor="#FFF0555A"
+        android:pathData="M54,77 A3.2,3.2 0 1 1 53.99,77 Z" />
+</vector>

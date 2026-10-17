@@ -1,29 +1,39 @@
 package com.kooo.evcam.hud;
 
+import android.content.Context;
+
+import com.kooo.evcam.AppConfig;
+
 /**
- * 抬头显示上的通知卡片：哪些通知上屏、文字截多长、放在哪。纯函数，单测钉着。
+ * 抬头显示上的提示卡片：7xDash 自己的事（开始 / 停止录像、抓拍存好了、拍照、调暗、喊话……）
+ * 在中控弹提示的同时，也在抬头显示上用大字写一遍。开车时眼睛不用离开前方。
  *
- * <p>只上「人发来的、一眼能看完的」：自己的通知不上（录像、喊话这些常驻条会刷屏），
- * 常驻（ongoing）的不上（导航、音乐），分组摘要不上（同一组的单条已经上过），
- * 没有标题也没有正文的不上。</p>
+ * <p>不读别的应用的通知：那要「通知使用权」，车机上没有那个设置页（2026-10-17 实车）。
+ * 设置在主页「抬头显示通知」卡片上开关；没有抬头显示的车什么都不做。</p>
+ *
+ * <p>截字和摆位是纯函数，单测钉着。</p>
  */
 public final class HudNotice {
 
     /** 一张卡片停多久。 */
-    public static final long SHOW_MS = 6_000L;
-    /** 正文最多几个字，多了用省略号收尾。抬头显示上第二行看不清。 */
+    public static final long SHOW_MS = 4_000L;
+    /** 一行最多几个字，多了用省略号收尾。抬头显示上太长看不完。 */
     public static final int MAX_TEXT = 60;
-    public static final int MAX_TITLE = 30;
+    public static final int MAX_TITLE = 40;
 
     private HudNotice() {
     }
 
-    public static boolean accept(String pkg, String ownPkg, boolean ongoing, boolean groupSummary,
-                                 CharSequence title, CharSequence text) {
-        if (pkg == null || pkg.equals(ownPkg) || ongoing || groupSummary) {
-            return false;
+    /** 开着「抬头显示通知」时把这一句放到抬头显示上。任何线程都能调。 */
+    public static void post(Context context, CharSequence title) {
+        post(context, title, null);
+    }
+
+    public static void post(Context context, CharSequence title, CharSequence detail) {
+        if (context == null || isBlank(title) || !new AppConfig(context).isHudNotificationsEnabled()) {
+            return;
         }
-        return !isBlank(title) || !isBlank(text);
+        HudNoticeWindow.show(context, "7xDash", clip(title, MAX_TITLE), clip(detail, MAX_TEXT));
     }
 
     public static String clip(CharSequence value, int max) {

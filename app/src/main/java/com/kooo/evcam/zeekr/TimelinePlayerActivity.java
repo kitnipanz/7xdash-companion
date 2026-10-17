@@ -528,7 +528,7 @@ public class TimelinePlayerActivity extends AppCompatActivity {
                     applyViewMode(0L);
                     positionText.setText("");
                     infoText.setText(R.string.msg_no_surround_clips);
-                    Toast.makeText(this, R.string.msg_no_surround_clips_long,
+                    com.kooo.evcam.ui.Notice.makeText(this, R.string.msg_no_surround_clips_long,
                             Toast.LENGTH_LONG).show();
                     return;
                 }
@@ -1066,7 +1066,7 @@ public class TimelinePlayerActivity extends AppCompatActivity {
             uncover(lane);
             if (++consecutiveErrors >= MAX_CONSECUTIVE_ERRORS) {
                 AppLog.e(TAG, "连续 " + consecutiveErrors + " 次播放出错，停止自动续播");
-                Toast.makeText(TimelinePlayerActivity.this,
+                com.kooo.evcam.ui.Notice.makeText(TimelinePlayerActivity.this,
                         R.string.msg_segment_unplayable, Toast.LENGTH_LONG).show();
                 consecutiveErrors = 0;
                 return;
@@ -1151,7 +1151,7 @@ public class TimelinePlayerActivity extends AppCompatActivity {
     private void sendCurrentSegment() {
         File file = currentSegmentFile();
         if (file == null) {
-            Toast.makeText(this, R.string.share_phone_no_file, Toast.LENGTH_SHORT).show();
+            com.kooo.evcam.ui.Notice.makeText(this, R.string.share_phone_no_file, Toast.LENGTH_SHORT).show();
             return;
         }
         Lane lane = expanded != null ? expanded : surround;
@@ -1378,7 +1378,7 @@ public class TimelinePlayerActivity extends AppCompatActivity {
             }
         }
         if (uris.isEmpty()) {
-            Toast.makeText(this, R.string.msg_nothing_to_share, Toast.LENGTH_SHORT).show();
+            com.kooo.evcam.ui.Notice.makeText(this, R.string.msg_nothing_to_share, Toast.LENGTH_SHORT).show();
             return;
         }
         Intent intent = new Intent(uris.size() > 1
@@ -1429,7 +1429,7 @@ public class TimelinePlayerActivity extends AppCompatActivity {
     private void confirmDeleteChosen() {
         List<Integer> indexes = sessionAdapter.chosenIndexes();
         if (indexes.isEmpty()) {
-            Toast.makeText(this, R.string.msg_selected_none, Toast.LENGTH_SHORT).show();
+            com.kooo.evcam.ui.Notice.makeText(this, R.string.msg_selected_none, Toast.LENGTH_SHORT).show();
             return;
         }
         // 清单在这里取一次，确认框里报的和真删的是同一批（同 showSessionActions）
@@ -1463,7 +1463,7 @@ public class TimelinePlayerActivity extends AppCompatActivity {
             }
         }
         AppLog.i(TAG, "多选删除：" + deleted + "/" + files.size() + " 个文件，锁定的留下 " + kept + " 个");
-        Toast.makeText(this, deletedText(deleted, kept), Toast.LENGTH_SHORT).show();
+        com.kooo.evcam.ui.Notice.makeText(this, deletedText(deleted, kept), Toast.LENGTH_SHORT).show();
         setSelecting(false);
         loadTimelines();
     }
@@ -1495,7 +1495,7 @@ public class TimelinePlayerActivity extends AppCompatActivity {
             }
         }
         AppLog.i(TAG, "删除时间轴 " + index + "：" + deleted + "/" + files.size() + " 个文件，锁定的留下 " + kept + " 个");
-        Toast.makeText(this, deletedText(deleted, kept), Toast.LENGTH_SHORT).show();
+        com.kooo.evcam.ui.Notice.makeText(this, deletedText(deleted, kept), Toast.LENGTH_SHORT).show();
         loadTimelines();
     }
 
@@ -1583,7 +1583,7 @@ public class TimelinePlayerActivity extends AppCompatActivity {
     private void toggleLockHere() {
         List<File> files = filesHere();
         if (files.isEmpty()) {
-            Toast.makeText(this, R.string.msg_footage_nothing_here, Toast.LENGTH_SHORT).show();
+            com.kooo.evcam.ui.Notice.makeText(this, R.string.msg_footage_nothing_here, Toast.LENGTH_SHORT).show();
             return;
         }
         final List<String> names = namesOf(files);
@@ -1595,7 +1595,7 @@ public class TimelinePlayerActivity extends AppCompatActivity {
             }
             lockButton.setEnabled(true);
             if (!ok) {
-                Toast.makeText(this, R.string.msg_footage_lock_failed, Toast.LENGTH_LONG).show();
+                com.kooo.evcam.ui.Notice.makeText(this, R.string.msg_footage_lock_failed, Toast.LENGTH_LONG).show();
                 return;
             }
             if (unlock) {
@@ -1604,7 +1604,7 @@ public class TimelinePlayerActivity extends AppCompatActivity {
                 lockedVideos.addAll(names);
             }
             AppLog.i(TAG, (unlock ? "解锁此刻：" : "锁定此刻：") + names.size() + " 个文件 " + names);
-            Toast.makeText(this, getResources().getQuantityString(
+            com.kooo.evcam.ui.Notice.makeText(this, getResources().getQuantityString(
                     unlock ? R.plurals.msg_footage_unlocked : R.plurals.msg_footage_locked,
                     names.size(), names.size()), Toast.LENGTH_SHORT).show();
             sessionAdapter.setLocked(lockedFlags());

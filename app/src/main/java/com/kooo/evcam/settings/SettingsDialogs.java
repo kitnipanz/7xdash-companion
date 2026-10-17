@@ -50,7 +50,7 @@ public final class SettingsDialogs {
         }
         final String[] cameraIds = listCameraIds(context);
         if (cameraIds.length == 0) {
-            Toast.makeText(context, R.string.msg_camera_list_failed,
+            com.kooo.evcam.ui.Notice.makeText(context, R.string.msg_camera_list_failed,
                     Toast.LENGTH_SHORT).show();
             return;
         }
@@ -114,7 +114,7 @@ public final class SettingsDialogs {
                     if (onChanged != null) {
                         onChanged.run();
                     }
-                    Toast.makeText(context, R.string.msg_mapping_saved,
+                    com.kooo.evcam.ui.Notice.makeText(context, R.string.msg_mapping_saved,
                             Toast.LENGTH_LONG).show();
                 })
                 .setNeutralButton(R.string.action_all_auto, (d, w) -> {
@@ -122,7 +122,7 @@ public final class SettingsDialogs {
                     if (onChanged != null) {
                         onChanged.run();
                     }
-                    Toast.makeText(context, R.string.msg_mapping_cleared,
+                    com.kooo.evcam.ui.Notice.makeText(context, R.string.msg_mapping_cleared,
                             Toast.LENGTH_LONG).show();
                 })
                 .setNegativeButton(R.string.action_cancel, null));

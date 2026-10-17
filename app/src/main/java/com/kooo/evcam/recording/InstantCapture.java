@@ -560,6 +560,6 @@ public final class InstantCapture {
     }
 
     private static void toast(Context app, String text) {
-        MAIN.post(() -> Toast.makeText(app, text, Toast.LENGTH_SHORT).show());
+        MAIN.post(() -> com.kooo.evcam.ui.Notice.makeText(app, text, Toast.LENGTH_SHORT).show());
     }
 }

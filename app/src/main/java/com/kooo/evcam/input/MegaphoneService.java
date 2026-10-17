@@ -59,7 +59,7 @@ public class MegaphoneService extends Service {
         }
         if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO)
                 != android.content.pm.PackageManager.PERMISSION_GRANTED) {
-            Toast.makeText(context, R.string.megaphone_need_mic, Toast.LENGTH_SHORT).show();
+            com.kooo.evcam.ui.Notice.makeText(context, R.string.megaphone_need_mic, Toast.LENGTH_SHORT).show();
             return;
         }
         start(context, 0L);
@@ -72,7 +72,7 @@ public class MegaphoneService extends Service {
         }
         if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO)
                 != android.content.pm.PackageManager.PERMISSION_GRANTED) {
-            Toast.makeText(context, R.string.megaphone_need_mic, Toast.LENGTH_SHORT).show();
+            com.kooo.evcam.ui.Notice.makeText(context, R.string.megaphone_need_mic, Toast.LENGTH_SHORT).show();
             return;
         }
         armed.set(true);
@@ -85,6 +85,7 @@ public class MegaphoneService extends Service {
         Intent intent = new Intent(context, MegaphoneService.class);
         intent.setAction(ACTION_START);
         ContextCompat.startForegroundService(context, intent);
+        com.kooo.evcam.hud.HudNotice.post(context, context.getString(R.string.megaphone_speaking));
     }
 
     public static boolean isOpen() {

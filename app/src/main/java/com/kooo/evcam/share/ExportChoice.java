@@ -45,7 +45,7 @@ public final class ExportChoice {
             }
         }
         if (available.isEmpty()) {
-            Toast.makeText(activity, R.string.share_phone_no_file, Toast.LENGTH_SHORT).show();
+            com.kooo.evcam.ui.Notice.makeText(activity, R.string.share_phone_no_file, Toast.LENGTH_SHORT).show();
             return;
         }
         if (available.size() == 1) {
@@ -71,7 +71,7 @@ public final class ExportChoice {
                         }
                     }
                     if (picked.isEmpty()) {
-                        Toast.makeText(activity, R.string.share_phone_no_file, Toast.LENGTH_SHORT).show();
+                        com.kooo.evcam.ui.Notice.makeText(activity, R.string.share_phone_no_file, Toast.LENGTH_SHORT).show();
                         return;
                     }
                     sink.export(activity, picked);

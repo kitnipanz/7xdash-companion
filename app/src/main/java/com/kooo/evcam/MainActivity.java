@@ -745,6 +745,18 @@ public class MainActivity extends AppCompatActivity {
         openPage(page);
     }
 
+    /**
+     * 7xDash 主页「拍照」卡片：就地拍一张，不换页。主页盖在预览上、预览一直开着，
+     * 画布齐了就当场拍；还没齐就记着，齐了再拍（和 PAGE_PHOTO 同一条路，只是不切到画面页）。
+     */
+    public void takePhotoHere() {
+        if (PreviewSlots.canStartCamera(textureReadyCount, configuredCameraCount)) {
+            takePicture();
+        } else {
+            photoWhenReady = true;
+        }
+    }
+
     /** 7xDash 主页的卡片用：去某一页（值见 PAGE_）。 */
     public void openPage(String page) {
         if (drawerLayout != null && drawerLayout.isDrawerOpen(navGravity())) {
@@ -1053,11 +1065,11 @@ public class MainActivity extends AppCompatActivity {
             if (isRecordingStatsEnabled) {
                 // 显示状态（使用 alpha 恢复可见）
                 tvRecordingStats.setAlpha(1.0f);
-                Toast.makeText(this, R.string.msg_stats_on, Toast.LENGTH_SHORT).show();
+                com.kooo.evcam.ui.Notice.makeText(this, R.string.msg_stats_on, Toast.LENGTH_SHORT).show();
             } else {
                 // 使用 alpha=0 隐藏，但保持 VISIBLE 状态以响应点击
                 tvRecordingStats.setAlpha(0.0f);
-                Toast.makeText(this, R.string.msg_stats_off, Toast.LENGTH_SHORT).show();
+                com.kooo.evcam.ui.Notice.makeText(this, R.string.msg_stats_off, Toast.LENGTH_SHORT).show();
             }
         }
         
@@ -1435,7 +1447,7 @@ public class MainActivity extends AppCompatActivity {
         appConfig.setLanguageMode(mode);
         appConfig.setLanguageChosen();
         Languages.apply(mode);
-        Toast.makeText(this, R.string.msg_language_hint, Toast.LENGTH_LONG).show();
+        com.kooo.evcam.ui.Notice.makeText(this, R.string.msg_language_hint, Toast.LENGTH_LONG).show();
         // 语言没变的话不会重建，这里接着往下走
         checkFirstLaunch();
     }
@@ -1470,7 +1482,7 @@ public class MainActivity extends AppCompatActivity {
         appConfig.setActionRailSide(side);
         appConfig.setRailSideChosen();
         applyActionRailSide();
-        Toast.makeText(this, R.string.msg_rail_side_hint, Toast.LENGTH_LONG).show();
+        com.kooo.evcam.ui.Notice.makeText(this, R.string.msg_rail_side_hint, Toast.LENGTH_LONG).show();
         checkFirstLaunch();
     }
 
@@ -1929,7 +1941,7 @@ public class MainActivity extends AppCompatActivity {
                     initCamera();
                 }
             } else {
-                Toast.makeText(this, R.string.msg_need_camera_storage, Toast.LENGTH_SHORT).show();
+                com.kooo.evcam.ui.Notice.makeText(this, R.string.msg_need_camera_storage, Toast.LENGTH_SHORT).show();
                 finish();
             }
         }
@@ -2031,7 +2043,7 @@ public class MainActivity extends AppCompatActivity {
     private void showBuilt(com.kooo.evcam.camera.CameraManagerHolder.Built built) {
         if (built.failed || built.plan == null) {
             // 列相机时相机服务出错：原因（英文原话和错误码）只进日志，下次有人要管线时 Holder 重建
-            Toast.makeText(this, R.string.msg_camera_access_failed, Toast.LENGTH_SHORT).show();
+            com.kooo.evcam.ui.Notice.makeText(this, R.string.msg_camera_access_failed, Toast.LENGTH_SHORT).show();
             return;
         }
         com.kooo.evcam.zeekr.ZeekrMultiPlan plan = built.plan;
@@ -2042,14 +2054,14 @@ public class MainActivity extends AppCompatActivity {
         if (configuredCameraCount > 1) {
             if (plan.assignedCount() == 0) {
                 AppLog.w(TAG, "没有任何可用相机，三路模式无法显示");
-                Toast.makeText(this, R.string.msg_no_camera_available, Toast.LENGTH_LONG).show();
+                com.kooo.evcam.ui.Notice.makeText(this, R.string.msg_no_camera_available, Toast.LENGTH_LONG).show();
             }
             updateCompositeInfoOverlay(describeMultiSlots(plan));
             return;
         }
         if (!plan.compositeIsReal) {
             // 没找到合成流：管线拿第一个相机顶上，界面上显示原始画面并提示不支持
-            Toast.makeText(this, R.string.zeekr_composite_not_found, Toast.LENGTH_LONG).show();
+            com.kooo.evcam.ui.Notice.makeText(this, R.string.zeekr_composite_not_found, Toast.LENGTH_LONG).show();
         }
         // 角标先写探测结果；相机真正开起来之后会用实际尺寸再刷一次（见 refreshCompositeSizeOverlay）——
         // 强制换了尺寸而 HAL 不认时，这里写探测值就成了「界面一个数、实际另一个数」
@@ -2553,11 +2565,11 @@ public class MainActivity extends AppCompatActivity {
         if (debugOverlayVisible) {
             tvDebugOverlay.setVisibility(View.VISIBLE);
             startDebugUpdates();
-            android.widget.Toast.makeText(this, R.string.debug_on, android.widget.Toast.LENGTH_SHORT).show();
+            com.kooo.evcam.ui.Notice.makeText(this, R.string.debug_on, android.widget.Toast.LENGTH_SHORT).show();
         } else {
             tvDebugOverlay.setVisibility(View.GONE);
             stopDebugUpdates();
-            android.widget.Toast.makeText(this, R.string.debug_off, android.widget.Toast.LENGTH_SHORT).show();
+            com.kooo.evcam.ui.Notice.makeText(this, R.string.debug_off, android.widget.Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -2723,7 +2735,7 @@ public class MainActivity extends AppCompatActivity {
             moveTaskToBack(true);
             com.kooo.evcam.blackbox.BlackBox.noteImportant("熄屏 15 秒：主界面退到后台"
                     + com.kooo.evcam.blackbox.BlackBox.afterScreenOff());
-            Toast.makeText(MainActivity.this, R.string.msg_screen_off_background, Toast.LENGTH_SHORT).show();
+            com.kooo.evcam.ui.Notice.makeText(MainActivity.this, R.string.msg_screen_off_background, Toast.LENGTH_SHORT).show();
         };
 
         screenStateHandler.postDelayed(screenOffBackgroundRunnable, delayMs);
@@ -2832,18 +2844,17 @@ public class MainActivity extends AppCompatActivity {
             // 一路都没在录，就说在等摄像头 —— 录像没停
             if (sdFellBack && !AppConfig.isSdFallbackShownThisSession()) {
                 AppConfig.setSdFallbackShownThisSession(true);
-                Toast.makeText(MainActivity.this,
+                com.kooo.evcam.ui.Notice.makeText(MainActivity.this,
                         R.string.msg_sd_fallback, Toast.LENGTH_LONG).show();
             } else if (liveKeys.isEmpty()) {
-                Toast.makeText(MainActivity.this,
+                com.kooo.evcam.ui.Notice.makeText(MainActivity.this,
                         R.string.msg_recording_waiting_cameras, Toast.LENGTH_LONG).show();
             } else {
                 int count = liveKeys.size();
-                Toast.makeText(MainActivity.this,
-                        count == planned.size()
-                                ? getString(R.string.msg_recording_started_all)
-                                : getString(R.string.msg_recording_started_n, count),
-                        Toast.LENGTH_SHORT).show();
+                String started = count == planned.size()
+                        ? getString(R.string.msg_recording_started_all)
+                        : getString(R.string.msg_recording_started_n, count);
+                com.kooo.evcam.ui.Notice.makeText(MainActivity.this, started, Toast.LENGTH_SHORT).show();
             }
         }
 
@@ -2899,7 +2910,7 @@ public class MainActivity extends AppCompatActivity {
                     break;
                 }
             }
-            Toast.makeText(MainActivity.this, text, length).show();
+            com.kooo.evcam.ui.Notice.makeText(MainActivity.this, text, length).show();
 
             // 熄屏期间停下来的（因熄屏停的、录不下去了的）：熄屏那一刻排的 15 秒那一步可能早就因为在录没退，再排一次。
             // 只是界面：相机由通道调度照登记表关（熄屏时预览不算有人要），不用等主界面退下去
@@ -2917,13 +2928,13 @@ public class MainActivity extends AppCompatActivity {
                 return;
             }
             lastRefusalShown = reason;
-            Toast.makeText(MainActivity.this, reason, Toast.LENGTH_LONG).show();
+            com.kooo.evcam.ui.Notice.makeText(MainActivity.this, reason, Toast.LENGTH_LONG).show();
         }
 
         @Override
         public void onWriteSlow() {
             // 录像照常在录，只是 U 盘写不过来、开始丢帧；多久提示一次协调器已经定了
-            Toast.makeText(MainActivity.this, R.string.msg_storage_too_slow, Toast.LENGTH_LONG).show();
+            com.kooo.evcam.ui.Notice.makeText(MainActivity.this, R.string.msg_storage_too_slow, Toast.LENGTH_LONG).show();
         }
     };
 
@@ -3187,7 +3198,7 @@ public class MainActivity extends AppCompatActivity {
         isRecording = false;
         stopRecordingTimer();
         renderRecordState();
-        Toast.makeText(this, R.string.msg_recording_lost_in_background, Toast.LENGTH_LONG).show();
+        com.kooo.evcam.ui.Notice.makeText(this, R.string.msg_recording_lost_in_background, Toast.LENGTH_LONG).show();
     }
 
     /**
@@ -3452,7 +3463,7 @@ public class MainActivity extends AppCompatActivity {
         lastRecordingErrorToastTime = currentTime;
 
         runOnUiThread(() -> {
-            android.widget.Toast.makeText(this, R.string.msg_record_error, android.widget.Toast.LENGTH_LONG).show();
+            com.kooo.evcam.ui.Notice.makeText(this, R.string.msg_record_error, android.widget.Toast.LENGTH_LONG).show();
         });
     }
 
@@ -3609,7 +3620,7 @@ public class MainActivity extends AppCompatActivity {
     public void showImageAdjustFloatingWindow() {
         // 检查悬浮窗权限
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !android.provider.Settings.canDrawOverlays(this)) {
-            Toast.makeText(this, R.string.msg_need_overlay_adjust, Toast.LENGTH_SHORT).show();
+            com.kooo.evcam.ui.Notice.makeText(this, R.string.msg_need_overlay_adjust, Toast.LENGTH_SHORT).show();
             Intent intent = new Intent(android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
                     android.net.Uri.parse("package:" + getPackageName()));
             startActivityForResult(intent, REQUEST_OVERLAY_PERMISSION);
@@ -3617,7 +3628,7 @@ public class MainActivity extends AppCompatActivity {
         }
         
         if (imageAdjustManager == null) {
-            Toast.makeText(this, R.string.msg_camera_not_ready_adjust, Toast.LENGTH_SHORT).show();
+            com.kooo.evcam.ui.Notice.makeText(this, R.string.msg_camera_not_ready_adjust, Toast.LENGTH_SHORT).show();
             return;
         }
         
@@ -3635,7 +3646,7 @@ public class MainActivity extends AppCompatActivity {
         // 窗口真打开了才说「已打开」：没权限、摄像头没就绪各有自己的提示（上面两处）；
         // show() 加不上窗口时只记日志不抛，所以问一下它
         if (imageAdjustFloatingWindow.isShowing()) {
-            Toast.makeText(this, R.string.msg_adjust_opened, Toast.LENGTH_SHORT).show();
+            com.kooo.evcam.ui.Notice.makeText(this, R.string.msg_adjust_opened, Toast.LENGTH_SHORT).show();
         }
 
         AppLog.d(TAG, "Image adjust floating window shown");
@@ -3651,7 +3662,7 @@ public class MainActivity extends AppCompatActivity {
                 // 权限已授予，打开悬浮窗
                 showImageAdjustFloatingWindow();
             } else {
-                Toast.makeText(this, R.string.msg_overlay_denied, Toast.LENGTH_SHORT).show();
+                com.kooo.evcam.ui.Notice.makeText(this, R.string.msg_overlay_denied, Toast.LENGTH_SHORT).show();
             }
         }
     }
@@ -3971,10 +3982,10 @@ public class MainActivity extends AppCompatActivity {
     private void toggleRearViewFromDrawer() {
         boolean on = !appConfig.isRearViewEnabled();
         if (!OverlayCoordinator.setRearViewEnabled(this, on)) {
-            Toast.makeText(this, R.string.msg_need_overlay, Toast.LENGTH_SHORT).show();
+            com.kooo.evcam.ui.Notice.makeText(this, R.string.msg_need_overlay, Toast.LENGTH_SHORT).show();
             WakeUpHelper.requestOverlayPermission(this);
         } else if (on) {
-            Toast.makeText(this, R.string.msg_rearview_on, Toast.LENGTH_SHORT).show();
+            com.kooo.evcam.ui.Notice.makeText(this, R.string.msg_rearview_on, Toast.LENGTH_SHORT).show();
             com.kooo.evcam.ui.RearViewGuide.showOnce(this);
         }
         syncRearViewSwitch();
@@ -3984,7 +3995,7 @@ public class MainActivity extends AppCompatActivity {
     private void toggleFloatingButtonFromDrawer() {
         boolean on = !appConfig.isRecordingFloatingEnabled();
         if (!OverlayCoordinator.setRecordButtonEnabled(this, on)) {
-            Toast.makeText(this, R.string.msg_need_overlay, Toast.LENGTH_SHORT).show();
+            com.kooo.evcam.ui.Notice.makeText(this, R.string.msg_need_overlay, Toast.LENGTH_SHORT).show();
             WakeUpHelper.requestOverlayPermission(this);
         }
         syncRearViewSwitch();

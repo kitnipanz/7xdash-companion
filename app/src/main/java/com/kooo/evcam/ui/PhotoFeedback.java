@@ -22,25 +22,25 @@ public final class PhotoFeedback implements MultiCameraManager.PhotoCallback {
 
     @Override
     public void onWaitingForCameras() {
-        Toast.makeText(context, R.string.msg_photo_waiting, Toast.LENGTH_SHORT).show();
+        com.kooo.evcam.ui.Notice.makeText(context, R.string.msg_photo_waiting, Toast.LENGTH_SHORT).show();
     }
 
     @Override
     public void onPhotoResult(int saved, int pressed, int expected) {
         if (saved > 0 && saved >= expected) {
-            Toast.makeText(context, R.string.msg_photo_taken, Toast.LENGTH_SHORT).show();
+            com.kooo.evcam.ui.Notice.makeText(context, R.string.msg_photo_taken, Toast.LENGTH_SHORT).show();
         } else if (saved > 0) {
-            Toast.makeText(context, context.getString(R.string.msg_photo_partial, saved, expected),
+            com.kooo.evcam.ui.Notice.makeText(context, context.getString(R.string.msg_photo_partial, saved, expected),
                     Toast.LENGTH_LONG).show();
         } else if (pressed > 0) {
-            Toast.makeText(context, R.string.msg_photo_not_saved, Toast.LENGTH_LONG).show();
+            com.kooo.evcam.ui.Notice.makeText(context, R.string.msg_photo_not_saved, Toast.LENGTH_LONG).show();
         } else {
-            Toast.makeText(context, R.string.msg_photo_no_picture, Toast.LENGTH_LONG).show();
+            com.kooo.evcam.ui.Notice.makeText(context, R.string.msg_photo_no_picture, Toast.LENGTH_LONG).show();
         }
     }
 
     @Override
     public void onNoStorage() {
-        Toast.makeText(context, R.string.msg_photo_no_drive, Toast.LENGTH_LONG).show();
+        com.kooo.evcam.ui.Notice.makeText(context, R.string.msg_photo_no_drive, Toast.LENGTH_LONG).show();
     }
 }

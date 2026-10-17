@@ -130,7 +130,7 @@ public final class Megaphone {
                     });
                 } else if (failure != ENDED) {
                     MAIN.post(() -> {
-                        android.widget.Toast.makeText(app, failure, android.widget.Toast.LENGTH_SHORT).show();
+                        com.kooo.evcam.ui.Notice.makeText(app, failure, android.widget.Toast.LENGTH_SHORT).show();
                         if (onEnded != null) {
                             onEnded.run();
                         }

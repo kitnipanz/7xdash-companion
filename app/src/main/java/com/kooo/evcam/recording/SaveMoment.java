@@ -124,6 +124,6 @@ public final class SaveMoment {
     }
 
     private static void toast(Context context, int res) {
-        MAIN.post(() -> Toast.makeText(context, res, Toast.LENGTH_SHORT).show());
+        MAIN.post(() -> com.kooo.evcam.ui.Notice.makeText(context, res, Toast.LENGTH_SHORT).show());
     }
 }

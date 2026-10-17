@@ -23,8 +23,6 @@ import androidx.fragment.app.Fragment;
 import com.kooo.evcam.AppConfig;
 import com.kooo.evcam.MainActivity;
 import com.kooo.evcam.R;
-import com.kooo.evcam.hud.NotificationGate;
-import com.kooo.evcam.input.AccessibilityGate;
 import com.kooo.evcam.input.MegaphoneService;
 import com.kooo.evcam.input.ShortcutAction;
 import com.kooo.evcam.input.ShortcutPerformer;
@@ -181,7 +179,7 @@ public class HomeFragment extends Fragment {
     private void buildGrid(LinearLayout grid) {
         // 第一行：拍照、回看、后视镜头、盲区
         addCard(grid, 0, 0, R.drawable.ic_photo, R.string.home_card_photo,
-                R.string.home_card_photo_sub, () -> page(MainActivity.PAGE_PHOTO),
+                R.string.home_card_photo_sub, this::takePhotoHere,
                 () -> startActivity(new Intent(requireContext(),
                         com.kooo.evcam.playback.PhotoPlaybackActivity.class)));
         addCard(grid, 0, 1, R.drawable.ic_video, R.string.home_card_videos,
@@ -196,15 +194,17 @@ public class HomeFragment extends Fragment {
                 () -> page(MainActivity.PAGE_SETTINGS_PREFIX + "screen_rearview"))
                 .state(this::blindSpotText, () -> config.isSidePopupEnabled());
 
-        // 第二行：即时抓拍、闪远光抓拍、远程观看、喊话
+        // 第二行：即时抓拍、抓拍列表、远程观看、喊话。
+        // 即时抓拍和闪远光是同一件事、两种触发：点卡片当场抓；卡片右上角那颗「闪远光」小开关
+        // 决定录像时闪一下远光算不算也抓一次。长按卡片看抓拍列表
         addCard(grid, 1, 0, R.drawable.ic_flash, R.string.home_card_capture,
                 R.string.home_card_capture_sub, () -> perform(ShortcutAction.INSTANT_CAPTURE),
-                () -> startActivity(new Intent(requireContext(),
-                        com.kooo.evcam.recording.InstantCapturesActivity.class)));
-        addCard(grid, 1, 1, R.drawable.ic_flash, R.string.home_card_flash,
-                R.string.home_card_flash_sub, this::toggleFlash,
-                () -> page(MainActivity.PAGE_SETTINGS_PREFIX + "screen_storage"))
-                .onOff(() -> AutoLock.flashEnabled(requireContext()));
+                this::openCaptures)
+                .pill(() -> getString(R.string.home_capture_flash, getString(
+                                AutoLock.flashEnabled(requireContext()) ? R.string.home_state_on : R.string.home_state_off)),
+                        () -> AutoLock.flashEnabled(requireContext()), this::toggleFlash);
+        addCard(grid, 1, 1, R.drawable.ic_play, R.string.rail_captures_list,
+                R.string.home_card_saved_sub, this::openCaptures, null);
         addCard(grid, 1, 2, R.drawable.ic_remote, R.string.home_card_remote,
                 R.string.home_card_remote_sub, () -> page(MainActivity.PAGE_REMOTE), null);
         addCard(grid, 1, 3, R.drawable.ic_megaphone, R.string.home_rail_megaphone,
@@ -272,6 +272,31 @@ public class HomeFragment extends Fragment {
             return state(() -> getString(on.get() ? R.string.home_state_on : R.string.home_state_off), on);
         }
 
+        /**
+         * 右上角换成一颗能点的小开关（胶囊）：点它只拨开关，不触发整张卡片。
+         * 开着时胶囊是实心橙，关着是灰；卡片本身不跟着点亮（卡片是「动作」，胶囊才是「开关」）。
+         */
+        Card pill(Label label, State on, Runnable toggle) {
+            state.setClickable(true);
+            state.setFocusable(true);
+            state.setBackgroundResource(R.drawable.bg_segment);
+            int padH = Math.round(14 * getResources().getDisplayMetrics().density);
+            int padV = Math.round(6 * getResources().getDisplayMetrics().density);
+            state.setPadding(padH, padV, padH, padV);
+            state.setOnClickListener(v -> {
+                toggle.run();
+                handler.postDelayed(HomeFragment.this::refresh, 300);
+            });
+            refreshers.add(() -> {
+                boolean active = on.get();
+                state.setText(label.get());
+                state.setActivated(active);
+                state.setTextColor(ContextCompat.getColor(requireContext(),
+                        active ? R.color.on_energy : R.color.text_secondary));
+            });
+            return this;
+        }
+
         Card state(Label label, State on) {
             refreshers.add(() -> {
                 state.setText(label.get());
@@ -318,6 +343,13 @@ public class HomeFragment extends Fragment {
         ShortcutPerformer.perform(requireContext(), action.key);
     }
 
+    /** 拍照卡片：就地拍，留在主页（结果照常弹提示，开着抬头显示通知时也上抬头显示）。 */
+    private void takePhotoHere() {
+        if (getActivity() instanceof MainActivity) {
+            ((MainActivity) getActivity()).takePhotoHere();
+        }
+    }
+
     private void page(String page) {
         if (getActivity() instanceof MainActivity) {
             ((MainActivity) getActivity()).openPage(page);
@@ -330,7 +362,7 @@ public class HomeFragment extends Fragment {
         if (!config.isSidePopupEnabled()) {
             config.setSidePopupOnHud(false);
             if (!OverlayCoordinator.setSidePopupEnabled(context, true)) {
-                Toast.makeText(context, R.string.msg_need_overlay, Toast.LENGTH_SHORT).show();
+                com.kooo.evcam.ui.Notice.makeText(context, R.string.msg_need_overlay, Toast.LENGTH_SHORT).show();
             }
             return;
         }
@@ -352,6 +384,10 @@ public class HomeFragment extends Fragment {
     }
 
     /** 闪远光抓拍：打开时把它依赖的「锁定影像」一起打开，不然开关拨了不起作用。 */
+    private void openCaptures() {
+        startActivity(new Intent(requireContext(), com.kooo.evcam.recording.InstantCapturesActivity.class));
+    }
+
     private void toggleFlash() {
         Context context = requireContext();
         boolean on = !AutoLock.flashEnabled(context);
@@ -362,7 +398,7 @@ public class HomeFragment extends Fragment {
         AutoLock.get().settingsChanged(context);
     }
 
-    /** 抬头显示通知：要先能读通知。车机上多半没有那一页，就靠 WRITE_SECURE_SETTINGS 自己写。 */
+    /** 抬头显示通知：7xDash 自己的提示也写到抬头显示上（{@link com.kooo.evcam.hud.HudNotice}）。不要任何权限。 */
     private void toggleHudNotices() {
         Context context = requireContext();
         if (config.isHudNotificationsEnabled()) {
@@ -370,16 +406,11 @@ public class HomeFragment extends Fragment {
             return;
         }
         if (HudDisplay.find(context) == null) {
-            Toast.makeText(context, R.string.msg_no_hud, Toast.LENGTH_SHORT).show();
-            return;
-        }
-        if (!NotificationGate.selfEnable(context)) {
-            if (!NotificationGate.openSystemPage(context)) {
-                Toast.makeText(context, getString(R.string.hud_notice_need_access,
-                        AccessibilityGate.grantCommand(context)), Toast.LENGTH_LONG).show();
-            }
+            com.kooo.evcam.ui.Notice.makeText(context, R.string.msg_no_hud, Toast.LENGTH_SHORT).show();
             return;
         }
         config.setHudNotificationsEnabled(true);
+        com.kooo.evcam.hud.HudNotice.post(context, getString(R.string.home_card_hud_notice),
+                getString(R.string.home_state_on));
     }
 }

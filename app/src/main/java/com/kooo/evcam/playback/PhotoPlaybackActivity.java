@@ -409,7 +409,7 @@ public class PhotoPlaybackActivity extends AppCompatActivity {
     private void sendCurrentPhotoToPhone() {
         File file = currentPhotoFile();
         if (file == null) {
-            Toast.makeText(PhotoPlaybackActivity.this, R.string.share_phone_no_file,
+            com.kooo.evcam.ui.Notice.makeText(PhotoPlaybackActivity.this, R.string.share_phone_no_file,
                     Toast.LENGTH_SHORT).show();
             return;
         }
@@ -608,7 +608,7 @@ public class PhotoPlaybackActivity extends AppCompatActivity {
             }
             btnLock.setEnabled(true);
             if (!ok) {
-                Toast.makeText(this, R.string.msg_footage_lock_failed, Toast.LENGTH_LONG).show();
+                com.kooo.evcam.ui.Notice.makeText(this, R.string.msg_footage_lock_failed, Toast.LENGTH_LONG).show();
                 return;
             }
             if (unlock) {
@@ -616,7 +616,7 @@ public class PhotoPlaybackActivity extends AppCompatActivity {
             } else {
                 lockedPhotos.addAll(names);
             }
-            Toast.makeText(this, getResources().getQuantityString(
+            com.kooo.evcam.ui.Notice.makeText(this, getResources().getQuantityString(
                     unlock ? R.plurals.msg_footage_unlocked : R.plurals.msg_footage_locked,
                     names.size(), names.size()), Toast.LENGTH_SHORT).show();
             adapter.setLockedNames(lockedPhotos);
@@ -975,7 +975,7 @@ public class PhotoPlaybackActivity extends AppCompatActivity {
                     adapter.notifyDataSetChanged();
                     updateSelectedCount();
 
-                    android.widget.Toast.makeText(PhotoPlaybackActivity.this,
+                    com.kooo.evcam.ui.Notice.makeText(PhotoPlaybackActivity.this,
                             getResources().getQuantityString(R.plurals.msg_photos_deleted,
                                     deletedCount, deletedCount)
                                     + (keptCount > 0 ? getResources().getQuantityString(
@@ -1044,7 +1044,7 @@ public class PhotoPlaybackActivity extends AppCompatActivity {
     private void shareSelected() {
         Set<PhotoGroup> selectedGroups = adapter.getSelectedGroups();
         if (selectedGroups.isEmpty()) {
-            Toast.makeText(PhotoPlaybackActivity.this, getString(R.string.msg_select_photos_first), Toast.LENGTH_SHORT).show();
+            com.kooo.evcam.ui.Notice.makeText(PhotoPlaybackActivity.this, getString(R.string.msg_select_photos_first), Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -1060,7 +1060,7 @@ public class PhotoPlaybackActivity extends AppCompatActivity {
         }
 
         if (allPhotoFiles.isEmpty()) {
-            Toast.makeText(PhotoPlaybackActivity.this, getString(R.string.msg_no_photos_to_share), Toast.LENGTH_SHORT).show();
+            com.kooo.evcam.ui.Notice.makeText(PhotoPlaybackActivity.this, getString(R.string.msg_no_photos_to_share), Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -1085,7 +1085,7 @@ public class PhotoPlaybackActivity extends AppCompatActivity {
         }
 
         if (photoFiles.isEmpty()) {
-            Toast.makeText(PhotoPlaybackActivity.this, getString(R.string.msg_no_photos_to_share), Toast.LENGTH_SHORT).show();
+            com.kooo.evcam.ui.Notice.makeText(PhotoPlaybackActivity.this, getString(R.string.msg_no_photos_to_share), Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -1134,7 +1134,7 @@ public class PhotoPlaybackActivity extends AppCompatActivity {
 
                 // 检查文件是否存在且可读
                 if (!photoFile.exists() || !photoFile.canRead()) {
-                    Toast.makeText(PhotoPlaybackActivity.this, getString(R.string.msg_file_unreadable), Toast.LENGTH_SHORT).show();
+                    com.kooo.evcam.ui.Notice.makeText(PhotoPlaybackActivity.this, getString(R.string.msg_file_unreadable), Toast.LENGTH_SHORT).show();
                     return;
                 }
 
@@ -1154,7 +1154,7 @@ public class PhotoPlaybackActivity extends AppCompatActivity {
                 if (chooser.resolveActivity(PhotoPlaybackActivity.this.getPackageManager()) != null) {
                     startActivity(chooser);
                 } else {
-                    Toast.makeText(PhotoPlaybackActivity.this, getString(R.string.msg_no_share_target), Toast.LENGTH_SHORT).show();
+                    com.kooo.evcam.ui.Notice.makeText(PhotoPlaybackActivity.this, getString(R.string.msg_no_share_target), Toast.LENGTH_SHORT).show();
                 }
             } else {
                 // 分享多个图片
@@ -1169,7 +1169,7 @@ public class PhotoPlaybackActivity extends AppCompatActivity {
                 }
 
                 if (photoUris.isEmpty()) {
-                    Toast.makeText(PhotoPlaybackActivity.this, getString(R.string.msg_nothing_to_share), Toast.LENGTH_SHORT).show();
+                    com.kooo.evcam.ui.Notice.makeText(PhotoPlaybackActivity.this, getString(R.string.msg_nothing_to_share), Toast.LENGTH_SHORT).show();
                     return;
                 }
 
@@ -1187,17 +1187,17 @@ public class PhotoPlaybackActivity extends AppCompatActivity {
                 if (chooser.resolveActivity(PhotoPlaybackActivity.this.getPackageManager()) != null) {
                     startActivity(chooser);
                 } else {
-                    Toast.makeText(PhotoPlaybackActivity.this, getString(R.string.msg_no_share_target), Toast.LENGTH_SHORT).show();
+                    com.kooo.evcam.ui.Notice.makeText(PhotoPlaybackActivity.this, getString(R.string.msg_no_share_target), Toast.LENGTH_SHORT).show();
                 }
             }
         } catch (IllegalArgumentException e) {
             AppLog.e(TAG, "分享图片失败: FileProvider 无法处理该文件路径", e);
-            Toast.makeText(PhotoPlaybackActivity.this, R.string.msg_share_path_unsupported,
+            com.kooo.evcam.ui.Notice.makeText(PhotoPlaybackActivity.this, R.string.msg_share_path_unsupported,
                     Toast.LENGTH_LONG).show();
         } catch (Exception e) {
             // 异常原文（英文、有时是 null）只进日志，界面上只说分享不了
             AppLog.e(TAG, "分享图片失败", e);
-            Toast.makeText(PhotoPlaybackActivity.this, R.string.msg_share_failed,
+            com.kooo.evcam.ui.Notice.makeText(PhotoPlaybackActivity.this, R.string.msg_share_failed,
                     Toast.LENGTH_SHORT).show();
         }
     }

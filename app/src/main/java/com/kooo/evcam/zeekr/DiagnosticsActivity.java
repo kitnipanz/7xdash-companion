@@ -324,6 +324,6 @@ public class DiagnosticsActivity extends AppCompatActivity {
      */
     private void toast(String message) {
         Context app = getApplicationContext();
-        mainHandler.post(() -> Toast.makeText(app, message, Toast.LENGTH_LONG).show());
+        mainHandler.post(() -> com.kooo.evcam.ui.Notice.makeText(app, message, Toast.LENGTH_LONG).show());
     }
 }

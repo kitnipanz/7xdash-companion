@@ -242,7 +242,7 @@ public final class AutoLock implements Telemetry.Listener {
             com.kooo.evcam.recording.CaptureLog.attach(appContext);
             if (!recording) {
                 com.kooo.evcam.recording.CaptureLog.line("shortcut instant capture: not recording");
-                Toast.makeText(appContext, R.string.instant_capture_need_recording, Toast.LENGTH_SHORT).show();
+                com.kooo.evcam.ui.Notice.makeText(appContext, R.string.instant_capture_need_recording, Toast.LENGTH_SHORT).show();
                 return;
             }
             long now = System.currentTimeMillis();
@@ -357,8 +357,8 @@ public final class AutoLock implements Telemetry.Listener {
             return;
         }
         lastToastAt = now;
-        Toast.makeText(context, Languages.localized(context).getString(message),
-                Toast.LENGTH_SHORT).show();
+        String text = Languages.localized(context).getString(message);
+        com.kooo.evcam.ui.Notice.makeText(context, text, Toast.LENGTH_SHORT).show();
     }
 
     // ================================================================= 盘上有什么

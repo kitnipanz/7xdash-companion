@@ -77,6 +77,41 @@ public final class Languages {
         return app.createConfigurationContext(config);
     }
 
+    /**
+     * 同上，再把 Application 自己的资源也换成这个语言。
+     *
+     * <p>Android 13 以下，appcompat 只给各个 Activity 换语言；服务、提示、通知、悬浮窗用的是
+     * Application 的资源，还是系统语言 —— 泰文界面里会冒出英文提示（2026-10-17）。
+     * 这里把 Application 的那份配置也改掉，整个进程说同一种话。</p>
+     */
+    public static void apply(Context context, String mode) {
+        apply(mode);
+        applyToApp(context, mode);
+    }
+
+    /** 只改 Application 的资源（进程起来时、系统配置变了被冲掉时再改一次）。 */
+    @SuppressWarnings("deprecation")
+    public static void applyToApp(Context context, String mode) {
+        if (context == null) {
+            return;
+        }
+        try {
+            android.content.res.Resources res = context.getApplicationContext().getResources();
+            Configuration config = new Configuration(res.getConfiguration());
+            String tags = tagsFor(mode);
+            LocaleList wanted = tags.isEmpty()
+                    ? android.content.res.Resources.getSystem().getConfiguration().getLocales()
+                    : LocaleList.forLanguageTags(tags);
+            if (wanted.equals(config.getLocales())) {
+                return;
+            }
+            config.setLocales(wanted);
+            res.updateConfiguration(config, res.getDisplayMetrics());
+        } catch (RuntimeException e) {
+            AppLog.w(TAG, "应用级语言没换成: " + e);
+        }
+    }
+
     /** 把设置里的选择真正应用到界面上。 */
     public static void apply(String mode) {
         String tags = tagsFor(mode);

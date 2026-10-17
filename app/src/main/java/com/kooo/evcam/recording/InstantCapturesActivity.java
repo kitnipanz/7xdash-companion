@@ -57,7 +57,7 @@ public class InstantCapturesActivity extends AppCompatActivity {
         player.setOnCompletionListener(mp -> playGlyph.setVisibility(View.VISIBLE));
         player.setOnErrorListener((mp, what, extra) -> {
             playGlyph.setVisibility(View.VISIBLE);
-            Toast.makeText(this, R.string.instant_captures_play_failed, Toast.LENGTH_SHORT).show();
+            com.kooo.evcam.ui.Notice.makeText(this, R.string.instant_captures_play_failed, Toast.LENGTH_SHORT).show();
             return true;
         });
     }

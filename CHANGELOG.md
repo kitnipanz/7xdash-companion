@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.0.1-beta] - 2026-10-17
+
+- Google Drive sign-in is built in: the release now carries the OAuth client, so there is no client ID or secret to paste on the car.
+
 ## [1.0.0-beta] - 2026-10-17
 
 First 7xDash build for the Zeekr head unit, based on zeekr-shortcut-car 2.11.47-beta.

@@ -15,8 +15,8 @@ public class HudNoticeTest {
     }
 
     @Test
-    public void placesCardInTheMiddleAwayFromTheSideViews() {
+    public void placesCardTopLeft() {
         // 7X HUD: 1440×480
-        assertArrayEquals(new int[]{432, 38, 576, 172}, HudNotice.place(1440, 480));
+        assertArrayEquals(new int[]{43, 38, 576, 172}, HudNotice.place(1440, 480));
     }
 }

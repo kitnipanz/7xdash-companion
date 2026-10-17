@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.0.4-beta] - 2026-10-17
+
+- Fixed "The head unit refused the equalizer." The EQ now falls back to a setup the head unit accepts, keeping the smooth curve, headroom and limiter when it can.
+- HUD notices show at the top left instead of the centre.
+
 ## [1.0.3-beta] - 2026-10-17
 
 - EQ is on the side rail.

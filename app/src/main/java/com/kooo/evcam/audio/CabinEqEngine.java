@@ -44,7 +44,13 @@ public final class CabinEqEngine {
             if (effect == null) {
                 effect = open(curve);
             } else {
-                push(effect, curve);
+                try {
+                    push(effect, curve);
+                } catch (RuntimeException e) {
+                    AppLog.w(TAG, "equalizer update refused, reopening: " + e);
+                    release();
+                    effect = open(curve);
+                }
             }
             effect.setEnabled(true);
             return true;
@@ -64,47 +70,116 @@ public final class CabinEqEngine {
             }
             effect = null;
         }
+        profile = null;
     }
+
+    /**
+     * One way to set the engine up. The head unit may refuse the richer ones, so {@link #open}
+     * walks {@link #PROFILES} from best to plainest; the last one is the 1.0.2 setup that the
+     * car is known to take.
+     */
+    private static final class Profile {
+        final String name;
+        final int variant;
+        final boolean blended;
+        final boolean headroom;
+        final boolean limiter;
+
+        Profile(String name, int variant, boolean blended, boolean headroom, boolean limiter) {
+            this.name = name;
+            this.variant = variant;
+            this.blended = blended;
+            this.headroom = headroom;
+            this.limiter = limiter;
+        }
+
+        int bands() {
+            return blended ? CabinEq.ENGINE_BANDS : CabinEq.BANDS;
+        }
+
+        float[] edges() {
+            return blended ? CabinEq.engineCutoffs() : CabinEq.cutoffs();
+        }
+
+        float[] curve(float[] gains) {
+            return blended ? CabinEq.engineGains(gains) : CabinEq.copy(gains);
+        }
+    }
+
+    private static final Profile[] PROFILES = {
+            new Profile("time/30/limiter", DynamicsProcessing.VARIANT_FAVOR_TIME_RESOLUTION, true, true, true),
+            new Profile("freq/30/limiter", DynamicsProcessing.VARIANT_FAVOR_FREQUENCY_RESOLUTION, true, true, true),
+            new Profile("freq/30", DynamicsProcessing.VARIANT_FAVOR_FREQUENCY_RESOLUTION, true, true, false),
+            new Profile("freq/15/headroom", DynamicsProcessing.VARIANT_FAVOR_FREQUENCY_RESOLUTION, false, true, false),
+            new Profile("freq/15", DynamicsProcessing.VARIANT_FAVOR_FREQUENCY_RESOLUTION, false, false, false),
+    };
+
+    /** The profile the open effect was built with. */
+    private static Profile profile;
+
+    /** First profile worth trying: ones the head unit already refused are skipped next time. */
+    private static int firstTry;
 
     private static DynamicsProcessing open(float[] gains) {
         RuntimeException last = null;
-        for (int channels : new int[] {2, 1}) {
-            try {
-                DynamicsProcessing created = new DynamicsProcessing(0, 0, config(channels, gains));
-                AppLog.i(TAG, "equalizer on the output mix, " + channels + " ch, "
-                        + CabinEq.ENGINE_BANDS + " bands");
-                return created;
-            } catch (RuntimeException e) {
-                last = e;
+        for (int i = firstTry; i < PROFILES.length; i++) {
+            Profile p = PROFILES[i];
+            for (int channels : new int[] {2, 1}) {
+                DynamicsProcessing created = null;
+                try {
+                    created = new DynamicsProcessing(0, 0, config(p, channels, gains));
+                    if (p.headroom) {
+                        // some builds take the config but refuse a live input-gain change
+                        created.setInputGainAllChannelsTo(-CabinEq.headroomDb(gains));
+                    }
+                    profile = p;
+                    firstTry = i;
+                    AppLog.i(TAG, "equalizer on the output mix, " + channels + " ch, " + p.name);
+                    return created;
+                } catch (RuntimeException e) {
+                    if (created != null) {
+                        try {
+                            created.release();
+                        } catch (RuntimeException ignored) {
+                            // already gone
+                        }
+                    }
+                    AppLog.w(TAG, "equalizer profile " + p.name + " / " + channels + " ch refused: " + e);
+                    last = e;
+                }
             }
         }
         throw last == null ? new IllegalStateException("equalizer") : last;
     }
 
     /**
-     * Pre-EQ with thirty blended bands, the input turned down by the biggest boost (headroom),
-     * and a gentle limiter just under full scale to catch what still gets through.
+     * Pre-EQ, optionally with thirty blended bands, the input turned down by the biggest boost
+     * (headroom), and a gentle limiter just under full scale to catch what still gets through.
      * FAVOR_TIME_RESOLUTION keeps latency and smearing low on music.
      */
-    private static DynamicsProcessing.Config config(int channels, float[] gains) {
+    private static DynamicsProcessing.Config config(Profile p, int channels, float[] gains) {
         DynamicsProcessing.Config config = new DynamicsProcessing.Config.Builder(
-                DynamicsProcessing.VARIANT_FAVOR_TIME_RESOLUTION,
+                p.variant,
                 channels,
-                true, CabinEq.ENGINE_BANDS,
+                true, p.bands(),
                 false, 0,
                 false, 0,
-                true).build();
-        float[] edges = CabinEq.engineCutoffs();
-        float[] curve = CabinEq.engineGains(gains);
+                p.limiter).build();
+        float[] edges = p.edges();
+        float[] curve = p.curve(gains);
         for (int channel = 0; channel < channels; channel++) {
             DynamicsProcessing.Eq eq = config.getPreEqByChannelIndex(channel);
             eq.setEnabled(true);
-            for (int band = 0; band < CabinEq.ENGINE_BANDS; band++) {
+            for (int band = 0; band < p.bands(); band++) {
                 eq.setBand(band, new DynamicsProcessing.EqBand(true, edges[band], curve[band]));
             }
             config.setPreEqByChannelIndex(channel, eq);
-            config.setInputGainByChannelIndex(channel, -CabinEq.headroomDb(gains));
-            config.setLimiterByChannelIndex(channel, limiter());
+            if (p.headroom) {
+                config.setInputGainByChannelIndex(channel, -CabinEq.headroomDb(gains));
+            }
+            if (p.limiter) {
+                config.setLimiterByChannelIndex(channel, limiter());
+            }
         }
         return config;
     }
@@ -115,10 +190,13 @@ public final class CabinEqEngine {
     }
 
     private static void push(DynamicsProcessing effect, float[] gains) {
-        float[] edges = CabinEq.engineCutoffs();
-        float[] curve = CabinEq.engineGains(gains);
-        effect.setInputGainAllChannelsTo(-CabinEq.headroomDb(gains));
-        for (int band = 0; band < CabinEq.ENGINE_BANDS; band++) {
+        Profile p = profile;
+        float[] edges = p.edges();
+        float[] curve = p.curve(gains);
+        if (p.headroom) {
+            effect.setInputGainAllChannelsTo(-CabinEq.headroomDb(gains));
+        }
+        for (int band = 0; band < p.bands(); band++) {
             effect.setPreEqBandAllChannelsTo(band,
                     new DynamicsProcessing.EqBand(true, edges[band], curve[band]));
         }

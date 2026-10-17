@@ -48,8 +48,7 @@ public final class HudNotice {
     }
 
     /**
-     * 卡片放在抬头显示正中偏上：左右两沿留给盲区画面（{@code HudFrame} 贴着外沿放），
-     * 中间这一块不和它抢。{@code [x, y, width, height]}。
+     * 卡片放在抬头显示左上角，离边留一点空。{@code [x, y, width, height]}。
      */
     public static int[] place(int displayW, int displayH) {
         if (displayW < 2 || displayH < 2) {
@@ -57,7 +56,7 @@ public final class HudNotice {
         }
         int width = displayW * 40 / 100;
         int height = displayH * 36 / 100;
-        int x = (displayW - width) / 2;
+        int x = displayW * 3 / 100;
         int y = displayH * 8 / 100;
         return new int[]{x, y, width, height};
     }

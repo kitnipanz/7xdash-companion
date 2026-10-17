@@ -62,6 +62,8 @@ public class MainActivity extends AppCompatActivity {
     /** 相机预览起来以后拍一张。 */
     public static final String PAGE_PHOTO = "photo";
     public static final String PAGE_REMOTE = "remote";
+    /** 均衡器（侧边栏的「EQ」）。 */
+    public static final String PAGE_EQ = "eq";
     /** 后面接设置分区的 key，比如 settings:screen_drive。 */
     public static final String PAGE_SETTINGS_PREFIX = "settings:";
 
@@ -764,6 +766,9 @@ public class MainActivity extends AppCompatActivity {
         }
         if (PAGE_HOME.equals(page)) {
             showHome();
+        } else if (PAGE_EQ.equals(page)) {
+            showFragment(new com.kooo.evcam.audio.CabinEqFragment());
+            selectNavItem(R.id.nav_eq);
         } else if (PAGE_REMOTE.equals(page)) {
             showRemoteInterface();
         } else if (page.startsWith(PAGE_SETTINGS_PREFIX)) {

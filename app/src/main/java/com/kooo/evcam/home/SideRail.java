@@ -33,7 +33,7 @@ import java.util.List;
 /**
  * 7xDash 的固定控制栏：极氪 OS 7 左边那一条，每一页都在，永远在同一个位置。
  *
- * <p>从上到下：主页、录像、调暗、后视、即时抓拍、喊话、设置。除了主页和设置，都是开关 ——
+ * <p>从上到下：主页、录像、调暗、后视、即时抓拍、喊话、均衡器、设置。除了主页和设置，都是开关 ——
  * 点了不换页，走的是快捷键那条路（{@link ShortcutPerformer}），开着的那一格点亮
  * （录像是录制红，其余是极氪橙；主页在主页上时点亮）。</p>
  *
@@ -167,6 +167,10 @@ public class SideRail extends LinearLayout {
                 () -> perform(ShortcutAction.INSTANT_CAPTURE), null, false);
         add(R.drawable.ic_megaphone, R.string.home_rail_megaphone,
                 () -> perform(ShortcutAction.TOGGLE_SPEAK), MegaphoneService::isOpen, false);
+        // 均衡器：点了进均衡器那一页；均衡器开着时这一格点亮
+        add(R.drawable.ic_eq, R.string.home_rail_eq,
+                () -> open(MainActivity.PAGE_EQ),
+                () -> new com.kooo.evcam.audio.CabinEqStore(getContext()).enabled(), false);
         add(R.drawable.ic_settings, R.string.home_rail_settings,
                 () -> open(MainActivity.PAGE_SETTINGS_PREFIX + "screen_recording"), null, false);
     }

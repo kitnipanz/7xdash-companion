@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.3-beta] - 2026-10-17
+
+- EQ is on the side rail.
+- Built-in EQ presets: Flat, Rock, Jazz, Hip-hop, Pop and K-Pop.
+- Five presets of your own (My 1 to My 5). Moving a fader on a built-in preset saves the curve to your last My preset.
+- Cleaner EQ sound: smoother curve between the 15 faders, automatic headroom so boosts no longer clip, a limiter as a safety net, and lower processing delay.
+
 ## [1.0.2-beta] - 2026-10-17
 
 - New app icon: a dashcam lens inside an orange gauge.

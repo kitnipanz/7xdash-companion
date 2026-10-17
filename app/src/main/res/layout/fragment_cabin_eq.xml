@@ -60,52 +60,51 @@
         android:orientation="vertical"
         android:padding="24dp">
 
+        <!-- 预设：上一排是内置曲线（平直、摇滚、爵士、嘻哈、流行、K-Pop），下一排是自己的五条。
+             点一下就换；在内置曲线上拖推子，改动存进「我的」那一条（最近用的那条）。按钮由代码填 -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center_vertical"
             android:orientation="horizontal">
 
-            <!-- 预设：两段开关，和设置页「常用 / 全部」一样 -->
+            <TextView
+                android:layout_width="140dp"
+                android:layout_height="wrap_content"
+                android:text="@string/eq_builtin_label"
+                android:textAppearance="@style/TextAppearance.Cam.Body"
+                android:textColor="@color/text_secondary" />
+
             <LinearLayout
+                android:id="@+id/eq_builtin"
                 android:layout_width="wrap_content"
                 android:layout_height="54dp"
                 android:background="@drawable/bg_segment_track"
                 android:orientation="horizontal"
-                android:padding="4dp">
+                android:padding="4dp" />
+        </LinearLayout>
 
-                <TextView
-                    android:id="@+id/eq_preset_0"
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:background="@drawable/bg_segment"
-                    android:gravity="center"
-                    android:minWidth="128dp"
-                    android:paddingStart="20dp"
-                    android:paddingEnd="20dp"
-                    android:text="@string/eq_preset_1"
-                    android:textAppearance="@style/TextAppearance.Cam.Body" />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
 
-                <TextView
-                    android:id="@+id/eq_preset_1"
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:background="@drawable/bg_segment"
-                    android:gravity="center"
-                    android:minWidth="128dp"
-                    android:paddingStart="20dp"
-                    android:paddingEnd="20dp"
-                    android:text="@string/eq_preset_2"
-                    android:textAppearance="@style/TextAppearance.Cam.Body" />
-            </LinearLayout>
+            <TextView
+                android:layout_width="140dp"
+                android:layout_height="wrap_content"
+                android:text="@string/eq_my_label"
+                android:textAppearance="@style/TextAppearance.Cam.Body"
+                android:textColor="@color/text_secondary" />
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/eq_flat"
-                style="@style/Widget.Cam.RailSmall"
+            <LinearLayout
+                android:id="@+id/eq_my"
                 android:layout_width="wrap_content"
                 android:layout_height="54dp"
-                android:layout_marginStart="16dp"
-                android:text="@string/eq_flat" />
+                android:background="@drawable/bg_segment_track"
+                android:orientation="horizontal"
+                android:padding="4dp" />
 
             <TextView
                 android:id="@+id/eq_hint"
@@ -113,8 +112,8 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="24dp"
                 android:layout_weight="1"
-                android:maxLines="2"
                 android:ellipsize="end"
+                android:maxLines="2"
                 android:text="@string/eq_hint"
                 android:textAppearance="@style/TextAppearance.Cam.Caption"
                 android:textColor="@color/text_secondary" />

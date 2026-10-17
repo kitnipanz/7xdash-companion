@@ -64,6 +64,7 @@ public class AirPlayService extends Service implements RaopCallbackHandler {
     private static final String PREFS = "airplay";
     private static final String KEY_ON = "on";
     private static final String KEY_MAC = "mac";
+    private static final String KEY_WHILE_DRIVING = "show_while_driving";
     private static final String TELEMETRY_USER = "airplay";
     private static final int PORT = 7000;
     /** Other ports to try when 7000 stays taken (another AirPlay receiver on the car, say). */
@@ -95,6 +96,10 @@ public class AirPlayService extends Service implements RaopCallbackHandler {
     private final List<NsdManager.RegistrationListener> registrations = new ArrayList<>();
     private WifiManager.MulticastLock multicast;
     private final MirrorDecoder decoder = new MirrorDecoder();
+    private CastPlayer cast;
+    /** The floating window's surface; given to whichever of mirroring and casting is on. */
+    private Surface surface;
+    private boolean casting;
     private AirPlayWindow window;
     private final AtomicInteger connections = new AtomicInteger();
     private boolean mirroring;
@@ -123,6 +128,20 @@ public class AirPlayService extends Service implements RaopCallbackHandler {
     public static void applySaved(Context context) {
         if (enabled(context) && live == null) {
             start(context);
+        }
+    }
+
+    /** Show the picture while driving (for passengers). Off by default. */
+    public static boolean showWhileDriving(Context context) {
+        return context.getSharedPreferences(PREFS, MODE_PRIVATE).getBoolean(KEY_WHILE_DRIVING, false);
+    }
+
+    public static void setShowWhileDriving(Context context, boolean on) {
+        context.getSharedPreferences(PREFS, MODE_PRIVATE).edit().putBoolean(KEY_WHILE_DRIVING, on).apply();
+        AirPlayLog.i("show picture while driving: " + on);
+        AirPlayService s = live;
+        if (s != null) {
+            s.main.post(s::checkCar);
         }
     }
 
@@ -193,13 +212,44 @@ public class AirPlayService extends Service implements RaopCallbackHandler {
         promote();
         window = new AirPlayWindow(this, new AirPlayWindow.Listener() {
             @Override
-            public void onSurface(Surface surface) {
-                decoder.setSurface(surface);
+            public void onSurface(Surface s) {
+                surface = s;
+                if (casting) {
+                    cast.setSurface(s);
+                } else {
+                    decoder.setSurface(s);
+                }
             }
 
             @Override
             public void onCloseTapped() {
                 endMirroring();
+            }
+        });
+        cast = new CastPlayer(this, new CastPlayer.Listener() {
+            @Override
+            public void onInfo(float position, float duration, float rate, boolean ready) {
+                long h = handle;
+                if (h != 0) {
+                    NativeBridge.nativeUpdatePlaybackInfo(h, position, duration, rate, ready);
+                }
+            }
+
+            @Override
+            public void onVideoSize(int width, int height) {
+                window.setVideoSize(width, height);
+            }
+
+            @Override
+            public void onFirstFrame() {
+                AirPlayLog.i("cast: first frame");
+                window.setPlaying(true);
+            }
+
+            @Override
+            public void onEnded(String why) {
+                AirPlayLog.i("cast: " + why);
+                castStopped();
             }
         });
         AirPlayLog.init(this);
@@ -225,6 +275,9 @@ public class AirPlayService extends Service implements RaopCallbackHandler {
         main.removeCallbacksAndMessages(null);
         if (window != null) {
             window.hide();
+        }
+        if (cast != null) {
+            cast.stop();
         }
         stopWatchingCar();
         AirPlayLog.i("service stopping");
@@ -266,7 +319,8 @@ public class AirPlayService extends Service implements RaopCallbackHandler {
         NativeBridge.nativeServerAudioConfigure(handle, 0, 95, 0, false, false, true, true, false);
         NativeBridge.nativeSetH265Enabled(handle, false);
         NativeBridge.nativeSetCodecs(handle, false, true);
-        NativeBridge.nativeSetHlsEnabled(handle, false);
+        // video casting (the AirPlay button inside an app): the iPhone hands over a stream address
+        NativeBridge.nativeSetHlsEnabled(handle, true);
         NativeBridge.nativeSetLang(handle, "", "",
                 getResources().getConfiguration().getLocales().toLanguageTags().replace(',', ':'));
         NativeBridge.nativeSetFeature(handle, NativeBridge.FT_MIRROR, true);
@@ -447,6 +501,10 @@ public class AirPlayService extends Service implements RaopCallbackHandler {
     /** Close tapped: drop the iPhone by restarting the receiver; it stays available. */
     private void endMirroring() {
         AirPlayLog.i("close tapped: dropping the iPhone");
+        if (casting) {
+            cast.stop();
+            casting = false;
+        }
         window.hide();
         WORK.post(() -> {
             stopServer();
@@ -457,6 +515,9 @@ public class AirPlayService extends Service implements RaopCallbackHandler {
     // ---- floating window and the car ----
 
     private void mirrorStarted() {
+        if (casting) {
+            castStopped();
+        }
         mirroring = true;
         AirPlayLog.i("mirroring started");
         if (!OverlayCoordinator.canShowOverlay(this)) {
@@ -474,6 +535,44 @@ public class AirPlayService extends Service implements RaopCallbackHandler {
     private void mirrorStopped() {
         AirPlayLog.i("mirroring stopped");
         mirroring = false;
+        window.hide();
+        stopWatchingCar();
+        setState(connections.get() > 0 ? getString(R.string.airplay_state_connected)
+                : getString(R.string.airplay_state_waiting, name));
+    }
+
+    /** The iPhone cast a video: play it in the floating window. */
+    private void castStarted(String location, float startSeconds) {
+        AirPlayLog.i("cast: play " + location + " from " + startSeconds + " s");
+        if (mirroring) {
+            mirrorStopped();
+        }
+        casting = true;
+        decoder.setSurface(null);
+        if (surface != null) {
+            cast.setSurface(surface);
+        }
+        cast.play(location, startSeconds);
+        if (!OverlayCoordinator.canShowOverlay(this)) {
+            AirPlayLog.w("no permission to draw over other apps: no window");
+            Notice.makeText(this, R.string.airplay_need_overlay, Toast.LENGTH_LONG).show();
+            return;
+        }
+        window.show();
+        window.setPlaying(false);
+        watchCar();
+        setState(getString(R.string.airplay_state_casting));
+        Notice.makeText(this, R.string.airplay_cast_started, Toast.LENGTH_SHORT).show();
+    }
+
+    private void castStopped() {
+        if (!casting) {
+            return;
+        }
+        AirPlayLog.i("cast: stopped");
+        casting = false;
+        cast.stop();
+        cast.setSurface(null);
         window.hide();
         stopWatchingCar();
         setState(connections.get() > 0 ? getString(R.string.airplay_state_connected)
@@ -508,7 +607,7 @@ public class AirPlayService extends Service implements RaopCallbackHandler {
         Readings r = Telemetry.get().readings();
         String gear = r.text(Signal.GEAR);
         Float speed = Telemetry.get().latest().speedKmh;
-        boolean blocked = DrivingGate.blocked(gear, speed);
+        boolean blocked = !showWhileDriving(this) && DrivingGate.blocked(gear, speed);
         if (blocked != lastBlocked) {
             lastBlocked = blocked;
             AirPlayLog.i((blocked ? "picture hidden" : "picture shown") + ": gear=" + gear + " speed=" + speed);
@@ -590,6 +689,9 @@ public class AirPlayService extends Service implements RaopCallbackHandler {
                 NativeBridge.nativeServerAudioStop(handle);
             }
             main.post(() -> {
+                if (casting) {
+                    castStopped();
+                }
                 if (mirroring) {
                     mirrorStopped();
                 } else {
@@ -637,18 +739,24 @@ public class AirPlayService extends Service implements RaopCallbackHandler {
 
     @Override
     public void onVideoPlay(String location, float startPositionSeconds) {
+        main.post(() -> castStarted(location, startPositionSeconds));
     }
 
     @Override
     public void onVideoScrub(float positionSeconds) {
+        AirPlayLog.i("cast: seek to " + positionSeconds + " s");
+        cast.seek(positionSeconds);
     }
 
     @Override
     public void onVideoRate(float rate) {
+        AirPlayLog.i("cast: rate " + rate);
+        cast.setRate(rate);
     }
 
     @Override
     public void onVideoStop() {
+        main.post(this::castStopped);
     }
 
     @Override

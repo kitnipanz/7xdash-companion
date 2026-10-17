@@ -18,14 +18,14 @@ public class HudNoticeTest {
     @Test
     public void placesCardTopLeft() {
         // 7X HUD: 1440×480。左上角只留 8 的空，和侧视贴边一样
-        assertArrayEquals(new int[]{8, 8, 576, 172}, HudNotice.place(1440, 480));
+        assertArrayEquals(new int[]{8, 8, 1424, 172}, HudNotice.place(1440, 480));
     }
 
     @Test
     public void leftOffsetMovesTheCardIn() {
         // 7X 默认往里挪 20%：1440 的 20% 是 288
-        assertArrayEquals(new int[]{288, 8, 576, 172}, HudNotice.place(1440, 480, 20));
-        assertArrayEquals(new int[]{8, 8, 576, 172}, HudNotice.place(1440, 480, 0));
+        assertArrayEquals(new int[]{288, 8, 1144, 172}, HudNotice.place(1440, 480, 20));
+        assertArrayEquals(new int[]{8, 8, 1424, 172}, HudNotice.place(1440, 480, 0));
     }
 
     @Test

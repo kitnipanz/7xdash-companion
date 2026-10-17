@@ -18,8 +18,6 @@ public final class HudNotice {
     /** 一张卡片停多久。 */
     public static final long SHOW_MS = 4_000L;
     /** 一行最多几个字，多了用省略号收尾。抬头显示上太长看不完。 */
-    public static final int MAX_TEXT = 60;
-    public static final int MAX_TITLE = 40;
 
     private HudNotice() {
     }
@@ -33,7 +31,8 @@ public final class HudNotice {
         if (context == null || isBlank(title) || !new AppConfig(context).isHudNotificationsEnabled()) {
             return;
         }
-        HudNoticeWindow.show(context, "7xDash", clip(title, MAX_TITLE), clip(detail, MAX_TEXT));
+        HudNoticeWindow.show(context, "7xDash", clip(title, Integer.MAX_VALUE),
+                clip(detail, Integer.MAX_VALUE));
     }
 
     public static String clip(CharSequence value, int max) {
@@ -54,7 +53,7 @@ public final class HudNotice {
      * 卡片左对齐，贴着整块屏的左上角，只留 {@link #EDGE} 的空。{@code [x, y, width, height]}。
      *
      * <p>实车上整块屏最左边那一截看不到，所以真正用的是下面带 {@code leftPercent} 的那个。
-     * 宽 40%、高 36%，再大也收在屏里。窗口本身从 (0,0) 起，卡片在窗口里挪到 (x, y)，
+     * 宽从左边位置一直到右沿（通知可能很长），高 36%，收在屏里。窗口本身从 (0,0) 起，卡片在窗口里挪到 (x, y)，
      * 见 {@link HudNoticeWindow}。</p>
      */
     public static int[] place(int displayW, int displayH) {
@@ -73,7 +72,8 @@ public final class HudNotice {
         int inset = displayW * Math.max(0, Math.min(90, leftPercent)) / 100;
         int x = Math.min(Math.max(EDGE, inset), Math.max(0, displayW - displayW / 4 - 1));
         int y = Math.min(EDGE, displayH / 4);
-        int width = Math.max(1, Math.min(displayW * 40 / 100, displayW - x - EDGE));
+        // full width from the left position to the right edge: notices can be long
+        int width = Math.max(1, displayW - x - EDGE);
         int height = Math.max(1, Math.min(displayH * 36 / 100, displayH - y * 2));
         return new int[]{x, y, width, height};
     }

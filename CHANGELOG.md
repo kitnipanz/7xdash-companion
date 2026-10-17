@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.9-beta] - 2026-10-18
+
+- AirPlay video casting: tap the AirPlay button in a video's player on the iPhone and choose 7xDash. Only the video plays, in the floating window (ExoPlayer, HLS); play, pause and seeking follow the iPhone's controls. Copy-protected apps still won't play.
+- AirPlay: new switch on the AirPlay page, "Show the picture while driving" (off by default, for passengers, with a warning). When on, the picture no longer hides in gear or while moving.
+- HUD notice: the card runs full width, from its left position to the right edge. Long text wraps onto more lines (the card grows taller) instead of being cut. The card is slim: only as tall as its text, with little padding.
+
 ## [1.0.8-beta] - 2026-10-18
 
 - AirPlay: fixed "see 7xDash but can't connect". The car's system mDNS told the iPhone an internal address (198.18.34.15). 7xDash now runs its own mDNS responder that answers each network with its own address (Wi-Fi 192.168.5.x), and stays off the car's internal links. Falls back to the system one if the mDNS port can't be shared.

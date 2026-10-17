@@ -59,8 +59,8 @@ android {
         // versionName 会成为 Release 名称与 APK 文件名
         //
         // 7xDash 用自己的 applicationId，可以和 zeekr-shortcut-car 并排装。版本号从 1 重新起。
-        versionCode = 9
-        versionName = "1.0.8-beta"
+        versionCode = 10
+        versionName = "1.0.9-beta"
 
         buildConfigField("String", "DRIVE_CLIENT_ID", gradleStringLiteral(driveCredential("DRIVE_CLIENT_ID")))
         buildConfigField("String", "DRIVE_CLIENT_SECRET", gradleStringLiteral(driveCredential("DRIVE_CLIENT_SECRET")))
@@ -144,6 +144,9 @@ dependencies {
 
     // AirPlay 接收的音频输出（原生库通过 prefab 链接）
     implementation("com.google.oboe:oboe:1.9.3")
+    // AirPlay 只投视频（App 里的 AirPlay 按钮）：iPhone 给一个 HLS 地址，用 ExoPlayer 播
+    implementation("androidx.media3:media3-exoplayer:1.5.1")
+    implementation("androidx.media3:media3-exoplayer-hls:1.5.1")
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)

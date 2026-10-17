@@ -1308,9 +1308,9 @@
     <string name="airplay_state_off">ปิดอยู่</string>
     <string name="airplay_name_line">แสดงบน iPhone ในชื่อ “%1$s”</string>
     <string name="airplay_how_title">สะท้อนหน้าจอ iPhone</string>
-    <string name="airplay_steps">1. ให้ iPhone และรถใช้ Wi-Fi เดียวกัน (ฮอตสปอตของรถก็ได้)\n2. บน iPhone เปิดศูนย์ควบคุม แล้วแตะ การสะท้อนหน้าจอ\n3. เลือก “%1$s”</string>
+    <string name="airplay_steps">1. ให้ iPhone และรถใช้ Wi-Fi เดียวกัน (ฮอตสปอตของรถก็ได้)\n2. บน iPhone เปิดศูนย์ควบคุม แล้วแตะ การสะท้อนหน้าจอ\n3. เลือก “%1$s”\n\nถ้าจะส่งแค่วิดีโอ ให้แตะปุ่ม AirPlay ในตัวเล่นวิดีโอ แล้วเลือก “%1$s”</string>
     <string name="airplay_window_hint">หน้าจอ iPhone จะเปิดในหน้าต่างลอย ลากเพื่อย้าย ลากมุมเพื่อปรับขนาด แตะสองครั้งเพื่อสลับเล็กหรือใหญ่ และแตะ × เพื่อหยุด</string>
-    <string name="airplay_limits">ภาพจะซ่อนเมื่อรถอยู่ในเกียร์หรือกำลังเคลื่อนที่ แอปที่มีการป้องกันการคัดลอก (Netflix, Disney+, Apple TV) จะแสดงจอดำ</string>
+    <string name="airplay_limits">ภาพจะซ่อนเมื่อรถอยู่ในเกียร์หรือกำลังเคลื่อนที่ เว้นแต่เปิดสวิตช์ด้านล่าง แอปที่มีการป้องกันการคัดลอก (Netflix, Disney+, Apple TV) จะแสดงจอดำ</string>
     <string name="airplay_notification">รอการสะท้อนหน้าจอจาก iPhone</string>
 
     <!-- 抬头显示通知的位置 -->
@@ -1321,4 +1321,8 @@
     <string name="set_hud_notice_preview_detail">ห่างจากซ้าย %1$d%%</string>
     <string name="airplay_address_title">ที่อยู่ของตัวรับ</string>
     <string name="airplay_address_test">เชื่อมต่อไม่ได้? เปิด http://%1$s/info ใน Safari บน iPhone (หน้าอาจว่างเปล่า) แล้วดูใน log ของ AirPlay บน USB ว่ามาถึงรถหรือไม่</string>
+    <string name="airplay_drive_title">แสดงภาพขณะขับขี่</string>
+    <string name="airplay_drive_warning">สำหรับผู้โดยสาร การดูวิดีโอขณะขับขี่เป็นอันตรายและผิดกฎหมายในหลายประเทศ เมื่อปิดไว้ ภาพจะซ่อนเมื่อรถอยู่ในเกียร์หรือกำลังเคลื่อนที่</string>
+    <string name="airplay_state_casting">กำลังเล่นวิดีโอจาก iPhone</string>
+    <string name="airplay_cast_started">กำลังเล่นวิดีโอจาก iPhone</string>
 </resources>

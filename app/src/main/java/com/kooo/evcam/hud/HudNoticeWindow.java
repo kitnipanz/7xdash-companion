@@ -66,13 +66,15 @@ public final class HudNoticeWindow {
             // 窗口若不从原点起，这台抬头显示画出来的位置会错开，卡片就跑出看得见的那一块。
             // 不加 FLAG_LAYOUT_NO_LIMITS：窗口要被按在屏里，不许探出边。
             FrameLayout root = new FrameLayout(window);
-            FrameLayout.LayoutParams at = new FrameLayout.LayoutParams(box[2], box[3]);
+            // height grows with the text (long notices wrap onto more lines); box[3] is the least
+            FrameLayout.LayoutParams at = new FrameLayout.LayoutParams(box[2],
+                    FrameLayout.LayoutParams.WRAP_CONTENT);
             at.gravity = Gravity.TOP | Gravity.START;
             at.leftMargin = box[0];
             at.topMargin = box[1];
             root.addView(card(window, box[3], app, title, text), at);
             WindowManager.LayoutParams lp = new WindowManager.LayoutParams(
-                    box[0] + box[2], box[1] + box[3],
+                    box[0] + box[2], WindowManager.LayoutParams.WRAP_CONTENT,
                     WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
                     WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
                             | WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE,
@@ -107,11 +109,12 @@ public final class HudNoticeWindow {
         LinearLayout card = new LinearLayout(context);
         card.setOrientation(LinearLayout.VERTICAL);
         card.setGravity(Gravity.CENTER_VERTICAL | Gravity.START);
-        int pad = height / 8;
+        // super slim: only as tall as its text, with a thin margin around it
+        int pad = Math.max(4, height / 28);
         card.setPadding(pad * 2, pad, pad * 2, pad);
         GradientDrawable bg = new GradientDrawable();
         bg.setColor(0xD9101114);
-        bg.setCornerRadius(height / 6f);
+        bg.setCornerRadius(height / 12f);
         bg.setStroke(Math.max(2, height / 60), ENERGY);
         card.setBackground(bg);
         // 不写应用名：抬头显示上地方小，橙色描边已经说明是 7xDash 的
@@ -129,8 +132,8 @@ public final class HudNoticeWindow {
         view.setText(value);
         view.setTextSize(TypedValue.COMPLEX_UNIT_PX, px);
         view.setTextColor(color);
-        view.setSingleLine(true);
-        view.setEllipsize(TextUtils.TruncateAt.END);
+        // wrap long text onto more lines instead of cutting it
+        view.setSingleLine(false);
         view.setGravity(Gravity.START);
         view.setTextAlignment(View.TEXT_ALIGNMENT_VIEW_START);
         if (bold) {

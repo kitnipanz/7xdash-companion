@@ -152,6 +152,25 @@
                 android:text="@string/airplay_limits"
                 android:textAppearance="@style/TextAppearance.Cam.Caption"
                 android:textColor="@color/text_tertiary" />
+
+            <!-- 开车时也显示画面：给乘客用，默认关，带警告 -->
+            <androidx.appcompat.widget.SwitchCompat
+                android:id="@+id/airplay_while_driving"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="32dp"
+                android:minHeight="56dp"
+                android:text="@string/airplay_drive_title"
+                android:textAppearance="@style/TextAppearance.Cam.Row"
+                android:textColor="@color/text_primary" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="@string/airplay_drive_warning"
+                android:textAppearance="@style/TextAppearance.Cam.Caption"
+                android:textColor="@color/recording_text" />
         </LinearLayout>
     </ScrollView>
 </LinearLayout>

@@ -62,6 +62,7 @@ GPL-3.0 是传染性（copyleft）许可证。因此**本项目整体以 GPL-3.0
 | NanoHTTPD | BSD 3-Clause |
 | ZXing Core | Apache License 2.0 |
 | Oboe（AirPlay 音频输出） | Apache License 2.0 |
+| AndroidX Media3 ExoPlayer + HLS（AirPlay 只投视频） | Apache License 2.0 |
 
 ### AirPlay 投屏接收（`app/src/main/cpp`）
 

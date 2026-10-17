@@ -60,6 +60,10 @@ public class AirPlayFragment extends Fragment {
             AirPlayService.setEnabled(requireContext(), on);
             handler.postDelayed(this::paint, 300);
         });
+        SwitchCompat whileDriving = view.findViewById(R.id.airplay_while_driving);
+        whileDriving.setChecked(AirPlayService.showWhileDriving(requireContext()));
+        whileDriving.setOnCheckedChangeListener((b, on) ->
+                AirPlayService.setShowWhileDriving(requireContext(), on));
         paint();
     }
 

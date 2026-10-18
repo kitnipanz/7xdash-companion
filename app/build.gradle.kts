@@ -59,8 +59,8 @@ android {
         // versionName 会成为 Release 名称与 APK 文件名
         //
         // 7xDash 用自己的 applicationId，可以和 zeekr-shortcut-car 并排装。版本号从 1 重新起。
-        versionCode = 14
-        versionName = "1.0.13-beta"
+        versionCode = 15
+        versionName = "1.0.14-beta"
 
         buildConfigField("String", "DRIVE_CLIENT_ID", gradleStringLiteral(driveCredential("DRIVE_CLIENT_ID")))
         buildConfigField("String", "DRIVE_CLIENT_SECRET", gradleStringLiteral(driveCredential("DRIVE_CLIENT_SECRET")))
@@ -147,6 +147,8 @@ dependencies {
     // AirPlay 只投视频（App 里的 AirPlay 按钮）：iPhone 给一个 HLS 地址，用 ExoPlayer 播
     implementation("androidx.media3:media3-exoplayer:1.5.1")
     implementation("androidx.media3:media3-exoplayer-hls:1.5.1")
+    // 投视频时 YouTube 的分段走车机的 Wi-Fi（有的话），不走车机自己的流量：用 OkHttp 绑到 Wi-Fi 网络
+    implementation("androidx.media3:media3-datasource-okhttp:1.5.1")
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)

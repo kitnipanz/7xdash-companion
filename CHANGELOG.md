@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.0.14-beta] - 2026-10-18
+
+- AirPlay casting downloads over the car's Wi-Fi when it has one with internet, instead of the car's own mobile data (the 7X sends everything over its in-car network by default, even on a home Wi-Fi). Falls back to the default network otherwise; the log says which route each cast used.
+- AirPlay log: "iPhone at" now finds the car's Wi-Fi (inside the virtual-app host Android only shows 7xDash the default network, so it said "not on any of the car's networks").
+
 ## [1.0.13-beta] - 2026-10-18
 
 - AirPlay casting follows the audio track picked on the iPhone. The receiver used to keep only the language matching the car's setting and drop the rest (a Thai video played its English auto-dub); now every language YouTube offers reaches the player, YouTube's own default plays first, and the player switches when you pick another track.

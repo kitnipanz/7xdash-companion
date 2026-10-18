@@ -17,6 +17,9 @@ import androidx.annotation.Nullable;
 
 import java.net.Inet4Address;
 import java.net.InetAddress;
+import java.net.InterfaceAddress;
+import java.net.NetworkInterface;
+import java.util.Collections;
 import java.util.Locale;
 
 /**
@@ -35,6 +38,8 @@ final class NetworkReport {
     private String lastDefault = "";
     private long sessionStartBytes = -1;
     private String sessionKind;
+    /** Set by the service: where casts download from, for the end-of-cast line. */
+    WifiRoute castRoute;
 
     NetworkReport(Context context) {
         this.context = context.getApplicationContext();
@@ -192,45 +197,39 @@ final class NetworkReport {
         return s.replace("\"", "");
     }
 
-    /** "Remote: 192.168.5.23" from the receiver: say where the iPhone is relative to the car. */
+    /**
+     * "Remote: 192.168.5.23" from the receiver: say where the iPhone is relative to the car.
+     * Uses the interfaces themselves: inside a virtual-app host Android only shows this app the
+     * default network, so the car's Wi-Fi would be missing from ConnectivityManager.
+     */
     void iphoneAt(String address) {
         String clean = address.trim();
         if (clean.startsWith("::ffff:")) {
             clean = clean.substring(7);
         }
         String where = "not on any of the car's networks";
-        if (cm != null) {
-            for (Network n : cm.getAllNetworks()) {
-                LinkProperties link = cm.getLinkProperties(n);
-                if (link != null && covers(link, clean)) {
-                    where = "on the same network as the car: " + describe(n);
-                    break;
-                }
-            }
-        }
-        AirPlayLog.i("net: iPhone at " + clean + ", " + where);
-    }
-
-    private static boolean covers(LinkProperties link, String ip) {
         try {
-            InetAddress target = InetAddress.getByName(ip);
-            if (!(target instanceof Inet4Address)) {
-                return false;
-            }
-            int t = toInt((Inet4Address) target);
-            for (LinkAddress a : link.getLinkAddresses()) {
-                if (a.getAddress() instanceof Inet4Address) {
-                    int prefix = a.getPrefixLength();
-                    int mask = prefix <= 0 ? 0 : -1 << (32 - prefix);
-                    if (((toInt((Inet4Address) a.getAddress()) ^ t) & mask) == 0) {
-                        return true;
+            InetAddress target = InetAddress.getByName(clean);
+            if (target instanceof Inet4Address) {
+                int t = toInt((Inet4Address) target);
+                for (NetworkInterface ni : Collections.list(NetworkInterface.getNetworkInterfaces())) {
+                    for (InterfaceAddress ia : ni.getInterfaceAddresses()) {
+                        if (!(ia.getAddress() instanceof Inet4Address)) {
+                            continue;
+                        }
+                        int prefix = ia.getNetworkPrefixLength();
+                        int mask = prefix <= 0 ? 0 : -1 << (32 - prefix);
+                        if (((toInt((Inet4Address) ia.getAddress()) ^ t) & mask) == 0) {
+                            where = "on the same network as the car's " + ni.getName() + " "
+                                    + ia.getAddress().getHostAddress() + "/" + prefix;
+                        }
                     }
                 }
             }
         } catch (Exception ignored) {
             // not an address
         }
-        return false;
+        AirPlayLog.i("net: iPhone at " + clean + ", " + where);
     }
 
     private static int toInt(Inet4Address a) {
@@ -253,8 +252,7 @@ final class NetworkReport {
         long used = now >= sessionStartBytes ? now - sessionStartBytes : -1;
         String where;
         if ("cast".equals(sessionKind)) {
-            Network active = cm == null ? null : cm.getActiveNetwork();
-            where = "downloaded by the car over " + (active == null ? "?" : describe(active));
+            where = "downloaded by the car over " + (castRoute != null ? castRoute.describe() : "?");
         } else {
             where = "the iPhone's screen over the local Wi-Fi (the iPhone used its own internet)";
         }

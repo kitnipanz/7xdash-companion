@@ -281,6 +281,8 @@ public class AirPlayService extends Service implements RaopCallbackHandler {
         });
         AirPlayLog.init(this);
         net = new NetworkReport(this);
+        cast.route.start();
+        net.castRoute = cast.route;
         WORK.post(this::startServer);
     }
 
@@ -306,6 +308,7 @@ public class AirPlayService extends Service implements RaopCallbackHandler {
         }
         if (cast != null) {
             cast.stop();
+            cast.route.stop();
         }
         stopWatchingCar();
         AirPlayLog.i("service stopping");

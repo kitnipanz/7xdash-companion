@@ -13,6 +13,7 @@ import androidx.media3.common.Player;
 import androidx.media3.common.Timeline;
 import androidx.media3.common.VideoSize;
 import androidx.media3.exoplayer.ExoPlayer;
+import androidx.media3.exoplayer.source.DefaultMediaSourceFactory;
 
 /**
  * Plays a video the iPhone casts (the AirPlay button inside an app, not screen mirroring): the
@@ -40,6 +41,8 @@ final class CastPlayer {
 
     private final Context context;
     private final Listener listener;
+    /** Where the video is downloaded from: the car's Wi-Fi when it has one. */
+    final WifiRoute route;
     private final Handler main = new Handler(Looper.getMainLooper());
     private ExoPlayer player;
     private Surface surface;
@@ -89,6 +92,7 @@ final class CastPlayer {
     CastPlayer(Context context, Listener listener) {
         this.context = context.getApplicationContext();
         this.listener = listener;
+        this.route = new WifiRoute(this.context);
     }
 
     boolean isPlaying() {
@@ -99,7 +103,10 @@ final class CastPlayer {
         main.post(() -> {
             // a new video replaces the old one without telling the iPhone "stopped"
             release(false);
-            ExoPlayer p = new ExoPlayer.Builder(context).build();
+            AirPlayLog.i("cast: downloading over " + route.describe());
+            ExoPlayer p = new ExoPlayer.Builder(context)
+                    .setMediaSourceFactory(new DefaultMediaSourceFactory(route.dataSourceFactory()))
+                    .build();
             p.addListener(events);
             applyLanguage(p);
             if (surface != null) {

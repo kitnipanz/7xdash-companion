@@ -15,6 +15,9 @@
     <string name="set_section_rearview">กระจกมองหลังอัจฉริยะ</string>
     <string name="set_section_floating">ปุ่มลอย</string>
     <string name="set_section_dim">หรี่หน้าจอ</string>
+    <string name="set_section_side_mirror">กระจกข้าง</string>
+    <string name="set_section_sticker">สติกเกอร์อัจฉริยะ</string>
+    <string name="set_section_controller">คอนโทรลเลอร์</string>
     <string name="set_dim_title">หรี่หน้าจอ</string>
     <string name="set_dim_summary">คลุมทั้งหน้าจอเพื่อให้แผนที่สว่างน้อยลง ความทึบเริ่มต้น 90% การแตะยังส่งถึงแอปด้านล่าง</string>
     <string name="set_dim_opacity_title">ความทึบ</string>

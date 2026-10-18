@@ -1222,12 +1222,14 @@ public class SettingsPreferenceFragment extends PreferenceFragmentCompat {
                 openFragment(new VehicleInfoFragment(), R.string.set_vehicle_info_title));
         onClick("pref_screen_probe", pref ->
                 openFragment(new ScreenProbeFragment(), R.string.set_screen_probe_title));
+        onClick("pref_shortcuts", pref ->
+                startActivity(new Intent(getContext(), com.kooo.evcam.input.ShortcutListActivity.class)));
+        onClick("pref_sticker", pref ->
+                startActivity(new Intent(getContext(), com.kooo.evcam.input.StickerActivity.class)));
         onClick("pref_controller", pref ->
                 startActivity(new Intent(getContext(), ControllerProbeActivity.class)));
         onClick("pref_ble_signal", pref ->
                 startActivity(new Intent(getContext(), com.kooo.evcam.input.BleSignalActivity.class)));
-        onClick("pref_tap_to_speak", pref ->
-                openFragment(new TapToSpeakFragment(), R.string.set_tap_speak_title));
         int cabinScreenWidth = getResources().getDisplayMetrics().widthPixels;
         int cabinScreenHeight = getResources().getDisplayMetrics().heightPixels;
         bindSlider("pref_cabin_width", com.kooo.evcam.zeekr.CabinWindow.MIN_PX, cabinScreenWidth,

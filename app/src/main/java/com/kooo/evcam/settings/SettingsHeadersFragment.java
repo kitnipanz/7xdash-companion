@@ -147,12 +147,6 @@ public class SettingsHeadersFragment extends PreferenceFragmentCompat {
                     if (getActivity() instanceof MainActivity) {
                         ((MainActivity) getActivity()).showHome();
                     }
-                } else if ("pref_shortcuts".equals(key)) {
-                    startActivity(new android.content.Intent(requireContext(),
-                            com.kooo.evcam.input.ShortcutListActivity.class));
-                } else if ("pref_sticker".equals(key)) {
-                    startActivity(new android.content.Intent(requireContext(),
-                            com.kooo.evcam.input.StickerActivity.class));
                 } else if ("pref_about".equals(key)) {
                     // 关于不是分区：点了直接打开关于页，不在右栏里再垫一层
                     startActivity(new android.content.Intent(requireContext(),
@@ -169,18 +163,24 @@ public class SettingsHeadersFragment extends PreferenceFragmentCompat {
         }
     }
 
-    /** 左栏分组：这几项各起一组，上面画线。快捷键贴纸 / 录像存储 / 画面窗口 / 界面系统 / 云端更新 / 关于退出。 */
+    /** 左栏分组：这几项各起一组，上面画线。快捷键贴纸手柄喊话 / 录像存储 / 后视镜侧镜窗口遮罩 / 界面系统 / 云端更新 / 关于退出。 */
     private static final java.util.Set<String> GROUP_STARTS = new java.util.HashSet<>(java.util.Arrays.asList(
-            "pref_shortcuts", "screen_recording", "screen_rearview", "screen_interface", "screen_drive", "pref_about"));
+            "screen_shortcuts", "screen_recording", "screen_rearview", "screen_interface", "screen_drive", "pref_about"));
 
     private static int iconFor(String key) {
         switch (key) {
             case "pref_back_to_recording":
                 return R.drawable.ic_home;
-            case "pref_shortcuts":
+            case "screen_shortcuts":
                 return R.drawable.ic_shortcut;
-            case "pref_sticker":
+            case "screen_sticker":
                 return R.drawable.ic_sticker;
+            case "screen_controller":
+                return R.drawable.ic_controller;
+            case "screen_megaphone":
+                return R.drawable.ic_megaphone;
+            case "screen_side_mirror":
+                return R.drawable.ic_blindspot;
             case "screen_recording":
                 return R.drawable.ic_video;
             case "screen_storage":

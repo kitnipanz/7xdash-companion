@@ -51,6 +51,8 @@ public class SettingsShellFragment extends Fragment {
     static final String DEFAULT_SECTION = "screen_recording";
     /** 开发者选项那一段：没打开时不显示（左栏也没有这一行）。 */
     static final String DEVELOPER_SECTION = "screen_developer";
+    /** 喊话那一段：右栏是 TapToSpeakFragment，不是一列设置。 */
+    static final String MEGAPHONE_SECTION = "screen_megaphone";
 
     private SlidingPaneLayout slidingPane;
     private com.google.android.material.button.MaterialButton navButton;
@@ -156,7 +158,10 @@ public class SettingsShellFragment extends Fragment {
         if (order >= 0) {
             currentOrder = order;
         }
-        Fragment next = SettingsPreferenceFragment.forSection(screenKey);
+        // 喊话分区没有设置行：右栏直接是「点按说话」那一页（按钮、音量、扬声器）
+        Fragment next = MEGAPHONE_SECTION.equals(screenKey)
+                ? new TapToSpeakFragment()
+                : SettingsPreferenceFragment.forSection(screenKey);
         Fragment shown = getChildFragmentManager().findFragmentById(R.id.settings_detail);
         if (shown != null && MotionPolicy.decorative(requireContext())) {
             // 换分区沿纵轴走：左栏是竖着排的，点下面一行内容就从下面上来，

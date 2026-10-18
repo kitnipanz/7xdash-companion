@@ -182,10 +182,12 @@ public class BothMirrorsView extends ViewGroup {
     /** 中控：两块方窗在屏幕中线相接。抬头显示：窗口铺满，左画面贴左沿、右画面贴右沿，中间留给原厂图形。 */
     private void place() {
         if (onHud()) {
+            // 两块各占一半以内：宽度设到 100%（一块时铺满）时，两块不能叠在一起
+            int width = Math.min(appConfig.getSidePopupHudWidthPercent(), 49);
             int[] left = HudFrame.place(hudWidth, hudHeight, true,
-                    appConfig.getSidePopupHudWidthPercent(), appConfig.getSidePopupHudHeightPercent());
+                    width, appConfig.getSidePopupHudHeightPercent());
             int[] right = HudFrame.place(hudWidth, hudHeight, false,
-                    appConfig.getSidePopupHudWidthPercent(), appConfig.getSidePopupHudHeightPercent());
+                    width, appConfig.getSidePopupHudHeightPercent());
             leftX = left[0];
             leftY = left[1];
             leftW = left[2];

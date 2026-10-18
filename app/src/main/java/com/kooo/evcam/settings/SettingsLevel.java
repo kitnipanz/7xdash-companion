@@ -72,9 +72,7 @@ public final class SettingsLevel {
             // 系统：探测页和座舱窗口
             "pref_vehicle_info",
             "pref_screen_probe",
-            "pref_controller",
             "pref_ble_signal",
-            "pref_tap_to_speak",
             "cat_cabin_passenger",
             // 检查更新
             "pref_update_beta"

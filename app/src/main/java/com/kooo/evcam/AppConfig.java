@@ -138,7 +138,7 @@ public class AppConfig {
     private static final String KEY_SIDE_POPUP_VERTICAL = "side_popup_vertical";  // 上下位置，0 顶 100 底
     /** 以毫秒存：按秒只有 0–3 四档，车机那条很宽的滑块拖一小段根本不动（PR 作者 2026-10-01 实车）。 */
     public static final int SIDE_POPUP_MAX_CLOSE_DELAY_MS = 3000;
-    public static final int SIDE_POPUP_DEFAULT_CLOSE_DELAY_MS = 1000;
+    public static final int SIDE_POPUP_DEFAULT_CLOSE_DELAY_MS = 500;
     public static final int SIDE_POPUP_MIN_SIZE_PERCENT = 25;
     public static final int SIDE_POPUP_MAX_SIZE_PERCENT = 90;
     public static final int SIDE_POPUP_DEFAULT_SIZE_PERCENT = 55;
@@ -148,11 +148,11 @@ public class AppConfig {
     private static final String KEY_SIDE_POPUP_ROLL = "side_popup_roll";  // 旧：左右共用，读时迁到左右键
     private static final String KEY_SIDE_POPUP_ROLL_LEFT = "side_popup_roll_left";
     private static final String KEY_SIDE_POPUP_ROLL_RIGHT = "side_popup_roll_right";
-    /** 默认值是猜的（见 SideViewProjection）：视野 90°，往车尾转 50°，稍往上 15°。滚转默认 0。 */
-    public static final int SIDE_POPUP_DEFAULT_FOV = 90;
-    public static final int SIDE_POPUP_DEFAULT_YAW = 50;
-    public static final int SIDE_POPUP_DEFAULT_PITCH = 15;
-    public static final int SIDE_POPUP_DEFAULT_ROLL = 0;
+    /** 默认值按项目所有者实车调好的（2026-10-18）：视野 86°，往车尾转 52°，往上 17°，左右各转 37°。 */
+    public static final int SIDE_POPUP_DEFAULT_FOV = 86;
+    public static final int SIDE_POPUP_DEFAULT_YAW = 52;
+    public static final int SIDE_POPUP_DEFAULT_PITCH = 17;
+    public static final int SIDE_POPUP_DEFAULT_ROLL = 37;
     private static final String KEY_FORCE_H264_ENCODING = "force_h264_encoding";  // 拍照走相机 JPEG 通道
     private static final String KEY_LICENSE_PLATE = "license_plate";  // 车牌号（可选）
     private static final String KEY_LICENSE_PLATE_ENABLED = "license_plate_enabled";
@@ -1789,9 +1789,9 @@ public class AppConfig {
     }
 
     public static final int SIDE_POPUP_HUD_MIN_WIDTH = 10;
-    public static final int SIDE_POPUP_HUD_MAX_WIDTH = 40;
-    /** 约等于这块 1440 宽抬头显示上的 16:9。方形象太窄。 */
-    public static final int SIDE_POPUP_HUD_DEFAULT_WIDTH = 27;
+    public static final int SIDE_POPUP_HUD_MAX_WIDTH = 100;
+    /** 默认铺满整条抬头显示（项目所有者 2026-10-18）。以前是 27，约等于 1440 宽上的 16:9。 */
+    public static final int SIDE_POPUP_HUD_DEFAULT_WIDTH = 100;
 
     /** 抬头显示上侧视窗的宽度，屏宽的百分比。靠外沿。 */
     public int getSidePopupHudWidthPercent() {
@@ -1806,8 +1806,8 @@ public class AppConfig {
 
     public static final int SIDE_POPUP_HUD_MIN_HEIGHT = 20;
     public static final int SIDE_POPUP_HUD_MAX_HEIGHT = 100;
-    /** 上一版固定的 45%。100 顶满这条屏。 */
-    public static final int SIDE_POPUP_HUD_DEFAULT_HEIGHT = 45;
+    /** 默认 100 顶满这条屏（项目所有者 2026-10-18）。以前固定 45%。 */
+    public static final int SIDE_POPUP_HUD_DEFAULT_HEIGHT = 100;
 
     /** 抬头显示上侧视窗的高度，屏高的百分比。上下居中。 */
     public int getSidePopupHudHeightPercent() {
@@ -1885,7 +1885,7 @@ public class AppConfig {
         prefs.edit().putBoolean(KEY_SIDE_POPUP_INSTANT, on).apply();
     }
 
-    /** 灯灭后再留多少毫秒，0..3000，按 100 取整，默认 1000（PR 作者 2026-10-01 实车：灯灭就收太急）。 */
+    /** 灯灭后再留多少毫秒，0..3000，按 100 取整，默认 500（项目所有者 2026-10-18；之前是 1000）。 */
     public int getSidePopupCloseDelayMs() {
         int v = prefs.getInt(KEY_SIDE_POPUP_CLOSE_DELAY_MS, SIDE_POPUP_DEFAULT_CLOSE_DELAY_MS);
         return Math.max(0, Math.min(SIDE_POPUP_MAX_CLOSE_DELAY_MS, v));

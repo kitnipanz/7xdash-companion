@@ -191,7 +191,7 @@ public class HomeFragment extends Fragment {
                 .onOff(() -> config.isRearViewEnabled());
         addCard(grid, 0, 3, R.drawable.ic_blindspot, R.string.home_card_blind,
                 R.string.home_card_blind_sub, this::cycleBlindSpot,
-                () -> page(MainActivity.PAGE_SETTINGS_PREFIX + "screen_rearview"))
+                () -> page(MainActivity.PAGE_SETTINGS_PREFIX + "screen_side_mirror"))
                 .state(this::blindSpotText, () -> config.isSidePopupEnabled());
 
         // 第二行：即时抓拍、抓拍列表、远程观看、喊话。
@@ -208,7 +208,8 @@ public class HomeFragment extends Fragment {
         addCard(grid, 1, 2, R.drawable.ic_remote, R.string.home_card_remote,
                 R.string.home_card_remote_sub, () -> page(MainActivity.PAGE_REMOTE), null);
         addCard(grid, 1, 3, R.drawable.ic_megaphone, R.string.home_rail_megaphone,
-                R.string.home_card_megaphone_sub, () -> perform(ShortcutAction.TOGGLE_SPEAK), null)
+                R.string.home_card_megaphone_sub, () -> perform(ShortcutAction.TOGGLE_SPEAK),
+                () -> page(MainActivity.PAGE_SETTINGS_PREFIX + "screen_megaphone"))
                 .onOff(MegaphoneService::isOpen);
 
         // 第三行：Google 云端硬盘、智能贴、快捷键、抬头显示通知

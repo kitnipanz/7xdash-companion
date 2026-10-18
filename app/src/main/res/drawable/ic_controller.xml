@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- ic_controller：手柄。统一图标集（24dp 网格、线宽 1.7、圆头）。 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M7,7h10a4,4 0,0 1,4 4l0.6,4.6a2.6,2.6 0,0 1,-4.7 1.9l-1.4,-2h-7l-1.4,2a2.6,2.6 0,0 1,-4.7 -1.9l0.6,-4.6a4,4 0,0 1,4 -4z M8,10v3 M6.5,11.5h3 M15.5,11h0.01 M17.5,12.5h0.01"
+        android:strokeWidth="1.7"
+        android:strokeColor="@color/text_primary"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+</vector>

@@ -25,16 +25,47 @@
         android:key="pref_back_to_recording"
         android:title="@string/set_back_to_recording" />
 
-    <!-- 7xDash：快捷键和智能贴最常用，排在左栏最前面，不再藏在「系统」里。点了直接打开各自的页面 -->
-    <Preference
-        android:key="pref_shortcuts"
-        android:title="@string/set_shortcuts_title"
-        android:summary="@string/set_shortcuts_summary" />
+    <!-- ==================== 快捷键 / 智能贴 / 手柄 / 喊话 ==================== -->
+    <!-- 7xDash：各自一个分区，排在左栏最前面。快捷键、智能贴、手柄是独立界面，分区里一行点开 -->
+    <PreferenceScreen
+        android:key="screen_shortcuts"
+        android:title="@string/set_shortcuts_title">
 
-    <Preference
-        android:key="pref_sticker"
-        android:title="@string/set_sticker_title"
-        android:summary="@string/set_sticker_summary" />
+        <Preference
+            android:key="pref_shortcuts"
+            android:title="@string/set_shortcuts_title"
+            android:summary="@string/set_shortcuts_summary" />
+    </PreferenceScreen>
+
+    <PreferenceScreen
+        android:key="screen_sticker"
+        android:title="@string/set_section_sticker">
+
+        <Preference
+            android:key="pref_sticker"
+            android:title="@string/set_sticker_title"
+            android:summary="@string/set_sticker_summary" />
+
+        <Preference
+            android:key="pref_ble_signal"
+            android:title="@string/ble_signal_title"
+            android:summary="@string/ble_signal_summary" />
+    </PreferenceScreen>
+
+    <PreferenceScreen
+        android:key="screen_controller"
+        android:title="@string/set_section_controller">
+
+        <Preference
+            android:key="pref_controller"
+            android:title="@string/set_controller_title"
+            android:summary="@string/set_controller_summary" />
+    </PreferenceScreen>
+
+    <!-- 喊话：右栏直接是「点按说话」那一页（TapToSpeakFragment，见 SettingsShellFragment），这里只给分区名 -->
+    <PreferenceScreen
+        android:key="screen_megaphone"
+        android:title="@string/home_rail_megaphone" />
 
     <!-- ==================== 录制 ==================== -->
     <PreferenceScreen
@@ -251,122 +282,124 @@
                 app:showSeekBarValue="true" />
         </PreferenceCategory>
 
-        <!-- 打转向灯弹侧视：不依赖后视镜开关，后视镜关着也能用（开着时反而不弹） -->
-        <PreferenceCategory
-            android:key="cat_side_popup"
-            android:title="@string/set_side_popup_title">
+    </PreferenceScreen>
 
-            <SwitchPreferenceCompat
-                android:key="pref_side_popup"
-                android:title="@string/set_side_popup_title"
-                android:summary="@string/set_side_popup_summary" />
+    <!-- ==================== 侧镜 ==================== -->
+    <!-- 7xDash：打转向灯弹侧视自己一个分区（原来在超级后视镜底下，一页太长）。不依赖后视镜开关 -->
+    <PreferenceScreen
+        android:key="screen_side_mirror"
+        android:title="@string/set_section_side_mirror">
 
-            <SwitchPreferenceCompat
-                android:key="pref_side_popup_hud"
-                android:dependency="pref_side_popup"
-                android:title="@string/set_side_popup_hud_title"
-                android:summary="@string/set_side_popup_hud_summary" />
+        <SwitchPreferenceCompat
+            android:key="pref_side_popup"
+            android:title="@string/set_side_popup_title"
+            android:summary="@string/set_side_popup_summary" />
 
-            <SeekBarPreference
-                android:key="pref_side_popup_hud_width"
-                android:dependency="pref_side_popup"
-                android:title="@string/set_side_popup_hud_width_title"
-                android:summary="@string/set_side_popup_hud_width_summary"
-                app:showSeekBarValue="true" />
+        <SwitchPreferenceCompat
+            android:key="pref_side_popup_hud"
+            android:dependency="pref_side_popup"
+            android:title="@string/set_side_popup_hud_title"
+            android:summary="@string/set_side_popup_hud_summary" />
 
-            <SeekBarPreference
-                android:key="pref_side_popup_hud_height"
-                android:dependency="pref_side_popup"
-                android:title="@string/set_side_popup_hud_height_title"
-                android:summary="@string/set_side_popup_hud_height_summary"
-                app:showSeekBarValue="true" />
+        <SeekBarPreference
+            android:key="pref_side_popup_hud_width"
+            android:dependency="pref_side_popup"
+            android:title="@string/set_side_popup_hud_width_title"
+            android:summary="@string/set_side_popup_hud_width_summary"
+            app:showSeekBarValue="true" />
 
-            <SwitchPreferenceCompat
-                android:key="pref_side_popup_hud_left"
-                android:dependency="pref_side_popup"
-                android:title="@string/set_side_popup_hud_left_title"
-                android:summary="@string/set_side_popup_hud_left_summary" />
+        <SeekBarPreference
+            android:key="pref_side_popup_hud_height"
+            android:dependency="pref_side_popup"
+            android:title="@string/set_side_popup_hud_height_title"
+            android:summary="@string/set_side_popup_hud_height_summary"
+            app:showSeekBarValue="true" />
 
-            <SwitchPreferenceCompat
-                android:key="pref_both_mirrors_hud"
-                android:title="@string/set_both_mirrors_hud_title"
-                android:summary="@string/set_both_mirrors_hud_summary" />
+        <SwitchPreferenceCompat
+            android:key="pref_side_popup_hud_left"
+            android:dependency="pref_side_popup"
+            android:title="@string/set_side_popup_hud_left_title"
+            android:summary="@string/set_side_popup_hud_left_summary" />
 
-            <SeekBarPreference
-                android:key="pref_side_popup_min_speed"
-                android:dependency="pref_side_popup"
-                android:title="@string/set_side_popup_speed_title"
-                android:summary="@string/set_side_popup_speed_summary"
-                app:showSeekBarValue="true" />
+        <SwitchPreferenceCompat
+            android:key="pref_both_mirrors_hud"
+            android:title="@string/set_both_mirrors_hud_title"
+            android:summary="@string/set_both_mirrors_hud_summary" />
 
-            <SwitchPreferenceCompat
-                android:key="pref_side_popup_straighten"
-                android:dependency="pref_side_popup"
-                android:title="@string/set_side_popup_straighten_title"
-                android:summary="@string/set_side_popup_straighten_summary" />
+        <SeekBarPreference
+            android:key="pref_side_popup_min_speed"
+            android:dependency="pref_side_popup"
+            android:title="@string/set_side_popup_speed_title"
+            android:summary="@string/set_side_popup_speed_summary"
+            app:showSeekBarValue="true" />
 
-            <SeekBarPreference
-                android:key="pref_side_popup_fov"
-                android:dependency="pref_side_popup"
-                android:title="@string/set_side_popup_fov_title"
-                android:summary="@string/set_side_popup_fov_summary"
-                app:showSeekBarValue="true" />
+        <SwitchPreferenceCompat
+            android:key="pref_side_popup_straighten"
+            android:dependency="pref_side_popup"
+            android:title="@string/set_side_popup_straighten_title"
+            android:summary="@string/set_side_popup_straighten_summary" />
 
-            <SeekBarPreference
-                android:key="pref_side_popup_yaw"
-                android:dependency="pref_side_popup"
-                android:title="@string/set_side_popup_yaw_title"
-                android:summary="@string/set_side_popup_yaw_summary"
-                app:showSeekBarValue="true" />
+        <SeekBarPreference
+            android:key="pref_side_popup_fov"
+            android:dependency="pref_side_popup"
+            android:title="@string/set_side_popup_fov_title"
+            android:summary="@string/set_side_popup_fov_summary"
+            app:showSeekBarValue="true" />
 
-            <SeekBarPreference
-                android:key="pref_side_popup_pitch"
-                android:dependency="pref_side_popup"
-                android:title="@string/set_side_popup_pitch_title"
-                android:summary="@string/set_side_popup_pitch_summary"
-                app:showSeekBarValue="true" />
+        <SeekBarPreference
+            android:key="pref_side_popup_yaw"
+            android:dependency="pref_side_popup"
+            android:title="@string/set_side_popup_yaw_title"
+            android:summary="@string/set_side_popup_yaw_summary"
+            app:showSeekBarValue="true" />
 
-            <SeekBarPreference
-                android:key="pref_side_popup_roll_left"
-                android:dependency="pref_side_popup"
-                android:title="@string/set_side_popup_roll_left_title"
-                android:summary="@string/set_side_popup_roll_summary"
-                app:showSeekBarValue="true" />
+        <SeekBarPreference
+            android:key="pref_side_popup_pitch"
+            android:dependency="pref_side_popup"
+            android:title="@string/set_side_popup_pitch_title"
+            android:summary="@string/set_side_popup_pitch_summary"
+            app:showSeekBarValue="true" />
 
-            <SeekBarPreference
-                android:key="pref_side_popup_roll_right"
-                android:dependency="pref_side_popup"
-                android:title="@string/set_side_popup_roll_right_title"
-                android:summary="@string/set_side_popup_roll_summary"
-                app:showSeekBarValue="true" />
+        <SeekBarPreference
+            android:key="pref_side_popup_roll_left"
+            android:dependency="pref_side_popup"
+            android:title="@string/set_side_popup_roll_left_title"
+            android:summary="@string/set_side_popup_roll_summary"
+            app:showSeekBarValue="true" />
 
-            <SwitchPreferenceCompat
-                android:key="pref_side_popup_instant"
-                android:dependency="pref_side_popup"
-                android:title="@string/set_side_popup_instant_title"
-                android:summary="@string/set_side_popup_instant_summary" />
+        <SeekBarPreference
+            android:key="pref_side_popup_roll_right"
+            android:dependency="pref_side_popup"
+            android:title="@string/set_side_popup_roll_right_title"
+            android:summary="@string/set_side_popup_roll_summary"
+            app:showSeekBarValue="true" />
 
-            <SeekBarPreference
-                android:key="pref_side_popup_close_delay_ms"
-                android:dependency="pref_side_popup"
-                android:title="@string/set_side_popup_close_delay_ms_title"
-                android:summary="@string/set_side_popup_close_delay_ms_summary"
-                app:showSeekBarValue="true" />
+        <SwitchPreferenceCompat
+            android:key="pref_side_popup_instant"
+            android:dependency="pref_side_popup"
+            android:title="@string/set_side_popup_instant_title"
+            android:summary="@string/set_side_popup_instant_summary" />
 
-            <SeekBarPreference
-                android:key="pref_side_popup_size"
-                android:dependency="pref_side_popup"
-                android:title="@string/set_side_popup_size_title"
-                android:summary="@string/set_side_popup_size_summary"
-                app:showSeekBarValue="true" />
+        <SeekBarPreference
+            android:key="pref_side_popup_close_delay_ms"
+            android:dependency="pref_side_popup"
+            android:title="@string/set_side_popup_close_delay_ms_title"
+            android:summary="@string/set_side_popup_close_delay_ms_summary"
+            app:showSeekBarValue="true" />
 
-            <SeekBarPreference
-                android:key="pref_side_popup_vertical"
-                android:dependency="pref_side_popup"
-                android:title="@string/set_side_popup_vertical_title"
-                android:summary="@string/set_side_popup_vertical_summary"
-                app:showSeekBarValue="true" />
-        </PreferenceCategory>
+        <SeekBarPreference
+            android:key="pref_side_popup_size"
+            android:dependency="pref_side_popup"
+            android:title="@string/set_side_popup_size_title"
+            android:summary="@string/set_side_popup_size_summary"
+            app:showSeekBarValue="true" />
+
+        <SeekBarPreference
+            android:key="pref_side_popup_vertical"
+            android:dependency="pref_side_popup"
+            android:title="@string/set_side_popup_vertical_title"
+            android:summary="@string/set_side_popup_vertical_summary"
+            app:showSeekBarValue="true" />
     </PreferenceScreen>
 
     <!-- ==================== 悬浮窗 ==================== -->
@@ -572,21 +605,6 @@
             android:key="pref_screen_probe"
             android:title="@string/set_screen_probe_title"
             android:summary="@string/set_screen_probe_summary" />
-
-        <Preference
-            android:key="pref_controller"
-            android:title="@string/set_controller_title"
-            android:summary="@string/set_controller_summary" />
-
-        <Preference
-            android:key="pref_ble_signal"
-            android:title="@string/ble_signal_title"
-            android:summary="@string/ble_signal_summary" />
-
-        <Preference
-            android:key="pref_tap_to_speak"
-            android:title="@string/set_tap_speak_title"
-            android:summary="@string/set_tap_speak_summary" />
 
         <PreferenceCategory
             android:key="cat_cabin_passenger"

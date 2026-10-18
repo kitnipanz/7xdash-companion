@@ -15,6 +15,9 @@
     <string name="set_section_rearview">Super mirror</string>
     <string name="set_section_floating">Floating button</string>
     <string name="set_section_dim">Dim overlay</string>
+    <string name="set_section_side_mirror">Side mirror</string>
+    <string name="set_section_sticker">Smart sticker</string>
+    <string name="set_section_controller">Controller</string>
     <string name="set_dim_title">Dim overlay</string>
     <string name="set_dim_summary">Covers the whole screen so maps is less bright. Default opacity 90%. Touches still reach the app underneath</string>
     <string name="set_dim_opacity_title">Opacity</string>

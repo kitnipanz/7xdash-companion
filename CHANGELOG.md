@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.0] - 2026-10-18
+
+- Settings reorganised into tabs. New tabs for Shortcuts, Smart sticker (with BLE signals), Controller, Megaphone and Side mirror, at the top of the list; Dim overlay keeps its own tab. Megaphone shows its button, volume and speaker settings right in the tab.
+- Side mirror (turn-signal side view) moved out of Super mirror into its own tab, with new defaults tuned on the car: view width 86°, aim back 52°, aim up 17°, rotate left and right 37°, stays open 500 ms after the signal, and fills the whole HUD (width and height 100%). HUD width now goes up to 100% (was 40%); with both side mirrors on the HUD each picture stays under half the width. Settings you already changed are kept.
+- Home: long-press Blind spot opens the Side mirror tab; long-press Megaphone opens the Megaphone tab.
+
 ## [1.0.15-beta] - 2026-10-18
 
 - AirPlay casting starts much sooner. Before playing, the receiver fetched every YouTube track list through the iPhone, about 19 of them at ~0.6 s each. It now keeps only what the car plays (H.264 at 360p-1080p and the better audio in every language), about 6 lists. The player also starts after 1 s of video instead of 2.5 s.

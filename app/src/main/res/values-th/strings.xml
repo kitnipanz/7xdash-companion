@@ -1328,4 +1328,6 @@
     <string name="set_hud_notice_right_title">ตำแหน่งด้านขวา</string>
     <string name="set_hud_notice_right_summary">เลื่อนขอบขวาของการ์ดเข้ามาจนข้อความยาวๆ เห็นครบบน HUD ทุกครั้งที่ปรับจะแสดงการ์ดทดสอบ</string>
     <string name="set_hud_notice_preview_right">ห่างจากขวา %1$d%% ข้อความยาวนี้แสดงว่าการ์ดจบตรงไหนทางด้านขวาของ HUD</string>
+    <string name="airplay_cast_title">ส่งวิดีโอ (casting)</string>
+    <string name="airplay_cast_summary">เปิด: แอปอย่าง YouTube จะสลับจากการสะท้อนหน้าจอไปเป็นการส่งวิดีโอเอง รถจะดาวน์โหลดวิดีโอด้วยอินเทอร์เน็ตของรถ ภาพคมชัดกว่า ปิด: สะท้อนหน้าจออย่างเดียว iPhone สตรีมวิดีโอเอง รถแค่แสดงหน้าจอและไม่ใช้อินเทอร์เน็ต</string>
 </resources>

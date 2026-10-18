@@ -60,6 +60,10 @@ public class AirPlayFragment extends Fragment {
             AirPlayService.setEnabled(requireContext(), on);
             handler.postDelayed(this::paint, 300);
         });
+        SwitchCompat casting = view.findViewById(R.id.airplay_casting);
+        casting.setChecked(AirPlayService.castingEnabled(requireContext()));
+        casting.setOnCheckedChangeListener((b, on) ->
+                AirPlayService.setCastingEnabled(requireContext(), on));
         SwitchCompat whileDriving = view.findViewById(R.id.airplay_while_driving);
         whileDriving.setChecked(AirPlayService.showWhileDriving(requireContext()));
         whileDriving.setOnCheckedChangeListener((b, on) ->
@@ -85,8 +89,7 @@ public class AirPlayFragment extends Fragment {
         }
         boolean on = AirPlayService.isRunning();
         String deviceName = on ? AirPlayService.deviceName() : getString(R.string.airplay_device_name);
-        String now = AirPlayService.state();
-        state.setText(on ? (now.isEmpty() ? getString(R.string.airplay_state_starting) : now)
+        state.setText(on ? stateText(AirPlayService.state(), deviceName)
                 : getString(R.string.airplay_state_off));
         name.setText(getString(R.string.airplay_name_line, deviceName));
         steps.setText(getString(R.string.airplay_steps, deviceName));
@@ -105,5 +108,21 @@ public class AirPlayFragment extends Fragment {
         }
         icon.setImageTintList(ColorStateList.valueOf(ContextCompat.getColor(requireContext(),
                 on ? R.color.energy : R.color.text_secondary)));
+    }
+
+    /** In the app's language, here rather than in the service (which may run in another). */
+    private String stateText(int value, String deviceName) {
+        switch (value) {
+            case AirPlayService.STATE_WAITING:
+                return getString(R.string.airplay_state_waiting, deviceName);
+            case AirPlayService.STATE_CONNECTED:
+                return getString(R.string.airplay_state_connected);
+            case AirPlayService.STATE_MIRRORING:
+                return getString(R.string.airplay_state_mirroring);
+            case AirPlayService.STATE_CASTING:
+                return getString(R.string.airplay_state_casting);
+            default:
+                return getString(R.string.airplay_state_starting);
+        }
     }
 }

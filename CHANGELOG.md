@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.0.12-beta] - 2026-10-18
+
+- AirPlay: "Video casting" switch on the AirPlay page (on by default). Off keeps the iPhone on screen mirroring, so YouTube no longer switches to casting and the car uses no internet for it.
+- AirPlay page: the status line follows the app language (it could show English on a Thai screen).
+
 ## [1.0.11-beta] - 2026-10-18
 
 - AirPlay log: long messages are no longer cut (up to 16 KB per line), so a cast's full track list and the iPhone's track choice are recorded.

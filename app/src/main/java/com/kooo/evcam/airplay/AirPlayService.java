@@ -65,6 +65,7 @@ public class AirPlayService extends Service implements RaopCallbackHandler {
     private static final String KEY_ON = "on";
     private static final String KEY_MAC = "mac";
     private static final String KEY_WHILE_DRIVING = "show_while_driving";
+    private static final String KEY_CASTING = "video_casting";
     private static final String TELEMETRY_USER = "airplay";
     private static final int PORT = 7000;
     /** Other ports to try when 7000 stays taken (another AirPlay receiver on the car, say). */
@@ -85,7 +86,13 @@ public class AirPlayService extends Service implements RaopCallbackHandler {
     private static final int FPS = 30;
 
     private static volatile AirPlayService live;
-    private static volatile String state = "";
+    /** What the receiver is doing; the page turns it into text in the app's language. */
+    public static final int STATE_NONE = 0;
+    public static final int STATE_WAITING = 1;
+    public static final int STATE_CONNECTED = 2;
+    public static final int STATE_MIRRORING = 3;
+    public static final int STATE_CASTING = 4;
+    private static volatile int state = STATE_NONE;
     /** Port the receiver listens on, 0 when not up. */
     private static volatile int listenPort;
 
@@ -145,13 +152,32 @@ public class AirPlayService extends Service implements RaopCallbackHandler {
         }
     }
 
+    /**
+     * Offer video casting (on by default). While it is offered, iOS moves apps like YouTube from
+     * mirroring to casting by itself, and the car then downloads the video. Off keeps the iPhone
+     * on mirroring: it streams, the car only shows its screen.
+     */
+    public static boolean castingEnabled(Context context) {
+        return context.getSharedPreferences(PREFS, MODE_PRIVATE).getBoolean(KEY_CASTING, true);
+    }
+
+    public static void setCastingEnabled(Context context, boolean on) {
+        context.getSharedPreferences(PREFS, MODE_PRIVATE).edit().putBoolean(KEY_CASTING, on).apply();
+        AirPlayLog.i("video casting offered: " + on);
+        AirPlayService s = live;
+        if (s != null) {
+            // what we offer is in the announcement: restart the receiver so the iPhone sees it
+            s.main.post(() -> s.restartReceiver("video casting " + (on ? "on" : "off")));
+        }
+    }
+
     public static boolean isRunning() {
         return live != null;
     }
 
-    /** One line for the AirPlay page: waiting / connected / mirroring. Empty when off. */
-    public static String state() {
-        return live == null ? "" : state;
+    /** STATE_*; STATE_NONE when off or still starting. */
+    public static int state() {
+        return live == null ? STATE_NONE : state;
     }
 
     /**
@@ -271,7 +297,7 @@ public class AirPlayService extends Service implements RaopCallbackHandler {
     @Override
     public void onDestroy() {
         live = null;
-        state = "";
+        state = STATE_NONE;
         main.removeCallbacksAndMessages(null);
         if (window != null) {
             window.hide();
@@ -320,7 +346,7 @@ public class AirPlayService extends Service implements RaopCallbackHandler {
         NativeBridge.nativeSetH265Enabled(handle, false);
         NativeBridge.nativeSetCodecs(handle, false, true);
         // video casting (the AirPlay button inside an app): the iPhone hands over a stream address
-        NativeBridge.nativeSetHlsEnabled(handle, true);
+        NativeBridge.nativeSetHlsEnabled(handle, castingEnabled(this));
         NativeBridge.nativeSetLang(handle, "", "",
                 getResources().getConfiguration().getLocales().toLanguageTags().replace(',', ':'));
         NativeBridge.nativeSetFeature(handle, NativeBridge.FT_MIRROR, true);
@@ -345,7 +371,7 @@ public class AirPlayService extends Service implements RaopCallbackHandler {
         AirPlayLog.i("raop txt " + raopTxt);
         announce(raopName != null ? raopName : name, serverName != null ? serverName : name,
                 port, raopTxt, airplayTxt);
-        setState(getString(R.string.airplay_state_waiting, name));
+        setState(STATE_WAITING);
         listenPort = port;
         AirPlayLog.i("receiver up on port " + port + " as " + name + ", offers "
                 + size[0] + "x" + size[1] + "@" + FPS);
@@ -500,7 +526,12 @@ public class AirPlayService extends Service implements RaopCallbackHandler {
 
     /** Close tapped: drop the iPhone by restarting the receiver; it stays available. */
     private void endMirroring() {
-        AirPlayLog.i("close tapped: dropping the iPhone");
+        restartReceiver("close tapped");
+    }
+
+    /** Drop any iPhone and start the receiver again (it stays on). Main thread. */
+    private void restartReceiver(String why) {
+        AirPlayLog.i(why + ": restarting the receiver");
         if (casting) {
             cast.stop();
             casting = false;
@@ -528,7 +559,7 @@ public class AirPlayService extends Service implements RaopCallbackHandler {
         window.show();
         window.setPlaying(false);
         watchCar();
-        setState(getString(R.string.airplay_state_mirroring));
+        setState(STATE_MIRRORING);
         Notice.makeText(this, R.string.airplay_started, Toast.LENGTH_SHORT).show();
     }
 
@@ -537,8 +568,7 @@ public class AirPlayService extends Service implements RaopCallbackHandler {
         mirroring = false;
         window.hide();
         stopWatchingCar();
-        setState(connections.get() > 0 ? getString(R.string.airplay_state_connected)
-                : getString(R.string.airplay_state_waiting, name));
+        setState(connections.get() > 0 ? STATE_CONNECTED : STATE_WAITING);
     }
 
     /** The iPhone cast a video: play it in the floating window. */
@@ -561,7 +591,7 @@ public class AirPlayService extends Service implements RaopCallbackHandler {
         window.show();
         window.setPlaying(false);
         watchCar();
-        setState(getString(R.string.airplay_state_casting));
+        setState(STATE_CASTING);
         Notice.makeText(this, R.string.airplay_cast_started, Toast.LENGTH_SHORT).show();
     }
 
@@ -575,8 +605,7 @@ public class AirPlayService extends Service implements RaopCallbackHandler {
         cast.setSurface(null);
         window.hide();
         stopWatchingCar();
-        setState(connections.get() > 0 ? getString(R.string.airplay_state_connected)
-                : getString(R.string.airplay_state_waiting, name));
+        setState(connections.get() > 0 ? STATE_CONNECTED : STATE_WAITING);
     }
 
     private final Telemetry.Listener carListener = readings -> main.post(this::checkCar);
@@ -675,7 +704,7 @@ public class AirPlayService extends Service implements RaopCallbackHandler {
         AirPlayLog.i("iPhone connected (" + connections.incrementAndGet() + " open)");
         main.post(() -> {
             if (!mirroring) {
-                setState(getString(R.string.airplay_state_connected));
+                setState(STATE_CONNECTED);
             }
         });
     }
@@ -695,7 +724,7 @@ public class AirPlayService extends Service implements RaopCallbackHandler {
                 if (mirroring) {
                     mirrorStopped();
                 } else {
-                    setState(getString(R.string.airplay_state_waiting, name));
+                    setState(STATE_WAITING);
                 }
             });
         }
@@ -789,8 +818,8 @@ public class AirPlayService extends Service implements RaopCallbackHandler {
         return sb.toString();
     }
 
-    private void setState(String text) {
-        state = text;
+    private void setState(int value) {
+        state = value;
     }
 
     private static int parse(@Nullable String value) {

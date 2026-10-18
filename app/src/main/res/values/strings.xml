@@ -1350,4 +1350,6 @@ Then reopen this app.</string>
     <string name="set_hud_notice_right_title">Right position</string>
     <string name="set_hud_notice_right_summary">Move the card\'s right edge in until long notices stay fully visible on the HUD. A test card shows each time you change it.</string>
     <string name="set_hud_notice_preview_right">%1$d%% from the right. A long line shows where the card ends on the right side of the HUD.</string>
+    <string name="airplay_cast_title">Video casting</string>
+    <string name="airplay_cast_summary">On: apps like YouTube switch from mirroring to casting by themselves. The car downloads the video over its own internet, in better quality. Off: mirroring only. The iPhone streams the video, and the car just shows its screen and uses no internet.</string>
 </resources>

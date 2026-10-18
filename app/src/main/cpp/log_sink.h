@@ -49,7 +49,8 @@ public:
 
 private:
     void vemit(int prio, const char *fmt, va_list ap) {
-        char buf[256];
+        // 7xDash: long enough for whole HLS playlists and plists in the AirPlay log
+        char buf[16384];
         vsnprintf(buf, sizeof(buf), fmt, ap);
         __android_log_print(prio, LOG_SINK_TAG, "%s", buf);
         if (!mVm || !mObj || !mMethod) return;

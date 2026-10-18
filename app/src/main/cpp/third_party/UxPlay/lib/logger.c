@@ -97,7 +97,7 @@ logger_log(logger_t *logger, int level, const char *fmt, ...)
     }
     MUTEX_UNLOCK(logger->lvl_mutex);
 
-    char buffer[4096] = {0};
+    char buffer[16384] = {0};  /* 7xDash: whole HLS playlists and plists in the AirPlay log */
     char err_fmt[] = "---logger message is truncated from %d to %d chars---\n";
     char err_buf[128] = {0};
     va_list ap;

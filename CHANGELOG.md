@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.0.11-beta] - 2026-10-18
+
+- AirPlay log: long messages are no longer cut (up to 16 KB per line), so a cast's full track list and the iPhone's track choice are recorded.
+
 ## [1.0.10-beta] - 2026-10-18
 
 - HUD notice: new Right position setting (default 20% in from the right), next to Left position, with a test card; the card runs between the two, so long notices no longer go past the right edge of the visible HUD.

@@ -43,6 +43,8 @@ final class CastPlayer {
     private final Handler main = new Handler(Looper.getMainLooper());
     private ExoPlayer player;
     private Surface surface;
+    /** The audio language picked on the iPhone; null lets the stream's own default play. */
+    private String audioLanguage;
 
     private final Runnable report = new Runnable() {
         @Override
@@ -99,6 +101,7 @@ final class CastPlayer {
             release(false);
             ExoPlayer p = new ExoPlayer.Builder(context).build();
             p.addListener(events);
+            applyLanguage(p);
             if (surface != null) {
                 p.setVideoSurface(surface);
             }
@@ -132,6 +135,25 @@ final class CastPlayer {
                 player.setPlayWhenReady(true);
             }
         });
+    }
+
+    /** Play this audio language (from the iPhone's track choice), now and for the next video. */
+    void setAudioLanguage(String language) {
+        main.post(() -> {
+            audioLanguage = language;
+            if (player != null) {
+                applyLanguage(player);
+            }
+        });
+    }
+
+    private void applyLanguage(ExoPlayer p) {
+        if (audioLanguage == null) {
+            return;
+        }
+        p.setTrackSelectionParameters(p.getTrackSelectionParameters().buildUpon()
+                .setPreferredAudioLanguage(audioLanguage)
+                .build());
     }
 
     void setSurface(Surface s) {

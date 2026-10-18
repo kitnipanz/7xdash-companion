@@ -67,6 +67,8 @@ void android_callbacks_init(android_callback_ctx_t *ctx, JNIEnv *env, jobject ca
     ctx->on_video_play = (*env)->GetMethodID(env, cls, "onVideoPlay", "(Ljava/lang/String;F)V");
     ctx->on_video_scrub = (*env)->GetMethodID(env, cls, "onVideoScrub", "(F)V");
     ctx->on_video_rate = (*env)->GetMethodID(env, cls, "onVideoRate", "(F)V");
+    ctx->on_video_select_media = (*env)->GetMethodID(env, cls, "onVideoSelectMedia",
+                                                     "(Ljava/lang/String;Ljava/lang/String;)V");
     ctx->on_video_stop = (*env)->GetMethodID(env, cls, "onVideoStop", "()V");
     ctx->on_video_session_poll = (*env)->GetMethodID(env, cls, "onVideoSessionPoll", "()V");
     (*env)->DeleteLocalRef(env, cls);
@@ -339,6 +341,19 @@ static void _video_rate(void *cls, const float rate) {
     (*env)->CallVoidMethod(env, ctx->callback_obj, ctx->on_video_rate, (jfloat)rate);
 }
 
+/* 7xDash: the track picked on the iPhone */
+static void _video_select_media(void *cls, const char *media_type, const char *language) {
+    android_callback_ctx_t *ctx = (android_callback_ctx_t *)cls;
+    if (!ctx->on_video_select_media) return;
+    JNIEnv *env = _get_env(ctx);
+    if (!env) return;
+    jstring type = (*env)->NewStringUTF(env, media_type);
+    jstring lang = (*env)->NewStringUTF(env, language);
+    (*env)->CallVoidMethod(env, ctx->callback_obj, ctx->on_video_select_media, type, lang);
+    (*env)->DeleteLocalRef(env, type);
+    (*env)->DeleteLocalRef(env, lang);
+}
+
 static void _video_stop(void *cls) {
     android_callback_ctx_t *ctx = (android_callback_ctx_t *)cls;
     android_callbacks_update_playback_info(ctx, 0.0, -1.0, 0.0f, 0);
@@ -413,6 +428,7 @@ void android_callbacks_fill(raop_callbacks_t *cbs, android_callback_ctx_t *ctx) 
     cbs->on_video_play = _video_play;
     cbs->on_video_scrub = _video_scrub;
     cbs->on_video_rate = _video_rate;
+    cbs->on_video_select_media = _video_select_media;
     cbs->on_video_stop = _video_stop;
     cbs->on_video_acquire_playback_info = _video_acquire_playback_info;
     cbs->on_video_playlist_remove = _video_playlist_remove;

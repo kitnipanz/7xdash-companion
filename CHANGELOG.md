@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.0.13-beta] - 2026-10-18
+
+- AirPlay casting follows the audio track picked on the iPhone. The receiver used to keep only the language matching the car's setting and drop the rest (a Thai video played its English auto-dub); now every language YouTube offers reaches the player, YouTube's own default plays first, and the player switches when you pick another track.
+- AirPlay log: network lines ("net:"). Which network the car uses for internet (its own mobile data, a Wi-Fi router, or a phone hotspot, with Wi-Fi name and router), every time that changes; where each connecting iPhone is; and how much data each cast or mirroring session received and over what.
+
 ## [1.0.12-beta] - 2026-10-18
 
 - AirPlay: "Video casting" switch on the AirPlay page (on by default). Off keeps the iPhone on screen mirroring, so YouTube no longer switches to casting and the car uses no internet for it.

@@ -32,6 +32,7 @@ typedef struct {
     jmethodID on_video_play;
     jmethodID on_video_scrub;
     jmethodID on_video_rate;
+    jmethodID on_video_select_media;
     jmethodID on_video_stop;
     jmethodID on_video_session_poll;
     int h265_enabled;

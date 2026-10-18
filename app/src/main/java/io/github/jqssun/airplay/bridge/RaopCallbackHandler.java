@@ -44,6 +44,9 @@ public interface RaopCallbackHandler {
 
     void onVideoStop();
 
+    /** 7xDash: the track picked on the iPhone; type "soun" or "sbtl", language like "th". */
+    void onVideoSelectMedia(String mediaType, String language);
+
     void onVideoSessionPoll();
 
     void onLog(String message);

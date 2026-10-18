@@ -104,6 +104,7 @@ public class AirPlayService extends Service implements RaopCallbackHandler {
     private WifiManager.MulticastLock multicast;
     private final MirrorDecoder decoder = new MirrorDecoder();
     private CastPlayer cast;
+    private NetworkReport net;
     /** The floating window's surface; given to whichever of mirroring and casting is on. */
     private Surface surface;
     private boolean casting;
@@ -279,6 +280,7 @@ public class AirPlayService extends Service implements RaopCallbackHandler {
             }
         });
         AirPlayLog.init(this);
+        net = new NetworkReport(this);
         WORK.post(this::startServer);
     }
 
@@ -307,6 +309,10 @@ public class AirPlayService extends Service implements RaopCallbackHandler {
         }
         stopWatchingCar();
         AirPlayLog.i("service stopping");
+        if (net != null) {
+            net.sessionEnded();
+            net.stop();
+        }
         WORK.post(this::stopServer);
         super.onDestroy();
     }
@@ -323,6 +329,8 @@ public class AirPlayService extends Service implements RaopCallbackHandler {
                 + Build.MANUFACTURER + " " + Build.MODEL + ", log in " + AirPlayLog.where());
         AirPlayLog.lastExits(this);
         AirPlayLog.networks();
+        net.stop();
+        net.start();
         multicast = getSystemService(WifiManager.class) == null ? null
                 : getSystemService(WifiManager.class).createMulticastLock("airplay_mdns");
         if (multicast != null) {
@@ -559,12 +567,14 @@ public class AirPlayService extends Service implements RaopCallbackHandler {
         window.show();
         window.setPlaying(false);
         watchCar();
+        net.sessionStarted("mirroring");
         setState(STATE_MIRRORING);
         Notice.makeText(this, R.string.airplay_started, Toast.LENGTH_SHORT).show();
     }
 
     private void mirrorStopped() {
         AirPlayLog.i("mirroring stopped");
+        net.sessionEnded();
         mirroring = false;
         window.hide();
         stopWatchingCar();
@@ -582,6 +592,8 @@ public class AirPlayService extends Service implements RaopCallbackHandler {
         if (surface != null) {
             cast.setSurface(surface);
         }
+        net.sessionEnded();
+        net.sessionStarted("cast");
         cast.play(location, startSeconds);
         if (!OverlayCoordinator.canShowOverlay(this)) {
             AirPlayLog.w("no permission to draw over other apps: no window");
@@ -600,6 +612,7 @@ public class AirPlayService extends Service implements RaopCallbackHandler {
             return;
         }
         AirPlayLog.i("cast: stopped");
+        net.sessionEnded();
         casting = false;
         cast.stop();
         cast.setSurface(null);
@@ -784,6 +797,14 @@ public class AirPlayService extends Service implements RaopCallbackHandler {
     }
 
     @Override
+    public void onVideoSelectMedia(String mediaType, String language) {
+        AirPlayLog.i("cast: iPhone picked " + mediaType + " " + language);
+        if ("soun".equals(mediaType)) {
+            cast.setAudioLanguage(language);
+        }
+    }
+
+    @Override
     public void onVideoStop() {
         main.post(this::castStopped);
     }
@@ -795,6 +816,13 @@ public class AirPlayService extends Service implements RaopCallbackHandler {
     @Override
     public void onLog(String message) {
         AirPlayLog.nativeLine(message);
+        if (message.startsWith("Remote: ") && net != null) {
+            // the receiver's own line for each new connection: where is that iPhone?
+            String ip = message.substring("Remote: ".length());
+            if (!ip.startsWith("127.") && !ip.equals("0000:0000:0000:0000:0000:0000:0000:0001")) {
+                net.iphoneAt(ip);
+            }
+        }
     }
 
     // ---- helpers ----

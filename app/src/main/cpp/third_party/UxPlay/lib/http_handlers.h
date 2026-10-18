@@ -183,6 +183,42 @@ http_handler_set_property(raop_conn_t *conn,
 
     */
 
+    if (!strcmp(property, "selectedMediaArray") && raop->callbacks.on_video_select_media) {
+        /* 7xDash: pass the iPhone's track choice on to the player */
+        int req_datalen = 0;
+        const char *req_data = http_request_get_data(request, &req_datalen);
+        plist_t root = NULL;
+        if (req_data && req_datalen > 0) {
+            plist_from_bin(req_data, req_datalen, &root);
+        }
+        plist_t value = root ? plist_dict_get_item(root, "value") : NULL;
+        if (value && plist_get_node_type(value) == PLIST_ARRAY) {
+            uint32_t n = plist_array_get_size(value);
+            for (uint32_t i = 0; i < n; i++) {
+                plist_t item = plist_array_get_item(value, i);
+                if (!item || plist_get_node_type(item) != PLIST_DICT) continue;
+                char *type = NULL;
+                char *lang = NULL;
+                plist_t node = plist_dict_get_item(item, "MediaSelectionGroupMediaType");
+                if (node && plist_get_node_type(node) == PLIST_STRING) plist_get_string_val(node, &type);
+                const char *keys[] = {"MediaSelectionOptionsExtendedLanguageTag",
+                                      "MediaSelectionOptionsUnicodeLanguageIdentifier",
+                                      "MediaSelectionOptionsUnicodeLanguageCode"};
+                for (int k = 0; k < 3 && !lang; k++) {
+                    node = plist_dict_get_item(item, keys[k]);
+                    if (node && plist_get_node_type(node) == PLIST_STRING) plist_get_string_val(node, &lang);
+                }
+                if (type && lang) {
+                    logger_log(raop->logger, LOGGER_INFO, "selectedMediaArray: %s -> %s", type, lang);
+                    raop->callbacks.on_video_select_media(raop->callbacks.cls, type, lang);
+                }
+                free(type);
+                free(lang);
+            }
+        }
+        if (root) plist_free(root);
+    }
+
     if (!strcmp(property, "actionAtItemEnd") ||
         !strcmp(property, "selectedMediaArray") ||
         !strcmp(property, "reverseEndTime") ||
@@ -591,7 +627,10 @@ http_handler_action(raop_conn_t *conn, http_request_t *request, http_response_t 
             char ** uri_list = NULL;
             int num_uri = 0;
             char *uri_local_prefix = get_uri_local_prefix(airplay_video);
-            playlist = select_master_playlist_language(airplay_video, playlist);
+            /* 7xDash: keep every language YouTube offers (with its own DEFAULT) instead of
+               keeping only the one matching the car's language; the player follows the
+               track picked on the iPhone (selectedMediaArray) */
+            /* playlist = select_master_playlist_language(airplay_video, playlist); */
             playlist_len = strlen(playlist);
             create_media_uri_table(uri_prefix, playlist, playlist_len, &uri_list, &num_uri);	
             char *new_master = adjust_master_playlist (playlist, playlist_len,  uri_prefix, uri_local_prefix);

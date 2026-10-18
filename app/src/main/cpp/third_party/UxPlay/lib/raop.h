@@ -111,6 +111,9 @@ struct raop_callbacks_s {
     void  (*on_video_stop) (void *cls);
     void  (*on_video_acquire_playback_info) (void *cls, playback_info_t *playback_video);
     float  (*on_video_playlist_remove) (void *cls);
+    /* 7xDash: the track picked on the iPhone (PUT /setProperty?selectedMediaArray);
+       media_type "soun" (audio) or "sbtl" (subtitles), language like "th" or "en-US" */
+    void  (*on_video_select_media) (void *cls, const char *media_type, const char *language);
 };
 
 typedef struct raop_callbacks_s raop_callbacks_t;

@@ -12,6 +12,7 @@ import androidx.media3.common.PlaybackParameters;
 import androidx.media3.common.Player;
 import androidx.media3.common.Timeline;
 import androidx.media3.common.VideoSize;
+import androidx.media3.exoplayer.DefaultLoadControl;
 import androidx.media3.exoplayer.ExoPlayer;
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory;
 
@@ -106,6 +107,10 @@ final class CastPlayer {
             AirPlayLog.i("cast: downloading over " + route.describe());
             ExoPlayer p = new ExoPlayer.Builder(context)
                     .setMediaSourceFactory(new DefaultMediaSourceFactory(route.dataSourceFactory()))
+                    // start after 1 s of video instead of 2.5 s: the picture shows sooner
+                    .setLoadControl(new DefaultLoadControl.Builder()
+                            .setBufferDurationsMs(15_000, 50_000, 1_000, 2_000)
+                            .build())
                     .build();
             p.addListener(events);
             applyLanguage(p);

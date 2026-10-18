@@ -17,6 +17,7 @@
 /* this file is part of raop.c and should not be included in any other file */
 
 #include "airplay_video.h"
+#include "slim_master.h"  /* 7xDash */
 #include "fcup_request.h"
 
 static void
@@ -631,6 +632,14 @@ http_handler_action(raop_conn_t *conn, http_request_t *request, http_response_t 
                keeping only the one matching the car's language; the player follows the
                track picked on the iPhone (selectedMediaArray) */
             /* playlist = select_master_playlist_language(airplay_video, playlist); */
+            /* 7xDash: drop what the car won't play, so far fewer media playlists are fetched
+               through the iPhone before playback starts */
+            {
+                int vb, va, rb, ra;
+                playlist = slim_master_playlist(playlist, &vb, &va, &rb, &ra);
+                logger_log(raop->logger, LOGGER_INFO,
+                           "master playlist slimmed: %d -> %d video, %d -> %d audio", vb, va, rb, ra);
+            }
             playlist_len = strlen(playlist);
             create_media_uri_table(uri_prefix, playlist, playlist_len, &uri_list, &num_uri);	
             char *new_master = adjust_master_playlist (playlist, playlist_len,  uri_prefix, uri_local_prefix);

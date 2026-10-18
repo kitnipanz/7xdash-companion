@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.0.15-beta] - 2026-10-18
+
+- AirPlay casting starts much sooner. Before playing, the receiver fetched every YouTube track list through the iPhone, about 19 of them at ~0.6 s each. It now keeps only what the car plays (H.264 at 360p-1080p and the better audio in every language), about 6 lists. The player also starts after 1 s of video instead of 2.5 s.
+
 ## [1.0.14-beta] - 2026-10-18
 
 - AirPlay casting downloads over the car's Wi-Fi when it has one with internet, instead of the car's own mobile data (the 7X sends everything over its in-car network by default, even on a home Wi-Fi). Falls back to the default network otherwise; the log says which route each cast used.

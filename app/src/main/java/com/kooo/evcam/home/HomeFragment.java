@@ -36,8 +36,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 7xDash 主页，照极氪 OS 7 的沉浸壁纸桌面排：左边一列小组件（时钟、行车记录），右边壁纸上 4×3 功能卡片，
+ * 7xDash 主页，照极氪 OS 7 的沉浸壁纸桌面排：左边一列小组件（时钟、行车记录），右边壁纸上功能卡片，
  * 每个功能一张。控制栏是每一页都有的那条（{@link SideRail}），不在这里。
+ *
+ * <p>Responsive: the widget column takes 30% of the width (240–360dp), the cards take as many
+ * columns as fit (2–4, each at least {@link #CARD_MIN_WIDTH_DP} wide) and scroll when the rows
+ * do not fit. Beta features only get a card when Settings → Interface → Beta features is on.</p>
  *
  * <p>功能本身一行没重写：开关走 {@link ShortcutPerformer}（和贴纸、实体键同一条路），
  * 进页面走 {@link MainActivity#openPage}，设置走各自的分区。这里只排版和显示开 / 关。</p>
@@ -61,6 +65,25 @@ public class HomeFragment extends Fragment {
 
     /** 小画面多久换一帧：两帧一秒够看出车在动，又不和录像抢太多。 */
     private static final long PREVIEW_MS = 500L;
+
+    private static final int CARD_MIN_WIDTH_DP = 180;
+    private static final int CARD_MIN_HEIGHT_DP = 104;
+    private static final int MAX_COLUMNS = 4;
+    private static final int MIN_COLUMNS = 2;
+    /** Up to this many rows share the height; the wallpaper shows above them (one row's worth). */
+    private static final int ROWS_FOR_HEIGHT = 5;
+    private static final int WIDGETS_MIN_DP = 240;
+    private static final int WIDGETS_MAX_DP = 360;
+    private static final float WIDGETS_SHARE = 0.3f;
+
+    private final List<View> cards = new ArrayList<>();
+    private LinearLayout grid;
+    private View gridScroll;
+    private int laidColumns;
+    private int laidWidth;
+    private int laidHeight;
+    /** Beta features as the grid was built; the grid is rebuilt when it changes. */
+    private boolean betaShown;
 
     private AppConfig config;
     private TextView recState;
@@ -107,16 +130,23 @@ public class HomeFragment extends Fragment {
             page(MainActivity.PAGE_SETTINGS_PREFIX + "screen_recording");
             return true;
         });
-        refreshers.clear();
         if (config.isMenuOnRight()) {
             mirror((LinearLayout) view);
         }
-        buildGrid(view.findViewById(R.id.home_grid));
+        grid = view.findViewById(R.id.home_grid);
+        gridScroll = view.findViewById(R.id.home_grid_scroll);
+        View widgets = view.findViewById(R.id.home_widgets);
+        view.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or, ob) -> sizeWidgets(widgets, r - l));
+        gridScroll.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or, ob) -> v.post(() -> layoutGrid(false)));
+        buildGrid();
     }
 
     @Override
     public void onResume() {
         super.onResume();
+        if (grid != null && betaShown != config.isBetaFeaturesEnabled()) {
+            buildGrid();
+        }
         handler.post(tick);
         handler.post(previewTick);
     }
@@ -176,78 +206,136 @@ public class HomeFragment extends Fragment {
 
     // ---------------- 功能卡片 ----------------
 
-    private void buildGrid(LinearLayout grid) {
-        // 第一行：拍照、回看、后视镜头、盲区
-        addCard(grid, 0, 0, R.drawable.ic_photo, R.string.home_card_photo,
+    private void buildGrid() {
+        refreshers.clear();
+        cards.clear();
+        betaShown = config.isBetaFeaturesEnabled();
+        // 拍照、回看、后视镜头、盲区
+        addCard(R.drawable.ic_photo, R.string.home_card_photo,
                 R.string.home_card_photo_sub, this::takePhotoHere,
                 () -> startActivity(new Intent(requireContext(),
                         com.kooo.evcam.playback.PhotoPlaybackActivity.class)));
-        addCard(grid, 0, 1, R.drawable.ic_video, R.string.home_card_videos,
+        addCard(R.drawable.ic_video, R.string.home_card_videos,
                 R.string.home_card_videos_sub, () -> startActivity(new Intent(requireContext(),
                         com.kooo.evcam.zeekr.TimelinePlayerActivity.class)), null);
-        addCard(grid, 0, 2, R.drawable.ic_rearview, R.string.home_card_rear,
+        addCard(R.drawable.ic_rearview, R.string.home_card_rear,
                 R.string.home_card_rear_sub, () -> perform(ShortcutAction.MIRROR),
                 () -> page(MainActivity.PAGE_SETTINGS_PREFIX + "screen_rearview"))
                 .onOff(() -> config.isRearViewEnabled());
-        addCard(grid, 0, 3, R.drawable.ic_blindspot, R.string.home_card_blind,
+        addCard(R.drawable.ic_blindspot, R.string.home_card_blind,
                 R.string.home_card_blind_sub, this::cycleBlindSpot,
                 () -> page(MainActivity.PAGE_SETTINGS_PREFIX + "screen_side_mirror"))
                 .state(this::blindSpotText, () -> config.isSidePopupEnabled());
 
-        // 第二行：即时抓拍、抓拍列表、远程观看、喊话。
+        // 即时抓拍、抓拍列表、远程观看、喊话。
         // 即时抓拍和闪远光是同一件事、两种触发：点卡片当场抓；卡片右上角那颗「闪远光」小开关
         // 决定录像时闪一下远光算不算也抓一次。长按卡片看抓拍列表
-        addCard(grid, 1, 0, R.drawable.ic_flash, R.string.home_card_capture,
+        addCard(R.drawable.ic_flash, R.string.home_card_capture,
                 R.string.home_card_capture_sub, () -> perform(ShortcutAction.INSTANT_CAPTURE),
                 this::openCaptures)
                 .pill(() -> getString(R.string.home_capture_flash, getString(
                                 AutoLock.flashEnabled(requireContext()) ? R.string.home_state_on : R.string.home_state_off)),
                         () -> AutoLock.flashEnabled(requireContext()), this::toggleFlash);
-        addCard(grid, 1, 1, R.drawable.ic_play, R.string.rail_captures_list,
+        addCard(R.drawable.ic_play, R.string.rail_captures_list,
                 R.string.home_card_saved_sub, this::openCaptures, null);
-        addCard(grid, 1, 2, R.drawable.ic_remote, R.string.home_card_remote,
+        addCard(R.drawable.ic_remote, R.string.home_card_remote,
                 R.string.home_card_remote_sub, () -> page(MainActivity.PAGE_REMOTE), null);
-        addCard(grid, 1, 3, R.drawable.ic_megaphone, R.string.home_rail_megaphone,
+        addCard(R.drawable.ic_megaphone, R.string.home_rail_megaphone,
                 R.string.home_card_megaphone_sub, () -> perform(ShortcutAction.TOGGLE_SPEAK),
                 () -> page(MainActivity.PAGE_SETTINGS_PREFIX + "screen_megaphone"))
                 .onOff(MegaphoneService::isOpen);
 
-        // 第三行：Google 云端硬盘、智能贴、快捷键、抬头显示通知
-        addCard(grid, 2, 0, R.drawable.ic_drive, R.string.home_card_drive,
+        // Google 云端硬盘、智能贴、快捷键、抬头显示通知
+        addCard(R.drawable.ic_drive, R.string.home_card_drive,
                 R.string.home_card_drive_sub, () -> page(MainActivity.PAGE_SETTINGS_PREFIX + "screen_drive"), null);
-        addCard(grid, 2, 1, R.drawable.ic_sticker, R.string.home_card_sticker,
+        addCard(R.drawable.ic_sticker, R.string.home_card_sticker,
                 R.string.home_card_sticker_sub, () -> startActivity(new Intent(requireContext(),
                         com.kooo.evcam.input.StickerActivity.class)), null);
-        addCard(grid, 2, 2, R.drawable.ic_shortcut, R.string.home_card_shortcuts,
+        addCard(R.drawable.ic_shortcut, R.string.home_card_shortcuts,
                 R.string.home_card_shortcuts_sub, () -> startActivity(new Intent(requireContext(),
                         com.kooo.evcam.input.ShortcutListActivity.class)), null);
-        addCard(grid, 2, 3, R.drawable.ic_hud, R.string.home_card_hud_notice,
+        addCard(R.drawable.ic_hud, R.string.home_card_hud_notice,
                 R.string.home_card_hud_notice_sub, this::toggleHudNotices,
                 () -> page(MainActivity.PAGE_SETTINGS_PREFIX + "screen_rearview"))
                 .onOff(() -> config.isHudNotificationsEnabled());
 
-        // 第四行：停在哪。点卡片当场读一次；胶囊开关决定挂 P 时自动读
-        addCard(grid, 3, 0, R.drawable.ic_parking, R.string.home_card_parking,
-                R.string.home_card_parking_sub, () -> perform(ShortcutAction.WHERE_PARKED), null)
-                .pill(() -> getString(R.string.home_parking_auto, getString(
-                                config.isParkingAutoEnabled() ? R.string.home_state_on : R.string.home_state_off)),
-                        () -> config.isParkingAutoEnabled(), this::toggleParkingAuto);
-        padRow(grid, 3, 4);
+        // Beta: 停在哪。点卡片当场读一次；胶囊开关决定挂 P 时自动读
+        if (betaShown) {
+            addCard(R.drawable.ic_parking, R.string.home_card_parking,
+                    R.string.home_card_parking_sub, () -> perform(ShortcutAction.WHERE_PARKED), null)
+                    .pill(() -> getString(R.string.home_parking_auto, getString(
+                                    config.isParkingAutoEnabled() ? R.string.home_state_on : R.string.home_state_off)),
+                            () -> config.isParkingAutoEnabled(), this::toggleParkingAuto);
+        }
+        layoutGrid(true);
+        refresh();
     }
 
-    /** 一行没排满时补空位，卡片宽度和上面几行对齐。 */
-    private void padRow(LinearLayout grid, int row, int columns) {
-        LinearLayout line = rowOf(grid, row);
-        int gap = getResources().getDimensionPixelSize(R.dimen.gutter) / 2;
-        while (line.getChildCount() < columns) {
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f);
-            lp.setMargins(gap, gap, gap, gap);
-            line.addView(new View(grid.getContext()), lp);
+    /** Widget column: 30% of the page, 240–360dp. */
+    private void sizeWidgets(View widgets, int pageWidth) {
+        if (widgets == null || pageWidth <= 0) {
+            return;
+        }
+        float density = getResources().getDisplayMetrics().density;
+        int want = Math.round(Math.max(WIDGETS_MIN_DP * density,
+                Math.min(WIDGETS_MAX_DP * density, pageWidth * WIDGETS_SHARE)));
+        ViewGroup.LayoutParams lp = widgets.getLayoutParams();
+        if (lp.width != want) {
+            lp.width = want;
+            // Not inside this layout pass
+            widgets.post(() -> widgets.setLayoutParams(lp));
         }
     }
 
-    private Card addCard(LinearLayout grid, int row, int column, int icon, int title, int sub,
-                         Runnable onTap, @Nullable Runnable onHold) {
+    /**
+     * Put the cards into rows for the space the grid has: as many columns as fit, every row
+     * the same height. Rows fill from the bottom and leave the wallpaper above; when they do
+     * not fit at their minimum height the grid scrolls.
+     */
+    private void layoutGrid(boolean force) {
+        if (grid == null || gridScroll == null) {
+            return;
+        }
+        int width = gridScroll.getWidth();
+        int height = gridScroll.getHeight();
+        if (width <= 0 || height <= 0) {
+            return;
+        }
+        float density = getResources().getDisplayMetrics().density;
+        int gap = getResources().getDimensionPixelSize(R.dimen.gutter) / 2;
+        int columns = HomeGrid.columns(width, Math.round(CARD_MIN_WIDTH_DP * density), MIN_COLUMNS, MAX_COLUMNS);
+        int rows = HomeGrid.rows(cards.size(), columns);
+        int rowHeight = HomeGrid.rowHeight(height, rows, ROWS_FOR_HEIGHT, Math.round(CARD_MIN_HEIGHT_DP * density));
+        if (!force && columns == laidColumns && width == laidWidth && height == laidHeight) {
+            return;
+        }
+        laidColumns = columns;
+        laidWidth = width;
+        laidHeight = height;
+
+        for (View card : cards) {
+            if (card.getParent() instanceof ViewGroup) {
+                ((ViewGroup) card.getParent()).removeView(card);
+            }
+        }
+        grid.removeAllViews();
+        grid.setPadding(0, Math.max(0, height - rows * rowHeight), 0, 0);
+        for (int row = 0; row < rows; row++) {
+            LinearLayout line = new LinearLayout(grid.getContext());
+            line.setOrientation(LinearLayout.HORIZONTAL);
+            for (int column = 0; column < columns; column++) {
+                int at = row * columns + column;
+                // Empty slots keep the last row's cards as wide as the ones above
+                View cell = at < cards.size() ? cards.get(at) : new View(grid.getContext());
+                LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f);
+                lp.setMargins(gap, gap, gap, gap);
+                line.addView(cell, lp);
+            }
+            grid.addView(line, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, rowHeight));
+        }
+    }
+
+    private Card addCard(int icon, int title, int sub, Runnable onTap, @Nullable Runnable onHold) {
         View view = LayoutInflater.from(grid.getContext()).inflate(R.layout.item_home_card, grid, false);
         ((ImageView) view.findViewById(R.id.card_icon)).setImageResource(icon);
         ((TextView) view.findViewById(R.id.card_title)).setText(title);
@@ -262,22 +350,8 @@ public class HomeFragment extends Fragment {
                 return true;
             });
         }
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f);
-        int gap = getResources().getDimensionPixelSize(R.dimen.gutter) / 2;
-        lp.setMargins(gap, gap, gap, gap);
-        rowOf(grid, row).addView(view, column, lp);
+        cards.add(view);
         return new Card(view);
-    }
-
-    /** 第 row 行的横排，没有就建（行按顺序建，一行权重 1）。 */
-    private LinearLayout rowOf(LinearLayout grid, int row) {
-        while (grid.getChildCount() <= row) {
-            LinearLayout line = new LinearLayout(grid.getContext());
-            line.setOrientation(LinearLayout.HORIZONTAL);
-            grid.addView(line, new LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
-        }
-        return (LinearLayout) grid.getChildAt(row);
     }
 
     private final class Card {

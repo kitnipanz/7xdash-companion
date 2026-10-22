@@ -90,7 +90,7 @@ public final class WhereParked implements Telemetry.Listener {
         update();
     }
 
-    /** The home "Auto on P" switch moved. Main thread. */
+    /** The home "Auto on P" switch or the Beta features switch moved. Main thread. */
     public void settingsChanged(Context context) {
         if (app == null) {
             app = context.getApplicationContext();
@@ -98,8 +98,10 @@ public final class WhereParked implements Telemetry.Listener {
         update();
     }
 
+    /** Auto on P runs only while Beta features is on (this is a beta feature). */
     public static boolean autoEnabled(Context context) {
-        return new AppConfig(context).isParkingAutoEnabled();
+        AppConfig config = new AppConfig(context);
+        return config.isBetaFeaturesEnabled() && config.isParkingAutoEnabled();
     }
 
     private void update() {

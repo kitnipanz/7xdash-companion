@@ -863,6 +863,8 @@
 
     <!-- Interface section · first-launch side question · record unavailable · status bar -->
     <string name="set_section_interface">อินเทอร์เฟซ</string>
+    <string name="set_beta_features_title">ฟีเจอร์เบต้า</string>
+    <string name="set_beta_features_summary">แสดงและเปิดใช้ฟีเจอร์ที่ยังทดลองในรถอยู่ ตอนนี้มี: จอดไว้ที่ไหน (การ์ดในหน้าหลัก และอ่านป้ายเมื่อเข้าเกียร์ P)</string>
     <string name="set_reduce_motion_title">ลดแอนิเมชันขณะบันทึก</string>
     <string name="set_reduce_motion_summary">ปิดทรานสิชันและแอนิเมชันตกแต่งขณะบันทึก เพื่อให้ GPU ทำงานให้ตัวเข้ารหัส ปุ่มบันทึกและวงความคืบหน้ายังเคลื่อนไหวอยู่</string>
     <string name="set_vehicle_status_title">สถานะรถ (ทดลอง)</string>

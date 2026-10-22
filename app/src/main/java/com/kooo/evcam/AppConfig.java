@@ -34,6 +34,7 @@ public class AppConfig {
     private static final String KEY_FOOTAGE_LOCK_FLASH = "footage_lock_flash";  // 闪远光时自动锁定当前录像
     private static final String KEY_HUD_NOTIFICATIONS = "hud_notifications";
     private static final String KEY_PARKING_AUTO = "parking_auto";  // shifting into P reads the parking signs
+    private static final String KEY_BETA_FEATURES = "beta_features";  // show features still in beta (home cards, automatic triggers)
     private static final String KEY_HUD_NOTICE_LEFT = "hud_notice_left_pct";  // 抬头显示通知离左边多少（%）
     private static final String KEY_HUD_NOTICE_RIGHT = "hud_notice_right_pct";  // 离右边多少（%）  // 别的应用的通知投到抬头显示
     private static final String KEY_SETTINGS_SHOW_ALL = "settings_show_all";  // 设置显示「全部」而不是「常用」
@@ -444,6 +445,18 @@ public class AppConfig {
 
     public void setHudNotificationsEnabled(boolean enabled) {
         prefs.edit().putBoolean(KEY_HUD_NOTIFICATIONS, enabled).apply();
+    }
+
+    /**
+     * Beta features: features still being tried on the car (Where I parked). Off by default: their
+     * home cards are hidden and their automatic triggers do not run.
+     */
+    public boolean isBetaFeaturesEnabled() {
+        return prefs.getBoolean(KEY_BETA_FEATURES, false);
+    }
+
+    public void setBetaFeaturesEnabled(boolean enabled) {
+        prefs.edit().putBoolean(KEY_BETA_FEATURES, enabled).apply();
     }
 
     /** Where did I park: read the floor and bay signs every time the car goes into P. On by default. */

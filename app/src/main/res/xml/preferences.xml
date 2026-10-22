@@ -542,6 +542,12 @@
             android:title="@string/set_rail_side_title"
             android:summary="@string/set_rail_side_summary" />
 
+        <!-- Beta features: their home cards and automatic triggers (Where I parked) -->
+        <SwitchPreferenceCompat
+            android:key="pref_beta_features"
+            android:title="@string/set_beta_features_title"
+            android:summary="@string/set_beta_features_summary" />
+
         <SwitchPreferenceCompat
             android:key="pref_recording_stats"
             android:title="@string/set_recording_stats_title"

@@ -1180,6 +1180,11 @@ public class SettingsPreferenceFragment extends PreferenceFragmentCompat {
         bindSwitch("pref_recording_stats", appConfig.isRecordingStatsEnabled(),
                 value -> appConfig.setRecordingStatsEnabled(value));
 
+        bindSwitch("pref_beta_features", appConfig.isBetaFeaturesEnabled(), value -> {
+            appConfig.setBetaFeaturesEnabled(value);
+            com.kooo.evcam.parking.WhereParked.get().settingsChanged(requireContext());
+        });
+
         bindSwitch("pref_reduce_motion", appConfig.isReduceMotionWhileRecording(),
                 value -> appConfig.setReduceMotionWhileRecording(value));
         // 车辆状态面板：主界面那个控件自己听这个开关

@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.1.5-beta] - 2026-10-22
+
+- Home fits the screen: the widget column takes 30% of the width (240-360dp), and the feature cards take 2 to 4 columns depending on the space, with rows of equal height. When there are more rows than fit, the cards scroll.
+- New Settings > Interface > Beta features switch, off by default. While it is off, beta features are hidden from the home page and their automatic triggers do not run. Beta now: Where I parked (home card, and Auto on P). The Where did I park shortcut still works.
+
 ## [1.1.4-beta] - 2026-10-22
 
 - Cabin passenger: fixed the window sometimes opening blank. Closing it used to throw away its picture while the cabin camera was still sending to it, which stopped the whole cabin stream (window, main-screen cabin pane and cabin recording) until the camera rebuilt it. The window now hands its picture back, like Super mirror, and takes it back when opened again. It also re-attaches when no new frame arrives for 4 s, and after the camera pipeline restarts.

@@ -42,7 +42,11 @@ public class ShortcutCaptureActivity extends AppCompatActivity implements Sticke
         bind(R.id.shortcut_action_save, ShortcutAction.SAVE);
         bind(R.id.shortcut_action_lock_save, ShortcutAction.LOCK_SAVE);
         bind(R.id.shortcut_action_instant_capture, ShortcutAction.INSTANT_CAPTURE);
+        bind(R.id.shortcut_action_drive_upload, ShortcutAction.DRIVE_UPLOAD);
+        bind(R.id.shortcut_action_photo, ShortcutAction.PHOTO);
         bind(R.id.shortcut_action_photo_surround, ShortcutAction.PHOTO_SURROUND);
+        bind(R.id.shortcut_action_airplay, ShortcutAction.AIRPLAY);
+        bind(R.id.shortcut_action_eq, ShortcutAction.EQ);
         bind(R.id.shortcut_action_photo_cabin, ShortcutAction.PHOTO_CABIN);
         bind(R.id.shortcut_action_hold_speak, ShortcutAction.HOLD_SPEAK);
         bind(R.id.shortcut_action_toggle_speak, ShortcutAction.TOGGLE_SPEAK);

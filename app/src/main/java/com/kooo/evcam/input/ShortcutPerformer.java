@@ -80,17 +80,29 @@ public final class ShortcutPerformer {
             case INSTANT_CAPTURE:
                 com.kooo.evcam.storage.AutoLock.get().instantFromShortcut(context);
                 return;
+            case DRIVE_UPLOAD:
+                toggleDriveUpload(context);
+                return;
             case HOLD_SPEAK:
                 // Only a press with no key-up reaches here (a sticker): holding is impossible,
                 // so it behaves like click-to-speak. Held keys are handled in ShortcutKeys.
             case TOGGLE_SPEAK:
                 MegaphoneService.toggle(context);
                 return;
+            case PHOTO:
+                photo(context, null);
+                return;
             case PHOTO_SURROUND:
                 photo(context, com.kooo.evcam.camera.MultiCameraManager.PHOTO_SURROUND);
                 return;
             case PHOTO_CABIN:
                 photo(context, com.kooo.evcam.camera.MultiCameraManager.PHOTO_CABIN);
+                return;
+            case AIRPLAY:
+                toggleAirPlay(context);
+                return;
+            case EQ:
+                toggleEq(context);
                 return;
             case CABIN_PASSENGER:
                 AppConfig cabin = new AppConfig(context);
@@ -101,6 +113,26 @@ public final class ShortcutPerformer {
             default:
                 return;
         }
+    }
+
+    /**
+     * Flip upload-moment-to-Drive. Signed out (no client, or no account) shows an error
+     * and leaves the switch where it is.
+     */
+    private static void toggleDriveUpload(Context context) {
+        AppConfig config = new AppConfig(context);
+        if (!config.hasDriveClient() || !config.hasDriveRefreshToken()) {
+            com.kooo.evcam.ui.Notice.makeText(context, R.string.shortcut_drive_not_connected,
+                    Toast.LENGTH_SHORT).show();
+            return;
+        }
+        boolean on = !config.isSaveMomentDrive();
+        config.setSaveMomentDrive(on);
+        com.kooo.evcam.blackbox.BlackBox.noteImportant(
+                "开关变更: pref_save_moment_drive → " + (on ? "开" : "关"));
+        com.kooo.evcam.ui.Notice.makeText(context,
+                on ? R.string.shortcut_drive_upload_on : R.string.shortcut_drive_upload_off,
+                Toast.LENGTH_SHORT).show();
     }
 
     /** Open the super mirror on the HUD; if it is already there, close it. */
@@ -141,7 +173,30 @@ public final class ShortcutPerformer {
         HudCue.show(context, on);
     }
 
-    /** 拍一张，只拍 {@code only} 认的那几路。结果照常弹提示（开着抬头显示通知时也上抬头显示）。 */
+    /** Same switch as the AirPlay page. The service reports a missing overlay when a picture arrives. */
+    private static void toggleAirPlay(Context context) {
+        boolean on = !com.kooo.evcam.airplay.AirPlayService.enabled(context);
+        com.kooo.evcam.airplay.AirPlayService.setEnabled(context, on);
+        com.kooo.evcam.ui.Notice.makeText(context,
+                on ? R.string.shortcut_airplay_on : R.string.shortcut_airplay_off,
+                Toast.LENGTH_SHORT).show();
+    }
+
+    /** Same switch as the EQ page. A refusal leaves the equalizer off. */
+    private static void toggleEq(Context context) {
+        com.kooo.evcam.audio.CabinEqStore store = new com.kooo.evcam.audio.CabinEqStore(context);
+        boolean on = !store.enabled();
+        if (!com.kooo.evcam.audio.CabinEqEngine.apply(on, store.currentGains())) {
+            com.kooo.evcam.ui.Notice.makeText(context, R.string.eq_refused, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        store.setEnabled(on);
+        com.kooo.evcam.ui.Notice.makeText(context,
+                on ? R.string.shortcut_eq_on : R.string.shortcut_eq_off,
+                Toast.LENGTH_SHORT).show();
+    }
+
+    /** 拍一张，只拍 {@code only} 认的那几路。null 是全部。结果照常弹提示（开着抬头显示通知时也上抬头显示）。 */
     private static void photo(Context context, java.util.function.Predicate<String> only) {
         com.kooo.evcam.camera.CameraManagerHolder.getInstance().getOrInit(context)
                 .takePhoto(new com.kooo.evcam.ui.PhotoFeedback(context), only);

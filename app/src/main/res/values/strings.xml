@@ -222,6 +222,10 @@
     <string name="shortcut_action_save">Save this moment</string>
     <string name="shortcut_action_lock_save">Lock and save</string>
     <string name="shortcut_action_instant_capture">Instant capture</string>
+    <string name="shortcut_action_drive_upload">Toggle Google Drive upload</string>
+    <string name="shortcut_drive_not_connected">Google Drive is not connected</string>
+    <string name="shortcut_drive_upload_on">Google Drive upload on</string>
+    <string name="shortcut_drive_upload_off">Google Drive upload off</string>
     <string name="shortcut_action_hold_speak">Hold to speak outside</string>
     <string name="shortcut_action_toggle_speak">Click to speak outside (click again to stop)</string>
     <string name="megaphone_channel">Hold to speak</string>
@@ -1291,7 +1295,14 @@ Then reopen this app.</string>
     <string name="set_menu_side_summary">Where the home control bar, the slide-out menu and the settings list sit</string>
     <string name="home_preview_wait">Camera starting…</string>
     <string name="rail_captures_list">Saved captures</string>
+    <string name="shortcut_action_photo">Take photo</string>
     <string name="shortcut_action_photo_surround">Take photo (surround)</string>
+    <string name="shortcut_action_airplay">AirPlay on/off</string>
+    <string name="shortcut_airplay_on">AirPlay on</string>
+    <string name="shortcut_airplay_off">AirPlay off</string>
+    <string name="shortcut_action_eq">EQ on/off</string>
+    <string name="shortcut_eq_on">EQ on</string>
+    <string name="shortcut_eq_off">EQ off</string>
     <string name="shortcut_action_photo_cabin">Take photo (cabin)</string>
     <string name="home_capture_flash">Flash-to-pass: %1$s</string>
     <string name="home_card_saved_sub">Watch and delete instant captures</string>

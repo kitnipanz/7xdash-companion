@@ -169,6 +169,20 @@
                     android:layout_marginBottom="12dp"
                     android:text="@string/shortcut_action_instant_capture" />
                 <com.google.android.material.button.MaterialButton
+                    android:id="@+id/shortcut_action_drive_upload"
+                    style="@style/Widget.Cam.RailSmall"
+                    android:layout_width="match_parent"
+                    android:layout_height="64dp"
+                    android:layout_marginBottom="12dp"
+                    android:text="@string/shortcut_action_drive_upload" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/shortcut_action_photo"
+                    style="@style/Widget.Cam.RailSmall"
+                    android:layout_width="match_parent"
+                    android:layout_height="64dp"
+                    android:layout_marginBottom="12dp"
+                    android:text="@string/shortcut_action_photo" />
+                <com.google.android.material.button.MaterialButton
                     android:id="@+id/shortcut_action_photo_surround"
                     style="@style/Widget.Cam.RailSmall"
                     android:layout_width="match_parent"
@@ -182,6 +196,20 @@
                     android:layout_height="64dp"
                     android:layout_marginBottom="12dp"
                     android:text="@string/shortcut_action_photo_cabin" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/shortcut_action_airplay"
+                    style="@style/Widget.Cam.RailSmall"
+                    android:layout_width="match_parent"
+                    android:layout_height="64dp"
+                    android:layout_marginBottom="12dp"
+                    android:text="@string/shortcut_action_airplay" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/shortcut_action_eq"
+                    style="@style/Widget.Cam.RailSmall"
+                    android:layout_width="match_parent"
+                    android:layout_height="64dp"
+                    android:layout_marginBottom="12dp"
+                    android:text="@string/shortcut_action_eq" />
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/shortcut_action_hold_speak"
                     style="@style/Widget.Cam.RailSmall"

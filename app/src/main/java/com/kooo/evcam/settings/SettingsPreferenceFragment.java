@@ -158,6 +158,10 @@ public class SettingsPreferenceFragment extends PreferenceFragmentCompat {
         if (dim != null && appConfig != null) {
             dim.setChecked(appConfig.isDimOverlayEnabled());
         }
+        SwitchPreferenceCompat driveUpload = findPreference("pref_save_moment_drive");
+        if (driveUpload != null && appConfig != null) {
+            driveUpload.setChecked(appConfig.isSaveMomentDrive());
+        }
     }
 
     // ------------------------------------------------------------------ 录制

@@ -17,12 +17,20 @@ public enum ShortcutAction {
     LOCK_SAVE("lock_and_save", R.string.shortcut_action_lock_save),
     /** Same as a high-beam flash: lock the moment and save the surround clip to instant captures. */
     INSTANT_CAPTURE("instant_capture", R.string.shortcut_action_instant_capture),
+    /** Flip “upload this moment to Google Drive”. Refuses when Drive is not signed in. */
+    DRIVE_UPLOAD("toggle_drive_upload", R.string.shortcut_action_drive_upload),
     HOLD_SPEAK("hold_to_speak", R.string.shortcut_action_hold_speak),
     /** One click opens the mic, the next click closes it. For buttons that cannot be held. */
     TOGGLE_SPEAK("click_to_speak", R.string.shortcut_action_toggle_speak),
     CABIN_PASSENGER("cabin_passenger", R.string.shortcut_action_cabin),
+    /** Every camera, same as the home Photo card. Does not change page. */
+    PHOTO("take_photo", R.string.shortcut_action_photo),
     /** 只拍环视那一路，不换页。 */
     PHOTO_SURROUND("photo_surround", R.string.shortcut_action_photo_surround),
+    /** Start or stop the AirPlay receiver. */
+    AIRPLAY("toggle_airplay", R.string.shortcut_action_airplay),
+    /** Turn the cabin equalizer on or off. */
+    EQ("toggle_eq", R.string.shortcut_action_eq),
     /** 只拍座舱（前、后座舱），不换页。 */
     PHOTO_CABIN("photo_cabin", R.string.shortcut_action_photo_cabin);
 

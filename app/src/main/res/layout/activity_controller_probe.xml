@@ -177,6 +177,34 @@
                     android:layout_marginEnd="8dp"
                     android:text="@string/shortcut_action_instant_capture" />
                 <com.google.android.material.button.MaterialButton
+                    android:id="@+id/controller_action_drive_upload"
+                    style="@style/Widget.Cam.RailSmall"
+                    android:layout_width="wrap_content"
+                    android:layout_height="52dp"
+                    android:layout_marginEnd="8dp"
+                    android:text="@string/shortcut_action_drive_upload" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/controller_action_photo"
+                    style="@style/Widget.Cam.RailSmall"
+                    android:layout_width="wrap_content"
+                    android:layout_height="52dp"
+                    android:layout_marginEnd="8dp"
+                    android:text="@string/shortcut_action_photo" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/controller_action_airplay"
+                    style="@style/Widget.Cam.RailSmall"
+                    android:layout_width="wrap_content"
+                    android:layout_height="52dp"
+                    android:layout_marginEnd="8dp"
+                    android:text="@string/shortcut_action_airplay" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/controller_action_eq"
+                    style="@style/Widget.Cam.RailSmall"
+                    android:layout_width="wrap_content"
+                    android:layout_height="52dp"
+                    android:layout_marginEnd="8dp"
+                    android:text="@string/shortcut_action_eq" />
+                <com.google.android.material.button.MaterialButton
                     android:id="@+id/controller_action_hold_speak"
                     style="@style/Widget.Cam.RailSmall"
                     android:layout_width="wrap_content"

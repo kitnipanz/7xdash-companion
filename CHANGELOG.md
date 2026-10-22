@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.1.1] - 2026-10-22
+
+- Shortcuts: Toggle Google Drive upload. Shows an error when Drive is not connected and leaves the switch as it is.
+- Shortcuts: Take photo (every camera), AirPlay on/off, and EQ on/off. Photo stays on the current page. EQ stays off if the head unit refuses the equalizer.
+
 ## [1.1.0] - 2026-10-18
 
 - Settings reorganised into tabs. New tabs for Shortcuts, Smart sticker (with BLE signals), Controller, Megaphone and Side mirror, at the top of the list; Dim overlay keeps its own tab. Megaphone shows its button, volume and speaker settings right in the tab.

@@ -28,6 +28,8 @@ public class AirPlayFragment extends Fragment {
     private TextView addresses;
     private ImageView icon;
     private SwitchCompat enabled;
+    /** True while paint() moves the switch, so that does not start or stop the receiver again. */
+    private boolean painting;
 
     private final Runnable tick = new Runnable() {
         @Override
@@ -57,6 +59,9 @@ public class AirPlayFragment extends Fragment {
                 requireActivity().getOnBackPressedDispatcher().onBackPressed());
         enabled.setChecked(AirPlayService.enabled(requireContext()));
         enabled.setOnCheckedChangeListener((b, on) -> {
+            if (painting) {
+                return;
+            }
             AirPlayService.setEnabled(requireContext(), on);
             handler.postDelayed(this::paint, 300);
         });
@@ -108,6 +113,12 @@ public class AirPlayFragment extends Fragment {
         }
         icon.setImageTintList(ColorStateList.valueOf(ContextCompat.getColor(requireContext(),
                 on ? R.color.energy : R.color.text_secondary)));
+        boolean saved = AirPlayService.enabled(requireContext());
+        if (enabled.isChecked() != saved) {
+            painting = true;
+            enabled.setChecked(saved);
+            painting = false;
+        }
     }
 
     /** In the app's language, here rather than in the service (which may run in another). */

@@ -108,6 +108,17 @@ public class CabinEqFragment extends Fragment {
         }
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (enabled == null || store == null || enabled.isChecked() == store.enabled()) {
+            return;
+        }
+        painting = true;
+        enabled.setChecked(store.enabled());
+        painting = false;
+    }
+
     private void addChip(LinearLayout row, String label, String key) {
         TextView chip = new TextView(requireContext());
         chip.setText(label);

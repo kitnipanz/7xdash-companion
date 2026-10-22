@@ -103,6 +103,10 @@ public class ControllerProbeActivity extends AppCompatActivity implements Sticke
         bind(R.id.controller_action_save, ShortcutAction.SAVE);
         bind(R.id.controller_action_lock_save, ShortcutAction.LOCK_SAVE);
         bind(R.id.controller_action_instant_capture, ShortcutAction.INSTANT_CAPTURE);
+        bind(R.id.controller_action_drive_upload, ShortcutAction.DRIVE_UPLOAD);
+        bind(R.id.controller_action_photo, ShortcutAction.PHOTO);
+        bind(R.id.controller_action_airplay, ShortcutAction.AIRPLAY);
+        bind(R.id.controller_action_eq, ShortcutAction.EQ);
         bind(R.id.controller_action_hold_speak, ShortcutAction.HOLD_SPEAK);
         bind(R.id.controller_action_toggle_speak, ShortcutAction.TOGGLE_SPEAK);
         bind(R.id.controller_action_cabin, ShortcutAction.CABIN_PASSENGER);

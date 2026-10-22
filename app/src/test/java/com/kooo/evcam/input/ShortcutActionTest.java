@@ -16,6 +16,21 @@ public class ShortcutActionTest {
     }
 
     @Test
+    public void photoAirPlayAndEqAreTheirOwnStoredActions() {
+        assertEquals(ShortcutAction.PHOTO, ShortcutAction.fromKey("take_photo"));
+        assertEquals(ShortcutAction.AIRPLAY, ShortcutAction.fromKey("toggle_airplay"));
+        assertEquals(ShortcutAction.EQ, ShortcutAction.fromKey("toggle_eq"));
+        assertNotEquals(ShortcutAction.PHOTO.key, ShortcutAction.PHOTO_SURROUND.key);
+        assertNotEquals(ShortcutAction.PHOTO.key, ShortcutAction.PHOTO_CABIN.key);
+    }
+
+    @Test
+    public void driveUploadIsItsOwnStoredAction() {
+        assertEquals(ShortcutAction.DRIVE_UPLOAD, ShortcutAction.fromKey("toggle_drive_upload"));
+        assertEquals(ShortcutAction.RECORD, ShortcutAction.fromKey("toggle_recording"));
+    }
+
+    @Test
     public void instantCaptureIsItsOwnStoredAction() {
         assertEquals(ShortcutAction.INSTANT_CAPTURE, ShortcutAction.fromKey("instant_capture"));
         assertEquals(ShortcutAction.LOCK_SAVE, ShortcutAction.fromKey("lock_and_save"));

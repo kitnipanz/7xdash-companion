@@ -2078,8 +2078,14 @@ public class MultiCameraManager {
      * @return true：画布留下了，调用方返回 false（TextureView 不放）；false：哪一份都不带着它、也没有环视那一路，调用方照常让它放
      */
     public static boolean keepMirrorCanvas(MultiCameraManager current, android.graphics.SurfaceTexture texture) {
-        MultiCameraManager owner = ownerOf(current, ChannelRules.Kind.MIRROR, CameraSlots.KEY_SURROUND, texture);
-        return owner != null && owner.keepCanvas(ChannelRules.Kind.MIRROR, CameraSlots.KEY_SURROUND, texture);
+        return keepMirrorCanvas(current, CameraSlots.KEY_SURROUND, texture);
+    }
+
+    /** Same as {@link #keepMirrorCanvas(MultiCameraManager, android.graphics.SurfaceTexture)}, for any lane (cabin passenger uses the front cabin). */
+    public static boolean keepMirrorCanvas(MultiCameraManager current, String cameraKey,
+                                           android.graphics.SurfaceTexture texture) {
+        MultiCameraManager owner = ownerOf(current, ChannelRules.Kind.MIRROR, cameraKey, texture);
+        return owner != null && owner.keepCanvas(ChannelRules.Kind.MIRROR, cameraKey, texture);
     }
 
     /**
@@ -2166,7 +2172,12 @@ public class MultiCameraManager {
      * @return 留着、还活着的那一块；没有是 null
      */
     public android.graphics.SurfaceTexture takeKeptMirror() {
-        return takeKeptCanvas(ChannelRules.Kind.MIRROR, CameraSlots.KEY_SURROUND);
+        return takeKeptMirror(CameraSlots.KEY_SURROUND);
+    }
+
+    /** Same as {@link #takeKeptMirror()}, for any lane. */
+    public android.graphics.SurfaceTexture takeKeptMirror(String cameraKey) {
+        return takeKeptCanvas(ChannelRules.Kind.MIRROR, cameraKey);
     }
 
     private android.graphics.SurfaceTexture takeKeptCanvas(ChannelRules.Kind kind, String cameraKey) {

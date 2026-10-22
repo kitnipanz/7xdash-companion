@@ -33,6 +33,8 @@ public class CabinPassengerService extends Service {
     private static final long RETRY_DELAY_MS = 500L;
     private static final int MAX_RETRY = 20;
     private static final long WATCHDOG_INTERVAL_MS = 2000L;
+    /** No new frame for this long while bound: declare again and wake the scheduler. */
+    private static final long STALL_MS = 4000L;
 
     private static volatile CabinPassengerService instance;
 
@@ -42,6 +44,7 @@ public class CabinPassengerService extends Service {
     private SingleCamera boundCamera;
     private SurfaceTexture boundTexture;
     private int retryCount;
+    /** When this binding started, or the stall check last woke the scheduler. */
     private long lastRebuildMs;
     private Runnable retryRunnable;
     private Runnable watchdog;
@@ -92,8 +95,24 @@ public class CabinPassengerService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (window == null) {
             window = new CabinPassengerView(this, appConfig);
-            window.setSurfaceReady(this::onSurface);
+            window.setSurfaceReady(new CabinPassengerView.SurfaceReady() {
+                @Override
+                public void onSurface(SurfaceTexture surface) {
+                    bindCamera(surface);
+                }
+
+                @Override
+                public void onResized(SurfaceTexture surface) {
+                    restoreBufferSize(surface);
+                }
+
+                @Override
+                public boolean onGone(SurfaceTexture surface) {
+                    return handCanvasToPipeline(surface);
+                }
+            });
             window.show();
+            takeBackKeptCanvas();
             com.kooo.evcam.ui.Notice.makeText(this, R.string.msg_cabin_on, Toast.LENGTH_SHORT).show();
         }
         startWatchdog();
@@ -121,14 +140,6 @@ public class CabinPassengerService extends Service {
         return null;
     }
 
-    private void onSurface(SurfaceTexture surface) {
-        if (surface == null) {
-            unbindCamera();
-            return;
-        }
-        bindCamera(surface);
-    }
-
     private void bindCamera(SurfaceTexture surfaceTexture) {
         if (ScreenState.dark() || window == null || surfaceTexture == null) {
             return;
@@ -142,26 +153,85 @@ public class CabinPassengerService extends Service {
             scheduleRetry(surfaceTexture);
             return;
         }
-        boundCamera = camera;
-        boundTexture = surfaceTexture;
+        if (camera != boundCamera || surfaceTexture != boundTexture) {
+            // A rebuilt pipeline has a new camera object: the old one must not keep this canvas
+            withdrawOutput();
+            boundCamera = camera;
+            boundTexture = surfaceTexture;
+            lastRebuildMs = android.os.SystemClock.uptimeMillis();
+        }
         Size preview = camera.getPreviewSize();
         if (preview != null) {
             window.setBufferSize(preview.getWidth(), preview.getHeight());
         }
         window.setSystemMirrored(systemFlips(camera));
-        Size buffer = camera.getPreviewBufferSize();
-        if (buffer != null && buffer.getWidth() > 0 && buffer.getHeight() > 0) {
-            surfaceTexture.setDefaultBufferSize(buffer.getWidth(), buffer.getHeight());
-            window.setBufferSize(buffer.getWidth(), buffer.getHeight());
-        }
+        restoreBufferSize(surfaceTexture);
         boolean declared = camera.declareMirror(surfaceTexture);
         CameraNeeds.current().claim(CameraNeeds.Holder.CABIN);
         if (declared) {
             manager.channelScheduler().wake();
         }
-        lastRebuildMs = android.os.SystemClock.uptimeMillis();
         retryCount = 0;
-        AppLog.i(TAG, "cabin passenger bound, preview " + preview);
+        AppLog.i(TAG, "cabin passenger bound, preview " + preview + (declared ? ", declared" : ""));
+    }
+
+    /** The view sets its canvas to its layout size on resize. Put back the size the session uses. */
+    private void restoreBufferSize(SurfaceTexture surfaceTexture) {
+        SingleCamera camera = boundCamera;
+        if (surfaceTexture == null || camera == null || window == null) {
+            return;
+        }
+        Size buffer = camera.getPreviewBufferSize();
+        if (buffer != null && buffer.getWidth() > 0 && buffer.getHeight() > 0) {
+            surfaceTexture.setDefaultBufferSize(buffer.getWidth(), buffer.getHeight());
+            window.setBufferSize(buffer.getWidth(), buffer.getHeight());
+        }
+    }
+
+    /**
+     * Opening again soon after closing: take back the canvas the last window left with the
+     * pipeline. Same canvas, same output, so the cabin session does not change at all.
+     */
+    private void takeBackKeptCanvas() {
+        if (window == null || !window.isAttached()) {
+            return;
+        }
+        MultiCameraManager pipeline = CameraManagerHolder.getInstance().getCameraManager();
+        if (pipeline == null || pipeline.isReleased()) {
+            return;
+        }
+        SurfaceTexture kept = pipeline.takeKeptMirror(CabinWindow.CAMERA_KEY);
+        if (kept == null) {
+            return;
+        }
+        if (!window.adopt(kept)) {
+            if (!MultiCameraManager.keepMirrorCanvas(pipeline, CabinWindow.CAMERA_KEY, kept)) {
+                kept.release();
+            }
+            return;
+        }
+        AppLog.i(TAG, "cabin passenger took back its kept canvas");
+        bindCamera(kept);
+    }
+
+    /**
+     * The window's canvas is going away (window removed). Hand it to the pipeline instead of
+     * letting the view release it: a released canvas still in the session is a dead output, and
+     * the cabin lane sends no frames anywhere until the scheduler rebuilds the session.
+     *
+     * @return true: the pipeline keeps it
+     */
+    private boolean handCanvasToPipeline(SurfaceTexture surface) {
+        cancelRetry();
+        if (surface == boundTexture) {
+            unbindCamera();
+        }
+        MultiCameraManager pipeline = CameraManagerHolder.getInstance().getCameraManager();
+        boolean kept = MultiCameraManager.keepMirrorCanvas(pipeline, CabinWindow.CAMERA_KEY, surface);
+        if (!kept) {
+            com.kooo.evcam.camera.ChannelScheduler.wakeAll();
+        }
+        return kept;
     }
 
     private boolean systemFlips(SingleCamera camera) {
@@ -181,11 +251,19 @@ public class CabinPassengerService extends Service {
     private void unbindCamera() {
         cancelRetry();
         CameraNeeds.current().release(CameraNeeds.Holder.CABIN);
-        if (boundCamera != null && boundTexture != null) {
-            boundCamera.withdrawMirror(boundTexture);
-        }
+        withdrawOutput();
         boundCamera = null;
         boundTexture = null;
+    }
+
+    /** Withdraw only our canvas. The canvas stays in the session until the scheduler next changes it. */
+    private void withdrawOutput() {
+        if (boundCamera != null && boundTexture != null && boundCamera.withdrawMirror(boundTexture)) {
+            MultiCameraManager manager = CameraManagerHolder.getInstance().getCameraManager();
+            if (manager != null) {
+                manager.channelScheduler().wake();
+            }
+        }
     }
 
     private void rebind() {
@@ -225,16 +303,19 @@ public class CabinPassengerService extends Service {
                     handler.postDelayed(this, WATCHDOG_INTERVAL_MS);
                     return;
                 }
-                if (boundCamera == null || !boundCamera.isCameraOpened()) {
+                MultiCameraManager manager = CameraManagerHolder.getInstance().getCameraManager();
+                SingleCamera current = manager != null ? manager.getCamera(CabinWindow.CAMERA_KEY) : null;
+                if (boundCamera == null || boundCamera != current || !boundCamera.isCameraOpened()) {
                     rebind();
-                } else if (window != null && !window.hasFrame()) {
+                } else if (window != null) {
+                    // Stalled: no frame since this binding started, or none for a while after
                     long now = android.os.SystemClock.uptimeMillis();
-                    if (now - lastRebuildMs >= 8000L) {
+                    long since = Math.max(window.lastFrameAt(), lastRebuildMs);
+                    if (now - since >= STALL_MS) {
                         lastRebuildMs = now;
-                        MultiCameraManager manager = CameraManagerHolder.getInstance().getCameraManager();
-                        if (manager != null) {
-                            manager.channelScheduler().wake();
-                        }
+                        AppLog.w(TAG, "cabin passenger has no frames, declaring again");
+                        rebind();
+                        manager.channelScheduler().wake();
                     }
                 }
                 handler.postDelayed(this, WATCHDOG_INTERVAL_MS);

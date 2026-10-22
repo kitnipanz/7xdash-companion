@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.1.4-beta] - 2026-10-22
+
+- Cabin passenger: fixed the window sometimes opening blank. Closing it used to throw away its picture while the cabin camera was still sending to it, which stopped the whole cabin stream (window, main-screen cabin pane and cabin recording) until the camera rebuilt it. The window now hands its picture back, like Super mirror, and takes it back when opened again. It also re-attaches when no new frame arrives for 4 s, and after the camera pipeline restarts.
+
 ## [1.1.3-beta] - 2026-10-22
 
 - Home: the feature cards are more compact so all four rows fit. Smaller icons, one-line descriptions, and smaller Flash-to-pass and Auto on P pills.

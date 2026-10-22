@@ -26,6 +26,12 @@ public class CabinPassengerView extends ViewGroup {
 
     interface SurfaceReady {
         void onSurface(SurfaceTexture surface);
+
+        /** The view resized its canvas to its own layout size: put the camera's buffer size back. */
+        void onResized(SurfaceTexture surface);
+
+        /** The canvas is going away. True: the pipeline keeps it, so the view must not release it. */
+        boolean onGone(SurfaceTexture surface);
     }
 
     private static final String TAG = "CabinPassenger";
@@ -34,7 +40,8 @@ public class CabinPassengerView extends ViewGroup {
     private final WindowManager windowManager;
     private final AppConfig appConfig;
     private final TextureView textureView;
-    private boolean sawFrame;
+    /** {@code SystemClock.uptimeMillis()} of the last frame shown; 0 = none yet. */
+    private long lastFrameAt;
 
     private WindowManager.LayoutParams params;
     private boolean attached;
@@ -67,18 +74,21 @@ public class CabinPassengerView extends ViewGroup {
 
             @Override
             public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {
-                deliver(surface);
+                if (surfaceReady != null) {
+                    surfaceReady.onResized(surface);
+                }
             }
 
             @Override
             public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
-                deliver(null);
-                return true;
+                // Released while still in the cabin camera's session, the whole lane stops sending
+                // frames (preview and recording too) until the scheduler takes it out.
+                return surfaceReady == null || !surfaceReady.onGone(surface);
             }
 
             @Override
             public void onSurfaceTextureUpdated(SurfaceTexture surface) {
-                sawFrame = true;
+                lastFrameAt = android.os.SystemClock.uptimeMillis();
                 invalidate();
             }
         });
@@ -101,8 +111,27 @@ public class CabinPassengerView extends ViewGroup {
         invalidate();
     }
 
-    public boolean hasFrame() {
-        return sawFrame;
+    /** Time of the last frame shown ({@code SystemClock.uptimeMillis()}); 0 = none yet. */
+    public long lastFrameAt() {
+        return lastFrameAt;
+    }
+
+    /**
+     * Put a canvas the pipeline kept back on the view, before its first draw. The view then
+     * never calls onSurfaceTextureAvailable for it.
+     */
+    public boolean adopt(SurfaceTexture surface) {
+        try {
+            textureView.setSurfaceTexture(surface);
+            return true;
+        } catch (RuntimeException e) {
+            AppLog.w(TAG, "could not take back the kept canvas: " + e);
+            return false;
+        }
+    }
+
+    public boolean isAttached() {
+        return attached;
     }
 
     public TextureView getTextureView() {

@@ -124,6 +124,7 @@ public class MainActivity extends AppCompatActivity {
     private final float[] remoteLanes = new float[16];
     /** H.264 live watch. JPEG pump below only fills in until video packets flow. */
     private com.kooo.evcam.remote.RemoteStream remoteStream;
+    private com.kooo.evcam.audio.SpeakerRemote speakerRemote;
     private final Runnable remotePump = new Runnable() {
         @Override
         public void run() {
@@ -1717,6 +1718,8 @@ public class MainActivity extends AppCompatActivity {
                 remoteHandler.post(remotePump);
             }
         });
+        speakerRemote = new com.kooo.evcam.audio.SpeakerRemote(this, carLink);
+        speakerRemote.attach();
         carLink.start();
     }
 
@@ -3401,6 +3404,10 @@ public class MainActivity extends AppCompatActivity {
         remoteLive.shutdown();
         if (carLink != null) {
             carLink.setUi(null);
+            if (speakerRemote != null) {
+                speakerRemote.detach();
+                speakerRemote = null;
+            }
             carLink.stop();
             carLink = null;
         }

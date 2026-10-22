@@ -448,7 +448,7 @@ public class AppConfig {
     }
 
     /**
-     * Beta features: features still being tried on the car (Where I parked). Off by default: their
+     * Beta features: features still being tried on the car (Where I parked, Outside speaker). Off by default: their
      * home cards are hidden and their automatic triggers do not run.
      */
     public boolean isBetaFeaturesEnabled() {
@@ -2438,6 +2438,17 @@ public class AppConfig {
 
     public void setSpeakSpeaker(String address) {
         prefs.edit().putString(KEY_SPEAK_SPEAKER, address == null ? "" : address).apply();
+    }
+
+    private static final String KEY_OUTSIDE_SPEAKER_VOLUME = "outside_speaker_volume";
+
+    /** Beta outside speaker (head unit playback on the outside bus), 0–100. Plays on the megaphone's speaker. */
+    public int getOutsideSpeakerVolume() {
+        return com.kooo.evcam.input.SpeakPlan.volume(prefs.getInt(KEY_OUTSIDE_SPEAKER_VOLUME, 70));
+    }
+
+    public void setOutsideSpeakerVolume(int volume) {
+        prefs.edit().putInt(KEY_OUTSIDE_SPEAKER_VOLUME, com.kooo.evcam.input.SpeakPlan.volume(volume)).apply();
     }
 
     private static final String KEY_SHORTCUT_CATCH_EVERYWHERE = "shortcut_catch_everywhere";

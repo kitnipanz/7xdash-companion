@@ -38,6 +38,16 @@ public final class CarLink {
         void onLink(Snapshot snap);
     }
 
+    /**
+     * Outside speaker and megaphone volume, set from 7xDash web. {@link #status} is the car's
+     * {@code {"t":"speaker",…}} message; {@link #command} runs on the main thread.
+     */
+    public interface Speaker {
+        JSONObject status();
+
+        void command(JSONObject msg);
+    }
+
     /** Fired when the phone starts/stops watch or changes camera source. */
     public interface WatchListener {
         void onWatch(boolean watching, String source);
@@ -80,6 +90,7 @@ public final class CarLink {
     private String lastCode = "";
     private Ui ui;
     private WatchListener watchListener;
+    private volatile Speaker speaker;
 
     /** A QR code lives 10 min on the hub; swap it before then while nobody is linked. */
     private static final long CODE_REFRESH_MS = 8 * 60 * 1000L;
@@ -113,6 +124,31 @@ public final class CarLink {
 
     public void setWatchListener(WatchListener listener) {
         this.watchListener = listener;
+    }
+
+    public void setSpeaker(Speaker speaker) {
+        this.speaker = speaker;
+        sendSpeaker();
+    }
+
+    /** Tells the hub the speaker state now (on, volumes). Safe from any thread. */
+    public void sendSpeaker() {
+        sendSpeaker(socket);
+    }
+
+    private void sendSpeaker(WebSocket ws) {
+        Speaker current = speaker;
+        if (current == null || ws == null) {
+            return;
+        }
+        try {
+            JSONObject msg = current.status();
+            if (msg != null) {
+                msg.put("t", "speaker");
+                ws.send(msg.toString());
+            }
+        } catch (Exception ignored) {
+        }
     }
 
     public void start() {
@@ -281,6 +317,7 @@ public final class CarLink {
                 } catch (Exception ignored) {
                 }
                 publish("ONLINE", "", email);
+                sendSpeaker(webSocket);
             }
 
             @Override
@@ -330,6 +367,11 @@ public final class CarLink {
                         lastPushMs = 0L;
                         publish("ONLINE", "", email);
                         notifyWatch(wasWatching, prevSource);
+                    } else if ("speaker".equals(type)) {
+                        Speaker current = speaker;
+                        if (current != null) {
+                            handler.post(() -> current.command(j));
+                        }
                     } else if ("idle".equals(type)) {
                         boolean wasWatching = watching.get();
                         String prevSource = source;

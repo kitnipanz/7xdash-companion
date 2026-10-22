@@ -36,6 +36,7 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <!-- 前台服务类型：摄像头（Android 10+） -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CAMERA" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
     <!-- AirPlay 投屏：前台服务放声音；mDNS 要多播锁 -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
@@ -133,6 +134,21 @@
             android:name=".input.MegaphoneService"
             android:exported="false"
             android:foregroundServiceType="microphone" />
+
+        <!-- Beta outside speaker: head unit playback copied to the outside bus. Playback capture
+             needs a screen capture grant, asked on the screen each start -->
+        <service
+            android:name=".audio.OutsideSpeakerService"
+            android:exported="false"
+            android:foregroundServiceType="mediaProjection" />
+
+        <activity
+            android:name=".audio.SpeakerConsentActivity"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:launchMode="singleTask"
+            android:taskAffinity=".speaker"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
 
         <!-- AirPlay 投屏接收：iPhone 的画面放在悬浮窗里 -->
         <service

@@ -875,7 +875,7 @@ Then reopen this app.</string>
     <!-- Interface section · first-launch side question · record unavailable · status bar -->
     <string name="set_section_interface">Interface</string>
     <string name="set_beta_features_title">Beta features</string>
-    <string name="set_beta_features_summary">Show features that are still being tried on the car, and let them run. Now: Where I parked (home card, and reading the signs when the car goes into P).</string>
+    <string name="set_beta_features_summary">Show features that are still being tried on the car, and let them run. Now: Where I parked (home card, and reading the signs when the car goes into P), Outside speaker (home card).</string>
     <string name="set_reduce_motion_title">Less motion while recording</string>
     <string name="set_reduce_motion_summary">Turns off transitions and other decorative animation while recording, leaving the GPU to the encoder. The record button and progress ring still animate.</string>
     <string name="set_vehicle_status_title">Vehicle status (experimental)</string>
@@ -1379,4 +1379,21 @@ Then reopen this app.</string>
     <string name="set_hud_notice_preview_right">%1$d%% from the right. A long line shows where the card ends on the right side of the HUD.</string>
     <string name="airplay_cast_title">Video casting</string>
     <string name="airplay_cast_summary">On: apps like YouTube switch from mirroring to casting by themselves. The car downloads the video over its own internet, in better quality. Off: mirroring only. The iPhone streams the video, and the car just shows its screen and uses no internet.</string>
+    <!-- Beta outside speaker -->
+    <string name="home_card_outside_speaker">Outside speaker</string>
+    <string name="home_card_outside_speaker_sub">Play car audio outside. Hold for volume</string>
+    <string name="shortcut_action_outside_speaker">Outside speaker on/off (beta)</string>
+    <string name="outside_speaker_channel">Outside speaker</string>
+    <string name="outside_speaker_playing">Playing on the outside speaker</string>
+    <string name="outside_speaker_note">Music and media from the head unit</string>
+    <string name="outside_speaker_stop">Stop</string>
+    <string name="outside_speaker_open">Could not capture the head unit audio</string>
+    <string name="outside_speaker_refused">Audio capture was not allowed</string>
+    <string name="outside_speaker_unsupported">Outside speaker needs Android 10 or later</string>
+    <string name="outside_speaker_section">Outside speaker (beta)</string>
+    <string name="outside_speaker_summary">Plays what the head unit plays (music, radio, AirPlay) on the speaker above as well. Every start asks on the screen to allow audio capture: tap Start now. Apps that block capture stay silent outside. The volume can also be set from 7xDash web.</string>
+    <string name="outside_speaker_off">Off. Tap to start</string>
+    <string name="outside_speaker_on">Playing. Tap to stop</string>
+    <string name="outside_speaker_asking">Tap Start now on the screen</string>
+    <string name="outside_speaker_volume">Outside speaker volume</string>
 </resources>

@@ -116,5 +116,65 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:orientation="vertical" />
+
+        <!-- Beta: 车机的声音也从这个喇叭放。只在打开 Beta 功能时显示 -->
+        <LinearLayout
+            android:id="@+id/outside_speaker_box"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/outside_speaker_section"
+                android:textAppearance="@style/TextAppearance.Cam.Micro"
+                android:textColor="@color/pref_summary" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="@string/outside_speaker_summary"
+                android:textAppearance="@style/TextAppearance.Cam.Body"
+                android:textColor="@color/pref_summary" />
+
+            <TextView
+                android:id="@+id/outside_speaker_toggle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/bg_pref_row"
+                android:paddingStart="20dp"
+                android:paddingTop="14dp"
+                android:paddingEnd="20dp"
+                android:paddingBottom="14dp"
+                android:textAppearance="@style/TextAppearance.Cam.Body"
+                android:textColor="@color/pref_title" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="@string/outside_speaker_volume"
+                android:textAppearance="@style/TextAppearance.Cam.Micro"
+                android:textColor="@color/pref_summary" />
+
+            <TextView
+                android:id="@+id/outside_speaker_volume_value"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:textAppearance="@style/TextAppearance.Cam.Body"
+                android:textColor="@color/pref_title" />
+
+            <SeekBar
+                android:id="@+id/outside_speaker_volume"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:max="100" />
+        </LinearLayout>
     </LinearLayout>
 </ScrollView>

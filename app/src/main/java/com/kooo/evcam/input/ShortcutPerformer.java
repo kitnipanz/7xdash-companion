@@ -107,6 +107,9 @@ public final class ShortcutPerformer {
             case WHERE_PARKED:
                 com.kooo.evcam.parking.WhereParked.get().captureNow(context);
                 return;
+            case OUTSIDE_SPEAKER:
+                com.kooo.evcam.audio.OutsideSpeakerService.toggle(context);
+                return;
             case CABIN_PASSENGER:
                 AppConfig cabin = new AppConfig(context);
                 if (!OverlayCoordinator.setCabinPassengerEnabled(context, !cabin.isCabinPassengerEnabled())) {

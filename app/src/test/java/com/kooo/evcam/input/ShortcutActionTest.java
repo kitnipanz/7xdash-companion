@@ -43,6 +43,12 @@ public class ShortcutActionTest {
     }
 
     @Test
+    public void outsideSpeakerIsItsOwnStoredAction() {
+        assertEquals(ShortcutAction.OUTSIDE_SPEAKER, ShortcutAction.fromKey("toggle_outside_speaker"));
+        assertNotEquals(ShortcutAction.OUTSIDE_SPEAKER.key, ShortcutAction.TOGGLE_SPEAK.key);
+    }
+
+    @Test
     public void clickToSpeakHasASafetyCap() {
         assertEquals(10L * 60 * 1000, MegaphoneService.TOGGLE_MAX_MS);
     }

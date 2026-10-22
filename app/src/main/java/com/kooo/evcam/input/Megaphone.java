@@ -38,7 +38,7 @@ public final class Megaphone {
         return type == AudioDeviceInfo.TYPE_BUS && BUS_ADDRESS.equals(address);
     }
 
-    static AudioDeviceInfo find(AudioDeviceInfo[] devices, String address) {
+    public static AudioDeviceInfo find(AudioDeviceInfo[] devices, String address) {
         if (devices == null || address == null || address.isEmpty()) {
             return null;
         }
@@ -191,11 +191,15 @@ public final class Megaphone {
             if (record.getState() != AudioRecord.STATE_INITIALIZED) {
                 return R.string.megaphone_open;
             }
+            android.media.AudioAttributes.Builder attributes = new android.media.AudioAttributes.Builder()
+                    .setUsage(android.media.AudioAttributes.USAGE_MEDIA)
+                    .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SONIFICATION);
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                // The outside speaker (beta) copies captured media to this same bus; the voice is already there
+                attributes.setAllowedCapturePolicy(android.media.AudioAttributes.ALLOW_CAPTURE_BY_NONE);
+            }
             track = new AudioTrack.Builder()
-                    .setAudioAttributes(new android.media.AudioAttributes.Builder()
-                            .setUsage(android.media.AudioAttributes.USAGE_MEDIA)
-                            .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                            .build())
+                    .setAudioAttributes(attributes.build())
                     .setAudioFormat(new AudioFormat.Builder()
                             .setSampleRate(RATE)
                             .setEncoding(AudioFormat.ENCODING_PCM_16BIT)

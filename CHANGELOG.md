@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.1.6-beta] - 2026-10-22
+
+- New beta Outside speaker: what the head unit plays (music, radio, AirPlay) also plays on the outside speaker, the one the megaphone uses. Home card (with Beta features on) and a new Outside speaker on/off shortcut; hold the card for its section in Settings > Megaphone, with its own volume. Android only lets an app hear other apps through a screen capture grant, so every start asks on the screen: tap Start now. Apps that block capture stay silent outside. While the megaphone talks, the music drops to 15%. The megaphone's voice is no longer captured, so it is not played twice.
+- 7xDash web: an Outside speaker card turns it on or off and sets its volume, and sets the megaphone volume. Turning it on from the web still needs Start now on the car screen.
+
 ## [1.1.5-beta] - 2026-10-22
 
 - Home fits the screen: the widget column takes 30% of the width (240-360dp), and the feature cards take 2 to 4 columns depending on the space, with rows of equal height. When there are more rows than fit, the cards scroll.

@@ -17,6 +17,7 @@ import androidx.fragment.app.Fragment;
 
 import com.kooo.evcam.AppConfig;
 import com.kooo.evcam.R;
+import com.kooo.evcam.audio.OutsideSpeakerService;
 import com.kooo.evcam.input.Shortcut;
 import com.kooo.evcam.input.ShortcutAction;
 import com.kooo.evcam.input.ShortcutBook;
@@ -37,7 +38,12 @@ public class TapToSpeakFragment extends Fragment implements SpeakCapture.Listene
     private TextView volumeValue;
     private SeekBar volume;
     private LinearLayout speakers;
+    private View outsideBox;
+    private TextView outsideToggle;
+    private TextView outsideVolumeValue;
+    private SeekBar outsideVolume;
     private boolean listening;
+    private final Runnable outsideChanged = this::paintOutside;
 
     @Nullable
     @Override
@@ -73,6 +79,31 @@ public class TapToSpeakFragment extends Fragment implements SpeakCapture.Listene
             public void onStopTrackingTouch(SeekBar seekBar) {
             }
         });
+        outsideBox = root.findViewById(R.id.outside_speaker_box);
+        outsideToggle = root.findViewById(R.id.outside_speaker_toggle);
+        outsideVolumeValue = root.findViewById(R.id.outside_speaker_volume_value);
+        outsideVolume = root.findViewById(R.id.outside_speaker_volume);
+        outsideToggle.setOnClickListener(v -> {
+            OutsideSpeakerService.toggle(requireContext());
+            paintOutside();
+        });
+        outsideVolume.setProgress(config.getOutsideSpeakerVolume());
+        outsideVolume.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                if (fromUser) {
+                    OutsideSpeakerService.setVolume(requireContext(), progress);
+                }
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+            }
+        });
         buildSeconds();
         paint();
         return root;
@@ -81,6 +112,7 @@ public class TapToSpeakFragment extends Fragment implements SpeakCapture.Listene
     @Override
     public void onResume() {
         super.onResume();
+        OutsideSpeakerService.addListener(outsideChanged);
         paint();
     }
 
@@ -88,6 +120,7 @@ public class TapToSpeakFragment extends Fragment implements SpeakCapture.Listene
     public void onPause() {
         listening = false;
         SpeakCapture.disarm();
+        OutsideSpeakerService.removeListener(outsideChanged);
         super.onPause();
     }
 
@@ -152,6 +185,28 @@ public class TapToSpeakFragment extends Fragment implements SpeakCapture.Listene
         }
         showVolume();
         showSpeakers();
+        paintOutside();
+    }
+
+    /** Beta section: on/off and its own volume. Web and shortcuts change these too. */
+    private void paintOutside() {
+        if (!isAdded()) {
+            return;
+        }
+        boolean beta = config.isBetaFeaturesEnabled();
+        outsideBox.setVisibility(beta ? View.VISIBLE : View.GONE);
+        if (!beta) {
+            return;
+        }
+        boolean on = OutsideSpeakerService.isOn();
+        outsideToggle.setText(OutsideSpeakerService.isAsking() ? R.string.outside_speaker_asking
+                : on ? R.string.outside_speaker_on : R.string.outside_speaker_off);
+        outsideToggle.setTextColor(getColor(on ? R.color.energy : R.color.pref_title));
+        int volume = config.getOutsideSpeakerVolume();
+        if (outsideVolume.getProgress() != volume) {
+            outsideVolume.setProgress(volume);
+        }
+        outsideVolumeValue.setText(getString(R.string.tap_speak_volume_value, volume));
     }
 
     private void showVolume() {

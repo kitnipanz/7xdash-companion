@@ -34,7 +34,9 @@ public enum ShortcutAction {
     /** 只拍座舱（前、后座舱），不换页。 */
     PHOTO_CABIN("photo_cabin", R.string.shortcut_action_photo_cabin),
     /** Read the floor and bay signs around the car now, same as shifting into P. */
-    WHERE_PARKED("where_parked", R.string.shortcut_action_where_parked);
+    WHERE_PARKED("where_parked", R.string.shortcut_action_where_parked),
+    /** Beta: play what the head unit plays on the outside speaker, or stop it. */
+    OUTSIDE_SPEAKER("toggle_outside_speaker", R.string.shortcut_action_outside_speaker);
 
     public final String key;
     public final int labelRes;

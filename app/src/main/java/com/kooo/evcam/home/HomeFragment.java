@@ -266,6 +266,11 @@ public class HomeFragment extends Fragment {
                     .pill(() -> getString(R.string.home_parking_auto, getString(
                                     config.isParkingAutoEnabled() ? R.string.home_state_on : R.string.home_state_off)),
                             () -> config.isParkingAutoEnabled(), this::toggleParkingAuto);
+            // Beta: 车机正在放的声音也从车外喇叭放出来。长按去喊话页调音量
+            addCard(R.drawable.ic_speaker, R.string.home_card_outside_speaker,
+                    R.string.home_card_outside_speaker_sub, () -> perform(ShortcutAction.OUTSIDE_SPEAKER),
+                    () -> page(MainActivity.PAGE_SETTINGS_PREFIX + "screen_megaphone"))
+                    .onOff(com.kooo.evcam.audio.OutsideSpeakerService::isOn);
         }
         layoutGrid(true);
         refresh();

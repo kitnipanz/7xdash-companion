@@ -1304,6 +1304,17 @@ Then reopen this app.</string>
     <string name="shortcut_eq_on">EQ on</string>
     <string name="shortcut_eq_off">EQ off</string>
     <string name="shortcut_action_photo_cabin">Take photo (cabin)</string>
+    <string name="shortcut_action_where_parked">Where did I park</string>
+    <string name="home_card_parking">Where I parked</string>
+    <string name="home_card_parking_sub">Reads floor and bay signs. Tap to read now</string>
+    <string name="home_parking_auto">Auto on P: %1$s</string>
+    <string name="parking_channel">Where I parked</string>
+    <string name="parking_reading">Reading parking signs…</string>
+    <string name="parking_no_camera">Can\'t read parking signs: open 7xDash so the surround camera is on</string>
+    <string name="parking_no_sign">Parked — no floor or bay sign read</string>
+    <string name="parking_at">Parked at %1$s</string>
+    <string name="parking_floor">Floor %1$s</string>
+    <string name="parking_bay">Bay %1$s</string>
     <string name="home_capture_flash">Flash-to-pass: %1$s</string>
     <string name="home_card_saved_sub">Watch and delete instant captures</string>
     <string name="eq_rock">Rock</string>

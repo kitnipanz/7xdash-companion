@@ -240,6 +240,25 @@ public final class CarLink {
         }
     }
 
+    /**
+     * Where did I park ({@code {"t":"park",…}}). Underground there is often no signal, so the
+     * newest one waits here and goes out on every hello until the hub says {@code parked}.
+     */
+    private volatile String pendingPark;
+
+    public void sendPark(String json) {
+        pendingPark = json;
+        flushPark();
+    }
+
+    private void flushPark() {
+        String json = pendingPark;
+        WebSocket ws = socket;
+        if (json != null && ws != null && !email.isEmpty()) {
+            ws.send(json);
+        }
+    }
+
     private void dial() {
         int gen = generation.incrementAndGet();
         WebSocket old = socket;
@@ -283,12 +302,19 @@ public final class CarLink {
                         }
                         publish("ONLINE", j.optString("code"), email);
                         notifyWatch(wasWatching, prevSource);
+                        flushPark();
+                    } else if ("parked".equals(type)) {
+                        String sent = pendingPark;
+                        if (sent != null && j.optLong("at") == new JSONObject(sent).optLong("at")) {
+                            pendingPark = null;
+                        }
                     } else if ("code".equals(type)) {
                         publish("ONLINE", j.optString("code"), email);
                         handler.post(CarLink.this::armCodeRefresh);
                     } else if ("linked".equals(type)) {
                         email = j.optString("email", email);
                         publish("LINKED", "", email);
+                        flushPark();
                     } else if ("unlinked".equals(type)) {
                         email = "";
                         boolean wasWatching = watching.get();

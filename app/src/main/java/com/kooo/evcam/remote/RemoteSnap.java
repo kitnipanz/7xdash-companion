@@ -47,30 +47,11 @@ public final class RemoteSnap {
         if (live == null || source == null) {
             return;
         }
-        float[] use = lanes;
-        if (!RemoteFrame.lanesUsable(use)) {
-            RemoteFrame.equalVerticalLanes(fallbackLanes);
-            use = fallbackLanes;
-        }
         int[] cellOrder = order;
         if (cellOrder == null || cellOrder.length < CompositeStreamGeometry.LANE_COUNT) {
             cellOrder = new int[]{0, 1, 2, 3};
         }
-
-        mesh.setCorrection(fovDegrees, projection, strength);
-        RemoteFrame.correctedWindow((float) CELL_WIDTH / CELL_HEIGHT, window);
-
-        int sw = source.getWidth();
-        int sh = source.getHeight();
-
-        Bitmap[] channels = new Bitmap[CompositeStreamGeometry.LANE_COUNT];
-        for (int streamLane = 0; streamLane < CompositeStreamGeometry.LANE_COUNT; streamLane++) {
-            Bitmap cell = Bitmap.createBitmap(CELL_WIDTH, CELL_HEIGHT, Bitmap.Config.ARGB_8888);
-            Canvas canvas = new Canvas(cell);
-            canvas.drawColor(Color.BLACK);
-            drawLaneDefish(canvas, source, use, streamLane, sw, sh, 0f, 0f, CELL_WIDTH, CELL_HEIGHT);
-            channels[streamLane] = cell;
-        }
+        Bitmap[] channels = defishLanes(source, lanes, fovDegrees, projection, strength);
 
         Bitmap drive = Bitmap.createBitmap(CELL_WIDTH * 2, CELL_HEIGHT * 2, Bitmap.Config.ARGB_8888);
         Canvas driveCanvas = new Canvas(drive);
@@ -97,6 +78,35 @@ public final class RemoteSnap {
                 cell.recycle();
             }
         }
+    }
+
+    /**
+     * Each surround lane on its own, defished, {@link #CELL_WIDTH}×{@link #CELL_HEIGHT}.
+     * Indexed by stream lane: 0 front, 1 back, 2 left, 3 right. Caller recycles them.
+     */
+    public Bitmap[] defishLanes(Bitmap source, float[] lanes, float fovDegrees, String projection,
+                                float strength) {
+        float[] use = lanes;
+        if (!RemoteFrame.lanesUsable(use)) {
+            RemoteFrame.equalVerticalLanes(fallbackLanes);
+            use = fallbackLanes;
+        }
+
+        mesh.setCorrection(fovDegrees, projection, strength);
+        RemoteFrame.correctedWindow((float) CELL_WIDTH / CELL_HEIGHT, window);
+
+        int sw = source.getWidth();
+        int sh = source.getHeight();
+
+        Bitmap[] channels = new Bitmap[CompositeStreamGeometry.LANE_COUNT];
+        for (int streamLane = 0; streamLane < CompositeStreamGeometry.LANE_COUNT; streamLane++) {
+            Bitmap cell = Bitmap.createBitmap(CELL_WIDTH, CELL_HEIGHT, Bitmap.Config.ARGB_8888);
+            Canvas canvas = new Canvas(cell);
+            canvas.drawColor(Color.BLACK);
+            drawLaneDefish(canvas, source, use, streamLane, sw, sh, 0f, 0f, CELL_WIDTH, CELL_HEIGHT);
+            channels[streamLane] = cell;
+        }
+        return channels;
     }
 
     /** Cabin / non-surround still: center-crop to 16:9, no defish. */

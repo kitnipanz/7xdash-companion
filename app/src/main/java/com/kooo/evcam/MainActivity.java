@@ -351,6 +351,7 @@ public class MainActivity extends AppCompatActivity {
         initViews();
         setupNavigationDrawer();
         startRemoteLink();
+        com.kooo.evcam.parking.WhereParked.get().start(this);
 
         // 界面重建（切日夜模式、换语言）时录制管线一直在跑（管线属于应用，主界面销毁不放它，见 onDestroy），
         // 新界面只是把它现在的样子画出来（syncRecordingStateFromManager），没有「恢复录制」这回事；
@@ -1829,6 +1830,45 @@ public class MainActivity extends AppCompatActivity {
                 source.recycle();
                 homeBusy.set(false);
             }
+        });
+    }
+
+    private final com.kooo.evcam.remote.RemoteSnap parkingSnap = new com.kooo.evcam.remote.RemoteSnap();
+    private final float[] parkingLanes = new float[16];
+
+    /**
+     * Where did I park: every surround lane, defished, handed to {@code done} on the remote
+     * thread (0 front, 1 back, 2 left, 3 right; {@code done} recycles them). {@code done} gets
+     * null when the surround camera is not up.
+     */
+    public void grabParkingLanes(java.util.function.Consumer<android.graphics.Bitmap[]> done) {
+        if (textureFront == null || !textureFront.isAvailable()) {
+            done.accept(null);
+            return;
+        }
+        int[] grab = remoteGrabSize(textureFront);
+        final android.graphics.Bitmap source = grab == null ? null : textureFront.getBitmap(grab[0], grab[1]);
+        if (source == null) {
+            done.accept(null);
+            return;
+        }
+        boolean hasLanes = compositeContainer != null && compositeContainer.copyLaneWindows(parkingLanes);
+        if (!hasLanes) {
+            com.kooo.evcam.zeekr.RemoteFrame.equalVerticalLanes(parkingLanes);
+        }
+        final float[] lanes = parkingLanes.clone();
+        final float fov = appConfig.getFisheyeFov();
+        final String projection = appConfig.getFisheyeProjection();
+        remoteCompose.execute(() -> {
+            android.graphics.Bitmap[] channels = null;
+            try {
+                channels = parkingSnap.defishLanes(source, lanes, fov, projection, 1f);
+            } catch (RuntimeException e) {
+                AppLog.w(TAG, "parking grab failed: " + e.getMessage());
+            } finally {
+                source.recycle();
+            }
+            done.accept(channels);
         });
     }
 
@@ -3364,6 +3404,9 @@ public class MainActivity extends AppCompatActivity {
             carLink.stop();
             carLink = null;
         }
+        if (instance == this || instance == null) {
+            com.kooo.evcam.parking.WhereParked.get().stop();
+        }
         super.onDestroy();
         com.kooo.evcam.blackbox.BlackBox.noteImportant("主界面 onDestroy finishing=" + isFinishing()
                 + " changingConfigurations=" + isChangingConfigurations());
@@ -3686,6 +3729,11 @@ public class MainActivity extends AppCompatActivity {
      */
     public static MainActivity getInstance() {
         return instance;
+    }
+
+    /** Live link to 7xDash web, or null before it starts. */
+    public com.kooo.evcam.remote.CarLink getCarLink() {
+        return carLink;
     }
     
 

@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.2-beta] - 2026-10-22
+
+- Where I parked: when the car shifts into P, 7xDash reads the floor and bay signs (B2, LEVEL 4, 5F, A-12, ZONE C 045…) from the front and side cameras on the car, offline. The result pops up in the notification shade with a photo, and goes to 7xDash web over the Car Link (it waits and resends when the car park has no signal). Reads Latin letters and digits only, not Thai. Needs the main screen running.
+- Home: new Where I parked card. Tap to read the signs now; the Auto on P pill turns the automatic read on or off (on by default).
+- Shortcuts: Where did I park.
+
 ## [1.1.1] - 2026-10-22
 
 - Shortcuts: Toggle Google Drive upload. Shows an error when Drive is not connected and leaves the switch as it is.

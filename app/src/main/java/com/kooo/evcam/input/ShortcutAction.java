@@ -32,7 +32,9 @@ public enum ShortcutAction {
     /** Turn the cabin equalizer on or off. */
     EQ("toggle_eq", R.string.shortcut_action_eq),
     /** 只拍座舱（前、后座舱），不换页。 */
-    PHOTO_CABIN("photo_cabin", R.string.shortcut_action_photo_cabin);
+    PHOTO_CABIN("photo_cabin", R.string.shortcut_action_photo_cabin),
+    /** Read the floor and bay signs around the car now, same as shifting into P. */
+    WHERE_PARKED("where_parked", R.string.shortcut_action_where_parked);
 
     public final String key;
     public final int labelRes;

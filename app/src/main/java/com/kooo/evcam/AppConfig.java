@@ -33,6 +33,7 @@ public class AppConfig {
     private static final String KEY_FOOTAGE_LOCK = "footage_lock";  // 锁定影像
     private static final String KEY_FOOTAGE_LOCK_FLASH = "footage_lock_flash";  // 闪远光时自动锁定当前录像
     private static final String KEY_HUD_NOTIFICATIONS = "hud_notifications";
+    private static final String KEY_PARKING_AUTO = "parking_auto";  // shifting into P reads the parking signs
     private static final String KEY_HUD_NOTICE_LEFT = "hud_notice_left_pct";  // 抬头显示通知离左边多少（%）
     private static final String KEY_HUD_NOTICE_RIGHT = "hud_notice_right_pct";  // 离右边多少（%）  // 别的应用的通知投到抬头显示
     private static final String KEY_SETTINGS_SHOW_ALL = "settings_show_all";  // 设置显示「全部」而不是「常用」
@@ -443,6 +444,15 @@ public class AppConfig {
 
     public void setHudNotificationsEnabled(boolean enabled) {
         prefs.edit().putBoolean(KEY_HUD_NOTIFICATIONS, enabled).apply();
+    }
+
+    /** Where did I park: read the floor and bay signs every time the car goes into P. On by default. */
+    public boolean isParkingAutoEnabled() {
+        return prefs.getBoolean(KEY_PARKING_AUTO, true);
+    }
+
+    public void setParkingAutoEnabled(boolean enabled) {
+        prefs.edit().putBoolean(KEY_PARKING_AUTO, enabled).apply();
     }
 
     /**

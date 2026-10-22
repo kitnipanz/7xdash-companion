@@ -1282,6 +1282,17 @@
     <string name="shortcut_eq_on">เปิดอีคิวแล้ว</string>
     <string name="shortcut_eq_off">ปิดอีคิวแล้ว</string>
     <string name="shortcut_action_photo_cabin">ถ่ายภาพ (ห้องโดยสาร)</string>
+    <string name="shortcut_action_where_parked">จอดรถไว้ที่ไหน</string>
+    <string name="home_card_parking">จอดรถไว้ที่ไหน</string>
+    <string name="home_card_parking_sub">อ่านป้ายชั้นและช่องจอด แตะเพื่ออ่านตอนนี้</string>
+    <string name="home_parking_auto">อัตโนมัติเมื่อเข้า P: %1$s</string>
+    <string name="parking_channel">ตำแหน่งที่จอดรถ</string>
+    <string name="parking_reading">กำลังอ่านป้ายที่จอดรถ…</string>
+    <string name="parking_no_camera">อ่านป้ายที่จอดไม่ได้: เปิด 7xDash ไว้ให้กล้องรอบคันทำงาน</string>
+    <string name="parking_no_sign">จอดแล้ว — อ่านป้ายชั้นหรือช่องจอดไม่ได้</string>
+    <string name="parking_at">จอดที่ %1$s</string>
+    <string name="parking_floor">ชั้น %1$s</string>
+    <string name="parking_bay">ช่อง %1$s</string>
     <string name="home_capture_flash">กะพริบไฟสูง: %1$s</string>
     <string name="home_card_saved_sub">ดูและลบภาพที่จับไว้</string>
     <string name="eq_rock">ร็อก</string>

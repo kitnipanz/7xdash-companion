@@ -225,6 +225,25 @@ public class HomeFragment extends Fragment {
                 R.string.home_card_hud_notice_sub, this::toggleHudNotices,
                 () -> page(MainActivity.PAGE_SETTINGS_PREFIX + "screen_rearview"))
                 .onOff(() -> config.isHudNotificationsEnabled());
+
+        // 第四行：停在哪。点卡片当场读一次；胶囊开关决定挂 P 时自动读
+        addCard(grid, 3, 0, R.drawable.ic_parking, R.string.home_card_parking,
+                R.string.home_card_parking_sub, () -> perform(ShortcutAction.WHERE_PARKED), null)
+                .pill(() -> getString(R.string.home_parking_auto, getString(
+                                config.isParkingAutoEnabled() ? R.string.home_state_on : R.string.home_state_off)),
+                        () -> config.isParkingAutoEnabled(), this::toggleParkingAuto);
+        padRow(grid, 3, 4);
+    }
+
+    /** 一行没排满时补空位，卡片宽度和上面几行对齐。 */
+    private void padRow(LinearLayout grid, int row, int columns) {
+        LinearLayout line = rowOf(grid, row);
+        int gap = getResources().getDimensionPixelSize(R.dimen.gutter) / 2;
+        while (line.getChildCount() < columns) {
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f);
+            lp.setMargins(gap, gap, gap, gap);
+            line.addView(new View(grid.getContext()), lp);
+        }
     }
 
     private Card addCard(LinearLayout grid, int row, int column, int icon, int title, int sub,
@@ -388,6 +407,12 @@ public class HomeFragment extends Fragment {
     /** 闪远光抓拍：打开时把它依赖的「锁定影像」一起打开，不然开关拨了不起作用。 */
     private void openCaptures() {
         startActivity(new Intent(requireContext(), com.kooo.evcam.recording.InstantCapturesActivity.class));
+    }
+
+    private void toggleParkingAuto() {
+        Context context = requireContext();
+        config.setParkingAutoEnabled(!config.isParkingAutoEnabled());
+        com.kooo.evcam.parking.WhereParked.get().settingsChanged(context);
     }
 
     private void toggleFlash() {

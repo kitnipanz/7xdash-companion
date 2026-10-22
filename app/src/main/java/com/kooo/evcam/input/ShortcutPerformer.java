@@ -104,6 +104,9 @@ public final class ShortcutPerformer {
             case EQ:
                 toggleEq(context);
                 return;
+            case WHERE_PARKED:
+                com.kooo.evcam.parking.WhereParked.get().captureNow(context);
+                return;
             case CABIN_PASSENGER:
                 AppConfig cabin = new AppConfig(context);
                 if (!OverlayCoordinator.setCabinPassengerEnabled(context, !cabin.isCabinPassengerEnabled())) {

@@ -59,8 +59,8 @@ android {
         // versionName 会成为 Release 名称与 APK 文件名
         //
         // 7xDash 用自己的 applicationId，可以和 zeekr-shortcut-car 并排装。版本号从 1 重新起。
-        versionCode = 18
-        versionName = "1.1.1"
+        versionCode = 19
+        versionName = "1.1.2-beta"
 
         buildConfigField("String", "DRIVE_CLIENT_ID", gradleStringLiteral(driveCredential("DRIVE_CLIENT_ID")))
         buildConfigField("String", "DRIVE_CLIENT_SECRET", gradleStringLiteral(driveCredential("DRIVE_CLIENT_SECRET")))
@@ -149,6 +149,10 @@ dependencies {
     implementation("androidx.media3:media3-exoplayer-hls:1.5.1")
     // 投视频时 YouTube 的分段走车机的 Wi-Fi（有的话），不走车机自己的流量：用 OkHttp 绑到 Wi-Fi 网络
     implementation("androidx.media3:media3-datasource-okhttp:1.5.1")
+
+    // Where did I park: read floor / bay signs from the front and side cameras on the car.
+    // Bundled Latin model, so it works offline and without Play services.
+    implementation("com.google.mlkit:text-recognition:16.0.1")
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)

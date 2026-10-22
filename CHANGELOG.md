@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.1.7-beta] - 2026-10-22
+
+- Cabin passenger: still opens blank from a shortcut on some cars. This build writes a trace of every open to `Download/EVCam_Log/cabin-yyyyMMdd.log` (on the USB stick, else internal storage): the shortcut, the window, the camera connection and its state, frames received and drawn, and the automatic retries. Send it after a blank open.
+
 ## [1.1.6-beta] - 2026-10-22
 
 - New beta Outside speaker: what the head unit plays (music, radio, AirPlay) also plays on the outside speaker, the one the megaphone uses. Home card (with Beta features on) and a new Outside speaker on/off shortcut; hold the card for its section in Settings > Megaphone, with its own volume. Android only lets an app hear other apps through a screen capture grant, so every start asks on the screen: tap Start now. Apps that block capture stay silent outside. While the megaphone talks, the music drops to 15%. The megaphone's voice is no longer captured, so it is not played twice.

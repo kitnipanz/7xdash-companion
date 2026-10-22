@@ -301,8 +301,8 @@ public class HomeFragment extends Fragment {
             state.setClickable(true);
             state.setFocusable(true);
             state.setBackgroundResource(R.drawable.bg_segment);
-            int padH = Math.round(14 * getResources().getDisplayMetrics().density);
-            int padV = Math.round(6 * getResources().getDisplayMetrics().density);
+            int padH = Math.round(10 * getResources().getDisplayMetrics().density);
+            int padV = Math.round(3 * getResources().getDisplayMetrics().density);
             state.setPadding(padH, padV, padH, padV);
             state.setOnClickListener(v -> {
                 toggle.run();

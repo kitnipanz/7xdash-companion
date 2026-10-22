@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.1.3-beta] - 2026-10-22
+
+- Home: the feature cards are more compact so all four rows fit. Smaller icons, one-line descriptions, and smaller Flash-to-pass and Auto on P pills.
+
 ## [1.1.2-beta] - 2026-10-22
 
 - Where I parked: when the car shifts into P, 7xDash reads the floor and bay signs (B2, LEVEL 4, 5F, A-12, ZONE C 045…) from the front and side cameras on the car, offline. The result pops up in the notification shade with a photo, and goes to 7xDash web over the Car Link (it waits and resends when the car park has no signal). Reads Latin letters and digits only, not Thai. Needs the main screen running.

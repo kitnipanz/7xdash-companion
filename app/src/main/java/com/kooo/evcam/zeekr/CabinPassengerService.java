@@ -52,6 +52,7 @@ public class CabinPassengerService extends Service {
     private final ScreenState.Listener screenListener = new ScreenState.Listener() {
         @Override
         public void onScreenOff() {
+            log("screen off, recording=" + CameraNeeds.current().isHeld(CameraNeeds.Holder.RECORDING));
             if (CameraNeeds.current().isHeld(CameraNeeds.Holder.RECORDING)) {
                 return;
             }
@@ -60,15 +61,23 @@ public class CabinPassengerService extends Service {
 
         @Override
         public void onScreenOn() {
+            log("screen on");
             rebind();
         }
     };
 
     public static void start(Context context) {
-        context.startService(new Intent(context, CabinPassengerService.class));
+        CabinLog.line(context, "start() running=" + isRunning() + " " + CabinLog.world());
+        try {
+            context.startService(new Intent(context, CabinPassengerService.class));
+        } catch (RuntimeException e) {
+            CabinLog.line(context, "start() refused: " + e);
+            throw e;
+        }
     }
 
     public static void stop(Context context) {
+        CabinLog.line(context, "stop() running=" + isRunning());
         context.stopService(new Intent(context, CabinPassengerService.class));
     }
 
@@ -89,10 +98,12 @@ public class CabinPassengerService extends Service {
         appConfig = new AppConfig(this);
         instance = this;
         ScreenState.addListener(screenListener);
+        log("service created");
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        log("onStartCommand intent=" + (intent != null) + " window=" + (window != null) + " " + CabinLog.world());
         if (window == null) {
             window = new CabinPassengerView(this, appConfig);
             window.setSurfaceReady(new CabinPassengerView.SurfaceReady() {
@@ -112,6 +123,8 @@ public class CabinPassengerService extends Service {
                 }
             });
             window.show();
+            log("window shown attached=" + window.isAttached()
+                    + " hwAccel=" + window.getTextureView().isHardwareAccelerated());
             takeBackKeptCanvas();
             com.kooo.evcam.ui.Notice.makeText(this, R.string.msg_cabin_on, Toast.LENGTH_SHORT).show();
         }
@@ -121,6 +134,7 @@ public class CabinPassengerService extends Service {
 
     @Override
     public void onDestroy() {
+        log("service destroyed, frames=" + (window != null ? window.frameCount() : -1));
         cancelWatchdog();
         cancelRetry();
         unbindCamera();
@@ -142,6 +156,8 @@ public class CabinPassengerService extends Service {
 
     private void bindCamera(SurfaceTexture surfaceTexture) {
         if (ScreenState.dark() || window == null || surfaceTexture == null) {
+            log("bind skipped: dark=" + ScreenState.dark() + " window=" + (window != null)
+                    + " canvas=" + CabinLog.id(surfaceTexture));
             return;
         }
         MultiCameraManager manager = CameraManagerHolder.getInstance().getCameraManager();
@@ -150,6 +166,7 @@ public class CabinPassengerService extends Service {
         }
         SingleCamera camera = manager != null ? manager.getCamera(CabinWindow.CAMERA_KEY) : null;
         if (camera == null) {
+            log("bind: no cabin camera yet (manager=" + (manager != null) + "), retry " + (retryCount + 1));
             scheduleRetry(surfaceTexture);
             return;
         }
@@ -173,6 +190,9 @@ public class CabinPassengerService extends Service {
         }
         retryCount = 0;
         AppLog.i(TAG, "cabin passenger bound, preview " + preview + (declared ? ", declared" : ""));
+        log("bound preview=" + preview + " buffer=" + camera.getPreviewBufferSize()
+                + " declared=" + declared + " " + CabinLog.world() + " | " + CabinLog.camera(camera, surfaceTexture));
+        logLater(surfaceTexture, 1500L);
     }
 
     /** The view sets its canvas to its layout size on resize. Put back the size the session uses. */
@@ -201,10 +221,12 @@ public class CabinPassengerService extends Service {
             return;
         }
         SurfaceTexture kept = pipeline.takeKeptMirror(CabinWindow.CAMERA_KEY);
+        log("take back kept canvas: " + CabinLog.id(kept));
         if (kept == null) {
             return;
         }
         if (!window.adopt(kept)) {
+            log("adopt failed, kept canvas handed back");
             if (!MultiCameraManager.keepMirrorCanvas(pipeline, CabinWindow.CAMERA_KEY, kept)) {
                 kept.release();
             }
@@ -228,6 +250,7 @@ public class CabinPassengerService extends Service {
         }
         MultiCameraManager pipeline = CameraManagerHolder.getInstance().getCameraManager();
         boolean kept = MultiCameraManager.keepMirrorCanvas(pipeline, CabinWindow.CAMERA_KEY, surface);
+        log("canvas gone " + CabinLog.id(surface) + ", pipeline keeps it=" + kept);
         if (!kept) {
             com.kooo.evcam.camera.ChannelScheduler.wakeAll();
         }
@@ -249,6 +272,9 @@ public class CabinPassengerService extends Service {
     }
 
     private void unbindCamera() {
+        if (boundCamera != null) {
+            log("unbind canvas " + CabinLog.id(boundTexture));
+        }
         cancelRetry();
         CameraNeeds.current().release(CameraNeeds.Holder.CABIN);
         withdrawOutput();
@@ -271,6 +297,9 @@ public class CabinPassengerService extends Service {
             return;
         }
         SurfaceTexture texture = window.getTextureView().getSurfaceTexture();
+        if (texture == null) {
+            log("rebind: window has no canvas yet, available=" + window.getTextureView().isAvailable());
+        }
         if (texture != null) {
             bindCamera(texture);
         }
@@ -279,6 +308,7 @@ public class CabinPassengerService extends Service {
     private void scheduleRetry(SurfaceTexture surfaceTexture) {
         if (retryCount >= MAX_RETRY) {
             AppLog.w(TAG, "cabin camera still missing after " + MAX_RETRY + " tries");
+            log("gave up: cabin camera still missing after " + MAX_RETRY + " tries");
             return;
         }
         cancelRetry();
@@ -306,6 +336,10 @@ public class CabinPassengerService extends Service {
                 MultiCameraManager manager = CameraManagerHolder.getInstance().getCameraManager();
                 SingleCamera current = manager != null ? manager.getCamera(CabinWindow.CAMERA_KEY) : null;
                 if (boundCamera == null || boundCamera != current || !boundCamera.isCameraOpened()) {
+                    log("watchdog rebind: bound=" + (boundCamera != null)
+                            + " sameCamera=" + (boundCamera == current)
+                            + " opened=" + (boundCamera != null && boundCamera.isCameraOpened())
+                            + " " + CabinLog.world() + " | " + CabinLog.camera(current, boundTexture));
                     rebind();
                 } else if (window != null) {
                     // Stalled: no frame since this binding started, or none for a while after
@@ -314,6 +348,9 @@ public class CabinPassengerService extends Service {
                     if (now - since >= STALL_MS) {
                         lastRebuildMs = now;
                         AppLog.w(TAG, "cabin passenger has no frames, declaring again");
+                        log("stalled: frames=" + window.frameCount() + " lastFrame="
+                                + (window.lastFrameAt() > 0 ? (now - window.lastFrameAt()) + "ms ago" : "never")
+                                + " " + CabinLog.world() + " | " + CabinLog.camera(boundCamera, boundTexture));
                         rebind();
                         manager.channelScheduler().wake();
                     }
@@ -322,6 +359,22 @@ public class CabinPassengerService extends Service {
             }
         };
         handler.postDelayed(watchdog, WATCHDOG_INTERVAL_MS);
+    }
+
+    /** A second look shortly after binding: did the canvas reach the session, did frames arrive. */
+    private void logLater(SurfaceTexture texture, long delayMs) {
+        handler.postDelayed(() -> {
+            if (window == null || texture != boundTexture) {
+                return;
+            }
+            log("+" + delayMs + "ms frames=" + window.frameCount() + " drawn=" + window.drawCount()
+                    + " view=" + window.getWidth() + "x" + window.getHeight()
+                    + " shown=" + window.isShown() + " | " + CabinLog.camera(boundCamera, texture));
+        }, delayMs);
+    }
+
+    private void log(String text) {
+        CabinLog.line(this, text);
     }
 
     private void cancelWatchdog() {

@@ -199,6 +199,10 @@ public final class OverlayCoordinator {
      * <p>画面是前座舱，窗口和超级后视镜同一类：可拖、可改大小。用的是前座舱自己的附加输出。</p>
      */
     public static boolean setCabinPassengerEnabled(Context context, boolean enabled) {
+        com.kooo.evcam.zeekr.CabinLog.line(context, "---- cabin " + (enabled ? "ON" : "OFF")
+                + " requested, saved=" + new AppConfig(context).isCabinPassengerEnabled()
+                + " running=" + com.kooo.evcam.zeekr.CabinPassengerService.isRunning()
+                + " overlay=" + canShowOverlay(context));
         if (enabled && !canShowOverlay(context)) {
             return false;
         }

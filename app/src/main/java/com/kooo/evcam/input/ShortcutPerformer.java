@@ -111,6 +111,7 @@ public final class ShortcutPerformer {
                 com.kooo.evcam.audio.OutsideSpeakerService.toggle(context);
                 return;
             case CABIN_PASSENGER:
+                com.kooo.evcam.zeekr.CabinLog.line(context, "shortcut: cabin passenger");
                 AppConfig cabin = new AppConfig(context);
                 if (!OverlayCoordinator.setCabinPassengerEnabled(context, !cabin.isCabinPassengerEnabled())) {
                     toast(context);

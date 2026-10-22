@@ -42,6 +42,8 @@ public class CabinPassengerView extends ViewGroup {
     private final TextureView textureView;
     /** {@code SystemClock.uptimeMillis()} of the last frame shown; 0 = none yet. */
     private long lastFrameAt;
+    private int frames;
+    private int draws;
 
     private WindowManager.LayoutParams params;
     private boolean attached;
@@ -69,6 +71,7 @@ public class CabinPassengerView extends ViewGroup {
         textureView.setSurfaceTextureListener(new TextureView.SurfaceTextureListener() {
             @Override
             public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
+                CabinLog.line(getContext(), "canvas available " + CabinLog.id(surface) + " " + width + "x" + height);
                 deliver(surface);
             }
 
@@ -81,6 +84,7 @@ public class CabinPassengerView extends ViewGroup {
 
             @Override
             public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
+                CabinLog.line(getContext(), "canvas destroyed " + CabinLog.id(surface) + " after " + frames + " frames");
                 // Released while still in the cabin camera's session, the whole lane stops sending
                 // frames (preview and recording too) until the scheduler takes it out.
                 return surfaceReady == null || !surfaceReady.onGone(surface);
@@ -89,6 +93,9 @@ public class CabinPassengerView extends ViewGroup {
             @Override
             public void onSurfaceTextureUpdated(SurfaceTexture surface) {
                 lastFrameAt = android.os.SystemClock.uptimeMillis();
+                if (frames++ == 0) {
+                    CabinLog.line(getContext(), "first frame on canvas " + CabinLog.id(surface));
+                }
                 invalidate();
             }
         });
@@ -116,6 +123,16 @@ public class CabinPassengerView extends ViewGroup {
         return lastFrameAt;
     }
 
+    /** Frames the canvas received since the window opened. */
+    public int frameCount() {
+        return frames;
+    }
+
+    /** Times the window painted the canvas. */
+    public int drawCount() {
+        return draws;
+    }
+
     /**
      * Put a canvas the pipeline kept back on the view, before its first draw. The view then
      * never calls onSurfaceTextureAvailable for it.
@@ -123,6 +140,7 @@ public class CabinPassengerView extends ViewGroup {
     public boolean adopt(SurfaceTexture surface) {
         try {
             textureView.setSurfaceTexture(surface);
+            CabinLog.line(getContext(), "adopted kept canvas " + CabinLog.id(surface));
             return true;
         } catch (RuntimeException e) {
             AppLog.w(TAG, "could not take back the kept canvas: " + e);
@@ -165,6 +183,7 @@ public class CabinPassengerView extends ViewGroup {
             attached = true;
         } catch (Exception e) {
             AppLog.e(TAG, "cabin window failed to attach", e);
+            CabinLog.line(getContext(), "window failed to attach: " + e);
         }
     }
 
@@ -209,6 +228,10 @@ public class CabinPassengerView extends ViewGroup {
         if (width <= 0 || height <= 0) {
             return;
         }
+        if (draws == 0) {
+            CabinLog.line(getContext(), "first draw " + width + "x" + height + " buffer=" + bufferWidth + "x" + bufferHeight
+                    + " hwCanvas=" + canvas.isHardwareAccelerated() + " canvasAvailable=" + textureView.isAvailable());
+        }
         int save = canvas.save();
         if (mirror()) {
             canvas.scale(-1f, 1f, width / 2f, height / 2f);
@@ -221,6 +244,7 @@ public class CabinPassengerView extends ViewGroup {
             canvas.scale(drawnW / width, drawnH / height);
         }
         drawChild(canvas, textureView, getDrawingTime());
+        draws++;
         canvas.restoreToCount(save);
     }
 

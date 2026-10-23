@@ -2103,7 +2103,7 @@ public class MultiCameraManager {
         return keepMirrorCanvas(current, CameraSlots.KEY_SURROUND, texture);
     }
 
-    /** Same as {@link #keepMirrorCanvas(MultiCameraManager, android.graphics.SurfaceTexture)}, for any lane (cabin passenger uses the front cabin). */
+    /** Same as {@link #keepMirrorCanvas(MultiCameraManager, android.graphics.SurfaceTexture)}, for any lane (cabin passenger uses the rear cabin). */
     public static boolean keepMirrorCanvas(MultiCameraManager current, String cameraKey,
                                            android.graphics.SurfaceTexture texture) {
         MultiCameraManager owner = ownerOf(current, ChannelRules.Kind.MIRROR, cameraKey, texture);

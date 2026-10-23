@@ -19,7 +19,7 @@ import com.kooo.evcam.profile.ProfileSizes;
 import com.kooo.evcam.profile.ProfileStore;
 
 /**
- * Floating window of the front cabin. Drag moves it. A pinch, or the size sliders, changes
+ * Floating window of the rear cabin. Drag moves it. A pinch, or the size sliders, changes
  * how much of the cabin is visible. The picture is not stretched.
  */
 public class CabinPassengerView extends ViewGroup {

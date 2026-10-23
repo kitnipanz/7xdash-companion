@@ -78,7 +78,7 @@ public class CameraManagerHolder {
     private String builtFor;
     /** 这一份是照哪个车型建的（{@link Shape#carModel}）：车型变了谁来要都重建。 */
     private String builtCarModel;
-    /** This one builds the front cabin camera only for the cabin passenger window ({@link Shape#cabinFrontForPassenger}). */
+    /** This one builds the rear cabin camera only for the cabin passenger window ({@link Shape#cabinRearForPassenger}). */
     private boolean builtForPassenger;
     /** 这一份建好之后的样子（主线程上写）；null = 还在建。 */
     private Built built;
@@ -156,28 +156,28 @@ public class CameraManagerHolder {
         /** 后座舱（key left，配置里的座舱 2）要建。 */
         final boolean cabinRear;
         /**
-         * Front cabin is off in the profile but cabin passenger is on: build it anyway, only for that
+         * Rear cabin is off in the profile but cabin passenger is on: build it anyway, only for that
          * window (cabin-only: not recorded, not on the main screen). Not part of {@link #key}, so
          * turning cabin passenger off does not rebuild the pipeline.
          */
-        final boolean cabinFrontForPassenger;
+        final boolean cabinRearForPassenger;
         /** 最多开几路。 */
         final int count;
 
         private Shape(String carModel, Profile profile, boolean multi, boolean cabinFront, boolean cabinRear,
-                      boolean cabinFrontForPassenger, int count) {
+                      boolean cabinRearForPassenger, int count) {
             this.carModel = carModel;
             this.profile = profile;
             this.multi = multi;
             this.cabinFront = cabinFront;
             this.cabinRear = cabinRear;
-            this.cabinFrontForPassenger = cabinFrontForPassenger;
+            this.cabinRearForPassenger = cabinRearForPassenger;
             this.count = count;
         }
 
-        /** The front cabin camera is built, for the profile or for cabin passenger. */
-        boolean buildsCabinFront() {
-            return cabinFront || cabinFrontForPassenger;
+        /** The rear cabin camera is built, for the profile or for cabin passenger. */
+        boolean buildsCabinRear() {
+            return cabinRear || cabinRearForPassenger;
         }
 
         static Shape of(Context app) {
@@ -190,11 +190,11 @@ public class CameraManagerHolder {
             }
             boolean multi = enabled > 1;
             AppConfig config = new AppConfig(app);
-            boolean cabinFront = multi && hasLane(profile, CameraProfile.ROLE_CABIN_1);
+            boolean cabinRear = multi && hasLane(profile, CameraProfile.ROLE_CABIN_2);
             return new Shape(config.getCarModel(), profile, multi,
-                    cabinFront,
-                    multi && hasLane(profile, CameraProfile.ROLE_CABIN_2),
-                    !cabinFront && config.isCabinPassengerEnabled(),
+                    multi && hasLane(profile, CameraProfile.ROLE_CABIN_1),
+                    cabinRear,
+                    !cabinRear && config.isCabinPassengerEnabled(),
                     multi ? Math.min(enabled, 3) : 1);
         }
 
@@ -245,8 +245,8 @@ public class CameraManagerHolder {
                         ? "车型变了（" + builtCarModel + " → " + shape.carModel + "），放掉旧的、重建"
                         : why == Rebuild.LISTING_FAILED ? "上一次列相机出错，放掉重建（再出错的话，隔 "
                         + FAILED_REBUILD_GAP_MS / 1000 + " 秒以上才再重建，不再逐次记）"
-                        : why == Rebuild.PASSENGER ? "cabin passenger turned on, Cabin 1 off in the profile: rebuild with "
-                        + "the front cabin camera for the window only"
+                        : why == Rebuild.PASSENGER ? "cabin passenger turned on, Cabin 2 off in the profile: rebuild with "
+                        + "the rear cabin camera for the window only"
                         : "主界面接上时配置里开的几路变了（" + builtFor + " → " + shape.key() + "），放掉旧的、重建"));
             }
             cameraManager.release();
@@ -262,33 +262,33 @@ public class CameraManagerHolder {
         cameraManager = manager;
         builtFor = shape.key();
         builtCarModel = shape.carModel;
-        builtForPassenger = shape.cabinFrontForPassenger;
+        builtForPassenger = shape.cabinRearForPassenger;
         built = null;
         AppLog.i(TAG, "建相机管线（" + builtFor + "，最多 " + shape.count + " 路）：相机列表、合成流探测在相机线程上做");
         setup.execute(() -> build(app, manager, shape));
         return manager;
     }
 
-    /** Why the pipeline has no front cabin camera ({@link #cabinFrontMissing}). */
+    /** Why the pipeline has no rear cabin camera ({@link #cabinRearMissing}). */
     public enum CabinMissing {
-        /** Camera profile has Cabin 1 off, or only one camera on: the pipeline never builds it. */
+        /** Camera profile has Cabin 2 off, or only one camera on: the pipeline never builds it. */
         PROFILE,
-        /** Cabin 1 is on, but the camera list gave no camera for it. */
+        /** Cabin 2 is on, but the camera list gave no camera for it. */
         NOT_FOUND
     }
 
     /**
-     * Why the built pipeline has no front cabin camera ({@link CameraSlots#KEY_CABIN_FRONT}); null when it has
+     * Why the built pipeline has no rear cabin camera ({@link CameraSlots#KEY_CABIN_REAR}); null when it has
      * one, or there is no pipeline yet, or it is still being built (ask again later).
      */
-    public synchronized CabinMissing cabinFrontMissing() {
+    public synchronized CabinMissing cabinRearMissing() {
         if (cameraManager == null || cameraManager.isReleased() || built == null) {
             return null;
         }
-        if (cameraManager.getCamera(CameraSlots.KEY_CABIN_FRONT) != null) {
+        if (cameraManager.getCamera(CameraSlots.KEY_CABIN_REAR) != null) {
             return null;
         }
-        if (builtFor == null || !builtFor.contains("+cabin1") && !builtForPassenger) {
+        if (builtFor == null || !builtFor.contains("+cabin2") && !builtForPassenger) {
             return CabinMissing.PROFILE;
         }
         return CabinMissing.NOT_FOUND;
@@ -304,7 +304,7 @@ public class CameraManagerHolder {
         LISTING_FAILED,
         /** 配置里开的几路变了，主界面在接上管线（只在 {@link CameraManagerHolder#getForMainScreen} 里重建）。 */
         LANES,
-        /** Cabin passenger was turned on and this one has no front cabin camera for it (any caller rebuilds). */
+        /** Cabin passenger was turned on and this one has no rear cabin camera for it (any caller rebuilds). */
         PASSENGER
     }
 
@@ -321,7 +321,7 @@ public class CameraManagerHolder {
             return Rebuild.LANES;
         }
         // Only when it is missing: turning cabin passenger off keeps the (idle) cabin camera, no rebuild
-        return shape.cabinFrontForPassenger && !builtForPassenger ? Rebuild.PASSENGER : Rebuild.NO;
+        return shape.cabinRearForPassenger && !builtForPassenger ? Rebuild.PASSENGER : Rebuild.NO;
     }
 
     /**
@@ -436,8 +436,8 @@ public class CameraManagerHolder {
             // 列表里没有、又是这一次要建的那几路：照样建出来，调度开之前看相机服务说它「不在」，判成被别的程序拿着
             List<String> absent = new ArrayList<>();
             for (String id : plan.missing) {
-                if (id.equals(plan.compositeId) || shape.buildsCabinFront() && id.equals(plan.cabin1Id)
-                        || shape.cabinRear && id.equals(plan.cabin2Id)) {
+                if (id.equals(plan.compositeId) || shape.cabinFront && id.equals(plan.cabin1Id)
+                        || shape.buildsCabinRear() && id.equals(plan.cabin2Id)) {
                     absent.add(id);
                 }
             }
@@ -463,9 +463,9 @@ public class CameraManagerHolder {
         // 照配置定尺寸（「最大」要问相机服务这一路声明了哪些尺寸，所以也在这条线程上算）：环视只在真是合成流时钉
         Size compositeUse = plan.compositeIsReal && compositeSize != null
                 ? profileSize(app, shape.profile, CameraProfile.ROLE_COMPOSITE, compositeSize) : null;
-        Size cabinFrontUse = shape.buildsCabinFront()
-                ? profileSize(app, shape.profile, CameraProfile.ROLE_CABIN_1, null) : null;
-        Size cabinRearUse = shape.cabinRear ? profileSize(app, shape.profile, CameraProfile.ROLE_CABIN_2, null) : null;
+        Size cabinFrontUse = shape.cabinFront ? profileSize(app, shape.profile, CameraProfile.ROLE_CABIN_1, null) : null;
+        Size cabinRearUse = shape.buildsCabinRear()
+                ? profileSize(app, shape.profile, CameraProfile.ROLE_CABIN_2, null) : null;
         Built result = new Built(plan, compositeSize, compositeUse, located.diagnostics, false);
         main.post(() -> finish(manager, shape, result, cabinFrontUse, cabinRearUse));
     }
@@ -484,18 +484,18 @@ public class CameraManagerHolder {
             if (plan == null) {
                 manager.initCameras(null, null, null, null, null, null, null, null);
             } else {
-                manager.setCabinOnly(shape.cabinFrontForPassenger && plan.cabin1Id != null
-                        ? java.util.Collections.singleton(CameraSlots.KEY_CABIN_FRONT) : null);
+                manager.setCabinOnly(shape.cabinRearForPassenger && plan.cabin2Id != null
+                        ? java.util.Collections.singleton(CameraSlots.KEY_CABIN_REAR) : null);
                 manager.initCameras(plan.compositeId, null,
-                        shape.buildsCabinFront() ? plan.cabin1Id : null, null,
-                        shape.cabinRear ? plan.cabin2Id : null, null,
+                        shape.cabinFront ? plan.cabin1Id : null, null,
+                        shape.buildsCabinRear() ? plan.cabin2Id : null, null,
                         null, null);
                 pin(manager, CameraSlots.KEY_SURROUND, result.compositeUse);
                 pin(manager, CameraSlots.KEY_CABIN_FRONT, cabinFrontUse);
                 pin(manager, CameraSlots.KEY_CABIN_REAR, cabinRearUse);
                 AppLog.i(TAG, "相机管线建好了（" + builtFor + "）: " + plan + "，环视尺寸 " + result.compositeUse
                         + "（合成流 " + result.compositeSize + "），前座舱 " + cabinFrontUse + "，后座舱 " + cabinRearUse
-                        + (shape.cabinFrontForPassenger ? "（前座舱只给座舱窗口用）" : ""));
+                        + (shape.cabinRearForPassenger ? "（后座舱只给座舱窗口用）" : ""));
             }
             if (result.failed) {
                 failedAtMs = android.os.SystemClock.elapsedRealtime();

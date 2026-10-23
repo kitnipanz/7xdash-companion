@@ -4,12 +4,15 @@ package com.kooo.evcam.zeekr;
  * Size and position of the cabin-passenger window. No Android types, so the clamps can be tested.
  *
  * <p>The picture keeps its shape. The window's width and height only decide how much of the
- * front cabin is visible, the same way Super mirror's window does.</p>
+ * rear cabin is visible, the same way Super mirror's window does.</p>
  */
 public final class CabinWindow {
 
-    /** Front cabin. The internal key is {@code back}; that name is not "the rear camera". */
-    public static final String CAMERA_KEY = "back";
+    /**
+     * Rear cabin (Cabin 2, internal key {@code left}). Not the front cabin ({@code back}): on the car
+     * that slot is the driver face camera.
+     */
+    public static final String CAMERA_KEY = com.kooo.evcam.camera.CameraSlots.KEY_CABIN_REAR;
 
     public static final int MIN_PX = 120;
     public static final int DEFAULT_WIDTH = 720;

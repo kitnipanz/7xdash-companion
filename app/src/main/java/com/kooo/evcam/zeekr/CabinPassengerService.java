@@ -162,12 +162,12 @@ public class CabinPassengerService extends Service {
                     + " canvas=" + CabinLog.id(surfaceTexture));
             return;
         }
-        // getOrInit, not getCameraManager: with Cabin 1 off in the profile it rebuilds the pipeline
-        // once with the front cabin camera for this window only
+        // getOrInit, not getCameraManager: with Cabin 2 off in the profile it rebuilds the pipeline
+        // once with the rear cabin camera for this window only
         MultiCameraManager manager = CameraManagerHolder.getInstance().getOrInit(this);
         SingleCamera camera = manager != null ? manager.getCamera(CabinWindow.CAMERA_KEY) : null;
         if (camera == null) {
-            CameraManagerHolder.CabinMissing missing = CameraManagerHolder.getInstance().cabinFrontMissing();
+            CameraManagerHolder.CabinMissing missing = CameraManagerHolder.getInstance().cabinRearMissing();
             if (missing != null) {
                 // Built without it: retrying cannot help, and the window would stay blank
                 giveUp(missing);
@@ -313,7 +313,7 @@ public class CabinPassengerService extends Service {
     }
 
     /**
-     * The pipeline has no front cabin camera and will not get one by waiting. Say why and turn
+     * The pipeline has no rear cabin camera and will not get one by waiting. Say why and turn
      * cabin passenger off, instead of leaving a blank window up.
      */
     private void giveUp(CameraManagerHolder.CabinMissing missing) {
@@ -323,9 +323,9 @@ public class CabinPassengerService extends Service {
         gaveUp = true;
         cancelRetry();
         String why = missing == CameraManagerHolder.CabinMissing.PROFILE
-                ? "Cabin 1 is off in the camera profile (or only one camera is on)"
-                : "the camera list has no front cabin camera";
-        AppLog.w(TAG, "cabin passenger: no front cabin camera: " + why);
+                ? "Cabin 2 is off in the camera profile (or only one camera is on)"
+                : "the camera list has no rear cabin camera";
+        AppLog.w(TAG, "cabin passenger: no rear cabin camera: " + why);
         log("gave up: pipeline has no cabin camera, " + missing + " (" + why + ")");
         com.kooo.evcam.ui.Notice.makeText(this, missing == CameraManagerHolder.CabinMissing.PROFILE
                         ? R.string.msg_cabin_off_in_profile : R.string.msg_cabin_not_found,

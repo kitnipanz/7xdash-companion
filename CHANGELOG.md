@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.1.9-beta] - 2026-10-23
+
+- Cabin passenger (and its shortcut) shows the rear cabin camera, Cabin 2, again. 1.1.8 opened the Cabin 1 slot, which on the car is the driver face camera. With Cabin 2 off in the camera profile, the rear cabin camera is built for the cabin passenger window only, as 1.1.8 did for Cabin 1.
+
 ## [1.1.8-beta] - 2026-10-23
 
 - Cabin passenger works with Cabin 1 off in the camera profile. The front cabin camera is built for the cabin passenger window only: it is not recorded, not in photos, and the main screen layout stays as the profile says. Turning cabin passenger on for the first time restarts the camera pipeline once (a recording in progress ends its segment and carries on).

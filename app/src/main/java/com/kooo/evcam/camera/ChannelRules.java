@@ -1212,7 +1212,7 @@ public final class ChannelRules {
             case BOTH_MIRRORS:
                 return isSurround(lane);
             case CABIN:
-                return CameraSlots.KEY_CABIN_FRONT.equals(lane.key);
+                return CameraSlots.KEY_CABIN_REAR.equals(lane.key);
             default:
                 return true;
         }
@@ -1323,7 +1323,7 @@ public final class ChannelRules {
                             || w.holders.contains(CameraNeeds.Holder.SIDE_POPUP)
                             || w.holders.contains(CameraNeeds.Holder.BOTH_MIRRORS);
                 }
-                return CameraSlots.KEY_CABIN_FRONT.equals(lane.key)
+                return CameraSlots.KEY_CABIN_REAR.equals(lane.key)
                         && w.holders.contains(CameraNeeds.Holder.CABIN);
             case RECORD:
                 return w.holders.contains(CameraNeeds.Holder.RECORDING) && w.recordPlan.contains(lane.key);

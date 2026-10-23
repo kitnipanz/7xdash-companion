@@ -201,8 +201,8 @@
     <string name="set_cabin_width_title">ความกว้างหน้าต่าง</string>
     <string name="set_cabin_height_title">ความสูงหน้าต่าง</string>
     <string name="set_cabin_height_summary">ภาพคงรูปทรงเดิม หน้าต่างที่กว้างหรือสูงขึ้นจะเห็นห้องโดยสารหน้าได้มากขึ้น</string>
-    <string name="msg_cabin_off_in_profile">ห้องโดยสารต้องใช้กล้องห้องโดยสารหน้า เปิด Cabin 1 ในโปรไฟล์กล้องแล้วลองอีกครั้ง</string>
-    <string name="msg_cabin_not_found">ห้องโดยสาร: เครื่องเสียงไม่พบกล้องห้องโดยสารหน้า ตรวจการจับคู่กล้องในการตั้งค่า</string>
+    <string name="msg_cabin_off_in_profile">ห้องโดยสารต้องใช้กล้องห้องโดยสารหลัง เปิด Cabin 2 ในโปรไฟล์กล้องแล้วลองอีกครั้ง</string>
+    <string name="msg_cabin_not_found">ห้องโดยสาร: เครื่องเสียงไม่พบกล้องห้องโดยสารหลัง ตรวจการจับคู่กล้องในการตั้งค่า</string>
     <string name="msg_cabin_on">เปิดภาพห้องโดยสารแล้ว ลากเพื่อย้าย บีบเพื่อปรับขนาด</string>
     <string name="shortcut_add">เพิ่มปุ่มลัด</string>
     <string name="shortcut_empty">ยังไม่มีปุ่มลัด เพิ่มหนึ่งอัน กดปุ่ม แล้วเลือกการทำงาน</string>

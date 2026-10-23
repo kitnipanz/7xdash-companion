@@ -158,7 +158,7 @@ public class ChannelRulesTest {
             w.holders.clear();
             claim(holder);
             boolean wantsRear = holder != Holder.MIRROR && holder != Holder.SIDE_POPUP
-                    && holder != Holder.BOTH_MIRRORS && holder != Holder.CABIN;
+                    && holder != Holder.BOTH_MIRRORS;
             assertEquals(holder + "：亮屏照登记表", wantsRear, ChannelRules.wanted(w, rear));
             assertFalse(ChannelRules.releasedByDark(w, rear));
         }
@@ -2482,30 +2482,43 @@ public class ChannelRulesTest {
     }
 
     /**
-     * Front cabin built only for the cabin passenger window (Cabin 1 off in the profile): only that
+     * Rear cabin built only for the cabin passenger window (Cabin 2 off in the profile): only that
      * window wants it, and only its mirror output. Main screen preview, recording and photos never
      * open it, even with the screen on and it in the record plan.
      */
     @Test
     public void aCabinOnlyLaneIsWantedOnlyByCabinPassenger() {
-        front.cabinOnly = true;
+        rear.cabinOnly = true;
         w.screenOn = true;
         planAll();
         for (Holder holder : Holder.values()) {
             w.holders.clear();
             claim(holder);
             assertEquals(holder + ": only cabin passenger opens it",
-                    holder == Holder.CABIN, ChannelRules.wanted(w, front));
+                    holder == Holder.CABIN, ChannelRules.wanted(w, rear));
         }
-        front.declared.add(pvF);
-        front.declared.add(recF);
-        front.declared.add(mirror);
+        rear.declared.add(pvR);
+        rear.declared.add(recR);
+        rear.declared.add(mirror);
         claim(Holder.PREVIEW);
         claim(Holder.RECORDING);
         claim(Holder.CABIN);
         assertEquals("only the cabin window's output", java.util.Collections.singleton(mirror),
-                ChannelRules.wantedOutputs(w, front));
-        assertTrue("other lanes keep their rules", ChannelRules.wanted(w, rear));
+                ChannelRules.wantedOutputs(w, rear));
+        assertTrue("other lanes keep their rules", ChannelRules.wanted(w, front));
+    }
+
+    /** Cabin passenger shows the rear cabin (Cabin 2), never the front cabin slot (the driver face camera). */
+    @Test
+    public void cabinPassengerOpensTheRearCabinNotTheFront() {
+        w.screenOn = true;
+        claim(Holder.CABIN);
+        assertTrue(ChannelRules.wanted(w, rear));
+        assertFalse(ChannelRules.wanted(w, front));
+        rear.declared.add(mirror);
+        front.declared.add(mirror);
+        assertEquals(java.util.Collections.singleton(mirror), ChannelRules.wantedOutputs(w, rear));
+        assertTrue(ChannelRules.wantedOutputs(w, front).isEmpty());
     }
 
     private void claim(Holder holder) {

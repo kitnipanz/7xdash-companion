@@ -49,6 +49,11 @@ public class ShortcutActionTest {
     }
 
     @Test
+    public void quitIsItsOwnStoredAction() {
+        assertEquals(ShortcutAction.QUIT, ShortcutAction.fromKey("quit_app"));
+    }
+
+    @Test
     public void clickToSpeakHasASafetyCap() {
         assertEquals(10L * 60 * 1000, MegaphoneService.TOGGLE_MAX_MS);
     }

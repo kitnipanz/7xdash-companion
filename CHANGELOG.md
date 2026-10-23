@@ -1,3 +1,9 @@
+## [1.1.10-beta] - 2026-10-23
+
+- Quit button in the side rail, right under Dim. It asks before quitting, because quitting stops recording. New "Quit app" shortcut action quits straight away.
+- Outside speaker: after 6 seconds of pure silence from the head unit, the black box lists every app playing and whether it allows its sound to be captured, and the screen says when the playing app (CarPlay and some music apps) blocks capture.
+- Black box log lines for start-up, switches, exits and quitting are now in English.
+
 # Changelog
 
 ## [1.1.9-beta] - 2026-10-23

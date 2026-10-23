@@ -30,6 +30,12 @@ final class OutsideSpeaker {
     static final int ENDED = 0;
     /** While the megaphone talks on the same bus, the music drops to this share. */
     static final float DUCK = 0.15f;
+    /**
+     * Capture that stays exactly zero this long while something plays is a block, not a quiet song:
+     * Android hands back silence, not an error, for players that refuse capture (the car's own
+     * CarPlay / phone link app is privileged and refuses by default).
+     */
+    static final long SILENT_MS = 6_000L;
 
     private final Object lock = new Object();
     private volatile boolean go;
@@ -71,6 +77,20 @@ final class OutsideSpeaker {
             mono[f * 2 + 1] = (byte) (mixed >> 8);
         }
         return frames * 2;
+    }
+
+    /** True when every 16-bit sample is exactly zero. A real song never is, even when quiet. */
+    static boolean allZero(byte[] pcm, int length) {
+        if (pcm == null) {
+            return true;
+        }
+        int n = Math.min(length, pcm.length);
+        for (int i = 0; i < n; i++) {
+            if (pcm[i] != 0) {
+                return false;
+            }
+        }
+        return true;
     }
 
     void setVolume(int percent) {
@@ -190,6 +210,9 @@ final class OutsideSpeaker {
             byte[] in = new byte[CHUNK_BYTES];
             byte[] out = new byte[CHUNK_BYTES / 2];
             float applied = -1f;
+            long silentSince = android.os.SystemClock.elapsedRealtime();
+            boolean heard = false;
+            boolean reported = false;
             while (go) {
                 int read = record.read(in, 0, in.length);
                 if (read < 0) {
@@ -202,6 +225,17 @@ final class OutsideSpeaker {
                 if (want != applied) {
                     track.setVolume(want);
                     applied = want;
+                }
+                if (!allZero(in, read)) {
+                    if (!heard) {
+                        heard = true;
+                        com.kooo.evcam.blackbox.BlackBox.note("Outside speaker: hearing head unit audio");
+                    }
+                    silentSince = android.os.SystemClock.elapsedRealtime();
+                } else if (!reported && android.os.SystemClock.elapsedRealtime() - silentSince >= SILENT_MS
+                        && (ducking == null || !ducking.now())) {
+                    reported = true;
+                    reportSilence(context, manager);
                 }
                 int mono = downmix(in, read, out);
                 if (mono > 0 && track.write(out, 0, mono) < 0) {
@@ -216,6 +250,51 @@ final class OutsideSpeaker {
         } finally {
             capture = null;
             release(record, track);
+        }
+    }
+
+    /**
+     * Writes every active player's usage and capture policy to the black box, and tells the driver
+     * when another player is going but nothing reaches us. Our own track (capture refused) is one of them.
+     */
+    private static void reportSilence(Context context, AudioManager manager) {
+        java.util.List<android.media.AudioPlaybackConfiguration> players;
+        try {
+            players = manager.getActivePlaybackConfigurations();
+        } catch (RuntimeException e) {
+            players = java.util.Collections.emptyList();
+        }
+        StringBuilder line = new StringBuilder("Outside speaker: silent for ").append(SILENT_MS / 1000)
+                .append(" s, active players: ");
+        int others = 0;
+        for (android.media.AudioPlaybackConfiguration player : players) {
+            AudioAttributes attributes = player.getAudioAttributes();
+            int policy = attributes.getAllowedCapturePolicy();
+            line.append("[usage=").append(attributes.getUsage())
+                    .append(" content=").append(attributes.getContentType())
+                    .append(" capture=").append(policyName(policy)).append("] ");
+            if (policy != AudioAttributes.ALLOW_CAPTURE_BY_NONE) {
+                others++;
+            }
+        }
+        com.kooo.evcam.blackbox.BlackBox.noteImportant(line.toString());
+        if (others > 0) {
+            new android.os.Handler(android.os.Looper.getMainLooper()).post(() ->
+                    com.kooo.evcam.ui.Notice.makeText(context, R.string.outside_speaker_blocked,
+                            android.widget.Toast.LENGTH_LONG).show());
+        }
+    }
+
+    private static String policyName(int policy) {
+        switch (policy) {
+            case AudioAttributes.ALLOW_CAPTURE_BY_ALL:
+                return "all";
+            case AudioAttributes.ALLOW_CAPTURE_BY_SYSTEM:
+                return "system";
+            case AudioAttributes.ALLOW_CAPTURE_BY_NONE:
+                return "none";
+            default:
+                return Integer.toString(policy);
         }
     }
 

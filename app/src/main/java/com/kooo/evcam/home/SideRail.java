@@ -31,15 +31,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 7xDash 的固定控制栏：极氪 OS 7 左边那一条，每一页都在，永远在同一个位置。
+ * 7xDash fixed control rail: the strip on the left in Zeekr OS 7, on every page, always in the same place.
  *
- * <p>从上到下：主页、录像、调暗、后视、即时抓拍、喊话、均衡器、设置。除了主页和设置，都是开关 ——
- * 点了不换页，走的是快捷键那条路（{@link ShortcutPerformer}），开着的那一格点亮
- * （录像是录制红，其余是极氪橙；主页在主页上时点亮）。</p>
+ * <p>Top to bottom: Home, Record, Dim, Quit, Rear view, Instant capture, Megaphone, EQ, AirPlay, Settings.
+ * Except Home, Quit and Settings, each is a switch: tapping does not change page, it goes through the
+ * shortcut path ({@link ShortcutPerformer}), and a cell lights up while on (record red for Record,
+ * Zeekr orange for the rest; Home lights up on the home page).</p>
  *
- * <p>不用每个布局各放一份：{@link #install} 在每个界面第一次显示之前（onStart，窗口还没挂上）
- * 把整页包进一个横排、旁边插上这一条。那时还没有任何画布，预览的 TextureView 不会被拆一次。
- * 「侧边菜单位置」选了右边就插在右边。</p>
+ * <p>Not copied into every layout: {@link #install} wraps each screen before it first shows
+ * (onStart, window not attached yet) and puts the rail beside the page. No surface exists yet, so the
+ * preview TextureView is never torn down. With "Side menu position" set to right, it goes on the right.</p>
  */
 public class SideRail extends LinearLayout {
 
@@ -161,6 +162,8 @@ public class SideRail extends LinearLayout {
                 () -> perform(ShortcutAction.RECORD), this::recording, true);
         add(R.drawable.ic_dim, R.string.home_rail_dim,
                 () -> perform(ShortcutAction.DIM), config::isDimOverlayEnabled, false);
+        // Quitting stops recording: ask first, unlike the other cells which toggle on tap
+        add(R.drawable.ic_power, R.string.home_rail_quit, this::confirmQuit, null, false);
         add(R.drawable.ic_rearview, R.string.home_rail_rear,
                 () -> perform(ShortcutAction.MIRROR), config::isRearViewEnabled, false);
         add(R.drawable.ic_flash, R.string.home_rail_capture,
@@ -223,6 +226,17 @@ public class SideRail extends LinearLayout {
 
     private void perform(ShortcutAction action) {
         ShortcutPerformer.perform(getContext(), action.key);
+    }
+
+    private void confirmQuit() {
+        Context context = getContext();
+        com.kooo.evcam.ui.CamDialogs.showDestructive(
+                new com.google.android.material.dialog.MaterialAlertDialogBuilder(context,
+                        R.style.Theme_Cam_MaterialAlertDialog)
+                        .setTitle(R.string.nav_exit)
+                        .setMessage(R.string.home_rail_quit_confirm)
+                        .setPositiveButton(R.string.nav_exit, (d, w) -> perform(ShortcutAction.QUIT))
+                        .setNegativeButton(android.R.string.cancel, null));
     }
 
     private void goHome() {

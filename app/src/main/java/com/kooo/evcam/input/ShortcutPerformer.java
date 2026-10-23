@@ -110,6 +110,9 @@ public final class ShortcutPerformer {
             case OUTSIDE_SPEAKER:
                 com.kooo.evcam.audio.OutsideSpeakerService.toggle(context);
                 return;
+            case QUIT:
+                quit(context);
+                return;
             case CABIN_PASSENGER:
                 com.kooo.evcam.zeekr.CabinLog.line(context, "shortcut: cabin passenger");
                 AppConfig cabin = new AppConfig(context);
@@ -201,6 +204,24 @@ public final class ShortcutPerformer {
         com.kooo.evcam.ui.Notice.makeText(context,
                 on ? R.string.shortcut_eq_on : R.string.shortcut_eq_off,
                 Toast.LENGTH_SHORT).show();
+    }
+
+    /**
+     * Quit through the main screen's own exit, so recording stops and files close the same way.
+     * With no main screen alive, open it with {@link MainActivity#EXTRA_EXIT} and it quits itself.
+     */
+    private static void quit(Context context) {
+        new android.os.Handler(android.os.Looper.getMainLooper()).post(() -> {
+            MainActivity live = MainActivity.getInstance();
+            if (live != null && !live.isFinishing()) {
+                live.exitApp();
+                return;
+            }
+            Intent exit = new Intent(context, MainActivity.class)
+                    .putExtra(MainActivity.EXTRA_EXIT, true)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            context.startActivity(exit);
+        });
     }
 
     /** 拍一张，只拍 {@code only} 认的那几路。null 是全部。结果照常弹提示（开着抬头显示通知时也上抬头显示）。 */

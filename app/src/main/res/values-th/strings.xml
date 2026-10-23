@@ -1313,6 +1313,8 @@
     <string name="home_rail_rear">กล้องหลัง</string>
     <string name="home_rail_capture">จับภาพ</string>
     <string name="home_rail_dim">หรี่จอ</string>
+    <string name="home_rail_quit">ออก</string>
+    <string name="home_rail_quit_confirm">หยุดบันทึกและปิด 7xDash? แอปจะปิดอยู่จนกว่าคุณจะเปิดเอง</string>
     <string name="home_rail_megaphone">โทรโข่ง</string>
     <string name="home_rail_settings">ตั้งค่า</string>
     <string name="home_state_on">เปิด</string>
@@ -1368,6 +1370,7 @@
     <string name="outside_speaker_note">เพลงและสื่อจากหน้าจอรถ</string>
     <string name="outside_speaker_stop">หยุด</string>
     <string name="outside_speaker_open">จับเสียงจากหน้าจอรถไม่ได้</string>
+    <string name="outside_speaker_blocked">ไม่ได้ยินเสียงจากเครื่องเสียงรถ CarPlay และบางแอปไม่อนุญาตให้จับเสียงของแอป</string>
     <string name="outside_speaker_refused">ไม่ได้รับอนุญาตให้จับเสียง</string>
     <string name="outside_speaker_unsupported">ลำโพงนอกรถต้องใช้ Android 10 ขึ้นไป</string>
     <string name="outside_speaker_section">ลำโพงนอกรถ (เบต้า)</string>

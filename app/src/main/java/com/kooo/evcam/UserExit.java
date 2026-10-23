@@ -47,7 +47,7 @@ public final class UserExit {
         prefs(context).edit().putLong(KEY_EXITED_AT, System.currentTimeMillis())
                 .putLong(KEY_EXITED_BOOT_AT, bootAt()).commit();
         KeepAliveManager.stopKeepAliveWork(context);
-        BlackBox.noteImportant("用户退出：暂停自启动，已取消保活任务，直到真正开机或手动打开");
+        BlackBox.noteImportant("User quit: auto-start paused, keep-alive job cancelled, until a real reboot or a manual open");
     }
 
     public static boolean isExited(Context context) {
@@ -64,7 +64,7 @@ public final class UserExit {
             return;
         }
         prefs(context).edit().remove(KEY_EXITED_AT).apply();
-        BlackBox.noteImportant("恢复自启动：" + why);
+        BlackBox.noteImportant("Auto-start resumed: " + why);
     }
 
     /**

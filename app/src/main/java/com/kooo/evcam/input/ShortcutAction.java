@@ -36,7 +36,9 @@ public enum ShortcutAction {
     /** Read the floor and bay signs around the car now, same as shifting into P. */
     WHERE_PARKED("where_parked", R.string.shortcut_action_where_parked),
     /** Beta: play what the head unit plays on the outside speaker, or stop it. */
-    OUTSIDE_SPEAKER("toggle_outside_speaker", R.string.shortcut_action_outside_speaker);
+    OUTSIDE_SPEAKER("toggle_outside_speaker", R.string.shortcut_action_outside_speaker),
+    /** Quit the app, same as Quit app in the drawer: stops recording and stays closed until opened again. */
+    QUIT("quit_app", R.string.nav_exit);
 
     public final String key;
     public final int labelRes;

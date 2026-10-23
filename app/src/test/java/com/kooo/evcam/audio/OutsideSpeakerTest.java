@@ -41,4 +41,12 @@ public class OutsideSpeakerTest {
     private static int sample(byte[] pcm, int index) {
         return (short) ((pcm[index * 2] & 0xFF) | (pcm[index * 2 + 1] << 8));
     }
+
+    @Test
+    public void allZeroOnlyForTrueSilence() {
+        assertEquals(true, OutsideSpeaker.allZero(new byte[] {0, 0, 0, 0}, 4));
+        assertEquals(false, OutsideSpeaker.allZero(new byte[] {0, 0, 1, 0}, 4));
+        // Bytes past length do not count
+        assertEquals(true, OutsideSpeaker.allZero(new byte[] {0, 0, 1, 0}, 2));
+    }
 }

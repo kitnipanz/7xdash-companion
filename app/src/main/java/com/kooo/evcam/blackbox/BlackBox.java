@@ -138,14 +138,14 @@ public final class BlackBox {
             return;
         }
         startedAtMs = SystemClock.elapsedRealtime();
-        noteImportant("==== 进程启动，起因: " + starter + " ====");
+        noteImportant("==== Process start, cause: " + starter + " ====");
         // 重启判断别人马上要用（UserExit），留在调用线程；其余都是读文件、问系统，去黑匣子线程做
         noteBootIfNew(appContext, starter);
         final Context app = appContext;
         BOX.post(() -> {
             noteVersionIfNew(app);
             // 这一次进程起来时开关是什么样的 —— 事后看一段时间线，才知道当时在什么设置下
-            noteImportant("开关: " + describeSwitches(app));
+            noteImportant("Switches: " + describeSwitches(app));
             appendPreviousExits();
         });
     }
@@ -166,8 +166,8 @@ public final class BlackBox {
             return;
         }
         starterNoted = true;
-        noteImportant("拉起者: " + starter + "（进程启动后 "
-                + (SystemClock.elapsedRealtime() - startedAtMs) + " ms）");
+        noteImportant("Started by: " + starter + " ("
+                + (SystemClock.elapsedRealtime() - startedAtMs) + " ms after process start)");
     }
 
     /** 这个进程是不是车机重启后第一次运行。用户退出的标记按规格 1.4 在真正开机时清掉，靠它。 */
@@ -184,27 +184,27 @@ public final class BlackBox {
      */
     public static String describeSwitches(Context context) {
         if (context == null) {
-            return "(没有 context)";
+            return "(no context)";
         }
         try {
             com.kooo.evcam.AppConfig c = new com.kooo.evcam.AppConfig(context);
-            return "开机自启动=" + onOff(c.isAutoStartOnBoot())
-                    + " 自动录制=" + onOff(c.isAutoStartRecording())
-                    + " 熄屏录制=" + onOff(c.isScreenOffRecordingEnabled())
+            return "autoStartOnBoot=" + onOff(c.isAutoStartOnBoot())
+                    + " autoRecord=" + onOff(c.isAutoStartRecording())
+                    + " screenOffRecord=" + onOff(c.isScreenOffRecordingEnabled())
                     + (c.isScreenOffRecordingStoredOn() && !c.isScreenOffRecordingEnabled()
-                            ? "(存着是开，开发者选项没解锁，没生效)" : "")
-                    + (c.isScreenOffRecordingEnabled() ? "(最多 " + c.getScreenOffWakeMinutes() + " 分钟不让睡)" : "")
-                    + " 熄屏持续录制=" + onOff(c.isScreenOffKeepRecording())
-                    + " 超级后视镜=" + onOff(c.isRearViewEnabled())
-                    + " 按键模式=" + onOff(c.isRearViewButtonMode())
-                    + " 录制悬浮按钮=" + onOff(c.isRecordingFloatingEnabled());
+                            ? "(saved on, but developer options locked: not in effect)" : "")
+                    + (c.isScreenOffRecordingEnabled() ? "(keep awake up to " + c.getScreenOffWakeMinutes() + " min)" : "")
+                    + " screenOffKeepRecording=" + onOff(c.isScreenOffKeepRecording())
+                    + " rearViewMirror=" + onOff(c.isRearViewEnabled())
+                    + " buttonMode=" + onOff(c.isRearViewButtonMode())
+                    + " recordFloatingButton=" + onOff(c.isRecordingFloatingEnabled());
         } catch (Throwable t) {
-            return "(读开关失败: " + t + ")";
+            return "(reading switches failed: " + t + ")";
         }
     }
 
     private static String onOff(boolean on) {
-        return on ? "开" : "关";
+        return on ? "on" : "off";
     }
 
     /**
@@ -219,7 +219,7 @@ public final class BlackBox {
             return "";
         }
         long off = com.kooo.evcam.screen.ScreenState.androidOffForMs();
-        return "，熄屏后 +" + ms + "ms" + (off < 0 ? "" : "、安卓熄屏起 +" + off + "ms");
+        return ", screen off +" + ms + "ms" + (off < 0 ? "" : ", Android screen off +" + off + "ms");
     }
 
     /** 已经接上了没有。没接上时事件先攒在内存里。 */
@@ -263,7 +263,7 @@ public final class BlackBox {
             slot[0]++;
         }
         if (firstTime) {
-            note("首次收到: " + kind);
+            note("First received: " + kind);
         }
         flushCountsIfDue();
     }
@@ -277,7 +277,7 @@ public final class BlackBox {
                 return;
             }
             lastCountFlushMs = now;
-            line = new StringBuilder("计数汇总:");
+            line = new StringBuilder("Count summary:");
             for (Map.Entry<String, int[]> entry : COUNTS.entrySet()) {
                 line.append(' ').append(shortAction(entry.getKey()))
                         .append('=').append(entry.getValue()[0]);
@@ -351,7 +351,7 @@ public final class BlackBox {
                 }
             }
         } catch (Throwable t) {
-            AppLog.w(TAG, "写黑匣子失败: " + t);
+            AppLog.w(TAG, "Black box write failed: " + t);
         }
     }
 
@@ -373,10 +373,10 @@ public final class BlackBox {
                 return;
             }
             if (!file.renameTo(old)) {
-                AppLog.w(TAG, "轮换失败，继续往原文件写");
+                AppLog.w(TAG, "Rotation failed, still writing to the old file");
             }
         } catch (Throwable t) {
-            AppLog.w(TAG, "轮换出错: " + t);
+            AppLog.w(TAG, "Rotation error: " + t);
         }
     }
 
@@ -401,7 +401,7 @@ public final class BlackBox {
             List<ApplicationExitInfo> exits =
                     am.getHistoricalProcessExitReasons(context.getPackageName(), 0, 5);
             if (exits == null || exits.isEmpty()) {
-                note("（系统没有记录过上一次进程退出）");
+                note("(system has no record of the previous process exit)");
                 return;
             }
             noteNewestAnrTrace(context, exits);
@@ -415,18 +415,18 @@ public final class BlackBox {
                     continue;
                 }
                 newest = Math.max(newest, exit.getTimestamp());
-                note("上次退出: " + wallClock(exit.getTimestamp())
+                note("Last exit: " + wallClock(exit.getTimestamp())
                         + " pid=" + exit.getPid()
-                        + " 原因=" + reasonName(exit.getReason())
+                        + " reason=" + reasonName(exit.getReason())
                         + " status=" + exit.getStatus()
-                        + " 当时重要性=" + exit.getImportance()
+                        + " importance=" + exit.getImportance()
                         + (exit.getDescription() != null ? " (" + exit.getDescription() + ")" : ""));
             }
             if (newest > lastSeen) {
                 seen.edit().putLong(KEY_LAST_EXIT, newest).apply();
             }
         } catch (Throwable t) {
-            AppLog.w(TAG, "读进程退出原因失败: " + t);
+            AppLog.w(TAG, "Reading process exit reason failed: " + t);
         }
     }
 
@@ -459,12 +459,12 @@ public final class BlackBox {
                     || Math.abs(bootWall - lastWall) > SAME_BOOT_SLACK_MS);
             seen.edit().putLong(KEY_BOOT_WALL, bootWall).putLong(KEY_BOOT_ELAPSED, elapsed).apply();
             if (first) {
-                noteImportant("车机本次开机于 " + wallClock(bootWall) + "（第一次记录）");
+                noteImportant("Head unit booted at " + wallClock(bootWall) + " (first record)");
             } else if (rebooted) {
                 rebootedSinceLastRun = true;
-                noteImportant("车机重启过：本次开机于 " + wallClock(bootWall)
-                        + "（上次记录的开机 " + wallClock(lastWall) + "），开机 "
-                        + (elapsed / 60000) + " 分钟后我们才第一次运行，起因 " + starter);
+                noteImportant("Head unit rebooted: booted at " + wallClock(bootWall)
+                        + " (previous recorded boot " + wallClock(lastWall) + "), we first ran "
+                        + (elapsed / 60000) + " min after boot, cause " + starter);
             }
         } catch (Throwable t) {
             AppLog.w(TAG, "noteBootIfNew: " + t);
@@ -487,9 +487,9 @@ public final class BlackBox {
             String last = seen.getString(KEY_LAST_VERSION, null);
             if (now != null && !now.equals(last)) {
                 seen.edit().putString(KEY_LAST_VERSION, now).apply();
-                noteImportant(last == null ? "版本 " + now + "（第一次记录）"
-                        : "版本变了：" + last + " → " + now
-                                + "（装新版时旧进程是被系统用信号结束的，紧挨着的「收到信号」退出多半就是它）");
+                noteImportant(last == null ? "Version " + now + " (first record)"
+                        : "Version changed: " + last + " → " + now
+                                + " (installing kills the old process with a signal; a 'signaled' exit right next to this is most likely that)");
             }
             noteFirstRunOfInstall(seen, info.lastUpdateTime);
         } catch (Throwable t) {
@@ -510,8 +510,8 @@ public final class BlackBox {
         }
         seen.edit().putLong(KEY_LAST_INSTALL, installedAt).apply();
         long startedWall = System.currentTimeMillis() - (SystemClock.elapsedRealtime() - startedAtMs);
-        noteImportant("这一版装好 " + String.format(Locale.US, "%.1f", (startedWall - installedAt) / 1000f)
-                + " 秒后第一次运行（安装于 " + wallClock(installedAt) + "）");
+        noteImportant("First run " + String.format(Locale.US, "%.1f", (startedWall - installedAt) / 1000f)
+                + " s after install (installed " + wallClock(installedAt) + ")");
     }
 
     /** 上次进程起来时的版本号。 */
@@ -554,10 +554,10 @@ public final class BlackBox {
         seen.edit().putLong(KEY_LAST_ANR, anr.getTimestamp()).apply();
 
         List<String> frames = mainThreadOf(anr);
-        noteImportant("ANR 现场：" + wallClock(anr.getTimestamp()) + " pid=" + anr.getPid()
-                + (frames.isEmpty() ? "，系统没留主线程快照" : "，主线程如下"));
+        noteImportant("ANR at " + wallClock(anr.getTimestamp()) + " pid=" + anr.getPid()
+                + (frames.isEmpty() ? ", system kept no main thread snapshot" : ", main thread below"));
         for (String frame : frames) {
-            note("ANR 主线程 | " + frame);
+            note("ANR main thread | " + frame);
         }
     }
 
@@ -587,7 +587,7 @@ public final class BlackBox {
                 }
             }
         } catch (Throwable t) {
-            AppLog.w(TAG, "读 ANR 快照失败: " + t);
+            AppLog.w(TAG, "Reading ANR snapshot failed: " + t);
         }
         return out;
     }
@@ -595,19 +595,19 @@ public final class BlackBox {
     private static String reasonName(int reason) {
         switch (reason) {
             case ApplicationExitInfo.REASON_ANR: return "ANR";
-            case ApplicationExitInfo.REASON_CRASH: return "崩溃";
-            case ApplicationExitInfo.REASON_CRASH_NATIVE: return "native崩溃";
-            case ApplicationExitInfo.REASON_DEPENDENCY_DIED: return "依赖进程没了";
-            case ApplicationExitInfo.REASON_EXCESSIVE_RESOURCE_USAGE: return "占资源太多";
-            case ApplicationExitInfo.REASON_EXIT_SELF: return "自己退的(System.exit)";
-            case ApplicationExitInfo.REASON_INITIALIZATION_FAILURE: return "初始化失败";
-            case ApplicationExitInfo.REASON_LOW_MEMORY: return "内存不足";
-            case ApplicationExitInfo.REASON_OTHER: return "其它";
-            case ApplicationExitInfo.REASON_PERMISSION_CHANGE: return "权限变化";
-            case ApplicationExitInfo.REASON_SIGNALED: return "收到信号";
-            case ApplicationExitInfo.REASON_USER_REQUESTED: return "用户要求";
-            case ApplicationExitInfo.REASON_USER_STOPPED: return "用户停止";
-            case ApplicationExitInfo.REASON_UNKNOWN: return "未知";
+            case ApplicationExitInfo.REASON_CRASH: return "crash";
+            case ApplicationExitInfo.REASON_CRASH_NATIVE: return "native crash";
+            case ApplicationExitInfo.REASON_DEPENDENCY_DIED: return "dependency died";
+            case ApplicationExitInfo.REASON_EXCESSIVE_RESOURCE_USAGE: return "excessive resource usage";
+            case ApplicationExitInfo.REASON_EXIT_SELF: return "exit self (System.exit)";
+            case ApplicationExitInfo.REASON_INITIALIZATION_FAILURE: return "initialization failure";
+            case ApplicationExitInfo.REASON_LOW_MEMORY: return "low memory";
+            case ApplicationExitInfo.REASON_OTHER: return "other";
+            case ApplicationExitInfo.REASON_PERMISSION_CHANGE: return "permission change";
+            case ApplicationExitInfo.REASON_SIGNALED: return "signaled";
+            case ApplicationExitInfo.REASON_USER_REQUESTED: return "user requested";
+            case ApplicationExitInfo.REASON_USER_STOPPED: return "user stopped";
+            case ApplicationExitInfo.REASON_UNKNOWN: return "unknown";
             default: return "reason=" + reason;
         }
     }
@@ -623,7 +623,7 @@ public final class BlackBox {
      */
     public static String export(Context context, int maxChars) {
         if (context == null) {
-            return "（没有上下文）\n";
+            return "(no context)\n";
         }
         // 把还在排队的先写完，报告才是最新的
         flush(500);
@@ -633,7 +633,7 @@ public final class BlackBox {
             File file = new File(dir, FILE);
             File old = new File(dir, OLD_FILE);
             if (!file.isFile() && !old.isFile()) {
-                return "还没有记录。\n";
+                return "No records yet.\n";
             }
             String text = tail(joined(readIfThere(old), readIfThere(file)), maxChars);
             sb.append(text);
@@ -641,7 +641,7 @@ public final class BlackBox {
                 sb.append('\n');
             }
         } catch (IOException e) {
-            sb.append("!! 读取失败: ").append(e).append('\n');
+            sb.append("!! Read failed: ").append(e).append('\n');
         }
         return sb.toString();
     }
@@ -690,7 +690,7 @@ public final class BlackBox {
         int from = text.length() - maxChars;
         int cut = text.indexOf('\n', from);
         String kept = cut < 0 ? text.substring(from) : text.substring(cut + 1);
-        return "…（更早的在文件里）\n" + kept;
+        return "… (earlier entries are in the file)\n" + kept;
     }
 
     /** 广播 action 太长，记短名就够认。 */

@@ -57,6 +57,8 @@ public class MainActivity extends AppCompatActivity {
 
     /** 7xDash 主页的卡片：进来直接到哪一页。值见下面几个 PAGE_。 */
     public static final String EXTRA_OPEN_PAGE = "open_page";
+    /** Set by the Quit shortcut when the main screen is not alive: the screen opens and runs {@link #exitApp}. */
+    public static final String EXTRA_EXIT = "exit_app";
     public static final String PAGE_HOME = "home";
     public static final String PAGE_CAMERA = "camera";
     /** 相机预览起来以后拍一张。 */
@@ -309,6 +311,7 @@ public class MainActivity extends AppCompatActivity {
         com.kooo.evcam.blackbox.BlackBox.note("主界面 onCreate savedState=" + (savedInstanceState != null));
         // 用户退出之后，所有会自己拉起主界面的路都被拦住了 —— 这时主界面被创建，只能是人点开的
         UserExit.clear(this, "manual open");
+        exitIfAsked(getIntent());
         // 人点开的主界面 = 新的一趟（规格 1.2）：手动停录、自动开过的记录清零。
         // 我们自己静默拉起来的（恢复录像、亮屏接回）不算，界面重建（savedState 非空）也不算
         if (savedInstanceState == null
@@ -424,6 +427,7 @@ public class MainActivity extends AppCompatActivity {
         AppLog.d(TAG, "onNewIntent called");
         openDrawerIfAsked(intent);
         openPageIfAsked(intent);
+        exitIfAsked(intent);
 
         // 还活着的主界面被静默拉到前面（Recovery：要接录像、而那时用不了相机）：接上之后照样退回后台（规格 1.6）
         if (intent.getBooleanExtra("auto_start_from_boot", false)) {
@@ -739,6 +743,15 @@ public class MainActivity extends AppCompatActivity {
         if (hero != null) {
             hero.setClipToOutline(true);
         }
+    }
+
+    /** Opened with {@link #EXTRA_EXIT}: quit once this main-thread pass is done (quitting inside onCreate stops halfway). */
+    private void exitIfAsked(Intent intent) {
+        if (intent == null || !intent.getBooleanExtra(EXTRA_EXIT, false)) {
+            return;
+        }
+        intent.removeExtra(EXTRA_EXIT);
+        getWindow().getDecorView().post(this::exitApp);
     }
 
     /** 带着 {@link #EXTRA_OPEN_PAGE} 进来：直接去那一页。 */

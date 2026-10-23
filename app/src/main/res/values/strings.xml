@@ -1335,6 +1335,8 @@ Then reopen this app.</string>
     <string name="home_rail_rear">Rear</string>
     <string name="home_rail_capture">Capture</string>
     <string name="home_rail_dim">Dim</string>
+    <string name="home_rail_quit">Quit</string>
+    <string name="home_rail_quit_confirm">Stop recording and close 7xDash? It stays closed until you open it again.</string>
     <string name="home_rail_megaphone">Megaphone</string>
     <string name="home_rail_settings">Settings</string>
     <string name="home_state_on">On</string>
@@ -1390,6 +1392,7 @@ Then reopen this app.</string>
     <string name="outside_speaker_note">Music and media from the head unit</string>
     <string name="outside_speaker_stop">Stop</string>
     <string name="outside_speaker_open">Could not capture the head unit audio</string>
+    <string name="outside_speaker_blocked">Hearing nothing from the head unit. CarPlay and some apps do not let their sound be captured.</string>
     <string name="outside_speaker_refused">Audio capture was not allowed</string>
     <string name="outside_speaker_unsupported">Outside speaker needs Android 10 or later</string>
     <string name="outside_speaker_section">Outside speaker (beta)</string>

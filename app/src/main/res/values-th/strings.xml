@@ -1313,8 +1313,8 @@
     <string name="home_rail_rear">กล้องหลัง</string>
     <string name="home_rail_capture">จับภาพ</string>
     <string name="home_rail_dim">หรี่จอ</string>
-    <string name="home_rail_quit">ออก</string>
-    <string name="home_rail_quit_confirm">หยุดบันทึกและปิด 7xDash? แอปจะปิดอยู่จนกว่าคุณจะเปิดเอง</string>
+    <string name="floating_quit">ออกจาก 7xDash</string>
+    <string name="floating_quit_again">แตะอีกครั้งเพื่อหยุดบันทึกและปิด 7xDash</string>
     <string name="home_rail_megaphone">โทรโข่ง</string>
     <string name="home_rail_settings">ตั้งค่า</string>
     <string name="home_state_on">เปิด</string>
@@ -1365,6 +1365,7 @@
     <string name="home_card_outside_speaker">ลำโพงนอกรถ</string>
     <string name="home_card_outside_speaker_sub">เล่นเสียงในรถออกนอกรถ กดค้างเพื่อปรับเสียง</string>
     <string name="shortcut_action_outside_speaker">เปิด/ปิดลำโพงนอกรถ (เบต้า)</string>
+    <string name="shortcut_action_quit">ออกจากแอป</string>
     <string name="outside_speaker_channel">ลำโพงนอกรถ</string>
     <string name="outside_speaker_playing">กำลังเล่นเสียงออกลำโพงนอกรถ</string>
     <string name="outside_speaker_note">เพลงและสื่อจากหน้าจอรถ</string>

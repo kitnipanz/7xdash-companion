@@ -1335,8 +1335,8 @@ Then reopen this app.</string>
     <string name="home_rail_rear">Rear</string>
     <string name="home_rail_capture">Capture</string>
     <string name="home_rail_dim">Dim</string>
-    <string name="home_rail_quit">Quit</string>
-    <string name="home_rail_quit_confirm">Stop recording and close 7xDash? It stays closed until you open it again.</string>
+    <string name="floating_quit">Quit 7xDash</string>
+    <string name="floating_quit_again">Tap again to stop recording and close 7xDash.</string>
     <string name="home_rail_megaphone">Megaphone</string>
     <string name="home_rail_settings">Settings</string>
     <string name="home_state_on">On</string>
@@ -1387,6 +1387,7 @@ Then reopen this app.</string>
     <string name="home_card_outside_speaker">Outside speaker</string>
     <string name="home_card_outside_speaker_sub">Play car audio outside. Hold for volume</string>
     <string name="shortcut_action_outside_speaker">Outside speaker on/off (beta)</string>
+    <string name="shortcut_action_quit">Quit app</string>
     <string name="outside_speaker_channel">Outside speaker</string>
     <string name="outside_speaker_playing">Playing on the outside speaker</string>
     <string name="outside_speaker_note">Music and media from the head unit</string>

@@ -33,8 +33,8 @@ import java.util.List;
 /**
  * 7xDash fixed control rail: the strip on the left in Zeekr OS 7, on every page, always in the same place.
  *
- * <p>Top to bottom: Home, Record, Dim, Quit, Rear view, Instant capture, Megaphone, EQ, AirPlay, Settings.
- * Except Home, Quit and Settings, each is a switch: tapping does not change page, it goes through the
+ * <p>Top to bottom: Home, Record, Dim, Rear view, Instant capture, Megaphone, EQ, AirPlay, Settings.
+ * Except Home and Settings, each is a switch: tapping does not change page, it goes through the
  * shortcut path ({@link ShortcutPerformer}), and a cell lights up while on (record red for Record,
  * Zeekr orange for the rest; Home lights up on the home page).</p>
  *
@@ -162,8 +162,6 @@ public class SideRail extends LinearLayout {
                 () -> perform(ShortcutAction.RECORD), this::recording, true);
         add(R.drawable.ic_dim, R.string.home_rail_dim,
                 () -> perform(ShortcutAction.DIM), config::isDimOverlayEnabled, false);
-        // Quitting stops recording: ask first, unlike the other cells which toggle on tap
-        add(R.drawable.ic_power, R.string.home_rail_quit, this::confirmQuit, null, false);
         add(R.drawable.ic_rearview, R.string.home_rail_rear,
                 () -> perform(ShortcutAction.MIRROR), config::isRearViewEnabled, false);
         add(R.drawable.ic_flash, R.string.home_rail_capture,
@@ -226,17 +224,6 @@ public class SideRail extends LinearLayout {
 
     private void perform(ShortcutAction action) {
         ShortcutPerformer.perform(getContext(), action.key);
-    }
-
-    private void confirmQuit() {
-        Context context = getContext();
-        com.kooo.evcam.ui.CamDialogs.showDestructive(
-                new com.google.android.material.dialog.MaterialAlertDialogBuilder(context,
-                        R.style.Theme_Cam_MaterialAlertDialog)
-                        .setTitle(R.string.nav_exit)
-                        .setMessage(R.string.home_rail_quit_confirm)
-                        .setPositiveButton(R.string.nav_exit, (d, w) -> perform(ShortcutAction.QUIT))
-                        .setNegativeButton(android.R.string.cancel, null));
     }
 
     private void goHome() {

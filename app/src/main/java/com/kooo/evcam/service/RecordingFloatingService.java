@@ -110,6 +110,8 @@ public class RecordingFloatingService extends Service {
     private FrameLayout floatingContainer;
     private RecordingButtonView recordingButton;
     private DimButtonView dimButton;
+    /** Power sign right of the moon. First tap arms it, a second tap within {@link #QUIT_ARM_MS} quits. */
+    private QuitButtonView quitButton;
     private TextView timeTextView;
     /** One dot per saved sticker, above the buttons. Orange while that link is up. */
     private LinearLayout stickerDots;
@@ -149,6 +151,13 @@ public class RecordingFloatingService extends Service {
     /** 录制键 + 间距 + 遮罩键。拖动时按这一整条夹在屏幕里。 */
     private int clusterWidthPx;
     private boolean downOnDim;
+    private boolean downOnQuit;
+    private static final long QUIT_ARM_MS = 3_000L;
+    private final Runnable disarmQuit = () -> {
+        if (quitButton != null) {
+            quitButton.setArmed(false);
+        }
+    };
     /** Finger started on the moon and has slid far enough to change the dim, not toggle it. */
     private boolean dimAdjusting;
     /** Opacity when the dim drag started. Right and down add to this. */
@@ -306,6 +315,14 @@ public class RecordingFloatingService extends Service {
                 dimButton.setLayoutParams(dimParams);
                 clusterWidthPx = buttonSize * 2 + dimParams.leftMargin;
             }
+            if (quitButton != null) {
+                LinearLayout.LayoutParams quitParams = (LinearLayout.LayoutParams) quitButton.getLayoutParams();
+                quitParams.width = buttonSize;
+                quitParams.height = buttonSize;
+                quitParams.leftMargin = Math.max(4, buttonSize / 8);
+                quitButton.setLayoutParams(quitParams);
+                clusterWidthPx += buttonSize + quitParams.leftMargin;
+            }
         }
         if (dimButton != null) {
             dimButton.setDimOn(appConfig.isDimOverlayEnabled());
@@ -453,6 +470,7 @@ public class RecordingFloatingService extends Service {
             floatingContainer = null;
             recordingButton = null;
             dimButton = null;
+            quitButton = null;
             timeTextView = null;
             stickerDots = null;
         }
@@ -627,7 +645,12 @@ public class RecordingFloatingService extends Service {
         LinearLayout.LayoutParams dimParams = new LinearLayout.LayoutParams(buttonSize, buttonSize);
         dimParams.leftMargin = gap;
         horizontalContainer.addView(dimButton, dimParams);
-        clusterWidthPx = buttonSize * 2 + gap;
+
+        quitButton = new QuitButtonView(this);
+        LinearLayout.LayoutParams quitParams = new LinearLayout.LayoutParams(buttonSize, buttonSize);
+        quitParams.leftMargin = gap;
+        horizontalContainer.addView(quitButton, quitParams);
+        clusterWidthPx = buttonSize * 3 + gap * 2;
 
         // 创建时间显示
         timeTextView = new TextView(this);
@@ -685,11 +708,12 @@ public class RecordingFloatingService extends Service {
                         isDragging = false;
                         longPressFired = false;
                         downOnDim = hitDim(event);
+                        downOnQuit = !downOnDim && hit(quitButton, event);
                         dimAdjusting = false;
                         dimShown = -1;
                         if (downOnDim) {
                             dimOrigin = appConfig.getDimOpacity();
-                        } else {
+                        } else if (!downOnQuit) {
                             mainHandler.postDelayed(longPressRunnable, LONG_PRESS_MS);
                         }
                         return true;
@@ -751,6 +775,8 @@ public class RecordingFloatingService extends Service {
                         }
                         if (!isDragging && !longPressFired && downOnDim) {
                             toggleDim();
+                        } else if (!isDragging && downOnQuit) {
+                            tapQuit();
                         } else if (!isDragging && !longPressFired) {
                             perform(FloatingAction.fromKey(appConfig.getFloatingTapAction()));
                         } else if (!isDragging) {
@@ -796,15 +822,37 @@ public class RecordingFloatingService extends Service {
     }
 
     private boolean hitDim(MotionEvent event) {
-        if (dimButton == null || dimButton.getWidth() == 0) {
+        return hit(dimButton, event);
+    }
+
+    private static boolean hit(View view, MotionEvent event) {
+        if (view == null || view.getWidth() == 0) {
             return false;
         }
         int[] location = new int[2];
-        dimButton.getLocationOnScreen(location);
+        view.getLocationOnScreen(location);
         float x = event.getRawX();
         float y = event.getRawY();
-        return x >= location[0] && x <= location[0] + dimButton.getWidth()
-                && y >= location[1] && y <= location[1] + dimButton.getHeight();
+        return x >= location[0] && x <= location[0] + view.getWidth()
+                && y >= location[1] && y <= location[1] + view.getHeight();
+    }
+
+    /** Quitting stops recording, so one stray tap only arms the button; the second tap quits. */
+    private void tapQuit() {
+        if (quitButton == null) {
+            return;
+        }
+        mainHandler.removeCallbacks(disarmQuit);
+        if (!quitButton.isArmed()) {
+            quitButton.setArmed(true);
+            com.kooo.evcam.ui.Notice.makeText(this, R.string.floating_quit_again, Toast.LENGTH_SHORT).show();
+            mainHandler.postDelayed(disarmQuit, QUIT_ARM_MS);
+            return;
+        }
+        quitButton.setArmed(false);
+        AppLog.i(TAG, "Quit from the floating button");
+        com.kooo.evcam.input.ShortcutPerformer.perform(this,
+                com.kooo.evcam.input.ShortcutAction.QUIT.key);
     }
 
     /**
@@ -1334,6 +1382,48 @@ public class RecordingFloatingService extends Service {
             canvas.drawCircle(cx - moon * 0.15f, cy, moon, iconPaint);
             canvas.drawCircle(cx + moon * 0.45f, cy - moon * 0.15f, moon * 0.82f, cutPaint);
             canvas.restoreToCount(layer);
+        }
+    }
+
+    /** Power sign right of the moon. Turns record red once armed. */
+    private static class QuitButtonView extends View {
+        private final Paint backgroundPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        private final Paint iconPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        private boolean armed;
+
+        QuitButtonView(Context context) {
+            super(context);
+            backgroundPaint.setStyle(Paint.Style.FILL);
+            iconPaint.setStyle(Paint.Style.STROKE);
+            iconPaint.setStrokeCap(Paint.Cap.ROUND);
+            setContentDescription(context.getString(R.string.floating_quit));
+        }
+
+        boolean isArmed() {
+            return armed;
+        }
+
+        void setArmed(boolean on) {
+            armed = on;
+            invalidate();
+        }
+
+        @Override
+        protected void onDraw(Canvas canvas) {
+            super.onDraw(canvas);
+            float cx = getWidth() / 2f;
+            float cy = getHeight() / 2f;
+            float radius = Math.min(getWidth(), getHeight()) / 2f - 6f;
+            backgroundPaint.setColor(ContextCompat.getColor(getContext(),
+                    armed ? R.color.recording : R.color.sunken));
+            canvas.drawCircle(cx, cy, radius, backgroundPaint);
+
+            iconPaint.setColor(ContextCompat.getColor(getContext(),
+                    armed ? R.color.on_energy : R.color.text_primary));
+            iconPaint.setStrokeWidth(Math.max(2f, radius * 0.11f));
+            float ring = radius * 0.42f;
+            canvas.drawArc(cx - ring, cy - ring, cx + ring, cy + ring, -60f, 300f, false, iconPaint);
+            canvas.drawLine(cx, cy - ring * 1.25f, cx, cy - ring * 0.1f, iconPaint);
         }
     }
 }

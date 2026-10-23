@@ -2481,6 +2481,33 @@ public class ChannelRulesTest {
         w.now = T0 + ms;
     }
 
+    /**
+     * Front cabin built only for the cabin passenger window (Cabin 1 off in the profile): only that
+     * window wants it, and only its mirror output. Main screen preview, recording and photos never
+     * open it, even with the screen on and it in the record plan.
+     */
+    @Test
+    public void aCabinOnlyLaneIsWantedOnlyByCabinPassenger() {
+        front.cabinOnly = true;
+        w.screenOn = true;
+        planAll();
+        for (Holder holder : Holder.values()) {
+            w.holders.clear();
+            claim(holder);
+            assertEquals(holder + ": only cabin passenger opens it",
+                    holder == Holder.CABIN, ChannelRules.wanted(w, front));
+        }
+        front.declared.add(pvF);
+        front.declared.add(recF);
+        front.declared.add(mirror);
+        claim(Holder.PREVIEW);
+        claim(Holder.RECORDING);
+        claim(Holder.CABIN);
+        assertEquals("only the cabin window's output", java.util.Collections.singleton(mirror),
+                ChannelRules.wantedOutputs(w, front));
+        assertTrue("other lanes keep their rules", ChannelRules.wanted(w, rear));
+    }
+
     private void claim(Holder holder) {
         if (w.holders.add(holder)) {
             w.needsVersion++;

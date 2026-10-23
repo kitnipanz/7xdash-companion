@@ -331,6 +331,12 @@ public final class ChannelRules {
          */
         long recordWantedSince;
 
+        /**
+         * Built only for the cabin passenger window (camera profile has this camera off): only the
+         * CABIN holder wants it, and only its mirror output. Preview, recording, photos never open it.
+         */
+        boolean cabinOnly;
+
         Lane(String key, String cameraId) {
             this.key = Objects.requireNonNull(key);
             this.cameraId = cameraId;
@@ -1193,6 +1199,9 @@ public final class ChannelRules {
         if (releasedByDark(w, lane)) {
             return false;
         }
+        if (lane.cabinOnly && holder != CameraNeeds.Holder.CABIN) {
+            return false;
+        }
         switch (holder) {
             case PREVIEW:
                 return w.screenOn;
@@ -1300,6 +1309,9 @@ public final class ChannelRules {
      */
     private static boolean wantsKind(World w, Lane lane, Kind kind) {
         if (releasedByDark(w, lane)) {
+            return false;
+        }
+        if (lane.cabinOnly && kind != Kind.MIRROR) {
             return false;
         }
         switch (kind) {

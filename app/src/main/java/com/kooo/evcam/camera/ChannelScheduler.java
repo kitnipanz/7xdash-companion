@@ -101,6 +101,11 @@ public final class ChannelScheduler {
     interface CameraPort {
         String cameraId();
 
+        /** Built only for the cabin passenger window ({@link ChannelRules.Lane#cabinOnly}). */
+        default boolean cabinOnly() {
+            return false;
+        }
+
         /** 开，会话带着这一组输出（一样都没有就带出帧口）。 */
         boolean open(Set<ChannelRules.Out> outputs);
 
@@ -1473,7 +1478,9 @@ public final class ChannelScheduler {
         List<ChannelRules.Lane> list = new ArrayList<>();
         for (Map.Entry<String, CameraPort> entry : lanes.entrySet()) {
             ports.put(entry.getKey(), entry.getValue());
-            list.add(new ChannelRules.Lane(entry.getKey(), entry.getValue().cameraId()));
+            ChannelRules.Lane lane = new ChannelRules.Lane(entry.getKey(), entry.getValue().cameraId());
+            lane.cabinOnly = entry.getValue().cabinOnly();
+            list.add(lane);
         }
         w = new ChannelRules.World(list);
         // 亮熄屏从一开始就照实：第一轮之前录像、拍照来问「座舱被熄屏放开没有」（releasedByDark），读到的不能是新世界的初值（黑着）

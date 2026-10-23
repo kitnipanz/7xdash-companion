@@ -201,6 +201,8 @@
     <string name="set_cabin_width_title">Window width</string>
     <string name="set_cabin_height_title">Window height</string>
     <string name="set_cabin_height_summary">The picture keeps its shape. A wider or taller window shows more of the front cabin.</string>
+    <string name="msg_cabin_off_in_profile">Cabin passenger needs the front cabin camera. Turn on Cabin 1 in the camera profile, then try again.</string>
+    <string name="msg_cabin_not_found">Cabin passenger: the head unit did not list a front cabin camera. Check the camera mapping in Settings.</string>
     <string name="msg_cabin_on">Cabin passenger on. Drag it to move it. Pinch to resize.</string>
     <string name="shortcut_add">Add shortcut</string>
     <string name="shortcut_empty">No shortcuts yet. Add one, press the button, then pick an action.</string>

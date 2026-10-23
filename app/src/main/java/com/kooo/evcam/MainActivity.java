@@ -2076,7 +2076,9 @@ public class MainActivity extends AppCompatActivity {
         }
         showBuilt(built);
         // 布局是新建的，座舱两格默认都显示。管线里只有真正要建的那一路才有实例（配置里关着的那一路没有），问它就是结论
-        showCabinPanes(pipeline.getCamera("back") != null, pipeline.getCamera("left") != null);
+        // A front cabin built only for the cabin passenger window is not part of this layout
+        showCabinPanes(pipeline.getCamera("back") != null && !pipeline.isCabinOnly("back"),
+                pipeline.getCamera("left") != null);
         pipeline.declarePreviews(textureFront, textureBack, textureLeft);
         // 各路的画面尺寸可能在挂上回调之前就算出来了（不开设备先算的、上一个界面时开过的）：补一次
         pipeline.firePreviewSizeCallbacks();

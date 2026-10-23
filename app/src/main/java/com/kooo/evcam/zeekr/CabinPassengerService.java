@@ -44,6 +44,8 @@ public class CabinPassengerService extends Service {
     private SingleCamera boundCamera;
     private SurfaceTexture boundTexture;
     private int retryCount;
+    /** Already told the user there is no cabin camera; the service is stopping. */
+    private boolean gaveUp;
     /** When this binding started, or the stall check last woke the scheduler. */
     private long lastRebuildMs;
     private Runnable retryRunnable;
@@ -160,12 +162,17 @@ public class CabinPassengerService extends Service {
                     + " canvas=" + CabinLog.id(surfaceTexture));
             return;
         }
-        MultiCameraManager manager = CameraManagerHolder.getInstance().getCameraManager();
-        if (manager == null) {
-            manager = CameraManagerHolder.getInstance().getOrInit(this);
-        }
+        // getOrInit, not getCameraManager: with Cabin 1 off in the profile it rebuilds the pipeline
+        // once with the front cabin camera for this window only
+        MultiCameraManager manager = CameraManagerHolder.getInstance().getOrInit(this);
         SingleCamera camera = manager != null ? manager.getCamera(CabinWindow.CAMERA_KEY) : null;
         if (camera == null) {
+            CameraManagerHolder.CabinMissing missing = CameraManagerHolder.getInstance().cabinFrontMissing();
+            if (missing != null) {
+                // Built without it: retrying cannot help, and the window would stay blank
+                giveUp(missing);
+                return;
+            }
             log("bind: no cabin camera yet (manager=" + (manager != null) + "), retry " + (retryCount + 1));
             scheduleRetry(surfaceTexture);
             return;
@@ -303,6 +310,27 @@ public class CabinPassengerService extends Service {
         if (texture != null) {
             bindCamera(texture);
         }
+    }
+
+    /**
+     * The pipeline has no front cabin camera and will not get one by waiting. Say why and turn
+     * cabin passenger off, instead of leaving a blank window up.
+     */
+    private void giveUp(CameraManagerHolder.CabinMissing missing) {
+        if (gaveUp) {
+            return;
+        }
+        gaveUp = true;
+        cancelRetry();
+        String why = missing == CameraManagerHolder.CabinMissing.PROFILE
+                ? "Cabin 1 is off in the camera profile (or only one camera is on)"
+                : "the camera list has no front cabin camera";
+        AppLog.w(TAG, "cabin passenger: no front cabin camera: " + why);
+        log("gave up: pipeline has no cabin camera, " + missing + " (" + why + ")");
+        com.kooo.evcam.ui.Notice.makeText(this, missing == CameraManagerHolder.CabinMissing.PROFILE
+                        ? R.string.msg_cabin_off_in_profile : R.string.msg_cabin_not_found,
+                Toast.LENGTH_LONG).show();
+        com.kooo.evcam.overlay.OverlayCoordinator.setCabinPassengerEnabled(this, false);
     }
 
     private void scheduleRetry(SurfaceTexture surfaceTexture) {

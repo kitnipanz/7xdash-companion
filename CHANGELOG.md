@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.1.8-beta] - 2026-10-23
+
+- Cabin passenger works with Cabin 1 off in the camera profile. The front cabin camera is built for the cabin passenger window only: it is not recorded, not in photos, and the main screen layout stays as the profile says. Turning cabin passenger on for the first time restarts the camera pipeline once (a recording in progress ends its segment and carries on).
+- Cabin passenger no longer stays blank when there is no front cabin camera at all: it says why (not in the head unit's camera list) and turns itself off.
+
 ## [1.1.7-beta] - 2026-10-22
 
 - Cabin passenger: still opens blank from a shortcut on some cars. This build writes a trace of every open to `Download/EVCam_Log/cabin-yyyyMMdd.log` (on the USB stick, else internal storage): the shortcut, the window, the camera connection and its state, frames received and drawn, and the automatic retries. Send it after a blank open.

@@ -37,6 +37,12 @@ public class MultiCameraManager {
     private final Map<String, SingleCamera> cameras = new LinkedHashMap<>();
     private final List<String> activeCameraKeys = new ArrayList<>();
     private int maxOpenCameras = DEFAULT_MAX_OPEN_CAMERAS;
+    /**
+     * Cameras built only for the cabin passenger window (its camera is off in the camera profile).
+     * They are not active: recording, photos and the main screen leave them out, and the scheduler
+     * opens them only for the cabin passenger window. Set before {@link #initCameras}.
+     */
+    private final Set<String> cabinOnlyKeys = new HashSet<>();
     /** 放了（{@link #release}）。见 {@link #isReleased}。 */
     private volatile boolean released;
     /** 建好了（{@link #initCameras} 做完）。见 {@link #isBuilt}。 */
@@ -1946,6 +1952,19 @@ public class MultiCameraManager {
         this.firstDataWrittenCallback = callback;
     }
 
+    /** Mark these cameras as built only for the cabin passenger window. Before {@link #initCameras}. */
+    public void setCabinOnly(Set<String> keys) {
+        cabinOnlyKeys.clear();
+        if (keys != null) {
+            cabinOnlyKeys.addAll(keys);
+        }
+    }
+
+    /** Built only for the cabin passenger window: the main screen should not show it. */
+    public boolean isCabinOnly(String key) {
+        return cabinOnlyKeys.contains(key);
+    }
+
     public void setMaxOpenCameras(int maxOpenCameras) {
         this.maxOpenCameras = Math.max(1, maxOpenCameras);
     }
@@ -2031,6 +2050,9 @@ public class MultiCameraManager {
      * @return true：声明变了
      */
     public boolean declarePreview(String cameraKey, TextureView view) {
+        if (cabinOnlyKeys.contains(cameraKey)) {
+            return false;
+        }
         SingleCamera camera = cameras.get(cameraKey);
         android.graphics.SurfaceTexture texture = view == null ? null : view.getSurfaceTexture();
         if (camera == null || texture == null || texture.isReleased()) {
@@ -2375,15 +2397,19 @@ public class MultiCameraManager {
         final List<SingleCamera> active = new ArrayList<>();
         Set<String> activeIds = new HashSet<>();
         for (String key : CameraSlots.openOrder(cameras.keySet())) {
-            if (activeCameraKeys.size() >= maxOpenCameras) {
-                break;
+            boolean cabinOnly = cabinOnlyKeys.contains(key);
+            if (!cabinOnly && activeCameraKeys.size() >= maxOpenCameras) {
+                continue;
             }
             SingleCamera camera = cameras.get(key);
             if (camera == null || !activeIds.add(camera.getCameraId())) {
                 continue;
             }
-            activeCameraKeys.add(key);
-            ports.put(key, new LanePort(camera));
+            if (!cabinOnly) {
+                // Cabin-only cameras are not active: recording and photos never use them
+                activeCameraKeys.add(key);
+            }
+            ports.put(key, new LanePort(camera, cabinOnly));
             active.add(camera);
         }
         // 主线程上交（调度只在主线程上跑）；画面尺寸不开设备先算（SingleCamera 在自己起的相机线程上算），排在这一轮主线程
@@ -2998,9 +3024,16 @@ public class MultiCameraManager {
     /** 一路相机给调度的样子：SingleCamera 的动作和事实照转（主线程上调）。 */
     private static final class LanePort implements ChannelScheduler.CameraPort {
         private final SingleCamera camera;
+        private final boolean cabinOnly;
 
-        LanePort(SingleCamera camera) {
+        LanePort(SingleCamera camera, boolean cabinOnly) {
             this.camera = camera;
+            this.cabinOnly = cabinOnly;
+        }
+
+        @Override
+        public boolean cabinOnly() {
+            return cabinOnly;
         }
 
         @Override

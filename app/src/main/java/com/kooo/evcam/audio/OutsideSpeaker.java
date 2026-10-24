@@ -18,7 +18,7 @@ import com.kooo.evcam.input.MegaphoneService;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
- * Beta outside speaker: what is AirPlayed to 7xDash also plays on the outside bus, the one the
+ * Outside speaker: what is AirPlayed to 7xDash also plays on the outside bus, the one the
  * megaphone uses. 7xDash is the player, so no capture grant is needed. The AirPlay engine keeps a
  * mono copy of what it plays ({@code OutsideMirror} in audio_output.h); a thread here pulls it and
  * plays it on a track set up exactly like the megaphone's, which the car routes to the outside bus.

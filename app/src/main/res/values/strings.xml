@@ -877,7 +877,7 @@ Then reopen this app.</string>
     <!-- Interface section · first-launch side question · record unavailable · status bar -->
     <string name="set_section_interface">Interface</string>
     <string name="set_beta_features_title">Beta features</string>
-    <string name="set_beta_features_summary">Show features that are still being tried on the car, and let them run. Now: Where I parked (home card, and reading the signs when the car goes into P), Outside speaker (home card).</string>
+    <string name="set_beta_features_summary">Show features that are still being tried on the car, and let them run. Now: Where I parked (home card, and reading the signs when the car goes into P).</string>
     <string name="set_reduce_motion_title">Less motion while recording</string>
     <string name="set_reduce_motion_summary">Turns off transitions and other decorative animation while recording, leaving the GPU to the encoder. The record button and progress ring still animate.</string>
     <string name="set_vehicle_status_title">Vehicle status (experimental)</string>
@@ -1383,14 +1383,14 @@ Then reopen this app.</string>
     <string name="set_hud_notice_preview_right">%1$d%% from the right. A long line shows where the card ends on the right side of the HUD.</string>
     <string name="airplay_cast_title">Video casting</string>
     <string name="airplay_cast_summary">On: apps like YouTube switch from mirroring to casting by themselves. The car downloads the video over its own internet, in better quality. Off: mirroring only. The iPhone streams the video, and the car just shows its screen and uses no internet.</string>
-    <!-- Beta outside speaker -->
+    <!-- Outside speaker -->
     <string name="home_card_outside_speaker">Outside speaker</string>
     <string name="home_card_outside_speaker_sub">AirPlay audio outside too. Hold for volume</string>
-    <string name="shortcut_action_outside_speaker">Outside speaker on/off (beta)</string>
+    <string name="shortcut_action_outside_speaker">Outside speaker on/off</string>
     <string name="shortcut_action_quit">Quit app</string>
     <string name="outside_speaker_playing">AirPlay audio also plays on the outside speaker</string>
     <string name="outside_speaker_needs_airplay">Outside speaker on. It plays what you AirPlay to 7xDash: turn on AirPlay and play from your phone.</string>
-    <string name="outside_speaker_section">Outside speaker (beta)</string>
+    <string name="outside_speaker_section">Outside speaker</string>
     <string name="outside_speaker_summary">What you AirPlay to 7xDash also plays on the outside speaker, at its own volume. CarPlay, Spotify and radio cannot be copied: the car does not let apps capture them.</string>
     <string name="outside_speaker_off">Off. Tap to start</string>
     <string name="outside_speaker_on">Playing. Tap to stop</string>

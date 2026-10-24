@@ -38,7 +38,6 @@ public class TapToSpeakFragment extends Fragment implements SpeakCapture.Listene
     private TextView volumeValue;
     private SeekBar volume;
     private LinearLayout speakers;
-    private View outsideBox;
     private TextView outsideToggle;
     private TextView outsideVolumeValue;
     private SeekBar outsideVolume;
@@ -79,7 +78,6 @@ public class TapToSpeakFragment extends Fragment implements SpeakCapture.Listene
             public void onStopTrackingTouch(SeekBar seekBar) {
             }
         });
-        outsideBox = root.findViewById(R.id.outside_speaker_box);
         outsideToggle = root.findViewById(R.id.outside_speaker_toggle);
         outsideVolumeValue = root.findViewById(R.id.outside_speaker_volume_value);
         outsideVolume = root.findViewById(R.id.outside_speaker_volume);
@@ -188,14 +186,9 @@ public class TapToSpeakFragment extends Fragment implements SpeakCapture.Listene
         paintOutside();
     }
 
-    /** Beta section: on/off and its own volume. Web and shortcuts change these too. */
+    /** Outside speaker section: on/off and its own volume. Web and shortcuts change these too. */
     private void paintOutside() {
         if (!isAdded()) {
-            return;
-        }
-        boolean beta = config.isBetaFeaturesEnabled();
-        outsideBox.setVisibility(beta ? View.VISIBLE : View.GONE);
-        if (!beta) {
             return;
         }
         boolean on = OutsideSpeaker.isOn();

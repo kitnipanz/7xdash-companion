@@ -10,9 +10,8 @@ import org.json.JSONObject;
 
 /**
  * 7xDash web side of the outside speaker: reports on/off and both volumes over the Car Link,
- * and takes {@code {"t":"speaker","on":…,"volume":…,"megaphone":…}} back. Turning the
- * speaker on still needs Start now on the car screen; turning it on is refused while beta
- * features are off.
+ * and takes {@code {"t":"speaker","on":…,"volume":…,"megaphone":…}} back. "beta" stays true:
+ * the web card from 1.1.6 disables itself without it, and the speaker is no longer a beta.
  */
 public final class SpeakerRemote implements CarLink.Speaker {
 
@@ -42,7 +41,7 @@ public final class SpeakerRemote implements CarLink.Speaker {
     public JSONObject status() {
         JSONObject msg = new JSONObject();
         try {
-            msg.put("beta", config.isBetaFeaturesEnabled());
+            msg.put("beta", true);
             msg.put("supported", OutsideSpeaker.isSupported());
             msg.put("on", OutsideSpeaker.isOn());
             msg.put("asking", false);
@@ -69,8 +68,7 @@ public final class SpeakerRemote implements CarLink.Speaker {
             boolean want = msg.optBoolean("on");
             if (!want) {
                 OutsideSpeaker.stop(context);
-            } else if (config.isBetaFeaturesEnabled()
-                    && !OutsideSpeaker.isOn()) {
+            } else if (!OutsideSpeaker.isOn()) {
                 OutsideSpeaker.start(context);
             }
         }

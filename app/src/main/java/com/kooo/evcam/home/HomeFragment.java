@@ -259,6 +259,12 @@ public class HomeFragment extends Fragment {
                 () -> page(MainActivity.PAGE_SETTINGS_PREFIX + "screen_rearview"))
                 .onOff(() -> config.isHudNotificationsEnabled());
 
+        // Outside speaker: AirPlay audio on the outside speaker too. Hold for its volume on the megaphone page
+        addCard(R.drawable.ic_speaker, R.string.home_card_outside_speaker,
+                R.string.home_card_outside_speaker_sub, () -> perform(ShortcutAction.OUTSIDE_SPEAKER),
+                () -> page(MainActivity.PAGE_SETTINGS_PREFIX + "screen_megaphone"))
+                .onOff(com.kooo.evcam.audio.OutsideSpeaker::isOn);
+
         // Beta: 停在哪。点卡片当场读一次；胶囊开关决定挂 P 时自动读
         if (betaShown) {
             addCard(R.drawable.ic_parking, R.string.home_card_parking,
@@ -266,11 +272,6 @@ public class HomeFragment extends Fragment {
                     .pill(() -> getString(R.string.home_parking_auto, getString(
                                     config.isParkingAutoEnabled() ? R.string.home_state_on : R.string.home_state_off)),
                             () -> config.isParkingAutoEnabled(), this::toggleParkingAuto);
-            // Beta: 车机正在放的声音也从车外喇叭放出来。长按去喊话页调音量
-            addCard(R.drawable.ic_speaker, R.string.home_card_outside_speaker,
-                    R.string.home_card_outside_speaker_sub, () -> perform(ShortcutAction.OUTSIDE_SPEAKER),
-                    () -> page(MainActivity.PAGE_SETTINGS_PREFIX + "screen_megaphone"))
-                    .onOff(com.kooo.evcam.audio.OutsideSpeaker::isOn);
         }
         layoutGrid(true);
         refresh();

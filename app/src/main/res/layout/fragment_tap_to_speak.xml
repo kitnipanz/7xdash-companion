@@ -117,14 +117,13 @@
             android:layout_marginTop="8dp"
             android:orientation="vertical" />
 
-        <!-- Beta: 车机的声音也从这个喇叭放。只在打开 Beta 功能时显示 -->
+        <!-- Outside speaker: AirPlay audio on this speaker too -->
         <LinearLayout
             android:id="@+id/outside_speaker_box"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:orientation="vertical"
-            android:visibility="gone">
+            android:orientation="vertical">
 
             <TextView
                 android:layout_width="match_parent"

@@ -1,5 +1,38 @@
 # Changelog
 
+## [1.2.0] - 2026-10-24
+
+Everything since 1.1.1, the last stable release.
+
+### Outside speaker (new, out of beta)
+- What you AirPlay to 7xDash also plays on the outside speaker, the one the megaphone uses: music, screen mirroring, and videos cast from a video app's AirPlay button. It has its own volume, and drops to 15% while the megaphone talks.
+- Turn it on from the home card, the new Outside speaker on/off shortcut, Settings > Megaphone > Outside speaker (hold the home card to get there), or 7xDash web.
+- CarPlay, Spotify on the head unit and the radio cannot be sent outside: the car does not let apps copy their sound. Play from your phone over AirPlay instead.
+
+### AirPlay
+- Sound plays as soon as the iPhone connects, for music, mirroring and cast videos, without starting a radio channel first. 7xDash now asks the car for media audio focus while it plays, so starting AirPlay may pause the radio or another media app.
+
+### 7xDash web
+- New Outside speaker card: turn it on or off, and set the outside speaker and megaphone volumes.
+
+### Quit
+- Quit button on the floating buttons, right of the dim moon. The first tap turns it red; a second tap within 3 seconds stops recording and closes 7xDash.
+- Quit app can be picked as a shortcut for steering wheel keys, controllers and stickers.
+
+### Cabin passenger
+- Shows the rear cabin camera (Cabin 2), also with Cabin 1 or Cabin 2 off in the camera profile; the camera is then opened for the window only, not recorded.
+- No longer opens blank: the window gives its picture back when closed, re-attaches when no frame arrives for 4 s, and says why when the car has no cabin camera.
+
+### Home
+- Fits the screen: the widget column takes 30% of the width, and the cards take 2 to 4 columns with rows of equal height, scrolling when they do not fit.
+
+### Beta features
+- New Settings > Interface > Beta features switch, off by default. Beta features are hidden and do not run while it is off.
+- Where I parked (beta): when the car shifts into P, 7xDash reads the floor and bay signs from the cameras, offline, and shows them with a photo in the notification shade and on 7xDash web. Home card with an Auto on P switch, and a Where did I park shortcut.
+
+### Logs
+- Black box lines for start-up, switches, exits, quitting, AirPlay audio focus and the outside speaker are in English.
+
 ## [1.1.14-beta] - 2026-10-24
 
 - Videos cast from the iPhone (the AirPlay button inside a video app) now ask the car for media audio focus, so their sound plays without starting a radio channel first.

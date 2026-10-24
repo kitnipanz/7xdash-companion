@@ -866,7 +866,7 @@
     <!-- Interface section · first-launch side question · record unavailable · status bar -->
     <string name="set_section_interface">อินเทอร์เฟซ</string>
     <string name="set_beta_features_title">ฟีเจอร์เบต้า</string>
-    <string name="set_beta_features_summary">แสดงและเปิดใช้ฟีเจอร์ที่ยังทดลองในรถอยู่ ตอนนี้มี: จอดไว้ที่ไหน (การ์ดในหน้าหลัก และอ่านป้ายเมื่อเข้าเกียร์ P), ลำโพงนอกรถ (การ์ดในหน้าหลัก)</string>
+    <string name="set_beta_features_summary">แสดงและเปิดใช้ฟีเจอร์ที่ยังทดลองในรถอยู่ ตอนนี้มี: จอดไว้ที่ไหน (การ์ดในหน้าหลัก และอ่านป้ายเมื่อเข้าเกียร์ P)</string>
     <string name="set_reduce_motion_title">ลดแอนิเมชันขณะบันทึก</string>
     <string name="set_reduce_motion_summary">ปิดทรานสิชันและแอนิเมชันตกแต่งขณะบันทึก เพื่อให้ GPU ทำงานให้ตัวเข้ารหัส ปุ่มบันทึกและวงความคืบหน้ายังเคลื่อนไหวอยู่</string>
     <string name="set_vehicle_status_title">สถานะรถ (ทดลอง)</string>
@@ -1361,14 +1361,14 @@
     <string name="set_hud_notice_preview_right">ห่างจากขวา %1$d%% ข้อความยาวนี้แสดงว่าการ์ดจบตรงไหนทางด้านขวาของ HUD</string>
     <string name="airplay_cast_title">ส่งวิดีโอ (casting)</string>
     <string name="airplay_cast_summary">เปิด: แอปอย่าง YouTube จะสลับจากการสะท้อนหน้าจอไปเป็นการส่งวิดีโอเอง รถจะดาวน์โหลดวิดีโอด้วยอินเทอร์เน็ตของรถ ภาพคมชัดกว่า ปิด: สะท้อนหน้าจออย่างเดียว iPhone สตรีมวิดีโอเอง รถแค่แสดงหน้าจอและไม่ใช้อินเทอร์เน็ต</string>
-    <!-- Beta outside speaker -->
+    <!-- Outside speaker -->
     <string name="home_card_outside_speaker">ลำโพงนอกรถ</string>
     <string name="home_card_outside_speaker_sub">เสียง AirPlay ออกลำโพงนอกรถด้วย กดค้างเพื่อปรับเสียง</string>
-    <string name="shortcut_action_outside_speaker">เปิด/ปิดลำโพงนอกรถ (เบต้า)</string>
+    <string name="shortcut_action_outside_speaker">เปิด/ปิดลำโพงนอกรถ</string>
     <string name="shortcut_action_quit">ออกจากแอป</string>
     <string name="outside_speaker_playing">เสียง AirPlay เล่นที่ลำโพงนอกรถด้วย</string>
     <string name="outside_speaker_needs_airplay">เปิดลำโพงนอกรถแล้ว จะเล่นเสียงที่ AirPlay มายัง 7xDash: เปิด AirPlay แล้วเล่นจากโทรศัพท์</string>
-    <string name="outside_speaker_section">ลำโพงนอกรถ (เบต้า)</string>
+    <string name="outside_speaker_section">ลำโพงนอกรถ</string>
     <string name="outside_speaker_summary">เสียงที่ AirPlay มายัง 7xDash จะเล่นที่ลำโพงนอกรถด้วย ปรับระดับเสียงแยกได้ CarPlay, Spotify และวิทยุคัดลอกไม่ได้ เพราะรถไม่อนุญาตให้แอปดักเสียง</string>
     <string name="outside_speaker_off">ปิดอยู่ แตะเพื่อเริ่ม</string>
     <string name="outside_speaker_on">กำลังเล่น แตะเพื่อหยุด</string>

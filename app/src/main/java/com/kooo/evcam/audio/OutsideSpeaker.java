@@ -178,7 +178,8 @@ public final class OutsideSpeaker {
         if (!on) {
             return;
         }
-        float gain = MegaphoneService.isOpen() ? volume * DUCK : volume;
+        float gain = MegaphoneService.isOpen() || com.kooo.evcam.announce.Announcer.isPlaying()
+                ? volume * DUCK : volume;
         if (gain == sent) {
             return;
         }

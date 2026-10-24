@@ -117,6 +117,30 @@
             android:layout_marginTop="8dp"
             android:orientation="vertical" />
 
+        <!-- Beta: announcements, phrases and sounds on the picked speakers. Shown with Beta features on -->
+        <TextView
+            android:id="@+id/announce_section"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="@string/announce_section"
+            android:textAppearance="@style/TextAppearance.Cam.Micro"
+            android:textColor="@color/pref_summary" />
+
+        <TextView
+            android:id="@+id/announce_open"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/bg_pref_row"
+            android:paddingStart="20dp"
+            android:paddingTop="14dp"
+            android:paddingEnd="20dp"
+            android:paddingBottom="14dp"
+            android:text="@string/announce_open"
+            android:textAppearance="@style/TextAppearance.Cam.Body"
+            android:textColor="@color/pref_title" />
+
         <!-- Outside speaker: AirPlay audio on this speaker too -->
         <LinearLayout
             android:id="@+id/outside_speaker_box"

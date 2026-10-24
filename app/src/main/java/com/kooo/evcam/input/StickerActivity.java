@@ -177,6 +177,7 @@ public class StickerActivity extends AppCompatActivity implements StickerHub.Wat
         bind(R.id.sticker_action_photo_cabin, ShortcutAction.PHOTO_CABIN);
         bind(R.id.sticker_action_where_parked, ShortcutAction.WHERE_PARKED);
         bind(R.id.sticker_action_quit, ShortcutAction.QUIT);
+        bind(R.id.sticker_action_announce, ShortcutAction.ANNOUNCE);
         bind(R.id.sticker_action_hold_speak, ShortcutAction.HOLD_SPEAK);
         bind(R.id.sticker_action_toggle_speak, ShortcutAction.TOGGLE_SPEAK);
         bind(R.id.sticker_action_cabin, ShortcutAction.CABIN_PASSENGER);

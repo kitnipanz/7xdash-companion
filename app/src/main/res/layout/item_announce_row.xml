@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- One announcement in settings: its text, play, delete -->
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="8dp"
+    android:background="@drawable/bg_pref_row"
+    android:gravity="center_vertical"
+    android:minHeight="64dp"
+    android:orientation="horizontal"
+    android:paddingStart="20dp"
+    android:paddingEnd="8dp">
+
+    <ImageView
+        android:id="@+id/announce_row_icon"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_marginEnd="14dp"
+        android:importantForAccessibility="no"
+        app:tint="@color/text_secondary" />
+
+    <TextView
+        android:id="@+id/announce_row_text"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:paddingTop="12dp"
+        android:paddingBottom="12dp"
+        android:textAppearance="@style/TextAppearance.Cam.Body"
+        android:textColor="@color/text_primary" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/announce_row_play"
+        style="@style/Widget.Cam.IconButton"
+        android:layout_width="@dimen/icon_button_size"
+        android:layout_height="@dimen/icon_button_size"
+        android:contentDescription="@string/announce_play"
+        app:icon="@drawable/ic_play" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/announce_row_delete"
+        style="@style/Widget.Cam.IconButton"
+        android:layout_width="@dimen/icon_button_size"
+        android:layout_height="@dimen/icon_button_size"
+        android:layout_marginStart="4dp"
+        android:contentDescription="@string/announce_delete"
+        app:icon="@drawable/ic_delete" />
+</LinearLayout>

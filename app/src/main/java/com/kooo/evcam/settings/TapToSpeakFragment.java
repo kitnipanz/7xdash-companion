@@ -38,6 +38,8 @@ public class TapToSpeakFragment extends Fragment implements SpeakCapture.Listene
     private TextView volumeValue;
     private SeekBar volume;
     private LinearLayout speakers;
+    private View announceSection;
+    private View announceOpen;
     private TextView outsideToggle;
     private TextView outsideVolumeValue;
     private SeekBar outsideVolume;
@@ -78,6 +80,10 @@ public class TapToSpeakFragment extends Fragment implements SpeakCapture.Listene
             public void onStopTrackingTouch(SeekBar seekBar) {
             }
         });
+        announceSection = root.findViewById(R.id.announce_section);
+        announceOpen = root.findViewById(R.id.announce_open);
+        announceOpen.setOnClickListener(v -> startActivity(
+                new android.content.Intent(requireContext(), com.kooo.evcam.announce.AnnouncementsActivity.class)));
         outsideToggle = root.findViewById(R.id.outside_speaker_toggle);
         outsideVolumeValue = root.findViewById(R.id.outside_speaker_volume_value);
         outsideVolume = root.findViewById(R.id.outside_speaker_volume);
@@ -168,6 +174,9 @@ public class TapToSpeakFragment extends Fragment implements SpeakCapture.Listene
         if (!isAdded()) {
             return;
         }
+        int beta = config.isBetaFeaturesEnabled() ? View.VISIBLE : View.GONE;
+        announceSection.setVisibility(beta);
+        announceOpen.setVisibility(beta);
         buttonValue.setText(listening
                 ? getString(R.string.tap_speak_button_wait)
                 : buttonLabel());

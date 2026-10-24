@@ -233,6 +233,13 @@
             android:exported="false" />
 
         <activity
+            android:name=".announce.AnnouncementsActivity"
+            android:label="@string/announce_title"
+            android:theme="@style/Theme.Cam"
+            android:screenOrientation="landscape"
+            android:exported="false" />
+
+        <activity
             android:name=".input.ShortcutListActivity"
             android:label="@string/set_shortcuts_title"
             android:theme="@style/Theme.Cam"

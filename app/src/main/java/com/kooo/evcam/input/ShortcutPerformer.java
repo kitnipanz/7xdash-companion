@@ -110,6 +110,9 @@ public final class ShortcutPerformer {
             case OUTSIDE_SPEAKER:
                 com.kooo.evcam.audio.OutsideSpeaker.toggle(context);
                 return;
+            case ANNOUNCE:
+                com.kooo.evcam.announce.AnnouncePicker.toggle(context);
+                return;
             case QUIT:
                 quit(context);
                 return;

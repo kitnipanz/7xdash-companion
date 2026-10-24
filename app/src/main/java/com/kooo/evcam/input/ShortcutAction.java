@@ -38,7 +38,9 @@ public enum ShortcutAction {
     /** Beta: play what the head unit plays on the outside speaker, or stop it. */
     OUTSIDE_SPEAKER("toggle_outside_speaker", R.string.shortcut_action_outside_speaker),
     /** Quit the app, same as Quit app in the drawer: stops recording and stays closed until opened again. */
-    QUIT("quit_app", R.string.shortcut_action_quit);
+    QUIT("quit_app", R.string.shortcut_action_quit),
+    /** Floating picker of announcements; tap one to play it on the picked speakers. */
+    ANNOUNCE("announce_picker", R.string.shortcut_action_announce);
 
     public final String key;
     public final int labelRes;

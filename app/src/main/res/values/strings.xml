@@ -879,7 +879,7 @@ Then reopen this app.</string>
     <!-- Interface section · first-launch side question · record unavailable · status bar -->
     <string name="set_section_interface">Interface</string>
     <string name="set_beta_features_title">Beta features</string>
-    <string name="set_beta_features_summary">Show features that are still being tried on the car, and let them run. Now: Where I parked (home card, and reading the signs when the car goes into P).</string>
+    <string name="set_beta_features_summary">Show features that are still being tried on the car, and let them run. Now: Where I parked (home card, and reading the signs when the car goes into P), Announcements (home card, Megaphone settings entry, and playing when Sentry Mode arms). Their shortcuts still work.</string>
     <string name="set_reduce_motion_title">Less motion while recording</string>
     <string name="set_reduce_motion_summary">Turns off transitions and other decorative animation while recording, leaving the GPU to the encoder. The record button and progress ring still animate.</string>
     <string name="set_vehicle_status_title">Vehicle status (experimental)</string>
@@ -1397,4 +1397,28 @@ Then reopen this app.</string>
     <string name="outside_speaker_off">Off. Tap to start</string>
     <string name="outside_speaker_on">Playing. Tap to stop</string>
     <string name="outside_speaker_volume">Outside speaker volume</string>
+    <!-- Announcements -->
+    <string name="announce_title">Announcements</string>
+    <string name="announce_open">Phrases and sounds for the speakers</string>
+    <string name="announce_summary">Play a phrase or a sound on the speakers picked for the megaphone, at the megaphone volume. Phrases are read out by the head unit\'s voice, in English or Thai. Open the picker from any screen with the Announcements shortcut.</string>
+    <string name="announce_add_hint">Type a phrase in English or Thai</string>
+    <string name="announce_add">Add</string>
+    <string name="announce_play">Play</string>
+    <string name="announce_delete">Delete</string>
+    <string name="announce_stop">Stop</string>
+    <string name="announce_close">Close</string>
+    <string name="announce_list_title">Phrases and sounds</string>
+    <string name="announce_picker_title">Play on the speakers</string>
+    <string name="announce_sounds">Sounds</string>
+    <string name="announce_phrases">Phrases</string>
+    <string name="announce_sentry_title">When Sentry Mode arms</string>
+    <string name="announce_sentry_none">Nothing</string>
+    <string name="announce_sentry_summary">Plays each time Sentry Mode changes to armed, at most once a minute.</string>
+    <string name="announce_no_voice">The head unit has no voice for this language</string>
+    <string name="announce_sound_chime">Chime</string>
+    <string name="announce_sound_beep">Double beep</string>
+    <string name="announce_sound_siren">Siren</string>
+    <string name="shortcut_action_announce">Announcements (pick one to play, beta)</string>
+    <string name="announce_section">Announcements (beta)</string>
+    <string name="home_card_announce_sub">Phrases and sounds outside. Hold to edit</string>
 </resources>

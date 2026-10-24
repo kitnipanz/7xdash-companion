@@ -54,6 +54,11 @@ public class ShortcutActionTest {
     }
 
     @Test
+    public void announcePickerIsItsOwnStoredAction() {
+        assertEquals(ShortcutAction.ANNOUNCE, ShortcutAction.fromKey("announce_picker"));
+    }
+
+    @Test
     public void clickToSpeakHasASafetyCap() {
         assertEquals(10L * 60 * 1000, MegaphoneService.TOGGLE_MAX_MS);
     }

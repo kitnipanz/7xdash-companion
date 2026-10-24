@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0-beta] - 2026-10-24
+
+- New beta Announcements: play a phrase or a sound on the speakers picked for the megaphone, at the megaphone volume. Comes with Chime, Double beep and Siren, and ready phrases in English and Thai; type your own in Settings > Megaphone > Announcements. Phrases are read out by the head unit's own voice (Thai when the phrase has Thai in it). While one plays, AirPlay music on the outside speaker drops to 15%.
+- Floating picker: the new Announcements shortcut (steering wheel keys, controllers, stickers) or the home card opens it over any screen; tap one to play it. Hold the home card for the list.
+- When Sentry Mode arms: pick an announcement to play each time Sentry Mode changes to armed, at most once a minute. Every Sentry Mode change goes to the black box.
+- With Beta features off, the home card, the Megaphone settings entry and the Sentry Mode trigger are hidden or off; the shortcut still works.
+
 ## [1.2.1] - 2026-10-24
 
 - Pick several speakers in Settings > Megaphone > Speakers: the megaphone and the outside speaker play on every ticked speaker at the same time. Tap a speaker to add or remove it; at least one stays ticked. A speaker the car refuses is skipped, and the black box says which ones played. Your earlier pick carries over.

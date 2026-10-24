@@ -866,7 +866,7 @@
     <!-- Interface section · first-launch side question · record unavailable · status bar -->
     <string name="set_section_interface">อินเทอร์เฟซ</string>
     <string name="set_beta_features_title">ฟีเจอร์เบต้า</string>
-    <string name="set_beta_features_summary">แสดงและเปิดใช้ฟีเจอร์ที่ยังทดลองในรถอยู่ ตอนนี้มี: จอดไว้ที่ไหน (การ์ดในหน้าหลัก และอ่านป้ายเมื่อเข้าเกียร์ P)</string>
+    <string name="set_beta_features_summary">แสดงและเปิดใช้ฟีเจอร์ที่ยังทดลองในรถอยู่ ตอนนี้มี: จอดไว้ที่ไหน (การ์ดในหน้าหลัก และอ่านป้ายเมื่อเข้าเกียร์ P), ประกาศ (การ์ดในหน้าหลัก ทางเข้าในหน้าโทรโข่ง และเล่นเมื่อโหมดเฝ้ารถพร้อมทำงาน) ปุ่มลัดยังใช้ได้</string>
     <string name="set_reduce_motion_title">ลดแอนิเมชันขณะบันทึก</string>
     <string name="set_reduce_motion_summary">ปิดทรานสิชันและแอนิเมชันตกแต่งขณะบันทึก เพื่อให้ GPU ทำงานให้ตัวเข้ารหัส ปุ่มบันทึกและวงความคืบหน้ายังเคลื่อนไหวอยู่</string>
     <string name="set_vehicle_status_title">สถานะรถ (ทดลอง)</string>
@@ -1375,4 +1375,28 @@
     <string name="outside_speaker_volume">ระดับเสียงลำโพงนอกรถ</string>
     <string name="tap_speak_speaker_hint">แตะเพื่อเพิ่มหรือเอาออก โทรโข่งและลำโพงนอกรถจะเล่นพร้อมกันทุกตัวที่เลือก</string>
     <string name="tap_speak_speaker_keep_one">ต้องเลือกลำโพงไว้อย่างน้อยหนึ่งตัว</string>
+    <!-- Announcements -->
+    <string name="announce_title">ประกาศ</string>
+    <string name="announce_open">ข้อความและเสียงสำหรับลำโพง</string>
+    <string name="announce_summary">เล่นข้อความหรือเสียงที่ลำโพงที่เลือกไว้สำหรับโทรโข่ง ด้วยระดับเสียงโทรโข่ง ข้อความจะอ่านด้วยเสียงของเครื่องเสียงรถ ภาษาอังกฤษหรือไทย เปิดหน้าต่างเลือกได้จากทุกหน้าด้วยปุ่มลัดประกาศ</string>
+    <string name="announce_add_hint">พิมพ์ข้อความภาษาอังกฤษหรือไทย</string>
+    <string name="announce_add">เพิ่ม</string>
+    <string name="announce_play">เล่น</string>
+    <string name="announce_delete">ลบ</string>
+    <string name="announce_stop">หยุด</string>
+    <string name="announce_close">ปิด</string>
+    <string name="announce_list_title">ข้อความและเสียง</string>
+    <string name="announce_picker_title">เล่นที่ลำโพง</string>
+    <string name="announce_sounds">เสียง</string>
+    <string name="announce_phrases">ข้อความ</string>
+    <string name="announce_sentry_title">เมื่อโหมดเฝ้ารถพร้อมทำงาน</string>
+    <string name="announce_sentry_none">ไม่เล่น</string>
+    <string name="announce_sentry_summary">เล่นทุกครั้งที่โหมดเฝ้ารถเปลี่ยนเป็นพร้อมทำงาน ไม่เกินนาทีละครั้ง</string>
+    <string name="announce_no_voice">เครื่องเสียงรถไม่มีเสียงอ่านสำหรับภาษานี้</string>
+    <string name="announce_sound_chime">เสียงกริ่ง</string>
+    <string name="announce_sound_beep">บี๊บสองครั้ง</string>
+    <string name="announce_sound_siren">ไซเรน</string>
+    <string name="shortcut_action_announce">ประกาศ (เลือกแล้วเล่น, เบต้า)</string>
+    <string name="announce_section">ประกาศ (เบต้า)</string>
+    <string name="home_card_announce_sub">ข้อความและเสียงออกลำโพง กดค้างเพื่อแก้ไข</string>
 </resources>

@@ -22,6 +22,10 @@ typedef struct LogSink LogSink;
  * see: https://github.com/google/oboe/blob/main/docs/GettingStarted.md#obtaining-optimal-latency */
 void audio_engine_set_default_stream_values(int sampleRate, int framesPerBurst);
 
+/* copy every played sample to a second output device (the outside speaker bus) at gain
+ * 0..1; deviceId 0 stops the copy. global, any thread */
+void audio_engine_set_outside_mirror(int deviceId, float gain);
+
 /* change engine config; any thread */
 bool audio_engine_configure(AudioEngine *engine, int cushionMs, int percentilePct,
                             int oboeBufferFrames, bool forceSwAlac, bool forceSwAac,

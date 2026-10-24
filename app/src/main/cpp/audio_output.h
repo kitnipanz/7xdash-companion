@@ -5,11 +5,97 @@
 #include <atomic>
 #include <memory>
 #include <mutex>
+#include <vector>
 
 #include "log_sink.h"
 #include "timeline_buffer.h"
 
 class AudioOutput;
+
+/*
+ * copy of the airplay output on a second device (the car's outside speaker bus). one per
+ * process: set from java on any thread, fed from the main stream's data callback. the
+ * callback never blocks on it: if the stream is being swapped it skips that burst, and a
+ * full mirror buffer drops the burst (the two devices run on separate clocks)
+ */
+class OutsideMirror {
+public:
+    static OutsideMirror &get() {
+        static OutsideMirror mirror;
+        return mirror;
+    }
+
+    // deviceId 0 turns the copy off; gain 0..1 scales it
+    void set(int deviceId, float gain) {
+        mGain.store(gain < 0.f ? 0.f : gain > 1.f ? 1.f : gain);
+        std::lock_guard<std::mutex> lk(mLock);
+        if (deviceId == mDeviceId) return;
+        mDeviceId = deviceId;
+        reopenLocked();
+    }
+
+    // main stream format; the copy must match it sample for sample
+    void format(int sampleRate, int channels) {
+        std::lock_guard<std::mutex> lk(mLock);
+        if (sampleRate == mSampleRate && channels == mChannels) return;
+        mSampleRate = sampleRate;
+        mChannels = channels;
+        reopenLocked();
+    }
+
+    // data callback thread
+    void push(const int16_t *pcm, int32_t frames) {
+        std::unique_lock<std::mutex> lk(mLock, std::try_to_lock);
+        if (!lk.owns_lock() || !mStream) return;
+        const size_t samples = static_cast<size_t>(frames) * mChannels;
+        if (samples > mScratch.size()) return;
+        const float gain = mGain.load();
+        for (size_t i = 0; i < samples; i++) {
+            mScratch[i] = static_cast<int16_t>(pcm[i] * gain);
+        }
+        mStream->write(mScratch.data(), frames, 0);
+    }
+
+private:
+    void reopenLocked() {  // caller holds mLock
+        if (mStream) {
+            mStream->stop();
+            mStream->close();
+            mStream.reset();
+        }
+        if (mDeviceId == 0 || mSampleRate <= 0 || mChannels <= 0) return;
+        oboe::AudioStreamBuilder b;
+        b.setDirection(oboe::Direction::Output)
+            ->setDeviceId(mDeviceId)
+            ->setSharingMode(oboe::SharingMode::Shared)
+            ->setFormat(oboe::AudioFormat::I16)
+            ->setChannelCount(mChannels)
+            ->setSampleRate(mSampleRate)
+            ->setSampleRateConversionQuality(oboe::SampleRateConversionQuality::Medium)
+            ->setUsage(oboe::Usage::Media)
+            ->setContentType(oboe::ContentType::Music)
+            ->setPerformanceMode(oboe::PerformanceMode::None);
+        if (b.openStream(mStream) != oboe::Result::OK) {
+            mStream.reset();
+            return;
+        }
+        // headroom for a few late bursts before writes start dropping
+        mStream->setBufferSizeInFrames(mStream->getBufferCapacityInFrames());
+        mScratch.assign(static_cast<size_t>(mStream->getBufferCapacityInFrames()) * mChannels, 0);
+        if (mStream->requestStart() != oboe::Result::OK) {
+            mStream->close();
+            mStream.reset();
+        }
+    }
+
+    std::mutex mLock;
+    std::atomic<float> mGain{1.f};
+    int mDeviceId = 0;
+    int mSampleRate = 0;
+    int mChannels = 0;
+    std::shared_ptr<oboe::AudioStream> mStream;
+    std::vector<int16_t> mScratch;
+};
 
 // https://github.com/google/oboe/wiki/TechNote_HowToAvoidCrashes#avoid-deleting-objects-that-are-used-by-callbacks
 /*
@@ -28,6 +114,7 @@ public:
     oboe::DataCallbackResult onAudioReady(oboe::AudioStream *, void *audioData,
                                           int32_t numFrames) override {
         mTimeline->read(static_cast<int16_t *>(audioData), numFrames);
+        OutsideMirror::get().push(static_cast<const int16_t *>(audioData), numFrames);
         return oboe::DataCallbackResult::Continue;
     }
 
@@ -154,6 +241,7 @@ private:
                   api, lowLatency ? " (low-latency)" : "", mmap ? "yes" : "no",
                   mStream->getBufferSizeInFrames(), mStream->getBufferCapacityInFrames(),
                   mStream->getFramesPerBurst(), mStream->getSampleRate());
+        OutsideMirror::get().format(mStream->getSampleRate(), mStream->getChannelCount());
         // adaptive tuner needs final buffer size
         mTimeline->noteOutputBufferFrames(mStream->getBufferSizeInFrames());
         return true;

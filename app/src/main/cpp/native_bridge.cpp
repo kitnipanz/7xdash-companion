@@ -379,6 +379,13 @@ Java_io_github_jqssun_airplay_bridge_NativeBridge_nativeSetDefaultStreamValues(
 }
 
 extern "C"
+JNIEXPORT void JNICALL
+Java_io_github_jqssun_airplay_bridge_NativeBridge_nativeSetOutsideMirror(
+        JNIEnv *env, jobject thiz, jint deviceId, jfloat gain) {
+    audio_engine_set_outside_mirror(deviceId, gain);
+}
+
+extern "C"
 JNIEXPORT jboolean JNICALL
 Java_io_github_jqssun_airplay_bridge_NativeBridge_nativeServerAudioStart(
         JNIEnv *env, jobject thiz, jlong handle) {

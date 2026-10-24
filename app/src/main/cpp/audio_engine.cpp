@@ -224,6 +224,10 @@ void audio_engine_set_default_stream_values(int sampleRate, int framesPerBurst) 
     if (framesPerBurst > 0) oboe::DefaultStreamValues::FramesPerBurst = framesPerBurst;
 }
 
+void audio_engine_set_outside_mirror(int deviceId, float gain) {
+    OutsideMirror::get().set(deviceId, gain);
+}
+
 bool audio_engine_configure(AudioEngine *engine, int cushionMs, int percentilePct,
                             int oboeBufferFrames, bool forceSwAlac, bool forceSwAac,
                             bool realtimePriority, bool lowLatency, bool benchmarkLog) {

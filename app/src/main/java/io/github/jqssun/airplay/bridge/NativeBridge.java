@@ -71,6 +71,9 @@ public final class NativeBridge {
                                                             boolean forceSwAac, boolean realtimePriority,
                                                             boolean lowLatency, boolean benchmarkLog);
 
+    /** Copy AirPlay audio to a second output device at gain 0..1; device 0 stops the copy. */
+    public static native void nativeSetOutsideMirror(int deviceId, float gain);
+
     public static native boolean nativeServerAudioStart(long handle);
 
     public static native void nativeServerAudioStop(long handle);

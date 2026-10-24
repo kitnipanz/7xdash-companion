@@ -29,12 +29,12 @@ public final class SpeakerRemote implements CarLink.Speaker {
     }
 
     public void attach() {
-        OutsideSpeakerService.addListener(changed);
+        OutsideSpeaker.addListener(changed);
         link.setSpeaker(this);
     }
 
     public void detach() {
-        OutsideSpeakerService.removeListener(changed);
+        OutsideSpeaker.removeListener(changed);
         link.setSpeaker(null);
     }
 
@@ -43,9 +43,9 @@ public final class SpeakerRemote implements CarLink.Speaker {
         JSONObject msg = new JSONObject();
         try {
             msg.put("beta", config.isBetaFeaturesEnabled());
-            msg.put("supported", OutsideSpeakerService.isSupported());
-            msg.put("on", OutsideSpeakerService.isOn());
-            msg.put("asking", OutsideSpeakerService.isAsking());
+            msg.put("supported", OutsideSpeaker.isSupported());
+            msg.put("on", OutsideSpeaker.isOn());
+            msg.put("asking", false);
             msg.put("volume", config.getOutsideSpeakerVolume());
             msg.put("megaphone", config.getSpeakVolume());
         } catch (JSONException ignored) {
@@ -60,7 +60,7 @@ public final class SpeakerRemote implements CarLink.Speaker {
             return;
         }
         if (msg.has("volume")) {
-            OutsideSpeakerService.setVolume(context, msg.optInt("volume", config.getOutsideSpeakerVolume()));
+            OutsideSpeaker.setVolume(context, msg.optInt("volume", config.getOutsideSpeakerVolume()));
         }
         if (msg.has("megaphone")) {
             config.setSpeakVolume(msg.optInt("megaphone", config.getSpeakVolume()));
@@ -68,10 +68,10 @@ public final class SpeakerRemote implements CarLink.Speaker {
         if (msg.has("on")) {
             boolean want = msg.optBoolean("on");
             if (!want) {
-                OutsideSpeakerService.stop(context);
+                OutsideSpeaker.stop(context);
             } else if (config.isBetaFeaturesEnabled()
-                    && !OutsideSpeakerService.isOn() && !OutsideSpeakerService.isAsking()) {
-                OutsideSpeakerService.start(context);
+                    && !OutsideSpeaker.isOn()) {
+                OutsideSpeaker.start(context);
             }
         }
         link.sendSpeaker();

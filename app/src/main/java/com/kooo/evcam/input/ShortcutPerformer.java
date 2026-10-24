@@ -108,7 +108,7 @@ public final class ShortcutPerformer {
                 com.kooo.evcam.parking.WhereParked.get().captureNow(context);
                 return;
             case OUTSIDE_SPEAKER:
-                com.kooo.evcam.audio.OutsideSpeakerService.toggle(context);
+                com.kooo.evcam.audio.OutsideSpeaker.toggle(context);
                 return;
             case QUIT:
                 quit(context);

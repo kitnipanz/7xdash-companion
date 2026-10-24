@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.1.12-beta] - 2026-10-24
+
+- Outside speaker now plays what you AirPlay to 7xDash, at its own volume, as well as on the cabin speakers. No more Start now screen capture prompt. The 1.1.10 black box showed copying the head unit's own sound cannot work on this car: CarPlay and music apps refuse capture, and even apps that allow it come back silent. While the megaphone talks, the music outside drops to 15% as before.
+- Video links the phone hands over (played in 7xDash's own player) are not sent outside yet.
+
 ## [1.1.11-beta] - 2026-10-23
 
 - Quit button moved from the side rail to the floating buttons, right of the dim moon. The first tap turns it red and asks to tap again; a second tap within 3 seconds stops recording and closes 7xDash.

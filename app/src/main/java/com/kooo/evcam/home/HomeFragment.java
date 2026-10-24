@@ -270,7 +270,7 @@ public class HomeFragment extends Fragment {
             addCard(R.drawable.ic_speaker, R.string.home_card_outside_speaker,
                     R.string.home_card_outside_speaker_sub, () -> perform(ShortcutAction.OUTSIDE_SPEAKER),
                     () -> page(MainActivity.PAGE_SETTINGS_PREFIX + "screen_megaphone"))
-                    .onOff(com.kooo.evcam.audio.OutsideSpeakerService::isOn);
+                    .onOff(com.kooo.evcam.audio.OutsideSpeaker::isOn);
         }
         layoutGrid(true);
         refresh();

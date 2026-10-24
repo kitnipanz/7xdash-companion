@@ -195,7 +195,7 @@ public final class Megaphone {
                     .setUsage(android.media.AudioAttributes.USAGE_MEDIA)
                     .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SONIFICATION);
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
-                // The outside speaker (beta) copies captured media to this same bus; the voice is already there
+                // Keep the voice out of any playback capture
                 attributes.setAllowedCapturePolicy(android.media.AudioAttributes.ALLOW_CAPTURE_BY_NONE);
             }
             track = new AudioTrack.Builder()

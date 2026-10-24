@@ -5,6 +5,8 @@ import android.os.Handler;
 import android.os.Looper;
 import android.view.Surface;
 
+import androidx.annotation.OptIn;
+import androidx.media3.common.AudioAttributes;
 import androidx.media3.common.C;
 import androidx.media3.common.MediaItem;
 import androidx.media3.common.PlaybackException;
@@ -12,8 +14,14 @@ import androidx.media3.common.PlaybackParameters;
 import androidx.media3.common.Player;
 import androidx.media3.common.Timeline;
 import androidx.media3.common.VideoSize;
+import androidx.media3.common.util.UnstableApi;
 import androidx.media3.exoplayer.DefaultLoadControl;
+import androidx.media3.exoplayer.DefaultRenderersFactory;
 import androidx.media3.exoplayer.ExoPlayer;
+import androidx.media3.common.audio.AudioProcessor;
+import androidx.media3.exoplayer.audio.AudioSink;
+import androidx.media3.exoplayer.audio.DefaultAudioSink;
+import androidx.media3.exoplayer.audio.TeeAudioProcessor;
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory;
 
 /**
@@ -100,12 +108,18 @@ final class CastPlayer {
         return player != null;
     }
 
+    @OptIn(markerClass = UnstableApi.class)
     void play(String location, float startSeconds) {
         main.post(() -> {
             // a new video replaces the old one without telling the iPhone "stopped"
             release(false);
             AirPlayLog.i("cast: downloading over " + route.describe());
-            ExoPlayer p = new ExoPlayer.Builder(context)
+            ExoPlayer p = new ExoPlayer.Builder(context, renderers())
+                    // media focus, handled by the player: without it the car keeps its media channel shut
+                    .setAudioAttributes(new AudioAttributes.Builder()
+                            .setUsage(C.USAGE_MEDIA)
+                            .setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
+                            .build(), true)
                     .setMediaSourceFactory(new DefaultMediaSourceFactory(route.dataSourceFactory()))
                     // start after 1 s of video instead of 2.5 s: the picture shows sooner
                     .setLoadControl(new DefaultLoadControl.Builder()
@@ -124,6 +138,56 @@ final class CastPlayer {
             listener.onInfo(startSeconds, 0f, 0f, false);
             main.postDelayed(report, REPORT_MS);
         });
+    }
+
+    /** Renderers whose audio also goes to the outside speaker copy (when it is on). */
+    @OptIn(markerClass = UnstableApi.class)
+    private DefaultRenderersFactory renderers() {
+        return new DefaultRenderersFactory(context) {
+            @Override
+            protected AudioSink buildAudioSink(Context c, boolean enableFloatOutput,
+                                               boolean enableAudioTrackPlaybackParams) {
+                return new DefaultAudioSink.Builder(c)
+                        .setAudioProcessors(new AudioProcessor[] {
+                                new TeeAudioProcessor(new OutsideTee())})
+                        .setEnableAudioTrackPlaybackParams(enableAudioTrackPlaybackParams)
+                        .build();
+            }
+        };
+    }
+
+    /** Decoded 16-bit PCM on its way to the cabin, copied for the outside speaker. */
+    @OptIn(markerClass = UnstableApi.class)
+    private static final class OutsideTee implements TeeAudioProcessor.AudioBufferSink {
+        private int rate;
+        private int channels;
+        private boolean pcm16;
+        private short[] samples = new short[0];
+
+        @Override
+        public void flush(int sampleRateHz, int channelCount, int encoding) {
+            rate = sampleRateHz;
+            channels = channelCount;
+            pcm16 = encoding == C.ENCODING_PCM_16BIT;
+        }
+
+        @Override
+        public void handleBuffer(java.nio.ByteBuffer buffer) {
+            if (!pcm16 || channels <= 0 || !com.kooo.evcam.audio.OutsideSpeaker.isOn()) {
+                return;
+            }
+            java.nio.ShortBuffer in = buffer.asReadOnlyBuffer()
+                    .order(java.nio.ByteOrder.LITTLE_ENDIAN).asShortBuffer();
+            int n = in.remaining() - in.remaining() % channels;
+            if (n <= 0) {
+                return;
+            }
+            if (samples.length < n) {
+                samples = new short[n];
+            }
+            in.get(samples, 0, n);
+            AirPlayAudio.pushOutsideMirror(samples, n / channels, rate, channels);
+        }
     }
 
     void seek(float seconds) {

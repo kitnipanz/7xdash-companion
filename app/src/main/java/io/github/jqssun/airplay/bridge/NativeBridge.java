@@ -80,6 +80,9 @@ public final class NativeBridge {
     /** Sample rate of the outside copy; 0 until the first AirPlay stream opens. */
     public static native int nativeOutsideMirrorRate();
 
+    /** Feed the outside copy from another player: interleaved 16-bit PCM in that format. */
+    public static native void nativePushOutsideMirror(short[] pcm, int frames, int sampleRate, int channels);
+
     /** Skip what queued up while nobody read. */
     public static native void nativeDropOutsideMirror();
 

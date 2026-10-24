@@ -29,6 +29,9 @@ void audio_engine_set_outside_mirror(bool on, float gain);
 /* frames of the outside copy, up to max; 0 when nothing is queued. one reader */
 int audio_engine_read_outside_mirror(int16_t *dst, int max);
 
+/* feed the outside copy from another player (video casting): interleaved pcm in that format */
+void audio_engine_push_outside_mirror(const int16_t *pcm, int frames, int sampleRate, int channels);
+
 /* sample rate of the outside copy; 0 until the first airplay stream opens */
 int audio_engine_outside_mirror_rate(void);
 

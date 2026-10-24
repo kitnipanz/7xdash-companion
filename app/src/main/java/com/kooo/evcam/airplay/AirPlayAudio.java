@@ -23,6 +23,11 @@ public final class AirPlayAudio {
         }
     }
 
+    /** Feed the outside copy from a player other than the AirPlay engine (video casting). */
+    public static void pushOutsideMirror(short[] pcm, int frames, int sampleRate, int channels) {
+        NativeBridge.nativePushOutsideMirror(pcm, frames, sampleRate, channels);
+    }
+
     /** Frames of the outside copy, up to {@code dst.length}; 0 when nothing is queued. One reader. */
     public static int readOutsideMirror(short[] dst) {
         return NativeBridge.nativeReadOutsideMirror(dst);

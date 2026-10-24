@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.1.14-beta] - 2026-10-24
+
+- Videos cast from the iPhone (the AirPlay button inside a video app) now ask the car for media audio focus, so their sound plays without starting a radio channel first.
+- Outside speaker: cast videos also play on the outside speaker, not only AirPlay music and screen mirroring.
+
 ## [1.1.13-beta] - 2026-10-24
 
 - AirPlay sound plays as soon as the iPhone connects, without starting a radio channel first. 7xDash now asks the car for media audio focus while AirPlay audio plays (the car opens its media channel only for the app holding it), and its output counts as media, not game. Starting AirPlay may pause the radio or another media app.

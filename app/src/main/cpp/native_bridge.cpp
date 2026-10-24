@@ -398,6 +398,17 @@ Java_io_github_jqssun_airplay_bridge_NativeBridge_nativeReadOutsideMirror(
 }
 
 extern "C"
+JNIEXPORT void JNICALL
+Java_io_github_jqssun_airplay_bridge_NativeBridge_nativePushOutsideMirror(
+        JNIEnv *env, jobject thiz, jshortArray pcm, jint frames, jint sampleRate, jint channels) {
+    if (frames <= 0 || channels <= 0 || env->GetArrayLength(pcm) < frames * channels) return;
+    jshort *in = env->GetShortArrayElements(pcm, nullptr);
+    if (!in) return;
+    audio_engine_push_outside_mirror(in, frames, sampleRate, channels);
+    env->ReleaseShortArrayElements(pcm, in, JNI_ABORT);
+}
+
+extern "C"
 JNIEXPORT jint JNICALL
 Java_io_github_jqssun_airplay_bridge_NativeBridge_nativeOutsideMirrorRate(
         JNIEnv *env, jobject thiz) {

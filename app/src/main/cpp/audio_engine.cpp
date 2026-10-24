@@ -232,6 +232,11 @@ int audio_engine_read_outside_mirror(int16_t *dst, int max) {
     return OutsideMirror::get().read(dst, max);
 }
 
+void audio_engine_push_outside_mirror(const int16_t *pcm, int frames, int sampleRate, int channels) {
+    OutsideMirror::get().format(sampleRate, channels);
+    OutsideMirror::get().push(pcm, frames);
+}
+
 int audio_engine_outside_mirror_rate(void) {
     return OutsideMirror::get().sampleRate();
 }

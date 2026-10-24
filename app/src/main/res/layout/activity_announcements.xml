@@ -64,6 +64,19 @@
                 android:textAppearance="@style/TextAppearance.Cam.Body"
                 android:textColor="@color/text_secondary" />
 
+            <TextView
+                android:id="@+id/announce_voice"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                android:background="@drawable/bg_pref_row"
+                android:paddingStart="20dp"
+                android:paddingTop="14dp"
+                android:paddingEnd="20dp"
+                android:paddingBottom="14dp"
+                android:textAppearance="@style/TextAppearance.Cam.Body"
+                android:textColor="@color/pref_title" />
+
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -94,6 +107,15 @@
                     android:layout_height="64dp"
                     android:layout_marginStart="12dp"
                     android:text="@string/announce_add" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/announce_record_new"
+                    style="@style/Widget.Cam.RailSmall"
+                    android:layout_width="wrap_content"
+                    android:layout_height="64dp"
+                    android:layout_marginStart="8dp"
+                    android:text="@string/announce_record"
+                    app:icon="@drawable/ic_mic" />
             </LinearLayout>
 
             <LinearLayout

@@ -32,6 +32,15 @@
         android:textColor="@color/text_primary" />
 
     <com.google.android.material.button.MaterialButton
+        android:id="@+id/announce_row_record"
+        style="@style/Widget.Cam.IconButton"
+        android:layout_width="@dimen/icon_button_size"
+        android:layout_height="@dimen/icon_button_size"
+        android:layout_marginEnd="4dp"
+        android:contentDescription="@string/announce_record"
+        app:icon="@drawable/ic_mic" />
+
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/announce_row_play"
         style="@style/Widget.Cam.IconButton"
         android:layout_width="@dimen/icon_button_size"

@@ -27,9 +27,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Plays announcements on every speaker picked for the megaphone, at the megaphone volume. Phrases
- * go through the head unit's text-to-speech into a WAV first, since speech cannot be sent to a
- * chosen speaker directly; sounds are made in code. One at a time: a new one cuts the last one off.
+ * Plays announcements on every speaker picked for the megaphone, at the megaphone volume. A phrase
+ * plays the driver's own recording when there is one, else goes through text-to-speech into a WAV
+ * first, since speech cannot be sent to a chosen speaker directly; sounds are made in code. One at a time: a new one cuts the last one off.
  * While one plays, the outside speaker's AirPlay music drops as it does for the megaphone.
  */
 public final class Announcer {
@@ -84,7 +84,12 @@ public final class Announcer {
             pcm = Tones.render(a.sound);
             rate = Tones.RATE;
         } else {
-            Wav wav = speak(context, a);
+            AnnouncementStore store = new AnnouncementStore(context);
+            Wav wav = store.hasRecording(a.id) ? read(store.recording(a.id))
+                    : !a.isThai() && OfflineVoice.isReady(context) ? OfflineVoice.speak(context, a.text) : null;
+            if (wav == null) {
+                wav = speak(context, a);
+            }
             if (wav == null) {
                 return R.string.announce_no_voice;
             }

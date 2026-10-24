@@ -1,6 +1,6 @@
 package com.kooo.evcam.announce;
 
-/** Reads the 16-bit PCM WAV that text-to-speech writes, down to mono. */
+/** 16-bit PCM WAV: reads what text-to-speech writes (down to mono), writes recordings. */
 final class Wav {
 
     final int rate;
@@ -9,6 +9,10 @@ final class Wav {
     private Wav(int rate, short[] mono) {
         this.rate = rate;
         this.mono = mono;
+    }
+
+    static Wav of(int rate, short[] mono) {
+        return new Wav(rate, mono);
     }
 
     /** Null when the bytes are not a 16-bit PCM WAV with some audio in it. */
@@ -54,6 +58,40 @@ final class Wav {
             at = body + size + (size & 1);
         }
         return null;
+    }
+
+    /** Mono 16-bit PCM WAV bytes. */
+    static byte[] write(int rate, short[] mono, int frames) {
+        int data = frames * 2;
+        java.nio.ByteBuffer b = java.nio.ByteBuffer.allocate(44 + data).order(java.nio.ByteOrder.LITTLE_ENDIAN);
+        b.put(new byte[] {'R', 'I', 'F', 'F'}).putInt(36 + data).put(new byte[] {'W', 'A', 'V', 'E'});
+        b.put(new byte[] {'f', 'm', 't', ' '}).putInt(16).putShort((short) 1).putShort((short) 1)
+                .putInt(rate).putInt(rate * 2).putShort((short) 2).putShort((short) 16);
+        b.put(new byte[] {'d', 'a', 't', 'a'}).putInt(data);
+        for (int i = 0; i < frames; i++) {
+            b.putShort(mono[i]);
+        }
+        return b.array();
+    }
+
+    /**
+     * Raises a quiet recording so its loudest sample reaches 70% of full scale, by at most
+     * {@code maxGain} (the cabin mic peaks around 1–2%). Returns the gain used.
+     */
+    static float normalize(short[] pcm, int frames, float maxGain) {
+        int peak = 0;
+        for (int i = 0; i < frames; i++) {
+            peak = Math.max(peak, Math.abs((int) pcm[i]));
+        }
+        if (peak == 0) {
+            return 1f;
+        }
+        float gain = Math.min(maxGain, 0.7f * 32767 / peak);
+        for (int i = 0; i < frames; i++) {
+            int v = Math.round(pcm[i] * gain);
+            pcm[i] = (short) Math.max(-32768, Math.min(32767, v));
+        }
+        return gain;
     }
 
     private static boolean tag(byte[] b, int at, String s) {

@@ -1,3 +1,6 @@
+import java.net.URI
+import java.security.MessageDigest
+
 import java.util.Properties
 
 plugins {
@@ -25,6 +28,13 @@ fun gradleStringLiteral(value: String): String {
 }
 
 android {
+    // sherpa-onnx's JNI library needs only onnxruntime; its C and C++ API libraries are for native callers
+    packaging {
+        jniLibs {
+            excludes += listOf("**/libsherpa-onnx-c-api.so", "**/libsherpa-onnx-cxx-api.so")
+        }
+    }
+
     namespace = "com.kooo.evcam"
     compileSdk = 36
     // AirPlay 接收（app/src/main/cpp）：UxPlay 的原生库
@@ -59,8 +69,8 @@ android {
         // versionName 会成为 Release 名称与 APK 文件名
         //
         // 7xDash 用自己的 applicationId，可以和 zeekr-shortcut-car 并排装。版本号从 1 重新起。
-        versionCode = 35
-        versionName = "1.3.1-beta"
+        versionCode = 36
+        versionName = "1.3.2-beta"
 
         buildConfigField("String", "DRIVE_CLIENT_ID", gradleStringLiteral(driveCredential("DRIVE_CLIENT_ID")))
         buildConfigField("String", "DRIVE_CLIENT_SECRET", gradleStringLiteral(driveCredential("DRIVE_CLIENT_SECRET")))
@@ -150,6 +160,12 @@ dependencies {
     // 投视频时 YouTube 的分段走车机的 Wi-Fi（有的话），不走车机自己的流量：用 OkHttp 绑到 Wi-Fi 网络
     implementation("androidx.media3:media3-datasource-okhttp:1.5.1")
 
+    // Announcements (beta): offline English voice. sherpa-onnx (Apache-2.0) is not on Maven Central,
+    // so its release AAR is fetched once into .gradle/ and checked against a pinned hash
+    implementation(files(sherpaOnnxAar()))
+    // Unpacks the downloaded voice (.tar.bz2)
+    implementation("org.apache.commons:commons-compress:1.26.2")
+
     // Where did I park: read floor / bay signs from the front and side cameras on the car.
     // Bundled Latin model, so it works offline and without Play services.
     implementation("com.google.mlkit:text-recognition:16.0.1")
@@ -157,4 +173,30 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
+}
+
+/**
+ * sherpa-onnx's Android AAR from its GitHub release, downloaded on first build and cached in the
+ * project's .gradle/ (git-ignored). A file with any other hash is thrown away and the build fails.
+ */
+fun sherpaOnnxAar(): File {
+    val version = "1.13.8"
+    val sha256 = "633c24321e06b1fe79feafa03ea16cbc0f8a286641e2da3559bac91bdb13bd96"
+    val aar = rootProject.file(".gradle/sherpa-onnx/sherpa-onnx-$version.aar")
+    fun hash(f: File): String = MessageDigest.getInstance("SHA-256")
+        .digest(f.readBytes()).joinToString("") { "%02x".format(it) }
+    if (aar.isFile && hash(aar) == sha256) {
+        return aar
+    }
+    aar.parentFile.mkdirs()
+    val part = File(aar.path + ".part")
+    URI("https://github.com/k2-fsa/sherpa-onnx/releases/download/v$version/sherpa-onnx-$version.aar")
+        .toURL().openStream().use { input -> part.outputStream().use { input.copyTo(it) } }
+    val got = hash(part)
+    if (got != sha256) {
+        part.delete()
+        throw GradleException("sherpa-onnx-$version.aar hash $got, expected $sha256")
+    }
+    part.renameTo(aar)
+    return aar
 }

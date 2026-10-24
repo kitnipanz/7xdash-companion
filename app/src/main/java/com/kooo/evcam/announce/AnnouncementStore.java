@@ -3,6 +3,7 @@ package com.kooo.evcam.announce;
 import android.content.Context;
 import android.content.SharedPreferences;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -22,9 +23,11 @@ public final class AnnouncementStore {
     public static final int MAX_TEXT = 200;
 
     private final SharedPreferences prefs;
+    private final File dir;
 
     public AnnouncementStore(Context context) {
         prefs = context.getApplicationContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        dir = context.getApplicationContext().getFilesDir();
     }
 
     public List<Announcement> all() {
@@ -91,9 +94,19 @@ public final class AnnouncementStore {
         List<Announcement> list = all();
         list.removeIf(a -> a.id.equals(id));
         save(list);
+        recording(id).delete();
         if (id.equals(sentryId())) {
             setSentryId("");
         }
+    }
+
+    /** The driver's own recording of a phrase; played instead of the speech engine when it exists. */
+    public File recording(String id) {
+        return new File(new File(dir, "announce_voice"), id.replaceAll("[^A-Za-z0-9_-]", "_") + ".wav");
+    }
+
+    public boolean hasRecording(String id) {
+        return recording(id).length() > 44;
     }
 
     /** Announcement played when Sentry Mode arms; empty for none (the default). */

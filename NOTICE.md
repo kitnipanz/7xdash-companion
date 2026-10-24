@@ -81,6 +81,15 @@ OpenSSL 改从官方 Release 下载并校验哈希。Java 侧（`com.kooo.evcam.
 `io.github.jqssun.airplay.bridge`）是照上面那个仓库的 Kotlin 代码改写的。
 AirPlay 是 Apple Inc. 的商标，本项目与 Apple 无关。
 
+Announcements (beta) offline English voice:
+
+| Component | Source | License |
+|------|------|--------|
+| sherpa-onnx 1.13.8 Android AAR (fetched at build time, SHA-256 pinned) | [k2-fsa/sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx) | Apache License 2.0 |
+| ONNX Runtime (inside the sherpa-onnx AAR) | [microsoft/onnxruntime](https://github.com/microsoft/onnxruntime) | MIT |
+| Apache Commons Compress 1.26.2 | [apache/commons-compress](https://commons.apache.org/proper/commons-compress/) | Apache License 2.0 |
+| Piper voice `en_US-libritts_r-medium` (int8, downloaded in the app on request, not in the APK) | [rhasspy/piper-voices](https://huggingface.co/rhasspy/piper-voices), dataset LibriTTS-R | CC BY 4.0 |
+
 `docs/evcam-upstream-douyin.jpg`、`docs/evcam-upstream-douyin2.png` 来自 EVCam，
 是其补盲功能作者（抖音 @星星舰见）的反馈群二维码，随上游一同保留以维持署名。
 应用里没有用到它们，2.0 之后从 `assets/` 挪到 `docs/`，不再打进 APK。

@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.3.2-beta] - 2026-10-24
+
+- Settings are kept on the USB stick (`7xDash/settings/`) a few seconds after any change, and come back by themselves after a reinstall or Clear data: switches, shortcuts, stickers, the mood light, speakers, EQ, profiles, announcements and their recordings. Settings › System has Back up settings to USB and Restore settings from USB. Android permissions and Bluetooth pairing are not part of the copy.
+- Announcements: record a phrase in your own voice (the mic on each phrase, or Record next to Add); it then plays instead of a voice engine. This is how Thai phrases play when the head unit has no Thai voice.
+- Announcements: 7xDash's own English voice, downloaded once (22 MB) and working offline, for head units with no English voice. The APK grows by about 30 MB for the offline speech engine.
+- Shortcuts: each saved shortcut has an Edit button to change its action or press type.
+- New experimental Mood light screen (Settings › Smart sticker) for cheap Bluetooth RGB lights (ELK-BLEDOM and Triones types): find, connect, on/off, colour and brightness. Granting Bluetooth permission from a light's Connect button now connects it instead of scanning.
+
 ## [1.3.1-beta] - 2026-10-24
 
 - Announcements: phrases said "no voice" on the car. 7xDash now declares that it uses text-to-speech (from Android 11 an app cannot see speech engines it does not declare), tries every speech engine on the head unit, and tries several English (US, UK, generic, Australian) and Thai variants. The black box lists the head unit's speech engines and what each answered, so a car with no English or Thai voice shows what it does have.

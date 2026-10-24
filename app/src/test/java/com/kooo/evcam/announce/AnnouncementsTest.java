@@ -114,6 +114,33 @@ public class AnnouncementsTest {
     }
 
     @Test
+    public void recordingsRoundTripAndAreRaisedToAUsableLevel() {
+        short[] quiet = {100, -400, 250, 0};
+        float gain = Wav.normalize(quiet, quiet.length, 30f);
+        assertEquals(30f, gain, 0f);
+        assertEquals(-12_000, quiet[1]);
+        short[] loud = {0, 20_000, -10_000};
+        Wav.normalize(loud, loud.length, 30f);
+        assertEquals(Math.round(0.7f * 32767), loud[1]);
+        Wav back = Wav.parse(Wav.write(48_000, quiet, quiet.length));
+        assertNotNull(back);
+        assertEquals(48_000, back.rate);
+        assertEquals(-12_000, back.mono[1]);
+        assertEquals(1f, Wav.normalize(new short[3], 3, 30f), 0f);
+    }
+
+    @Test
+    public void offlineVoiceSamplesBecome16BitAndClip() {
+        short[] pcm = OfflineVoice.toPcm(new float[] {0f, 1f, -1f, 0.5f, 2f, -3f});
+        assertEquals(0, pcm[0]);
+        assertEquals(32767, pcm[1]);
+        assertEquals(-32767, pcm[2]);
+        assertEquals(16384, pcm[3]);
+        assertEquals(32767, pcm[4]);
+        assertEquals(-32767, pcm[5]);
+    }
+
+    @Test
     public void sentryPlaysOnArmingOnlyOutsideTheCooldown() {
         long cool = SentryAnnouncer.COOLDOWN_MS;
         assertTrue(SentryAnnouncer.shouldPlay(1, 2, cool));

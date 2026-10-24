@@ -1396,7 +1396,7 @@
     <!-- Announcements -->
     <string name="announce_title">ประกาศ</string>
     <string name="announce_open">ข้อความและเสียงสำหรับลำโพง</string>
-    <string name="announce_summary">เล่นข้อความหรือเสียงที่ลำโพงที่เลือกไว้สำหรับโทรโข่ง ด้วยระดับเสียงโทรโข่ง ข้อความจะอ่านด้วยเสียงของเครื่องเสียงรถ ภาษาอังกฤษหรือไทย เปิดหน้าต่างเลือกได้จากทุกหน้าด้วยปุ่มลัดประกาศ</string>
+    <string name="announce_summary">เล่นข้อความหรือเสียงที่ลำโพงที่เลือกไว้สำหรับโทรโข่ง ด้วยระดับเสียงโทรโข่ง ข้อความจะเล่นด้วยเสียงที่คุณอัดไว้ หรือเสียงอ่านภาษาอังกฤษของ 7xDash หรือของเครื่องเสียงรถ เปิดหน้าต่างเลือกได้จากทุกหน้าด้วยปุ่มลัดประกาศ</string>
     <string name="announce_add_hint">พิมพ์ข้อความภาษาอังกฤษหรือไทย</string>
     <string name="announce_add">เพิ่ม</string>
     <string name="announce_play">เล่น</string>
@@ -1426,4 +1426,32 @@
     <string name="announce_sound_alarm">สัญญาณเตือนภัย</string>
     <string name="announce_sound_reversing">เสียงเตือนถอยหลัง</string>
     <string name="announce_sound_attention">เสียงเรียกความสนใจ</string>
+    <string name="announce_record">อัดเสียง</string>
+    <string name="announce_record_title">พูดว่า: %1$s</string>
+    <string name="announce_record_level">กำลังอัด %1$.1f วินาที จากสูงสุด %2$d วินาที</string>
+    <string name="announce_record_save">หยุดและบันทึก</string>
+    <string name="announce_record_remove">ลบเสียงที่อัด</string>
+    <string name="announce_record_saved">บันทึกแล้ว ข้อความนี้จะเล่นด้วยเสียงของคุณ</string>
+    <string name="announce_record_short">สั้นเกินไป ไม่ได้บันทึก</string>
+    <string name="announce_record_name_first">พิมพ์ข้อความที่จะพูดก่อน</string>
+    <string name="announce_in_your_voice">%1$s · เสียงของคุณ</string>
+    <string name="shortcut_edit">แก้ไข</string>
+    <string name="shortcut_edit_press">แบบการกด</string>
+    <string name="announce_voice_get">เสียงอ่านภาษาอังกฤษ: ยังไม่มีในรถ แตะเพื่อดาวน์โหลดของ 7xDash (%1$d MB ต้องใช้อินเทอร์เน็ตครั้งเดียว) ข้อความภาษาไทย: แตะไมค์แล้วอัดเสียงเอง</string>
+    <string name="announce_voice_ready">เสียงอ่านภาษาอังกฤษ: พร้อมใช้ (ไม่ต้องใช้อินเทอร์เน็ต) ข้อความภาษาไทย: แตะไมค์แล้วอัดเสียงเอง</string>
+    <string name="announce_voice_downloading">กำลังดาวน์โหลดเสียงอ่านภาษาอังกฤษ… %1$d%%</string>
+    <string name="announce_voice_unpacking">กำลังติดตั้งเสียงอ่านภาษาอังกฤษ…</string>
+    <string name="announce_voice_done">ติดตั้งเสียงอ่านภาษาอังกฤษแล้ว</string>
+    <string name="announce_voice_failed">ดาวน์โหลดเสียงอ่านภาษาอังกฤษไม่สำเร็จ ตรวจอินเทอร์เน็ตแล้วลองใหม่</string>
+    <string name="usb_settings_backup_title">สำรองการตั้งค่าลง USB</string>
+    <string name="usb_settings_backup_summary">การตั้งค่า ปุ่มลัด สติกเกอร์ ไฟ ลำโพง และประกาศ จะถูกคัดลอกลง USB ไม่กี่วินาทีหลังเปลี่ยน และกลับมาเองหลังติดตั้งใหม่ แตะเพื่อคัดลอกตอนนี้</string>
+    <string name="usb_settings_saved_at">คัดลอกลง USB เมื่อ %1$s แตะเพื่อคัดลอกตอนนี้</string>
+    <string name="usb_settings_saved">คัดลอกการตั้งค่าลง USB แล้ว</string>
+    <string name="usb_settings_no_usb">ไม่มี USB ให้คัดลอก</string>
+    <string name="usb_settings_restore_title">กู้คืนการตั้งค่าจาก USB</string>
+    <string name="usb_settings_restore_summary">นำสำเนาใน USB กลับมาใช้ แล้วเริ่ม 7xDash ใหม่</string>
+    <string name="usb_settings_restore_confirm">แทนที่การตั้งค่าในเครื่องเสียงรถด้วยสำเนาใน USB ไหม 7xDash จะเริ่มใหม่เพื่อใช้ค่าเหล่านั้น สิทธิ์ของ Android และการจับคู่บลูทูธไม่ได้อยู่ในสำเนา</string>
+    <string name="usb_settings_restore_go">กู้คืน</string>
+    <string name="usb_settings_none">ไม่มีสำเนาการตั้งค่าใน USB</string>
+    <string name="usb_settings_found">พบสำเนาการตั้งค่าใน USB ไปที่ ตั้งค่า › ระบบ › กู้คืนการตั้งค่าจาก USB เพื่อนำกลับมา</string>
 </resources>

@@ -71,12 +71,80 @@ public class ShortcutListActivity extends AppCompatActivity {
         label.setText(getString(R.string.shortcut_row,
                 buttonName(item) + " · " + getString(item.pressKind().labelRes),
                 actionName(item)));
+        line.findViewById(R.id.shortcut_edit).setOnClickListener(v -> editAction(item, index));
         line.findViewById(R.id.shortcut_delete).setOnClickListener(v -> {
             List<Shortcut> next = ShortcutBook.remove(ShortcutBook.parse(config.getButtonShortcuts()), index);
             config.setButtonShortcuts(ShortcutBook.write(next));
             show(next);
         });
         return line;
+    }
+
+    /** Pick a new action for this button and press; "Press type" switches tap / hold / double instead. */
+    private void editAction(Shortcut item, int index) {
+        ShortcutAction[] actions = ShortcutAction.values();
+        String[] names = new String[actions.length];
+        int checked = -1;
+        ShortcutAction current = ShortcutAction.fromKey(item.action);
+        for (int i = 0; i < actions.length; i++) {
+            names[i] = getString(actions[i].labelRes);
+            if (actions[i] == current) {
+                checked = i;
+            }
+        }
+        String title = buttonName(item) + " · " + getString(item.pressKind().labelRes);
+        com.kooo.evcam.ui.CamDialogs.show(new com.google.android.material.dialog.MaterialAlertDialogBuilder(
+                this, R.style.Theme_Cam_MaterialAlertDialog)
+                .setTitle(title)
+                .setSingleChoiceItems(names, checked, (dialog, which) -> {
+                    dialog.dismiss();
+                    ShortcutAction picked = actions[which];
+                    if (picked == ShortcutAction.ANNOUNCE_PLAY) {
+                        com.kooo.evcam.announce.AnnouncePick.choose(this,
+                                (key, label) -> replace(index, item, key, item.pressKind().key));
+                    } else {
+                        replace(index, item, picked.key, item.pressKind().key);
+                    }
+                })
+                .setNeutralButton(R.string.shortcut_edit_press, (dialog, which) -> editPress(item, index))
+                .setNegativeButton(android.R.string.cancel, null));
+    }
+
+    private void editPress(Shortcut item, int index) {
+        PressKind[] kinds = PressKind.values();
+        String[] names = new String[kinds.length];
+        int checked = 0;
+        for (int i = 0; i < kinds.length; i++) {
+            names[i] = getString(kinds[i].labelRes);
+            if (kinds[i] == item.pressKind()) {
+                checked = i;
+            }
+        }
+        com.kooo.evcam.ui.CamDialogs.show(new com.google.android.material.dialog.MaterialAlertDialogBuilder(
+                this, R.style.Theme_Cam_MaterialAlertDialog)
+                .setTitle(R.string.shortcut_edit_press)
+                .setSingleChoiceItems(names, checked, (dialog, which) -> {
+                    dialog.dismiss();
+                    replace(index, item, item.action, kinds[which].key);
+                })
+                .setNegativeButton(android.R.string.cancel, null));
+    }
+
+    /**
+     * Swaps the shortcut at {@code index} for the same button with a new action or press. Another
+     * shortcut already on that button and press gives way, as when adding one.
+     */
+    private void replace(int index, Shortcut item, String action, String press) {
+        List<Shortcut> next = ShortcutBook.put(
+                ShortcutBook.remove(ShortcutBook.parse(config.getButtonShortcuts()), index),
+                new Shortcut(item.keyCode, item.scanCode, item.deviceName, action, press));
+        config.setButtonShortcuts(ShortcutBook.write(next));
+        if (StickerFrame.isSticker(item.deviceName)) {
+            StickerHub.sync(this);
+        } else {
+            KeyCatcher.sync(this);
+        }
+        show(next);
     }
 
     private String buttonName(Shortcut item) {

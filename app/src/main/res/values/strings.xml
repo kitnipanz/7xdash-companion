@@ -1418,7 +1418,7 @@ Then reopen this app.</string>
     <!-- Announcements -->
     <string name="announce_title">Announcements</string>
     <string name="announce_open">Phrases and sounds for the speakers</string>
-    <string name="announce_summary">Play a phrase or a sound on the speakers picked for the megaphone, at the megaphone volume. Phrases are read out by the head unit\'s voice, in English or Thai. Open the picker from any screen with the Announcements shortcut.</string>
+    <string name="announce_summary">Play a phrase or a sound on the speakers picked for the megaphone, at the megaphone volume. Phrases play in your recorded voice, else 7xDash\'s English voice or the head unit\'s. Open the picker from any screen with the Announcements shortcut.</string>
     <string name="announce_add_hint">Type a phrase in English or Thai</string>
     <string name="announce_add">Add</string>
     <string name="announce_play">Play</string>
@@ -1448,4 +1448,32 @@ Then reopen this app.</string>
     <string name="announce_sound_alarm">Alarm</string>
     <string name="announce_sound_reversing">Reversing beeps</string>
     <string name="announce_sound_attention">Attention chime</string>
+    <string name="announce_record">Record</string>
+    <string name="announce_record_title">Say: %1$s</string>
+    <string name="announce_record_level">Recording %1$.1f s of %2$d s max</string>
+    <string name="announce_record_save">Stop and save</string>
+    <string name="announce_record_remove">Delete recording</string>
+    <string name="announce_record_saved">Saved. This phrase now plays in your voice.</string>
+    <string name="announce_record_short">Too short, nothing saved</string>
+    <string name="announce_record_name_first">Type what you will say first</string>
+    <string name="announce_in_your_voice">%1$s · your voice</string>
+    <string name="shortcut_edit">Edit</string>
+    <string name="shortcut_edit_press">Press type</string>
+    <string name="announce_voice_get">English voice: not on this car yet. Tap to download 7xDash\'s own (%1$d MB, needs internet once). Thai phrases: tap the mic and record them.</string>
+    <string name="announce_voice_ready">English voice: ready (works offline). Thai phrases: tap the mic and record them.</string>
+    <string name="announce_voice_downloading">Downloading the English voice… %1$d%%</string>
+    <string name="announce_voice_unpacking">Installing the English voice…</string>
+    <string name="announce_voice_done">English voice installed</string>
+    <string name="announce_voice_failed">Could not download the English voice. Check the internet and try again.</string>
+    <string name="usb_settings_backup_title">Back up settings to USB</string>
+    <string name="usb_settings_backup_summary">Settings, shortcuts, stickers, lights, speakers and announcements are copied to the USB stick a few seconds after any change, and come back by themselves after a reinstall. Tap to copy now.</string>
+    <string name="usb_settings_saved_at">Copied to USB %1$s. Tap to copy now.</string>
+    <string name="usb_settings_saved">Settings copied to the USB stick</string>
+    <string name="usb_settings_no_usb">No USB stick to copy to</string>
+    <string name="usb_settings_restore_title">Restore settings from USB</string>
+    <string name="usb_settings_restore_summary">Put back the copy on the USB stick and restart 7xDash</string>
+    <string name="usb_settings_restore_confirm">Replace the settings on this head unit with the copy on the USB stick? 7xDash restarts to use them. Android permissions and Bluetooth pairing are not part of the copy.</string>
+    <string name="usb_settings_restore_go">Restore</string>
+    <string name="usb_settings_none">No settings copy on the USB stick</string>
+    <string name="usb_settings_found">Settings copy found on the USB stick. Settings › System › Restore settings from USB puts it back.</string>
 </resources>

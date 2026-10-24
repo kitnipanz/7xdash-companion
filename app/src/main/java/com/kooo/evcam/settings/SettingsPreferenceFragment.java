@@ -1224,6 +1224,23 @@ public class SettingsPreferenceFragment extends PreferenceFragmentCompat {
      */
     private void bindSystem() {
         // 诊断信息放在系统里：它是给所有人导出报告用的
+        Preference backup = findPreference("pref_usb_backup");
+        if (backup != null) {
+            long at = UsbSettings.savedAt(requireContext());
+            backup.setSummary(at == 0 ? getString(R.string.usb_settings_backup_summary)
+                    : getString(R.string.usb_settings_saved_at, android.text.format.DateFormat
+                            .getDateFormat(requireContext()).format(new java.util.Date(at)) + " "
+                            + android.text.format.DateFormat.getTimeFormat(requireContext()).format(new java.util.Date(at))));
+        }
+        onClick("pref_usb_backup", pref -> UsbSettings.backupNow(requireContext()));
+        onClick("pref_usb_restore", pref -> com.kooo.evcam.ui.CamDialogs.showDestructive(
+                new com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext(),
+                        R.style.Theme_Cam_MaterialAlertDialog)
+                        .setTitle(R.string.usb_settings_restore_title)
+                        .setMessage(R.string.usb_settings_restore_confirm)
+                        .setPositiveButton(R.string.usb_settings_restore_go,
+                                (d, w) -> UsbSettings.restoreNow(requireContext()))
+                        .setNegativeButton(android.R.string.cancel, null)));
         onClick("pref_diagnostics", pref ->
                 startActivity(new Intent(getContext(), DiagnosticsActivity.class)));
         // 系统信息（试验性）：车机能读到的车辆信号。只在这一页开着时多读浮点和定位，离开就放掉（离散信号熄屏判断一直在读）

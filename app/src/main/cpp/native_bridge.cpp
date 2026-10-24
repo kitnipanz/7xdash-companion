@@ -381,8 +381,34 @@ Java_io_github_jqssun_airplay_bridge_NativeBridge_nativeSetDefaultStreamValues(
 extern "C"
 JNIEXPORT void JNICALL
 Java_io_github_jqssun_airplay_bridge_NativeBridge_nativeSetOutsideMirror(
-        JNIEnv *env, jobject thiz, jint deviceId, jfloat gain) {
-    audio_engine_set_outside_mirror(deviceId, gain);
+        JNIEnv *env, jobject thiz, jboolean on, jfloat gain) {
+    audio_engine_set_outside_mirror(on == JNI_TRUE, gain);
+}
+
+extern "C"
+JNIEXPORT jint JNICALL
+Java_io_github_jqssun_airplay_bridge_NativeBridge_nativeReadOutsideMirror(
+        JNIEnv *env, jobject thiz, jshortArray dst) {
+    jsize max = env->GetArrayLength(dst);
+    jshort *out = env->GetShortArrayElements(dst, nullptr);
+    if (!out) return 0;
+    int n = audio_engine_read_outside_mirror(out, max);
+    env->ReleaseShortArrayElements(dst, out, 0);
+    return n;
+}
+
+extern "C"
+JNIEXPORT jint JNICALL
+Java_io_github_jqssun_airplay_bridge_NativeBridge_nativeOutsideMirrorRate(
+        JNIEnv *env, jobject thiz) {
+    return audio_engine_outside_mirror_rate();
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_io_github_jqssun_airplay_bridge_NativeBridge_nativeDropOutsideMirror(
+        JNIEnv *env, jobject thiz) {
+    audio_engine_drop_outside_mirror();
 }
 
 extern "C"

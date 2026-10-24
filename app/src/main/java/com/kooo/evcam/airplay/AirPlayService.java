@@ -9,6 +9,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ServiceInfo;
+import android.media.AudioAttributes;
+import android.media.AudioFocusRequest;
 import android.media.AudioManager;
 import android.net.nsd.NsdManager;
 import android.net.nsd.NsdServiceInfo;
@@ -98,6 +100,8 @@ public class AirPlayService extends Service implements RaopCallbackHandler {
 
     private final Handler main = new Handler(Looper.getMainLooper());
     private long handle;
+    /** Held while the iPhone streams audio: the car opens its media channel only for the focus holder. */
+    private AudioFocusRequest focus;
     private NsdManager nsd;
     private MdnsResponder mdns;
     private final List<NsdManager.RegistrationListener> registrations = new ArrayList<>();
@@ -408,8 +412,46 @@ public class AirPlayService extends Service implements RaopCallbackHandler {
         return -1;
     }
 
+    /** Main thread. Without media focus the car keeps the media channel shut and AirPlay plays silent. */
+    private void holdFocus() {
+        if (focus != null) {
+            return;
+        }
+        AudioManager audio = getSystemService(AudioManager.class);
+        if (audio == null) {
+            return;
+        }
+        AudioFocusRequest request = new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
+                .setAudioAttributes(new AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_MEDIA)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                        .build())
+                .setWillPauseWhenDucked(false)
+                .setOnAudioFocusChangeListener(change -> AirPlayLog.i("audio focus changed: " + change), main)
+                .build();
+        int result = audio.requestAudioFocus(request);
+        AirPlayLog.i("audio focus " + (result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED ? "granted" : "refused (" + result + ")"));
+        com.kooo.evcam.blackbox.BlackBox.note("AirPlay: media audio focus "
+                + (result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED ? "granted" : "refused (" + result + ")"));
+        if (result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
+            focus = request;
+        }
+    }
+
+    /** Main thread. */
+    private void releaseFocus() {
+        AudioFocusRequest held = focus;
+        focus = null;
+        AudioManager audio = getSystemService(AudioManager.class);
+        if (held != null && audio != null) {
+            audio.abandonAudioFocusRequest(held);
+            AirPlayLog.i("audio focus released");
+        }
+    }
+
     private void stopServer() {
         AirPlayLog.i("receiver stopping");
+        releaseFocus();
         listenPort = 0;
         if (mdns != null) {
             mdns.stop();
@@ -706,6 +748,7 @@ public class AirPlayService extends Service implements RaopCallbackHandler {
         if (handle == 0) {
             return;
         }
+        main.post(this::holdFocus);
         NativeBridge.nativeServerAudioStart(handle);
         NativeBridge.nativeServerAudioFormat(handle, ct, spf);
     }
@@ -713,6 +756,7 @@ public class AirPlayService extends Service implements RaopCallbackHandler {
     @Override
     public void onAudioTeardown() {
         AirPlayLog.i("audio stream ended");
+        main.post(this::releaseFocus);
     }
 
     @Override
@@ -734,6 +778,7 @@ public class AirPlayService extends Service implements RaopCallbackHandler {
                 NativeBridge.nativeServerAudioStop(handle);
             }
             main.post(() -> {
+                releaseFocus();
                 if (casting) {
                     castStopped();
                 }

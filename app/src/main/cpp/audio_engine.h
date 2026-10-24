@@ -22,9 +22,18 @@ typedef struct LogSink LogSink;
  * see: https://github.com/google/oboe/blob/main/docs/GettingStarted.md#obtaining-optimal-latency */
 void audio_engine_set_default_stream_values(int sampleRate, int framesPerBurst);
 
-/* copy every played sample to a second output device (the outside speaker bus) at gain
- * 0..1; deviceId 0 stops the copy. global, any thread */
-void audio_engine_set_outside_mirror(int deviceId, float gain);
+/* outside speaker copy: mono, at gain 0..1, pulled with audio_engine_read_outside_mirror.
+ * global, any thread */
+void audio_engine_set_outside_mirror(bool on, float gain);
+
+/* frames of the outside copy, up to max; 0 when nothing is queued. one reader */
+int audio_engine_read_outside_mirror(int16_t *dst, int max);
+
+/* sample rate of the outside copy; 0 until the first airplay stream opens */
+int audio_engine_outside_mirror_rate(void);
+
+/* reader: skip what queued up while nobody read */
+void audio_engine_drop_outside_mirror(void);
 
 /* change engine config; any thread */
 bool audio_engine_configure(AudioEngine *engine, int cushionMs, int percentilePct,

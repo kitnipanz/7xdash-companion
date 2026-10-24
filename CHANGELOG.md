@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.1.13-beta] - 2026-10-24
+
+- AirPlay sound plays as soon as the iPhone connects, without starting a radio channel first. 7xDash now asks the car for media audio focus while AirPlay audio plays (the car opens its media channel only for the app holding it), and its output counts as media, not game. Starting AirPlay may pause the radio or another media app.
+- Outside speaker: AirPlay audio now reaches the outside speaker the same way the megaphone does. The black box notes the outside speaker track and which device the car routed it to.
+
 ## [1.1.12-beta] - 2026-10-24
 
 - Outside speaker now plays what you AirPlay to 7xDash, at its own volume, as well as on the cabin speakers. No more Start now screen capture prompt. The 1.1.10 black box showed copying the head unit's own sound cannot work on this car: CarPlay and music apps refuse capture, and even apps that allow it come back silent. While the megaphone talks, the music outside drops to 15% as before.

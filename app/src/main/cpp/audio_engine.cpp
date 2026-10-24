@@ -224,8 +224,20 @@ void audio_engine_set_default_stream_values(int sampleRate, int framesPerBurst) 
     if (framesPerBurst > 0) oboe::DefaultStreamValues::FramesPerBurst = framesPerBurst;
 }
 
-void audio_engine_set_outside_mirror(int deviceId, float gain) {
-    OutsideMirror::get().set(deviceId, gain);
+void audio_engine_set_outside_mirror(bool on, float gain) {
+    OutsideMirror::get().set(on, gain);
+}
+
+int audio_engine_read_outside_mirror(int16_t *dst, int max) {
+    return OutsideMirror::get().read(dst, max);
+}
+
+int audio_engine_outside_mirror_rate(void) {
+    return OutsideMirror::get().sampleRate();
+}
+
+void audio_engine_drop_outside_mirror(void) {
+    OutsideMirror::get().drop();
 }
 
 bool audio_engine_configure(AudioEngine *engine, int cushionMs, int percentilePct,

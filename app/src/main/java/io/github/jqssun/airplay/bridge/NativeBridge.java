@@ -71,8 +71,17 @@ public final class NativeBridge {
                                                             boolean forceSwAac, boolean realtimePriority,
                                                             boolean lowLatency, boolean benchmarkLog);
 
-    /** Copy AirPlay audio to a second output device at gain 0..1; device 0 stops the copy. */
-    public static native void nativeSetOutsideMirror(int deviceId, float gain);
+    /** Mono copy of AirPlay audio for the outside speaker, at gain 0..1. */
+    public static native void nativeSetOutsideMirror(boolean on, float gain);
+
+    /** Frames of the outside copy, up to the array length; 0 when nothing is queued. One reader. */
+    public static native int nativeReadOutsideMirror(short[] dst);
+
+    /** Sample rate of the outside copy; 0 until the first AirPlay stream opens. */
+    public static native int nativeOutsideMirrorRate();
+
+    /** Skip what queued up while nobody read. */
+    public static native void nativeDropOutsideMirror();
 
     public static native boolean nativeServerAudioStart(long handle);
 

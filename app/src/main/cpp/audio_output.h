@@ -5,7 +5,6 @@
 #include <atomic>
 #include <memory>
 #include <mutex>
-#include <vector>
 
 #include "log_sink.h"
 #include "timeline_buffer.h"
@@ -13,10 +12,11 @@
 class AudioOutput;
 
 /*
- * copy of the airplay output on a second device (the car's outside speaker bus). one per
- * process: set from java on any thread, fed from the main stream's data callback. the
- * callback never blocks on it: if the stream is being swapped it skips that burst, and a
- * full mirror buffer drops the burst (the two devices run on separate clocks)
+ * mono copy of the airplay output for the outside speaker. java pulls it with read() and
+ * plays it on an AudioTrack set up like the megaphone's, which the car routes to the outside
+ * bus. one per process, single producer (the main stream's data callback) and single
+ * consumer (java's outside speaker thread), lock-free: a full buffer drops the burst, since
+ * the two devices run on separate clocks
  */
 class OutsideMirror {
 public:
@@ -25,76 +25,62 @@ public:
         return mirror;
     }
 
-    // deviceId 0 turns the copy off; gain 0..1 scales it
-    void set(int deviceId, float gain) {
+    // any thread; gain 0..1
+    void set(bool on, float gain) {
         mGain.store(gain < 0.f ? 0.f : gain > 1.f ? 1.f : gain);
-        std::lock_guard<std::mutex> lk(mLock);
-        if (deviceId == mDeviceId) return;
-        mDeviceId = deviceId;
-        reopenLocked();
+        mOn.store(on);
     }
 
-    // main stream format; the copy must match it sample for sample
+    // main stream format; 0 until the first airplay stream opens
     void format(int sampleRate, int channels) {
-        std::lock_guard<std::mutex> lk(mLock);
-        if (sampleRate == mSampleRate && channels == mChannels) return;
-        mSampleRate = sampleRate;
-        mChannels = channels;
-        reopenLocked();
+        mChannels.store(channels);
+        mSampleRate.store(sampleRate);
     }
+
+    int sampleRate() const { return mSampleRate.load(); }
 
     // data callback thread
     void push(const int16_t *pcm, int32_t frames) {
-        std::unique_lock<std::mutex> lk(mLock, std::try_to_lock);
-        if (!lk.owns_lock() || !mStream) return;
-        const size_t samples = static_cast<size_t>(frames) * mChannels;
-        if (samples > mScratch.size()) return;
+        if (!mOn.load()) return;
+        const int channels = mChannels.load();
+        if (channels <= 0) return;
+        const uint32_t w = mWrite.load(std::memory_order_relaxed);
+        const uint32_t r = mRead.load(std::memory_order_acquire);
+        if (kSize - (w - r) < static_cast<uint32_t>(frames)) return;
         const float gain = mGain.load();
-        for (size_t i = 0; i < samples; i++) {
-            mScratch[i] = static_cast<int16_t>(pcm[i] * gain);
+        for (int32_t f = 0; f < frames; f++) {
+            int32_t sum = 0;
+            for (int c = 0; c < channels; c++) sum += pcm[f * channels + c];
+            mRing[(w + f) & kMask] = static_cast<int16_t>(sum / channels * gain);
         }
-        mStream->write(mScratch.data(), frames, 0);
+        mWrite.store(w + frames, std::memory_order_release);
     }
+
+    // java thread: copies up to max frames, returns how many
+    int read(int16_t *dst, int max) {
+        const uint32_t r = mRead.load(std::memory_order_relaxed);
+        const uint32_t w = mWrite.load(std::memory_order_acquire);
+        uint32_t n = w - r;
+        if (n > static_cast<uint32_t>(max)) n = max;
+        for (uint32_t i = 0; i < n; i++) dst[i] = mRing[(r + i) & kMask];
+        mRead.store(r + n, std::memory_order_release);
+        return static_cast<int>(n);
+    }
+
+    // java thread: forget what queued up while nobody listened
+    void drop() { mRead.store(mWrite.load(std::memory_order_acquire), std::memory_order_release); }
 
 private:
-    void reopenLocked() {  // caller holds mLock
-        if (mStream) {
-            mStream->stop();
-            mStream->close();
-            mStream.reset();
-        }
-        if (mDeviceId == 0 || mSampleRate <= 0 || mChannels <= 0) return;
-        oboe::AudioStreamBuilder b;
-        b.setDirection(oboe::Direction::Output)
-            ->setDeviceId(mDeviceId)
-            ->setSharingMode(oboe::SharingMode::Shared)
-            ->setFormat(oboe::AudioFormat::I16)
-            ->setChannelCount(mChannels)
-            ->setSampleRate(mSampleRate)
-            ->setSampleRateConversionQuality(oboe::SampleRateConversionQuality::Medium)
-            ->setUsage(oboe::Usage::Media)
-            ->setContentType(oboe::ContentType::Music)
-            ->setPerformanceMode(oboe::PerformanceMode::None);
-        if (b.openStream(mStream) != oboe::Result::OK) {
-            mStream.reset();
-            return;
-        }
-        // headroom for a few late bursts before writes start dropping
-        mStream->setBufferSizeInFrames(mStream->getBufferCapacityInFrames());
-        mScratch.assign(static_cast<size_t>(mStream->getBufferCapacityInFrames()) * mChannels, 0);
-        if (mStream->requestStart() != oboe::Result::OK) {
-            mStream->close();
-            mStream.reset();
-        }
-    }
+    static constexpr uint32_t kSize = 1u << 15;  // ~0.7 s at 44.1 kHz
+    static constexpr uint32_t kMask = kSize - 1;
 
-    std::mutex mLock;
+    std::atomic<bool> mOn{false};
     std::atomic<float> mGain{1.f};
-    int mDeviceId = 0;
-    int mSampleRate = 0;
-    int mChannels = 0;
-    std::shared_ptr<oboe::AudioStream> mStream;
-    std::vector<int16_t> mScratch;
+    std::atomic<int> mSampleRate{0};
+    std::atomic<int> mChannels{0};
+    std::atomic<uint32_t> mWrite{0};
+    std::atomic<uint32_t> mRead{0};
+    int16_t mRing[kSize] = {};
 };
 
 // https://github.com/google/oboe/wiki/TechNote_HowToAvoidCrashes#avoid-deleting-objects-that-are-used-by-callbacks
@@ -212,8 +198,8 @@ private:
             ->setDataCallback(mCallbacks)
             ->setErrorCallback(mCallbacks);
         if (mLowLatency) {
-            // game use case may enable extra latency optimizations
-            b.setPerformanceMode(oboe::PerformanceMode::LowLatency)->setUsage(oboe::Usage::Game);
+            // media usage, not game: the car opens its media channel for media only
+            b.setPerformanceMode(oboe::PerformanceMode::LowLatency)->setUsage(oboe::Usage::Media);
         } else {
             // media use case may have better quality and lower power
             b.setPerformanceMode(oboe::PerformanceMode::PowerSaving)->setUsage(oboe::Usage::Media);

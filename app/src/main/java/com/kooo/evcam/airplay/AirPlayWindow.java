@@ -27,8 +27,9 @@ import com.kooo.evcam.R;
 
 /**
  * The floating screen the iPhone mirrors into: a rounded card over whatever is on the head
- * unit. Drag it to move, drag the corner to resize (it keeps the iPhone's shape), double-tap to
- * switch between small and large, × to end the mirroring. Where it sat and how big it was are
+ * unit. It moves, pinches and docks to a screen edge the way Super mirror does
+ * ({@link com.kooo.evcam.zeekr.FloatingWindowGestures}); a pinch keeps the iPhone's shape.
+ * Double-tap switches between small and large, × ends the mirroring. Where it sat and how big it was are
  * remembered. Main thread only.
  */
 final class AirPlayWindow {
@@ -44,6 +45,8 @@ final class AirPlayWindow {
     private static final float SMALL = 0.42f;
     private static final float LARGE = 0.86f;
     private static final float MIN = 0.22f;
+    /** Smallest side a pinch shrinks the window to. */
+    private static final int MIN_SIDE_DP = 120;
 
     private final Context context;
     private final WindowManager wm;
@@ -106,10 +109,6 @@ final class AirPlayWindow {
 
         root.addView(button(R.drawable.ic_close, R.string.airplay_close, v -> listener.onCloseTapped()),
                 corner(Gravity.TOP | Gravity.END));
-        ImageView resize = button(R.drawable.ic_resize, R.string.airplay_resize, null);
-        resize.setOnTouchListener(new ResizeTouch());
-        root.addView(resize, corner(Gravity.BOTTOM | Gravity.END));
-
         root.setOnTouchListener(new MoveTouch());
 
         lp = new WindowManager.LayoutParams(
@@ -123,9 +122,11 @@ final class AirPlayWindow {
         lp.width = Math.round(prefs.getFloat("width", SMALL) * dm.widthPixels);
         lp.height = heightFor(lp.width);
         fitWidth();
-        lp.x = prefs.getInt("x", (dm.widthPixels - lp.width) / 2);
-        lp.y = prefs.getInt("y", (dm.heightPixels - lp.height) / 2);
-        clampPosition();
+        lp.x = com.kooo.evcam.zeekr.RearViewTouchModel.clampX(
+                prefs.getInt("x", (dm.widthPixels - lp.width) / 2), lp.width, dm.widthPixels,
+                com.kooo.evcam.zeekr.FloatingWindowGestures.PEEK_WIDTH_PX);
+        lp.y = com.kooo.evcam.zeekr.RearViewTouchModel.clampY(
+                prefs.getInt("y", (dm.heightPixels - lp.height) / 2), lp.height, dm.heightPixels);
         paintStatus();
         try {
             wm.addView(root, lp);
@@ -304,7 +305,7 @@ final class AirPlayWindow {
         }
     };
 
-    /** Drag the card around; double-tap for small / large. */
+    /** Move, pinch and dock like Super mirror; double-tap for small / large. */
     private final class MoveTouch implements View.OnTouchListener {
         private final GestureDetector taps = new GestureDetector(context,
                 new GestureDetector.SimpleOnGestureListener() {
@@ -314,68 +315,47 @@ final class AirPlayWindow {
                         return true;
                     }
                 });
-        private float downX;
-        private float downY;
-        private int startX;
-        private int startY;
+        private final com.kooo.evcam.zeekr.FloatingWindowGestures gestures =
+                new com.kooo.evcam.zeekr.FloatingWindowGestures(context,
+                        new com.kooo.evcam.zeekr.FloatingWindowGestures.Host() {
+                            @Override
+                            public WindowManager.LayoutParams params() {
+                                return lp;
+                            }
+
+                            @Override
+                            public int screenWidth() {
+                                return screen().widthPixels;
+                            }
+
+                            @Override
+                            public int screenHeight() {
+                                return screen().heightPixels;
+                            }
+
+                            @Override
+                            public int minSize() {
+                                return Math.round(MIN_SIDE_DP * density);
+                            }
+
+                            @Override
+                            public void apply() {
+                                update();
+                            }
+
+                            @Override
+                            public void save() {
+                                AirPlayWindow.this.save();
+                            }
+                        });
 
         @SuppressLint("ClickableViewAccessibility")
         @Override
         public boolean onTouch(View v, MotionEvent e) {
-            taps.onTouchEvent(e);
-            switch (e.getActionMasked()) {
-                case MotionEvent.ACTION_DOWN:
-                    downX = e.getRawX();
-                    downY = e.getRawY();
-                    startX = lp.x;
-                    startY = lp.y;
-                    return true;
-                case MotionEvent.ACTION_MOVE:
-                    lp.x = startX + Math.round(e.getRawX() - downX);
-                    lp.y = startY + Math.round(e.getRawY() - downY);
-                    clampPosition();
-                    update();
-                    return true;
-                case MotionEvent.ACTION_UP:
-                case MotionEvent.ACTION_CANCEL:
-                    save();
-                    return true;
-                default:
-                    return false;
+            if (e.getPointerCount() == 1) {
+                taps.onTouchEvent(e);
             }
-        }
-    }
-
-    /** Drag the corner: width follows the finger, height follows the iPhone's shape. */
-    private final class ResizeTouch implements View.OnTouchListener {
-        private float downX;
-        private int startW;
-
-        @SuppressLint("ClickableViewAccessibility")
-        @Override
-        public boolean onTouch(View v, MotionEvent e) {
-            switch (e.getActionMasked()) {
-                case MotionEvent.ACTION_DOWN:
-                    downX = e.getRawX();
-                    startW = lp.width;
-                    return true;
-                case MotionEvent.ACTION_MOVE:
-                    DisplayMetrics dm = screen();
-                    int w = startW + Math.round(e.getRawX() - downX);
-                    w = Math.max(Math.round(dm.widthPixels * MIN), Math.min(w, dm.widthPixels - lp.x));
-                    lp.width = w;
-                    lp.height = heightFor(w);
-                    fitWidth();
-                    clampPosition();
-                    update();
-                    return true;
-                case MotionEvent.ACTION_UP:
-                case MotionEvent.ACTION_CANCEL:
-                    save();
-                    return true;
-                default:
-                    return false;
-            }
+            return gestures.onTouch(e);
         }
     }
 }

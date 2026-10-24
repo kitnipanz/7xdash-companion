@@ -1344,7 +1344,6 @@
     <string name="airplay_title">AirPlay</string>
     <string name="airplay_device_name">7xDash</string>
     <string name="airplay_close">ปิด</string>
-    <string name="airplay_resize">ปรับขนาด</string>
     <string name="airplay_waiting">กำลังรอภาพจาก iPhone…</string>
     <string name="airplay_paused_driving">ซ่อนภาพขณะขับขี่ เสียงยังเล่นต่อ</string>
     <string name="airplay_failed">เปิด AirPlay ไม่สำเร็จ</string>

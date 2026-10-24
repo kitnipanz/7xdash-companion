@@ -3,6 +3,7 @@
 ## [1.3.5] - 2026-10-24
 
 - Announcements is no longer a beta feature: its home card, the Announcements entry in Settings › Megaphone and playing when Sentry Mode arms work without Beta features, and "beta" is gone from its shortcut names. Where I parked stays beta.
+- The AirPlay and cabin passenger windows move, resize and dock like Super mirror: drag anywhere to move, pinch to resize around your fingers (the shape is kept), push or flick to a side to dock with a strip showing, tap the strip to bring it back. Position and size are remembered. The AirPlay corner resize handle is gone; double-tap still switches small and large.
 
 ## [1.3.4] - 2026-10-24
 

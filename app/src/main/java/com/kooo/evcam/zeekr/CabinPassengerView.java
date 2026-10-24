@@ -19,8 +19,9 @@ import com.kooo.evcam.profile.ProfileSizes;
 import com.kooo.evcam.profile.ProfileStore;
 
 /**
- * Floating window of the rear cabin. Drag moves it. A pinch, or the size sliders, changes
- * how much of the cabin is visible. The picture is not stretched.
+ * Floating window of the rear cabin. Moves, pinches and docks to a screen edge the way Super mirror
+ * does ({@link FloatingWindowGestures}). A pinch, or the size sliders, changes how much of the cabin
+ * is visible. The picture is not stretched.
  */
 public class CabinPassengerView extends ViewGroup {
 
@@ -35,7 +36,6 @@ public class CabinPassengerView extends ViewGroup {
     }
 
     private static final String TAG = "CabinPassenger";
-    private static final int DRAG_SLOP_PX = 12;
 
     private final WindowManager windowManager;
     private final AppConfig appConfig;
@@ -52,20 +52,47 @@ public class CabinPassengerView extends ViewGroup {
     private int bufferHeight;
     private boolean systemMirrored;
 
-    private float downX;
-    private float downY;
-    private int startX;
-    private int startY;
-    private boolean dragging;
-    private boolean pinching;
-    private float pinchSpan;
-    private int pinchWidth;
-    private int pinchHeight;
+    private final FloatingWindowGestures gestures;
 
     public CabinPassengerView(Context context, AppConfig appConfig) {
         super(context);
         this.appConfig = appConfig;
         this.windowManager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
+        this.gestures = new FloatingWindowGestures(context, new FloatingWindowGestures.Host() {
+            @Override
+            public WindowManager.LayoutParams params() {
+                return params;
+            }
+
+            @Override
+            public int screenWidth() {
+                return CabinPassengerView.this.screenWidth();
+            }
+
+            @Override
+            public int screenHeight() {
+                return CabinPassengerView.this.screenHeight();
+            }
+
+            @Override
+            public int minSize() {
+                return CabinWindow.MIN_PX;
+            }
+
+            @Override
+            public void apply() {
+                applyLayout();
+                invalidate();
+            }
+
+            @Override
+            public void save() {
+                if (params != null) {
+                    appConfig.setCabinPassengerOrigin(params.x, params.y);
+                    appConfig.setCabinPassengerSize(params.width, params.height, screenWidth(), screenHeight());
+                }
+            }
+        });
         setBackgroundColor(0xFF000000);
         textureView = new TextureView(context);
         textureView.setSurfaceTextureListener(new TextureView.SurfaceTextureListener() {
@@ -167,7 +194,8 @@ public class CabinPassengerView extends ViewGroup {
                 Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
                         ? WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
                         : WindowManager.LayoutParams.TYPE_PHONE,
-                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+                // NO_LIMITS: docking leaves the window part off screen, as Super mirror's
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
                 PixelFormat.TRANSLUCENT);
         params.gravity = Gravity.TOP | Gravity.START;
         int savedX = appConfig.getCabinPassengerX();
@@ -176,8 +204,8 @@ public class CabinPassengerView extends ViewGroup {
             savedX = screenWidth() - width - 40;
             savedY = 80;
         }
-        params.x = CabinWindow.clampOrigin(savedX, width, screenWidth());
-        params.y = CabinWindow.clampOrigin(savedY, height, screenHeight());
+        params.x = RearViewTouchModel.clampX(savedX, width, screenWidth(), FloatingWindowGestures.PEEK_WIDTH_PX);
+        params.y = RearViewTouchModel.clampY(savedY, height, screenHeight());
         try {
             windowManager.addView(this, params);
             attached = true;
@@ -193,13 +221,15 @@ public class CabinPassengerView extends ViewGroup {
         }
         params.width = appConfig.getCabinPassengerWidth(screenWidth());
         params.height = appConfig.getCabinPassengerHeight(screenHeight());
-        params.x = CabinWindow.clampOrigin(params.x, params.width, screenWidth());
-        params.y = CabinWindow.clampOrigin(params.y, params.height, screenHeight());
+        params.x = RearViewTouchModel.clampX(params.x, params.width, screenWidth(),
+                FloatingWindowGestures.PEEK_WIDTH_PX);
+        params.y = RearViewTouchModel.clampY(params.y, params.height, screenHeight());
         applyLayout();
         invalidate();
     }
 
     public void hide() {
+        gestures.cancel();
         if (!attached) {
             return;
         }
@@ -250,82 +280,7 @@ public class CabinPassengerView extends ViewGroup {
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        if (params == null) {
-            return false;
-        }
-        if (event.getPointerCount() >= 2) {
-            pinch(event);
-            return true;
-        }
-        switch (event.getActionMasked()) {
-            case MotionEvent.ACTION_DOWN:
-                pinching = false;
-                dragging = false;
-                downX = event.getRawX();
-                downY = event.getRawY();
-                startX = params.x;
-                startY = params.y;
-                return true;
-            case MotionEvent.ACTION_MOVE:
-                if (pinching || params == null) {
-                    return true;
-                }
-                float dx = event.getRawX() - downX;
-                float dy = event.getRawY() - downY;
-                if (!dragging && (Math.abs(dx) > DRAG_SLOP_PX || Math.abs(dy) > DRAG_SLOP_PX)) {
-                    dragging = true;
-                }
-                if (dragging) {
-                    params.x = CabinWindow.clampOrigin(startX + Math.round(dx), params.width, screenWidth());
-                    params.y = CabinWindow.clampOrigin(startY + Math.round(dy), params.height, screenHeight());
-                    applyLayout();
-                }
-                return true;
-            case MotionEvent.ACTION_UP:
-            case MotionEvent.ACTION_CANCEL:
-                if (params != null && (dragging || pinching)) {
-                    appConfig.setCabinPassengerOrigin(params.x, params.y);
-                    if (pinching) {
-                        appConfig.setCabinPassengerSize(params.width, params.height, screenWidth(), screenHeight());
-                    }
-                }
-                dragging = false;
-                pinching = false;
-                return true;
-            default:
-                return true;
-        }
-    }
-
-    private void pinch(MotionEvent event) {
-        if (params == null || event.getPointerCount() < 2) {
-            return;
-        }
-        float span = span(event);
-        if (!pinching) {
-            pinching = true;
-            dragging = false;
-            pinchSpan = span;
-            pinchWidth = params.width;
-            pinchHeight = params.height;
-            return;
-        }
-        if (pinchSpan < 1f) {
-            return;
-        }
-        float scale = span / pinchSpan;
-        params.width = CabinWindow.clamp(Math.round(pinchWidth * scale), screenWidth());
-        params.height = CabinWindow.clamp(Math.round(pinchHeight * scale), screenHeight());
-        params.x = CabinWindow.clampOrigin(params.x, params.width, screenWidth());
-        params.y = CabinWindow.clampOrigin(params.y, params.height, screenHeight());
-        applyLayout();
-        invalidate();
-    }
-
-    private static float span(MotionEvent event) {
-        float dx = event.getX(0) - event.getX(1);
-        float dy = event.getY(0) - event.getY(1);
-        return (float) Math.hypot(dx, dy);
+        return gestures.onTouch(event);
     }
 
     /** Saved mirror, after undoing the flip Android already applied to a front-facing camera. */

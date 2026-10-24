@@ -1368,7 +1368,6 @@ Then reopen this app.</string>
     <string name="airplay_title">AirPlay</string>
     <string name="airplay_device_name">7xDash</string>
     <string name="airplay_close">Close</string>
-    <string name="airplay_resize">Resize</string>
     <string name="airplay_waiting">Waiting for the iPhone picture…</string>
     <string name="airplay_paused_driving">Picture hidden while driving. Sound keeps playing.</string>
     <string name="airplay_failed">AirPlay could not start.</string>

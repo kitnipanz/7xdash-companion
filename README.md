@@ -127,6 +127,10 @@ When the car shifts into P, reads the floor and bay signs from the cameras, offl
 a photo in the notification shade and on 7xDash web.
 - Turn on Settings → Interface → **Beta features**, then tap the card to read now; its **Auto on P**
   switch reads every time you park.
+- Its **Pillar scan** switch keeps reading the column signs while you creep under 3 km/h in D or R. Each new
+  floor or bay shows on the HUD, and at P it fills in whatever the parked read could not see.
+- Hold the card to scan once by hand: **Scan now** shows the photo, the floor and bay read, what is
+  remembered and the raw text, and sends the spot to 7xDash web.
 
 ### Settings backup on USB
 Your settings (switches, shortcuts, stickers, lights, speakers, EQ, profiles, announcements and

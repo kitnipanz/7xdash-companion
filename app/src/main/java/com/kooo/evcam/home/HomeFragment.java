@@ -270,13 +270,17 @@ public class HomeFragment extends Fragment {
                 () -> startActivity(new Intent(requireContext(),
                         com.kooo.evcam.announce.AnnouncementsActivity.class)));
 
-        // Beta: 停在哪。点卡片当场读一次；胶囊开关决定挂 P 时自动读
+        // Beta: 停在哪。点卡片当场读一次，长按开扫描窗（手动扫一次、看读到什么）；胶囊开关决定挂 P 时自动读，另一颗决定 3 km/h 以下边开边读柱子上的牌
         if (betaShown) {
             addCard(R.drawable.ic_parking, R.string.home_card_parking,
-                    R.string.home_card_parking_sub, () -> perform(ShortcutAction.WHERE_PARKED), null)
+                    R.string.home_card_parking_sub, () -> perform(ShortcutAction.WHERE_PARKED),
+                    () -> com.kooo.evcam.parking.ParkingScanDialog.show(requireContext()))
                     .pill(() -> getString(R.string.home_parking_auto, getString(
                                     config.isParkingAutoEnabled() ? R.string.home_state_on : R.string.home_state_off)),
-                            () -> config.isParkingAutoEnabled(), this::toggleParkingAuto);
+                            () -> config.isParkingAutoEnabled(), this::toggleParkingAuto)
+                    .extraPill(() -> getString(R.string.home_parking_creep, getString(
+                                    config.isParkingCreepEnabled() ? R.string.home_state_on : R.string.home_state_off)),
+                            () -> config.isParkingCreepEnabled(), this::toggleParkingCreep);
         }
         layoutGrid(true);
         refresh();
@@ -383,6 +387,17 @@ public class HomeFragment extends Fragment {
          * 开着时胶囊是实心橙，关着是灰；卡片本身不跟着点亮（卡片是「动作」，胶囊才是「开关」）。
          */
         Card pill(Label label, State on, Runnable toggle) {
+            return pill(state, label, on, toggle);
+        }
+
+        /** A second pill left of the first one. */
+        Card extraPill(Label label, State on, Runnable toggle) {
+            TextView extra = view.findViewById(R.id.card_state_extra);
+            extra.setVisibility(View.VISIBLE);
+            return pill(extra, label, on, toggle);
+        }
+
+        private Card pill(TextView state, Label label, State on, Runnable toggle) {
             state.setClickable(true);
             state.setFocusable(true);
             state.setBackgroundResource(R.drawable.bg_segment);
@@ -497,6 +512,12 @@ public class HomeFragment extends Fragment {
     private void toggleParkingAuto() {
         Context context = requireContext();
         config.setParkingAutoEnabled(!config.isParkingAutoEnabled());
+        com.kooo.evcam.parking.WhereParked.get().settingsChanged(context);
+    }
+
+    private void toggleParkingCreep() {
+        Context context = requireContext();
+        config.setParkingCreepEnabled(!config.isParkingCreepEnabled());
         com.kooo.evcam.parking.WhereParked.get().settingsChanged(context);
     }
 

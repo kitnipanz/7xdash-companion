@@ -32,10 +32,24 @@ final class ParkingNote {
     }
 
     static void show(Context app, ParkingText.Spot spot, long at, Bitmap picture) {
-        String time = DateFormat.getTimeFormat(app).format(at);
         String title = spot.isEmpty()
                 ? app.getString(R.string.parking_no_sign)
                 : app.getString(R.string.parking_at, spot.label());
+        post(app, title, details(app, spot, at), picture);
+    }
+
+    /**
+     * Pillar scan saw a new floor or bay while creeping: a card on the HUD, not the shade (eyes stay
+     * on the road; the shade gets the parked result). Shown whatever the HUD notices switch says,
+     * nothing on a car without a HUD.
+     */
+    static void seen(Context app, ParkingText.Spot spot, long at) {
+        com.kooo.evcam.hud.HudNoticeWindow.show(app, "7xDash",
+                app.getString(R.string.parking_seen, spot.label()), details(app, spot, at));
+    }
+
+    private static String details(Context app, ParkingText.Spot spot, long at) {
+        String time = DateFormat.getTimeFormat(app).format(at);
         StringBuilder text = new StringBuilder();
         if (!spot.floor.isEmpty()) {
             text.append(app.getString(R.string.parking_floor, spot.floor)).append("  ");
@@ -44,7 +58,7 @@ final class ParkingNote {
             text.append(app.getString(R.string.parking_bay, spot.bay)).append("  ");
         }
         text.append(time);
-        post(app, title, text.toString(), picture);
+        return text.toString();
     }
 
     private static void post(Context app, String title, String text, Bitmap picture) {

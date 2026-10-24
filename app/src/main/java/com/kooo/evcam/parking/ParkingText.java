@@ -57,6 +57,10 @@ public final class ParkingText {
     private ParkingText() {
     }
 
+    public static Spot spot(String floor, String bay) {
+        return new Spot(floor == null ? "" : floor, bay == null ? "" : bay);
+    }
+
     public static Spot pick(List<String> lines) {
         String floor = "";
         int floorScore = 0;

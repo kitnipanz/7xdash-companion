@@ -34,6 +34,18 @@
             android:layout_height="1dp"
             android:layout_weight="1" />
 
+        <!-- A second pill switch, only on cards that have two (Where I parked) -->
+        <TextView
+            android:id="@+id/card_state_extra"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textAppearance="@style/TextAppearance.Cam.Caption"
+            android:textColor="@color/energy_text"
+            android:visibility="gone" />
+
         <TextView
             android:id="@+id/card_state"
             android:layout_width="wrap_content"

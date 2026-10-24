@@ -34,6 +34,7 @@ public class AppConfig {
     private static final String KEY_FOOTAGE_LOCK_FLASH = "footage_lock_flash";  // 闪远光时自动锁定当前录像
     private static final String KEY_HUD_NOTIFICATIONS = "hud_notifications";
     private static final String KEY_PARKING_AUTO = "parking_auto";  // shifting into P reads the parking signs
+    private static final String KEY_PARKING_CREEP = "parking_creep";  // under 3 km/h in D/R keeps reading pillar signs
     private static final String KEY_BETA_FEATURES = "beta_features";  // show features still in beta (home cards, automatic triggers)
     private static final String KEY_HUD_NOTICE_LEFT = "hud_notice_left_pct";  // 抬头显示通知离左边多少（%）
     private static final String KEY_HUD_NOTICE_RIGHT = "hud_notice_right_pct";  // 离右边多少（%）  // 别的应用的通知投到抬头显示
@@ -468,6 +469,15 @@ public class AppConfig {
 
     public void setParkingAutoEnabled(boolean enabled) {
         prefs.edit().putBoolean(KEY_PARKING_AUTO, enabled).apply();
+    }
+
+    /** Where did I park: keep reading the pillar signs while creeping under 3 km/h. Off by default. */
+    public boolean isParkingCreepEnabled() {
+        return prefs.getBoolean(KEY_PARKING_CREEP, false);
+    }
+
+    public void setParkingCreepEnabled(boolean enabled) {
+        prefs.edit().putBoolean(KEY_PARKING_CREEP, enabled).apply();
     }
 
     /**

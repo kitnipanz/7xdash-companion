@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.3.7-beta] - 2026-10-25
+
+- Where I parked: new **Pillar scan** switch on its home card (off by default). While you creep under 3 km/h in D or R, 7xDash reads the column signs from the front and side cameras every 3 seconds and remembers the latest floor and bay. Each new one shows on the HUD; at P it fills in whatever the parked read could not see. Forgotten after 10 minutes or when you drive off from P.
+- Where I parked: hold the card for a scan window. **Scan now** reads once and shows the photo, the floor and bay, what is remembered and the raw text read, and sends the spot to 7xDash web.
+
 ## [1.3.6] - 2026-10-24
 
 - Side mirror: new defaults tuned on the car. Rotate left is -37° (right stays 37°), and the picture on the HUD is 47% wide (was the full strip). Values you already set are kept.

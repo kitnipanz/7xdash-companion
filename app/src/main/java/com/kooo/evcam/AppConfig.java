@@ -2487,6 +2487,47 @@ public class AppConfig {
         prefs.edit().putString(KEY_STICKER_DEVICES, raw == null ? "" : raw).apply();
     }
 
+    private static final String KEY_MOOD_LIGHT_ADDRESS = "mood_light_address";
+    private static final String KEY_MOOD_LIGHT_FAMILY = "mood_light_family";
+    private static final String KEY_MOOD_LIGHT_COLOR = "mood_light_color";
+    private static final String KEY_MOOD_LIGHT_BRIGHTNESS = "mood_light_brightness";
+
+    /** Mood light's MAC, empty when none is saved. */
+    public String getMoodLightAddress() {
+        return prefs.getString(KEY_MOOD_LIGHT_ADDRESS, "");
+    }
+
+    public void setMoodLightAddress(String address) {
+        prefs.edit().putString(KEY_MOOD_LIGHT_ADDRESS, address == null ? "" : address).apply();
+    }
+
+    /** {@code LightProtocol.Family} name last read from the light, empty before the first link. */
+    public String getMoodLightFamily() {
+        return prefs.getString(KEY_MOOD_LIGHT_FAMILY, "");
+    }
+
+    public void setMoodLightFamily(String family) {
+        prefs.edit().putString(KEY_MOOD_LIGHT_FAMILY, family == null ? "" : family).apply();
+    }
+
+    /** Last color sent, {@code 0xRRGGBB}. */
+    public int getMoodLightColor() {
+        return prefs.getInt(KEY_MOOD_LIGHT_COLOR, 0x8000FF);
+    }
+
+    public void setMoodLightColor(int rgb) {
+        prefs.edit().putInt(KEY_MOOD_LIGHT_COLOR, rgb & 0xFFFFFF).apply();
+    }
+
+    /** Last brightness sent, 0–100. */
+    public int getMoodLightBrightness() {
+        return prefs.getInt(KEY_MOOD_LIGHT_BRIGHTNESS, 80);
+    }
+
+    public void setMoodLightBrightness(int brightness) {
+        prefs.edit().putInt(KEY_MOOD_LIGHT_BRIGHTNESS, Math.max(0, Math.min(100, brightness))).apply();
+    }
+
     private static final String KEY_SAVED_CLIPS = "saved_clip_groups";
     private static final String KEY_SAVE_MOMENT_USB = "save_moment_usb";
     private static final String KEY_SAVE_MOMENT_DRIVE = "save_moment_drive";

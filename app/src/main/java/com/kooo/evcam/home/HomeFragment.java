@@ -264,6 +264,11 @@ public class HomeFragment extends Fragment {
                 R.string.home_card_outside_speaker_sub, () -> perform(ShortcutAction.OUTSIDE_SPEAKER),
                 () -> page(MainActivity.PAGE_SETTINGS_PREFIX + "screen_megaphone"))
                 .onOff(com.kooo.evcam.audio.OutsideSpeaker::isOn);
+        // Announcements: tap for the floating picker, hold for the list and the Sentry Mode pick
+        addCard(R.drawable.ic_announce, R.string.announce_title,
+                R.string.home_card_announce_sub, () -> com.kooo.evcam.announce.AnnouncePicker.toggle(requireContext()),
+                () -> startActivity(new Intent(requireContext(),
+                        com.kooo.evcam.announce.AnnouncementsActivity.class)));
 
         // Beta: 停在哪。点卡片当场读一次；胶囊开关决定挂 P 时自动读
         if (betaShown) {
@@ -272,11 +277,6 @@ public class HomeFragment extends Fragment {
                     .pill(() -> getString(R.string.home_parking_auto, getString(
                                     config.isParkingAutoEnabled() ? R.string.home_state_on : R.string.home_state_off)),
                             () -> config.isParkingAutoEnabled(), this::toggleParkingAuto);
-            // Beta: announcements. Tap for the floating picker, hold for the list and the Sentry Mode pick
-            addCard(R.drawable.ic_announce, R.string.announce_title,
-                    R.string.home_card_announce_sub, () -> com.kooo.evcam.announce.AnnouncePicker.toggle(requireContext()),
-                    () -> startActivity(new Intent(requireContext(),
-                            com.kooo.evcam.announce.AnnouncementsActivity.class)));
         }
         layoutGrid(true);
         refresh();

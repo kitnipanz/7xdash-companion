@@ -117,7 +117,7 @@
             android:layout_marginTop="8dp"
             android:orientation="vertical" />
 
-        <!-- Beta: announcements, phrases and sounds on the picked speakers. Shown with Beta features on -->
+        <!-- Announcements: phrases and sounds on the picked speakers -->
         <TextView
             android:id="@+id/announce_section"
             android:layout_width="match_parent"

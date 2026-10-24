@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.3.5] - 2026-10-24
+
+- Announcements is no longer a beta feature: its home card, the Announcements entry in Settings › Megaphone and playing when Sentry Mode arms work without Beta features, and "beta" is gone from its shortcut names. Where I parked stays beta.
+
 ## [1.3.4] - 2026-10-24
 
 Everything since 1.2.1, the last stable release.

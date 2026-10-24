@@ -884,7 +884,7 @@
     <!-- Interface section · first-launch side question · record unavailable · status bar -->
     <string name="set_section_interface">อินเทอร์เฟซ</string>
     <string name="set_beta_features_title">ฟีเจอร์เบต้า</string>
-    <string name="set_beta_features_summary">แสดงและเปิดใช้ฟีเจอร์ที่ยังทดลองในรถอยู่ ตอนนี้มี: จอดไว้ที่ไหน (การ์ดในหน้าหลัก และอ่านป้ายเมื่อเข้าเกียร์ P), ประกาศ (การ์ดในหน้าหลัก ทางเข้าในหน้าโทรโข่ง และเล่นเมื่อโหมดเฝ้ารถพร้อมทำงาน) ปุ่มลัดยังใช้ได้</string>
+    <string name="set_beta_features_summary">แสดงและเปิดใช้ฟีเจอร์ที่ยังทดลองในรถอยู่ ตอนนี้มี: จอดไว้ที่ไหน (การ์ดในหน้าหลัก และอ่านป้ายเมื่อเข้าเกียร์ P) ปุ่มลัดยังใช้ได้</string>
     <string name="set_reduce_motion_title">ลดแอนิเมชันขณะบันทึก</string>
     <string name="set_reduce_motion_summary">ปิดทรานสิชันและแอนิเมชันตกแต่งขณะบันทึก เพื่อให้ GPU ทำงานให้ตัวเข้ารหัส ปุ่มบันทึกและวงความคืบหน้ายังเคลื่อนไหวอยู่</string>
     <string name="set_vehicle_status_title">สถานะรถ (ทดลอง)</string>
@@ -1414,10 +1414,10 @@
     <string name="announce_sound_chime">เสียงกริ่ง</string>
     <string name="announce_sound_beep">บี๊บสองครั้ง</string>
     <string name="announce_sound_siren">ไซเรน</string>
-    <string name="shortcut_action_announce">ประกาศ (เลือกแล้วเล่น, เบต้า)</string>
-    <string name="announce_section">ประกาศ (เบต้า)</string>
+    <string name="shortcut_action_announce">ประกาศ (เลือกแล้วเล่น)</string>
+    <string name="announce_section">ประกาศ</string>
     <string name="home_card_announce_sub">ข้อความและเสียงออกลำโพง กดค้างเพื่อแก้ไข</string>
-    <string name="shortcut_action_announce_play">เล่นประกาศ (เบต้า)…</string>
+    <string name="shortcut_action_announce_play">เล่นประกาศ…</string>
     <string name="announce_pick_title">ปุ่มนี้จะเล่นประกาศไหน</string>
     <string name="announce_play_named">เล่น: %1$s</string>
     <string name="announce_missing">ประกาศนี้ถูกลบไปแล้ว</string>

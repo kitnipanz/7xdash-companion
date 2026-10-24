@@ -897,7 +897,7 @@ Then reopen this app.</string>
     <!-- Interface section · first-launch side question · record unavailable · status bar -->
     <string name="set_section_interface">Interface</string>
     <string name="set_beta_features_title">Beta features</string>
-    <string name="set_beta_features_summary">Show features that are still being tried on the car, and let them run. Now: Where I parked (home card, and reading the signs when the car goes into P), Announcements (home card, Megaphone settings entry, and playing when Sentry Mode arms). Their shortcuts still work.</string>
+    <string name="set_beta_features_summary">Show features that are still being tried on the car, and let them run. Now: Where I parked (home card, and reading the signs when the car goes into P). Its shortcut still works.</string>
     <string name="set_reduce_motion_title">Less motion while recording</string>
     <string name="set_reduce_motion_summary">Turns off transitions and other decorative animation while recording, leaving the GPU to the encoder. The record button and progress ring still animate.</string>
     <string name="set_vehicle_status_title">Vehicle status (experimental)</string>
@@ -1436,10 +1436,10 @@ Then reopen this app.</string>
     <string name="announce_sound_chime">Chime</string>
     <string name="announce_sound_beep">Double beep</string>
     <string name="announce_sound_siren">Siren</string>
-    <string name="shortcut_action_announce">Announcements (pick one to play, beta)</string>
-    <string name="announce_section">Announcements (beta)</string>
+    <string name="shortcut_action_announce">Announcements (pick one to play)</string>
+    <string name="announce_section">Announcements</string>
     <string name="home_card_announce_sub">Phrases and sounds outside. Hold to edit</string>
-    <string name="shortcut_action_announce_play">Play an announcement (beta)…</string>
+    <string name="shortcut_action_announce_play">Play an announcement…</string>
     <string name="announce_pick_title">Which announcement should this button play?</string>
     <string name="announce_play_named">Play: %1$s</string>
     <string name="announce_missing">That announcement was deleted</string>

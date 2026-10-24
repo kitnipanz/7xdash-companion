@@ -1419,7 +1419,7 @@ Then reopen this app.</string>
     <string name="announce_title">Announcements</string>
     <string name="announce_open">Phrases and sounds for the speakers</string>
     <string name="announce_summary">Play a phrase or a sound on the speakers picked for the megaphone, at the megaphone volume. Phrases play in your recorded voice, else 7xDash\'s English voice or the head unit\'s. Open the picker from any screen with the Announcements shortcut.</string>
-    <string name="announce_add_hint">Type a phrase in English or Thai</string>
+    <string name="announce_add_hint">Type a phrase in English</string>
     <string name="announce_add">Add</string>
     <string name="announce_play">Play</string>
     <string name="announce_delete">Delete</string>
@@ -1459,8 +1459,8 @@ Then reopen this app.</string>
     <string name="announce_in_your_voice">%1$s · your voice</string>
     <string name="shortcut_edit">Edit</string>
     <string name="shortcut_edit_press">Press type</string>
-    <string name="announce_voice_get">English voice: not on this car yet. Tap to download 7xDash\'s own (%1$d MB, needs internet once). Thai phrases: tap the mic and record them.</string>
-    <string name="announce_voice_ready">English voice: ready (works offline). Thai phrases: tap the mic and record them.</string>
+    <string name="announce_voice_get">English voice: not on this car yet. Tap to download 7xDash\'s own (%1$d MB, needs internet once).</string>
+    <string name="announce_voice_ready">English voice: ready (works offline).</string>
     <string name="announce_voice_downloading">Downloading the English voice… %1$d%%</string>
     <string name="announce_voice_unpacking">Installing the English voice…</string>
     <string name="announce_voice_done">English voice installed</string>
@@ -1476,4 +1476,5 @@ Then reopen this app.</string>
     <string name="usb_settings_restore_go">Restore</string>
     <string name="usb_settings_none">No settings copy on the USB stick</string>
     <string name="usb_settings_found">Settings copy found on the USB stick. Settings › System › Restore settings from USB puts it back.</string>
+    <string name="announce_record_needed">No voice reads this language. Tap the mic next to it and record it.</string>
 </resources>

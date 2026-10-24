@@ -30,7 +30,7 @@ public final class Announcement {
         return !sound.isEmpty();
     }
 
-    /** Thai script anywhere in the phrase picks the Thai voice. */
+    /** Thai script anywhere in the phrase. No voice reads Thai on this car: it plays only when recorded. */
     public boolean isThai() {
         for (int i = 0; i < text.length(); i++) {
             char c = text.charAt(i);

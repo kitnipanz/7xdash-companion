@@ -19,6 +19,10 @@ public final class AnnouncementStore {
     private static final String KEY_SENTRY = "sentry";
     /** Sounds already offered to this list, so ones added in a later version show up once, after the others. */
     private static final String KEY_SOUNDS_OFFERED = "sounds_offered";
+    /** Thai phrases shipped in 1.3.0 to 1.3.2; dropped since no voice could read them. */
+    static final List<String> OLD_THAI = java.util.Arrays.asList(
+            "th-step-back", "th-reversing", "th-recording", "th-thanks");
+    private static final String KEY_THAI_DROPPED = "thai_dropped";
     /** Longest phrase kept: text-to-speech engines refuse very long input. */
     public static final int MAX_TEXT = 200;
 
@@ -37,7 +41,13 @@ public final class AnnouncementStore {
         }
         List<Announcement> list = decode(saved);
         String offered = prefs.getString(KEY_SOUNDS_OFFERED, Tones.CHIME + "," + Tones.BEEP + "," + Tones.SIREN);
-        if (addNewSounds(list, offered)) {
+        boolean changed = addNewSounds(list, offered);
+        if (!prefs.getBoolean(KEY_THAI_DROPPED, false)) {
+            // Once: the shipped Thai phrases go, unless the driver recorded them in their own voice
+            changed |= list.removeIf(a -> OLD_THAI.contains(a.id) && !hasRecording(a.id));
+            prefs.edit().putBoolean(KEY_THAI_DROPPED, true).apply();
+        }
+        if (changed) {
             save(list);
         }
         return list;
@@ -131,7 +141,7 @@ public final class AnnouncementStore {
         return one.length() > MAX_TEXT ? one.substring(0, MAX_TEXT).trim() : one;
     }
 
-    /** Sounds first, then phrases in English and Thai. Ids stay fixed so a sentry pick survives. */
+    /** Sounds first, then English phrases. Ids stay fixed so a sentry pick survives. */
     static List<Announcement> defaults() {
         List<Announcement> list = defaultSounds();
         list.add(Announcement.phrase("en-step-back", "Please step back from the car."));
@@ -139,10 +149,6 @@ public final class AnnouncementStore {
         list.add(Announcement.phrase("en-recording", "Please do not touch the car. You are being recorded."));
         list.add(Announcement.phrase("en-coming-through", "Excuse me, coming through."));
         list.add(Announcement.phrase("en-thanks", "Thank you!"));
-        list.add(Announcement.phrase("th-step-back", "กรุณาถอยห่างจากรถด้วยครับ"));
-        list.add(Announcement.phrase("th-reversing", "ระวัง รถกำลังถอยหลัง"));
-        list.add(Announcement.phrase("th-recording", "กรุณาอย่าแตะต้องรถ กล้องกำลังบันทึกภาพ"));
-        list.add(Announcement.phrase("th-thanks", "ขอบคุณครับ"));
         return list;
     }
 

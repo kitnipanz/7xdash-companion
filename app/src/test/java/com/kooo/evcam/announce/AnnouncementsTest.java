@@ -46,7 +46,7 @@ public class AnnouncementsTest {
     }
 
     @Test
-    public void defaultsHaveSoundsEnglishThaiAndUniqueIds() {
+    public void defaultsHaveSoundsEnglishOnlyAndUniqueIds() {
         List<Announcement> list = AnnouncementStore.defaults();
         Set<String> ids = new HashSet<>();
         boolean thai = false;
@@ -64,8 +64,11 @@ public class AnnouncementsTest {
             }
         }
         assertEquals(Tones.ALL.length, sounds);
-        assertTrue(thai);
+        assertFalse(thai);
         assertTrue(english);
+        for (Announcement x : list) {
+            assertFalse(AnnouncementStore.OLD_THAI.contains(x.id));
+        }
     }
 
     @Test

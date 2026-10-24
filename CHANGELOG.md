@@ -1,5 +1,31 @@
 # Changelog
 
+## [1.3.4] - 2026-10-24
+
+Everything since 1.2.1, the last stable release.
+
+### Settings on USB (new)
+- Settings are kept on the USB stick (`7xDash/settings/`) a few seconds after any change, and come back by themselves after a reinstall or Clear data: switches, shortcuts, stickers, the mood light, speakers, EQ, profiles, announcements and their recordings. Settings › System has Back up settings to USB and Restore settings from USB. Android permissions and Bluetooth pairing are not part of the copy.
+
+### Announcements (beta)
+- Play a phrase or a sound on the speakers picked for the megaphone, at the megaphone volume. Eight built-in sounds (Chime, Double beep, Siren, Horn, Ding-dong, Alarm, Reversing beeps, Attention chime) and ready English phrases; add your own in Settings › Megaphone › Announcements.
+- Phrases play in your own recorded voice (the mic on each phrase), or in 7xDash's offline English voice (downloaded once, 22 MB), or the head unit's voice. Thai phrases play only when recorded; the ready-made Thai phrases are gone.
+- A floating picker opens over any screen from the Announcements shortcut or the home card. Another shortcut action plays one chosen announcement straight away.
+- When Sentry Mode arms, a chosen announcement can play (at most once a minute).
+- With Beta features off, the home card, the Megaphone settings entry and the Sentry Mode trigger are hidden or off; the shortcuts still work.
+
+### Speakers
+- The megaphone and the outside speaker play on every speaker you tick in Settings › Megaphone › Speakers, at the same time. 7xDash web can tick them too.
+
+### Shortcuts
+- Each saved shortcut has an Edit button to change its action or press type.
+
+### Mood light (experimental)
+- Settings › Smart sticker › Mood light finds and controls cheap Bluetooth RGB lights (ELK-BLEDOM and Triones types): on/off, colour and brightness.
+
+### Size
+- The APK is about 30 MB bigger, for the offline speech engine.
+
 ## [1.3.2-beta] - 2026-10-24
 
 - Settings are kept on the USB stick (`7xDash/settings/`) a few seconds after any change, and come back by themselves after a reinstall or Clear data: switches, shortcuts, stickers, the mood light, speakers, EQ, profiles, announcements and their recordings. Settings › System has Back up settings to USB and Restore settings from USB. Android permissions and Bluetooth pairing are not part of the copy.

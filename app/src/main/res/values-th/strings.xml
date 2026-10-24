@@ -1397,7 +1397,7 @@
     <string name="announce_title">ประกาศ</string>
     <string name="announce_open">ข้อความและเสียงสำหรับลำโพง</string>
     <string name="announce_summary">เล่นข้อความหรือเสียงที่ลำโพงที่เลือกไว้สำหรับโทรโข่ง ด้วยระดับเสียงโทรโข่ง ข้อความจะเล่นด้วยเสียงที่คุณอัดไว้ หรือเสียงอ่านภาษาอังกฤษของ 7xDash หรือของเครื่องเสียงรถ เปิดหน้าต่างเลือกได้จากทุกหน้าด้วยปุ่มลัดประกาศ</string>
-    <string name="announce_add_hint">พิมพ์ข้อความภาษาอังกฤษหรือไทย</string>
+    <string name="announce_add_hint">พิมพ์ข้อความภาษาอังกฤษ</string>
     <string name="announce_add">เพิ่ม</string>
     <string name="announce_play">เล่น</string>
     <string name="announce_delete">ลบ</string>
@@ -1437,8 +1437,8 @@
     <string name="announce_in_your_voice">%1$s · เสียงของคุณ</string>
     <string name="shortcut_edit">แก้ไข</string>
     <string name="shortcut_edit_press">แบบการกด</string>
-    <string name="announce_voice_get">เสียงอ่านภาษาอังกฤษ: ยังไม่มีในรถ แตะเพื่อดาวน์โหลดของ 7xDash (%1$d MB ต้องใช้อินเทอร์เน็ตครั้งเดียว) ข้อความภาษาไทย: แตะไมค์แล้วอัดเสียงเอง</string>
-    <string name="announce_voice_ready">เสียงอ่านภาษาอังกฤษ: พร้อมใช้ (ไม่ต้องใช้อินเทอร์เน็ต) ข้อความภาษาไทย: แตะไมค์แล้วอัดเสียงเอง</string>
+    <string name="announce_voice_get">เสียงอ่านภาษาอังกฤษ: ยังไม่มีในรถ แตะเพื่อดาวน์โหลดของ 7xDash (%1$d MB ต้องใช้อินเทอร์เน็ตครั้งเดียว)</string>
+    <string name="announce_voice_ready">เสียงอ่านภาษาอังกฤษ: พร้อมใช้ (ไม่ต้องใช้อินเทอร์เน็ต)</string>
     <string name="announce_voice_downloading">กำลังดาวน์โหลดเสียงอ่านภาษาอังกฤษ… %1$d%%</string>
     <string name="announce_voice_unpacking">กำลังติดตั้งเสียงอ่านภาษาอังกฤษ…</string>
     <string name="announce_voice_done">ติดตั้งเสียงอ่านภาษาอังกฤษแล้ว</string>
@@ -1454,4 +1454,5 @@
     <string name="usb_settings_restore_go">กู้คืน</string>
     <string name="usb_settings_none">ไม่มีสำเนาการตั้งค่าใน USB</string>
     <string name="usb_settings_found">พบสำเนาการตั้งค่าใน USB ไปที่ ตั้งค่า › ระบบ › กู้คืนการตั้งค่าจาก USB เพื่อนำกลับมา</string>
+    <string name="announce_record_needed">ไม่มีเสียงอ่านภาษานี้ แตะไมค์ข้างข้อความแล้วอัดเสียงเอง</string>
 </resources>

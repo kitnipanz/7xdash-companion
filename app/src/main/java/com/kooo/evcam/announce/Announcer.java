@@ -91,7 +91,7 @@ public final class Announcer {
                 wav = speak(context, a);
             }
             if (wav == null) {
-                return R.string.announce_no_voice;
+                return a.isThai() ? R.string.announce_record_needed : R.string.announce_no_voice;
             }
             pcm = wav.mono;
             rate = wav.rate;
@@ -142,11 +142,17 @@ public final class Announcer {
         if (!cache.isDirectory() && !cache.mkdirs()) {
             return null;
         }
-        File file = new File(cache, Integer.toHexString((a.text + a.isThai()).hashCode()) + ".wav");
+        // Same name as 1.3.0-1.3.2 gave English phrases, so their cached speech is kept
+        File file = new File(cache, Integer.toHexString((a.text + "false").hashCode()) + ".wav");
         if (file.isFile() && file.length() > 44) {
             return read(file);
         }
-        Locale[] wanted = a.isThai() ? THAI : ENGLISH;
+        if (a.isThai()) {
+            // No voice reads Thai on this car: Thai plays only when recorded
+            BlackBox.note("Announcement: Thai phrase not recorded: \"" + a.text + "\"");
+            return null;
+        }
+        Locale[] wanted = ENGLISH;
         StringBuilder tried = new StringBuilder();
         for (String engine : engines(context)) {
             TextToSpeech engineTts = engine(context, engine);
@@ -170,7 +176,6 @@ public final class Announcer {
     }
 
     private static final Locale[] ENGLISH = {Locale.US, Locale.UK, Locale.ENGLISH, new Locale("en", "AU")};
-    private static final Locale[] THAI = {new Locale("th", "TH"), new Locale("th")};
 
     /** First locale the engine can speak, noting each answer (1+ yes, -1 missing data, -2 unsupported). */
     private static Locale voice(TextToSpeech engineTts, Locale[] wanted, StringBuilder note) {

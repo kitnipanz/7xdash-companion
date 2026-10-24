@@ -130,6 +130,8 @@ public class MoodLightActivity extends AppCompatActivity implements MoodLight.Li
     private boolean leStarted;
     private boolean discoveryListening;
     private boolean ready;
+    /** The light whose Connect asked for permission: connected, not scanned for, once it is granted. */
+    private String connectAfterGrant;
     private int color;
     private int level;
 
@@ -154,8 +156,11 @@ public class MoodLightActivity extends AppCompatActivity implements MoodLight.Li
         scanButton.setOnClickListener(v -> {
             if (scanning) {
                 stopScan();
-            } else if (ensurePermission()) {
-                startScan();
+            } else {
+                connectAfterGrant = null;
+                if (ensurePermission()) {
+                    startScan();
+                }
             }
         });
         findViewById(R.id.light_on).setOnClickListener(v -> {
@@ -376,16 +381,24 @@ public class MoodLightActivity extends AppCompatActivity implements MoodLight.Li
                 showControls();
                 status.setText(R.string.mood_light_pick);
                 render();
-            } else if (ensurePermission()) {
-                stopScan();
-                config.setMoodLightAddress(address);
-                ready = false;
-                showControls();
-                light.connect(address);
-                render();
+            } else {
+                connectAfterGrant = address;
+                if (ensurePermission()) {
+                    connectAfterGrant = null;
+                    connectTo(address);
+                }
             }
         });
         devices.addView(line);
+    }
+
+    private void connectTo(String address) {
+        stopScan();
+        config.setMoodLightAddress(address);
+        ready = false;
+        showControls();
+        light.connect(address);
+        render();
     }
 
     // =================================================================== scan
@@ -426,13 +439,21 @@ public class MoodLightActivity extends AppCompatActivity implements MoodLight.Li
         if (requestCode != ASK) {
             return;
         }
+        String waiting = connectAfterGrant;
+        connectAfterGrant = null;
         for (int result : grantResults) {
             if (result != PackageManager.PERMISSION_GRANTED) {
                 status.setText(R.string.sticker_need_permission);
                 return;
             }
         }
-        startScan();
+        if (waiting != null) {
+            // The prompt paused the screen, which ended its link. Saving the address is what counts:
+            // if this lands before onResume, onResume dials the saved light; if after, this dials it
+            connectTo(waiting);
+        } else {
+            startScan();
+        }
     }
 
     private void startScan() {

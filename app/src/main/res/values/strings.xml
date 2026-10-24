@@ -194,7 +194,9 @@
     <string name="tap_speak_seconds">%1$d s</string>
     <string name="tap_speak_volume">Volume</string>
     <string name="tap_speak_volume_value">%1$d%%</string>
-    <string name="tap_speak_speaker">Speaker</string>
+    <string name="tap_speak_speaker">Speakers</string>
+    <string name="tap_speak_speaker_hint">Tap to add or remove. The megaphone and the outside speaker play on every ticked speaker at the same time.</string>
+    <string name="tap_speak_speaker_keep_one">Keep at least one speaker</string>
     <string name="tap_speak_speaker_default">Outside speaker</string>
     <string name="shortcut_action_cabin">Open/Close cabin passenger</string>
     <string name="set_cabin_title">Cabin passenger</string>

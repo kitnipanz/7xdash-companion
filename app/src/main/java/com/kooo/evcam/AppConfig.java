@@ -2432,12 +2432,16 @@ public class AppConfig {
         prefs.edit().putInt(KEY_SPEAK_VOLUME, com.kooo.evcam.input.SpeakPlan.volume(volume)).apply();
     }
 
-    public String getSpeakSpeaker() {
-        return com.kooo.evcam.input.SpeakPlan.speaker(prefs.getString(KEY_SPEAK_SPEAKER, ""));
+    /**
+     * Speakers the megaphone and the outside speaker play on, all at once. Before 1.2.1 one
+     * address was saved under the same key, which reads as a list of one.
+     */
+    public java.util.List<String> getSpeakSpeakers() {
+        return com.kooo.evcam.input.SpeakPlan.speakers(prefs.getString(KEY_SPEAK_SPEAKER, ""));
     }
 
-    public void setSpeakSpeaker(String address) {
-        prefs.edit().putString(KEY_SPEAK_SPEAKER, address == null ? "" : address).apply();
+    public void setSpeakSpeakers(java.util.List<String> addresses) {
+        prefs.edit().putString(KEY_SPEAK_SPEAKER, com.kooo.evcam.input.SpeakPlan.joinSpeakers(addresses)).apply();
     }
 
     private static final String KEY_OUTSIDE_SPEAKER_VOLUME = "outside_speaker_volume";

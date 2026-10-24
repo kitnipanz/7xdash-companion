@@ -221,7 +221,13 @@ public class TapToSpeakFragment extends Fragment implements SpeakCapture.Listene
 
     private void showSpeakers() {
         speakers.removeAllViews();
-        String saved = config.getSpeakSpeaker();
+        TextView hint = new TextView(requireContext());
+        hint.setText(R.string.tap_speak_speaker_hint);
+        hint.setTextAppearance(R.style.TextAppearance_Cam_Body);
+        hint.setTextColor(getColor(R.color.text_secondary));
+        hint.setPadding(0, 0, 0, dp(8));
+        speakers.addView(hint);
+        List<String> saved = config.getSpeakSpeakers();
         AudioManager manager = requireContext().getSystemService(AudioManager.class);
         AudioDeviceInfo[] devices = manager == null
                 ? null : manager.getDevices(AudioManager.GET_DEVICES_OUTPUTS);
@@ -239,17 +245,20 @@ public class TapToSpeakFragment extends Fragment implements SpeakCapture.Listene
                 CharSequence product = device.getProductName();
                 String title = product == null || product.length() == 0
                         ? address : product + " · " + address;
-                addSpeaker(title, address, saved.equals(address));
+                addSpeaker(title, address, saved.contains(address));
             }
         }
-        if (!seen.contains(saved)) {
-            addSpeaker(getString(R.string.tap_speak_speaker_default) + " · " + saved, saved, true);
+        // Picked but not on the head unit right now: still listed, so it can be removed
+        for (String address : saved) {
+            if (!seen.contains(address)) {
+                addSpeaker(getString(R.string.tap_speak_speaker_default) + " · " + address, address, true);
+            }
         }
     }
 
     private void addSpeaker(String title, String address, boolean selected) {
         TextView row = new TextView(requireContext());
-        row.setText(title);
+        row.setText((selected ? "✓  " : "") + title);
         row.setTextAppearance(R.style.TextAppearance_Cam_Body);
         row.setTextColor(getColor(selected ? R.color.energy : R.color.pref_title));
         row.setBackgroundResource(R.drawable.bg_pref_row);
@@ -260,7 +269,19 @@ public class TapToSpeakFragment extends Fragment implements SpeakCapture.Listene
         params.bottomMargin = dp(8);
         row.setLayoutParams(params);
         row.setOnClickListener(v -> {
-            config.setSpeakSpeaker(address);
+            List<String> picked = new ArrayList<>(config.getSpeakSpeakers());
+            if (picked.contains(address)) {
+                if (picked.size() == 1) {
+                    com.kooo.evcam.ui.Notice.makeText(requireContext(), R.string.tap_speak_speaker_keep_one,
+                            android.widget.Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                picked.remove(address);
+            } else {
+                picked.add(address);
+            }
+            config.setSpeakSpeakers(picked);
+            com.kooo.evcam.audio.OutsideSpeaker.speakersChanged(requireContext());
             paint();
         });
         speakers.addView(row);

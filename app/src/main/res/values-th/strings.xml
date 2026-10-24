@@ -1373,4 +1373,6 @@
     <string name="outside_speaker_off">ปิดอยู่ แตะเพื่อเริ่ม</string>
     <string name="outside_speaker_on">กำลังเล่น แตะเพื่อหยุด</string>
     <string name="outside_speaker_volume">ระดับเสียงลำโพงนอกรถ</string>
+    <string name="tap_speak_speaker_hint">แตะเพื่อเพิ่มหรือเอาออก โทรโข่งและลำโพงนอกรถจะเล่นพร้อมกันทุกตัวที่เลือก</string>
+    <string name="tap_speak_speaker_keep_one">ต้องเลือกลำโพงไว้อย่างน้อยหนึ่งตัว</string>
 </resources>

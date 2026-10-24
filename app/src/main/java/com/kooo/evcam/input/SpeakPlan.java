@@ -45,10 +45,28 @@ public final class SpeakPlan {
         return ONCE_SECONDS.clone();
     }
 
-    public static String speaker(String saved) {
-        if (saved == null || saved.isEmpty()) {
-            return Megaphone.BUS_ADDRESS;
+    /**
+     * Saved speaker addresses (comma-separated, in the order picked) to a list: no blanks, no
+     * repeats, and never empty, since the megaphone needs somewhere to play.
+     */
+    public static java.util.List<String> speakers(String saved) {
+        java.util.List<String> out = new java.util.ArrayList<>();
+        if (saved != null) {
+            for (String part : saved.split(",")) {
+                String address = part.trim();
+                if (!address.isEmpty() && !out.contains(address)) {
+                    out.add(address);
+                }
+            }
         }
-        return saved;
+        if (out.isEmpty()) {
+            out.add(Megaphone.BUS_ADDRESS);
+        }
+        return out;
+    }
+
+    /** The other way round. Addresses never hold a comma (BUS12_OUTER_NOTIFY and the like). */
+    public static String joinSpeakers(java.util.List<String> speakers) {
+        return String.join(",", speakers(speakers == null ? null : String.join(",", speakers)));
     }
 }

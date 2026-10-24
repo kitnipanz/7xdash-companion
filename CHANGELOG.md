@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.2.1] - 2026-10-24
+
+- Pick several speakers in Settings > Megaphone > Speakers: the megaphone and the outside speaker play on every ticked speaker at the same time. Tap a speaker to add or remove it; at least one stays ticked. A speaker the car refuses is skipped, and the black box says which ones played. Your earlier pick carries over.
+- 7xDash web: the Outside speaker card lists the car's speakers to tick, and shows Off instead of Beta.
+
 ## [1.2.0] - 2026-10-24
 
 Everything since 1.1.1, the last stable release.

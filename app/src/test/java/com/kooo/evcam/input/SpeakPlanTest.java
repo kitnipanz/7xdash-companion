@@ -21,8 +21,20 @@ public class SpeakPlanTest {
         assertEquals(0, SpeakPlan.gain(0));
         assertEquals(10, SpeakPlan.seconds(7));
         assertEquals(20, SpeakPlan.seconds(20));
-        assertEquals(Megaphone.BUS_ADDRESS, SpeakPlan.speaker(""));
-        assertEquals("BUS11_OUTER_SPEAKER_PLAYBACK", SpeakPlan.speaker("BUS11_OUTER_SPEAKER_PLAYBACK"));
+        assertEquals(Collections.singletonList(Megaphone.BUS_ADDRESS), SpeakPlan.speakers(""));
+        assertEquals(Collections.singletonList(Megaphone.BUS_ADDRESS), SpeakPlan.speakers(null));
+    }
+
+    @Test
+    public void speakersKeepPickOrderWithoutBlanksOrRepeats() {
+        // Before 1.2.1 one address was saved: it reads as a list of one
+        assertEquals(Collections.singletonList("BUS11_OUTER_SPEAKER_PLAYBACK"),
+                SpeakPlan.speakers("BUS11_OUTER_SPEAKER_PLAYBACK"));
+        assertEquals(Arrays.asList("BUS12_OUTER_NOTIFY", "BUS11_OUTER_SPEAKER_PLAYBACK"),
+                SpeakPlan.speakers(" BUS12_OUTER_NOTIFY,,BUS11_OUTER_SPEAKER_PLAYBACK,BUS12_OUTER_NOTIFY "));
+        assertEquals("BUS12_OUTER_NOTIFY,BUS0_MEDIA",
+                SpeakPlan.joinSpeakers(Arrays.asList("BUS12_OUTER_NOTIFY", "", "BUS0_MEDIA", "BUS0_MEDIA")));
+        assertEquals(Megaphone.BUS_ADDRESS, SpeakPlan.joinSpeakers(Collections.emptyList()));
     }
 
     @Test

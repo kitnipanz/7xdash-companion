@@ -4,7 +4,6 @@ import android.media.AudioDeviceInfo;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioRecord;
-import android.media.AudioTrack;
 import android.media.MediaRecorder;
 import android.os.Handler;
 import android.os.Looper;
@@ -13,8 +12,9 @@ import android.os.SystemClock;
 import com.kooo.evcam.R;
 
 /**
- * Live mic to the outside bus. The numeric device id changes; the address does not.
- * A failed preferred-device call does not fall back to the cabin speakers.
+ * Live mic to every picked speaker at once (the outside bus by default). The numeric device id
+ * changes; the address does not. A speaker that refuses the preferred-device call is skipped, never
+ * swapped for the cabin speakers; with none left the megaphone does not start.
  */
 public final class Megaphone {
 
@@ -114,10 +114,10 @@ public final class Megaphone {
             go = true;
             android.content.Context app = context.getApplicationContext();
             com.kooo.evcam.AppConfig config = new com.kooo.evcam.AppConfig(app);
-            String speaker = config.getSpeakSpeaker();
+            java.util.List<String> speakers = config.getSpeakSpeakers();
             int gain = SpeakPlan.gain(config.getSpeakVolume());
             worker = new Thread(() -> {
-                int failure = run(app, level, speaker, gain);
+                int failure = run(app, level, speakers, gain);
                 synchronized (lock) {
                     go = false;
                     worker = null;
@@ -169,55 +169,37 @@ public final class Megaphone {
         return go;
     }
 
-    private int run(android.content.Context context, Level level, String speaker, int gain) {
+    private int run(android.content.Context context, Level level, java.util.List<String> speakers, int gain) {
         AudioManager manager = context.getSystemService(AudioManager.class);
         if (manager == null) {
             return R.string.megaphone_no_speaker;
         }
-        AudioDeviceInfo device = find(manager.getDevices(AudioManager.GET_DEVICES_OUTPUTS), speaker);
-        if (device == null) {
+        java.util.List<AudioDeviceInfo> devices = SpeakerSet.find(manager, speakers);
+        if (devices.isEmpty()) {
             return R.string.megaphone_no_speaker;
         }
         int inMin = AudioRecord.getMinBufferSize(RATE, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT);
-        int outMin = AudioTrack.getMinBufferSize(RATE, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT);
-        if (inMin <= 0 || outMin <= 0) {
+        if (inMin <= 0) {
             return R.string.megaphone_open;
         }
         AudioRecord record = null;
-        AudioTrack track = null;
+        SpeakerSet out = null;
         try {
             record = new AudioRecord(MediaRecorder.AudioSource.MIC, RATE, AudioFormat.CHANNEL_IN_MONO,
                     AudioFormat.ENCODING_PCM_16BIT, Math.max(inMin, CHUNK_BYTES) * 2);
             if (record.getState() != AudioRecord.STATE_INITIALIZED) {
                 return R.string.megaphone_open;
             }
-            android.media.AudioAttributes.Builder attributes = new android.media.AudioAttributes.Builder()
-                    .setUsage(android.media.AudioAttributes.USAGE_MEDIA)
-                    .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SONIFICATION);
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
-                // Keep the voice out of any playback capture
-                attributes.setAllowedCapturePolicy(android.media.AudioAttributes.ALLOW_CAPTURE_BY_NONE);
-            }
-            track = new AudioTrack.Builder()
-                    .setAudioAttributes(attributes.build())
-                    .setAudioFormat(new AudioFormat.Builder()
-                            .setSampleRate(RATE)
-                            .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
-                            .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
-                            .build())
-                    .setTransferMode(AudioTrack.MODE_STREAM)
-                    .setBufferSizeInBytes(Math.max(outMin, CHUNK_BYTES))
-                    .build();
-            if (track.getState() != AudioTrack.STATE_INITIALIZED) {
-                return R.string.megaphone_open;
-            }
-            if (!track.setPreferredDevice(device)) {
+            out = SpeakerSet.open(devices, RATE, CHUNK_BYTES);
+            if (out.size() == 0) {
+                com.kooo.evcam.blackbox.BlackBox.note("Megaphone: no speaker took a track: " + out.describe());
                 return R.string.megaphone_route;
+            }
+            if (devices.size() > 1 || out.size() < devices.size()) {
+                com.kooo.evcam.blackbox.BlackBox.note("Megaphone: " + out.describe());
             }
             mic = record;
             record.startRecording();
-            track.play();
-            track.setVolume(1f);
             byte[] buf = new byte[CHUNK_BYTES];
             long deadline = SystemClock.elapsedRealtime() + MAX_MS;
             long lastLevel = 0L;
@@ -235,8 +217,7 @@ public final class Megaphone {
                     continue;
                 }
                 int heard = boost(buf, read, gain);
-                int wrote = track.write(buf, 0, read);
-                if (wrote < 0) {
+                if (!out.write(buf, read)) {
                     return R.string.megaphone_open;
                 }
                 long now = SystemClock.uptimeMillis();
@@ -256,11 +237,14 @@ public final class Megaphone {
             return R.string.megaphone_open;
         } finally {
             mic = null;
-            release(record, track);
+            release(record);
+            if (out != null) {
+                out.release();
+            }
         }
     }
 
-    private static void release(AudioRecord record, AudioTrack track) {
+    private static void release(AudioRecord record) {
         if (record != null) {
             try {
                 record.stop();
@@ -268,15 +252,6 @@ public final class Megaphone {
                 // already stopped to unblock read
             }
             record.release();
-        }
-        if (track != null) {
-            try {
-                track.pause();
-                track.flush();
-            } catch (IllegalStateException ignored) {
-                // not playing yet
-            }
-            track.release();
         }
     }
 

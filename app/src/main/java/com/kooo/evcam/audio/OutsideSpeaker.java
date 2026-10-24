@@ -1,11 +1,8 @@
 package com.kooo.evcam.audio;
 
 import android.content.Context;
-import android.media.AudioAttributes;
 import android.media.AudioDeviceInfo;
-import android.media.AudioFormat;
 import android.media.AudioManager;
-import android.media.AudioTrack;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Process;
@@ -14,12 +11,14 @@ import android.widget.Toast;
 import com.kooo.evcam.AppConfig;
 import com.kooo.evcam.R;
 import com.kooo.evcam.input.MegaphoneService;
+import com.kooo.evcam.input.SpeakerSet;
 
+import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Outside speaker: what is AirPlayed to 7xDash also plays on the outside bus, the one the
- * megaphone uses. 7xDash is the player, so no capture grant is needed. The AirPlay engine keeps a
+ * megaphone uses (every speaker picked for it). 7xDash is the player, so no capture grant is needed. The AirPlay engine keeps a
  * mono copy of what it plays ({@code OutsideMirror} in audio_output.h); a thread here pulls it and
  * plays it on a track set up exactly like the megaphone's, which the car routes to the outside bus.
  *
@@ -120,11 +119,10 @@ public final class OutsideSpeaker {
         }
         AppConfig config = new AppConfig(context);
         AudioManager manager = context.getSystemService(AudioManager.class);
-        AudioDeviceInfo found = manager == null ? null : com.kooo.evcam.input.Megaphone.find(
-                manager.getDevices(AudioManager.GET_DEVICES_OUTPUTS), config.getSpeakSpeaker());
-        if (found == null) {
-            com.kooo.evcam.blackbox.BlackBox.noteImportant("Outside speaker: no outside speaker device ("
-                    + config.getSpeakSpeaker() + ")");
+        List<AudioDeviceInfo> found = SpeakerSet.find(manager, config.getSpeakSpeakers());
+        if (found.isEmpty()) {
+            com.kooo.evcam.blackbox.BlackBox.noteImportant("Outside speaker: none of the picked speakers is there ("
+                    + String.join(", ", config.getSpeakSpeakers()) + ")");
             com.kooo.evcam.ui.Notice.makeText(context, R.string.megaphone_no_speaker, Toast.LENGTH_SHORT).show();
             return;
         }
@@ -144,8 +142,12 @@ public final class OutsideSpeaker {
         }, "outside-speaker");
         pump.start();
         boolean airplay = com.kooo.evcam.airplay.AirPlayService.isRunning();
-        com.kooo.evcam.blackbox.BlackBox.noteImportant("Outside speaker: on, device " + found.getId()
-                + " (" + found.getAddress() + "), AirPlay " + (airplay ? "running" : "off"));
+        StringBuilder names = new StringBuilder();
+        for (AudioDeviceInfo device : found) {
+            names.append(names.length() == 0 ? "" : ", ").append(device.getAddress());
+        }
+        com.kooo.evcam.blackbox.BlackBox.noteImportant("Outside speaker: on, speakers " + names
+                + ", AirPlay " + (airplay ? "running" : "off"));
         com.kooo.evcam.ui.Notice.makeText(context, airplay ? R.string.outside_speaker_playing
                 : R.string.outside_speaker_needs_airplay, Toast.LENGTH_LONG).show();
         changed();
@@ -185,14 +187,26 @@ public final class OutsideSpeaker {
         }
     }
 
+    /** Picked speakers changed: a running pump moves to the new set, and listeners (web) hear of it. */
+    public static void speakersChanged(Context context) {
+        changed();
+        if (on) {
+            Context app = context.getApplicationContext();
+            MAIN.post(() -> {
+                end();
+                begin(app);
+            });
+        }
+    }
+
     /**
-     * Pump thread: AirPlay copy to a track built like the megaphone's (media, sonification, preferred
-     * device). Rebuilds the track when the AirPlay sample rate changes; idles until AirPlay first plays.
+     * Pump thread: AirPlay copy to every picked speaker ({@link SpeakerSet}, the megaphone's route).
+     * Reopens the speakers when the AirPlay sample rate changes; idles until AirPlay first plays.
      */
-    private static void run(AudioDeviceInfo target) {
+    private static void run(List<AudioDeviceInfo> targets) {
         short[] buf = new short[CHUNK_FRAMES];
-        AudioTrack track = null;
-        int trackRate = 0;
+        SpeakerSet out = null;
+        int outRate = 0;
         boolean heard = false;
         try {
             com.kooo.evcam.airplay.AirPlayAudio.dropOutsideMirror();
@@ -202,11 +216,15 @@ public final class OutsideSpeaker {
                     Thread.sleep(50);
                     continue;
                 }
-                if (track == null || rate != trackRate) {
-                    release(track);
-                    track = open(target, rate);
-                    trackRate = rate;
-                    if (track == null) {
+                if (out == null || rate != outRate) {
+                    if (out != null) {
+                        out.release();
+                    }
+                    out = SpeakerSet.open(targets, rate, CHUNK_FRAMES * 2 * 4);
+                    outRate = rate;
+                    com.kooo.evcam.blackbox.BlackBox.noteImportant("Outside speaker: " + rate + " Hz on "
+                            + out.describe());
+                    if (out.size() == 0) {
                         return;
                     }
                 }
@@ -217,77 +235,24 @@ public final class OutsideSpeaker {
                 }
                 if (!heard && !allZero(buf, frames)) {
                     heard = true;
-                    com.kooo.evcam.blackbox.BlackBox.note("Outside speaker: AirPlay audio flowing to the track");
+                    com.kooo.evcam.blackbox.BlackBox.note("Outside speaker: AirPlay audio flowing to the speakers");
                 }
-                int wrote = track.write(buf, 0, frames);
-                if (wrote < 0) {
-                    com.kooo.evcam.blackbox.BlackBox.noteImportant("Outside speaker: track write failed " + wrote);
+                if (!out.write(buf, frames)) {
+                    com.kooo.evcam.blackbox.BlackBox.noteImportant("Outside speaker: track write failed");
                     return;
                 }
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         } finally {
-            release(track);
+            if (out != null) {
+                out.release();
+            }
             if (on) {
-                // the track failed: show the switch as off rather than playing nothing
+                // the speakers failed: show the switch as off rather than playing nothing
                 MAIN.post(OutsideSpeaker::end);
             }
         }
-    }
-
-    private static AudioTrack open(AudioDeviceInfo target, int rate) {
-        int min = AudioTrack.getMinBufferSize(rate, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT);
-        if (min <= 0) {
-            com.kooo.evcam.blackbox.BlackBox.noteImportant("Outside speaker: no track at " + rate + " Hz");
-            return null;
-        }
-        AudioAttributes.Builder attributes = new AudioAttributes.Builder()
-                .setUsage(AudioAttributes.USAGE_MEDIA)
-                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION);
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
-            attributes.setAllowedCapturePolicy(AudioAttributes.ALLOW_CAPTURE_BY_NONE);
-        }
-        AudioTrack track;
-        try {
-            track = new AudioTrack.Builder()
-                    .setAudioAttributes(attributes.build())
-                    .setAudioFormat(new AudioFormat.Builder()
-                            .setSampleRate(rate)
-                            .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
-                            .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
-                            .build())
-                    .setTransferMode(AudioTrack.MODE_STREAM)
-                    .setBufferSizeInBytes(Math.max(min, CHUNK_FRAMES * 2 * 4))
-                    .build();
-        } catch (RuntimeException e) {
-            com.kooo.evcam.blackbox.BlackBox.noteImportant("Outside speaker: track failed " + e);
-            return null;
-        }
-        if (track.getState() != AudioTrack.STATE_INITIALIZED) {
-            track.release();
-            com.kooo.evcam.blackbox.BlackBox.noteImportant("Outside speaker: track not initialized");
-            return null;
-        }
-        boolean routed = track.setPreferredDevice(target);
-        track.play();
-        AudioDeviceInfo now = track.getRoutedDevice();
-        com.kooo.evcam.blackbox.BlackBox.noteImportant("Outside speaker: track " + rate + " Hz, preferred "
-                + (routed ? "accepted" : "refused") + ", routed to "
-                + (now == null ? "unknown yet" : now.getId() + " (" + now.getAddress() + ")"));
-        return track;
-    }
-
-    private static void release(AudioTrack track) {
-        if (track == null) {
-            return;
-        }
-        try {
-            track.stop();
-        } catch (IllegalStateException ignored) {
-            // never started
-        }
-        track.release();
     }
 
     /** True when every sample is exactly zero. A real song never is, even when quiet. */

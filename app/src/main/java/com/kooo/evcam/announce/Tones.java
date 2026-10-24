@@ -6,6 +6,13 @@ public final class Tones {
     public static final String CHIME = "chime";
     public static final String BEEP = "beep";
     public static final String SIREN = "siren";
+    public static final String HORN = "horn";
+    public static final String DING_DONG = "ding_dong";
+    public static final String ALARM = "alarm";
+    public static final String REVERSING = "reversing";
+    public static final String ATTENTION = "attention";
+    /** Every sound, in the order offered. */
+    public static final String[] ALL = {CHIME, BEEP, SIREN, HORN, DING_DONG, ALARM, REVERSING, ATTENTION};
     public static final int RATE = 48_000;
     private static final double PEAK = 0.7 * 32767;
 
@@ -23,6 +30,28 @@ public final class Tones {
         }
         if (SIREN.equals(key)) {
             return siren(3, 0.8);
+        }
+        if (HORN.equals(key)) {
+            // Two short honks; two notes a third apart, rich in overtones like a car horn
+            return join(horn(0.25), silence(0.12), horn(0.45));
+        }
+        if (DING_DONG.equals(key)) {
+            return join(bell(659.3, 0.55), bell(523.3, 0.9));
+        }
+        if (ALARM.equals(key)) {
+            short[][] pulses = new short[16][];
+            for (int i = 0; i < pulses.length; i++) {
+                pulses[i] = i % 2 == 0 ? tone(2200, 0.09) : silence(0.06);
+            }
+            return join(pulses);
+        }
+        if (REVERSING.equals(key)) {
+            // Truck backing up: three long beeps
+            return join(tone(1100, 0.45), silence(0.45), tone(1100, 0.45), silence(0.45), tone(1100, 0.45));
+        }
+        if (ATTENTION.equals(key)) {
+            // Three rising notes, like a station announcement
+            return join(bell(523.3, 0.35), bell(659.3, 0.35), bell(784.0, 0.7));
         }
         return null;
     }
@@ -61,6 +90,22 @@ public final class Tones {
             phase += 2 * Math.PI * hz / RATE;
             double env = Math.min(attack(i), attack(n - 1 - i));
             out[i] = (short) (Math.sin(phase) * env * PEAK);
+        }
+        return out;
+    }
+
+    /** 400 + 500 Hz, each a sum of odd harmonics: buzzy, like a horn. */
+    private static short[] horn(double seconds) {
+        int n = (int) (RATE * seconds);
+        short[] out = new short[n];
+        for (int i = 0; i < n; i++) {
+            double t = (double) i / RATE;
+            double v = 0;
+            for (int k = 1; k <= 7; k += 2) {
+                v += (Math.sin(2 * Math.PI * 400 * k * t) + Math.sin(2 * Math.PI * 500 * k * t)) / k;
+            }
+            double env = Math.min(attack(i), attack(n - 1 - i));
+            out[i] = (short) (v / 2.6 * env * PEAK);
         }
         return out;
     }

@@ -110,6 +110,16 @@ public final class ShortcutPerformer {
             case OUTSIDE_SPEAKER:
                 com.kooo.evcam.audio.OutsideSpeaker.toggle(context);
                 return;
+            case ANNOUNCE_PLAY:
+                com.kooo.evcam.announce.Announcement chosen = new com.kooo.evcam.announce.AnnouncementStore(context)
+                        .find(ShortcutAction.choice(actionKey));
+                if (chosen == null) {
+                    com.kooo.evcam.ui.Notice.makeText(context, R.string.announce_missing,
+                            android.widget.Toast.LENGTH_SHORT).show();
+                } else {
+                    com.kooo.evcam.announce.Announcer.play(context, chosen, "shortcut");
+                }
+                return;
             case ANNOUNCE:
                 com.kooo.evcam.announce.AnnouncePicker.toggle(context);
                 return;

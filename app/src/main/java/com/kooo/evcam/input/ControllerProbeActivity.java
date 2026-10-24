@@ -110,6 +110,8 @@ public class ControllerProbeActivity extends AppCompatActivity implements Sticke
         bind(R.id.controller_action_where_parked, ShortcutAction.WHERE_PARKED);
         bind(R.id.controller_action_quit, ShortcutAction.QUIT);
         bind(R.id.controller_action_announce, ShortcutAction.ANNOUNCE);
+        findViewById(R.id.controller_action_announce_play).setOnClickListener(v ->
+                com.kooo.evcam.announce.AnnouncePick.choose(this, this::save));
         bind(R.id.controller_action_hold_speak, ShortcutAction.HOLD_SPEAK);
         bind(R.id.controller_action_toggle_speak, ShortcutAction.TOGGLE_SPEAK);
         bind(R.id.controller_action_cabin, ShortcutAction.CABIN_PASSENGER);
@@ -304,12 +306,16 @@ public class ControllerProbeActivity extends AppCompatActivity implements Sticke
     }
 
     private void save(ShortcutAction action) {
+        save(action.key, getString(action.labelRes));
+    }
+
+    private void save(String key, String label) {
         if (pending == null) {
             return;
         }
         AppConfig config = new AppConfig(this);
         Shortcut next = new Shortcut(pending.keyCode, pending.scanCode, pending.deviceName,
-                action.key, pressKind.key);
+                key, pressKind.key);
         config.setButtonShortcuts(ShortcutBook.write(
                 ShortcutBook.put(ShortcutBook.parse(config.getButtonShortcuts()), next)));
         if (StickerFrame.isSticker(pending.deviceName)) {
@@ -323,7 +329,7 @@ public class ControllerProbeActivity extends AppCompatActivity implements Sticke
         }
         liveView.setText(getString(R.string.sticker_saved_action,
                 pendingLabel + " " + getString(pressKind.labelRes),
-                getString(action.labelRes)));
+                label));
     }
 
     private String buttonName(Shortcut item) {

@@ -178,6 +178,8 @@ public class StickerActivity extends AppCompatActivity implements StickerHub.Wat
         bind(R.id.sticker_action_where_parked, ShortcutAction.WHERE_PARKED);
         bind(R.id.sticker_action_quit, ShortcutAction.QUIT);
         bind(R.id.sticker_action_announce, ShortcutAction.ANNOUNCE);
+        findViewById(R.id.sticker_action_announce_play).setOnClickListener(v ->
+                com.kooo.evcam.announce.AnnouncePick.choose(this, this::save));
         bind(R.id.sticker_action_hold_speak, ShortcutAction.HOLD_SPEAK);
         bind(R.id.sticker_action_toggle_speak, ShortcutAction.TOGGLE_SPEAK);
         bind(R.id.sticker_action_cabin, ShortcutAction.CABIN_PASSENGER);
@@ -213,11 +215,15 @@ public class StickerActivity extends AppCompatActivity implements StickerHub.Wat
     }
 
     private void save(ShortcutAction action) {
+        save(action.key, getString(action.labelRes));
+    }
+
+    private void save(String key, String actionLabel) {
         if (pending == null || pendingAddress == null) {
             return;
         }
         Shortcut next = new Shortcut(pending.control, 0, StickerFrame.deviceName(pendingAddress),
-                action.key, pending.press.key);
+                key, pending.press.key);
         config.setButtonShortcuts(ShortcutBook.write(
                 ShortcutBook.put(ShortcutBook.parse(config.getButtonShortcuts()), next)));
         config.setStickerEnabled(true);
@@ -231,7 +237,7 @@ public class StickerActivity extends AppCompatActivity implements StickerHub.Wat
         String control = label == 0 ? String.valueOf(pending.control) : getString(label);
         status.setText(getString(R.string.sticker_saved_action,
                 control + " " + getString(pending.press.labelRes),
-                getString(action.labelRes)));
+                actionLabel));
     }
 
     private boolean ensurePermission() {
@@ -712,7 +718,8 @@ public class StickerActivity extends AppCompatActivity implements StickerHub.Wat
             }
             out.append(getString(item.pressKind().labelRes));
             out.append(' ');
-            out.append(getString(action.labelRes));
+            String announce = com.kooo.evcam.announce.AnnouncePick.label(this, item.action);
+            out.append(announce != null ? announce : getString(action.labelRes));
         }
         return out.length() == 0 ? null : out.toString();
     }

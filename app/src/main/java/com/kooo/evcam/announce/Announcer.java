@@ -46,8 +46,9 @@ public final class Announcer {
     private static volatile boolean playing;
     /** Bumped by every play and stop: a running playback stops when it no longer matches. */
     private static volatile int generation;
-    private static TextToSpeech tts;
-    private static volatile boolean ttsReady;
+    /** Started speech engines by package ("" is the system default); null for one that failed to start. */
+    private static final java.util.Map<String, TextToSpeech> ENGINES = new java.util.HashMap<>();
+    private static volatile boolean enginesLogged;
 
     private Announcer() {
     }
@@ -130,7 +131,7 @@ public final class Announcer {
         return 0;
     }
 
-    /** Worker thread. The phrase as a WAV from the head unit's speech engine, or null. */
+    /** Worker thread. The phrase as a WAV from the first speech engine with a voice for it, or null. */
     private static Wav speak(Context context, Announcement a) {
         File cache = new File(context.getCacheDir(), "announce");
         if (!cache.isDirectory() && !cache.mkdirs()) {
@@ -140,20 +141,49 @@ public final class Announcer {
         if (file.isFile() && file.length() > 44) {
             return read(file);
         }
-        if (!ensureTts(context)) {
-            BlackBox.note("Announcement: text-to-speech did not start");
-            return null;
+        Locale[] wanted = a.isThai() ? THAI : ENGLISH;
+        StringBuilder tried = new StringBuilder();
+        for (String engine : engines(context)) {
+            TextToSpeech engineTts = engine(context, engine);
+            if (engineTts == null) {
+                tried.append(engine).append(" did not start; ");
+                continue;
+            }
+            Locale locale = voice(engineTts, wanted, tried.append(engine).append(':'));
+            tried.append("; ");
+            if (locale == null) {
+                continue;
+            }
+            Wav wav = synthesize(engineTts, locale, a.text, cache, file);
+            if (wav != null) {
+                return wav;
+            }
+            tried.append(engine).append(" wrote no audio; ");
         }
-        Locale locale = a.isThai() ? new Locale("th", "TH") : Locale.US;
-        int available = tts.isLanguageAvailable(locale);
-        if (available < TextToSpeech.LANG_AVAILABLE) {
-            BlackBox.note("Announcement: no " + locale + " voice (" + available + ")");
-            return null;
+        BlackBox.note("Announcement: no voice for \"" + a.text + "\". Tried " + tried);
+        return null;
+    }
+
+    private static final Locale[] ENGLISH = {Locale.US, Locale.UK, Locale.ENGLISH, new Locale("en", "AU")};
+    private static final Locale[] THAI = {new Locale("th", "TH"), new Locale("th")};
+
+    /** First locale the engine can speak, noting each answer (1+ yes, -1 missing data, -2 unsupported). */
+    private static Locale voice(TextToSpeech engineTts, Locale[] wanted, StringBuilder note) {
+        for (Locale locale : wanted) {
+            int available = engineTts.isLanguageAvailable(locale);
+            note.append(' ').append(locale).append('=').append(available);
+            if (available >= TextToSpeech.LANG_AVAILABLE) {
+                return locale;
+            }
         }
-        tts.setLanguage(locale);
+        return null;
+    }
+
+    private static Wav synthesize(TextToSpeech engineTts, Locale locale, String text, File cache, File file) {
+        engineTts.setLanguage(locale);
         CountDownLatch done = new CountDownLatch(1);
         String utterance = "announce-" + System.nanoTime();
-        tts.setOnUtteranceProgressListener(new UtteranceProgressListener() {
+        engineTts.setOnUtteranceProgressListener(new UtteranceProgressListener() {
             @Override
             public void onStart(String id) {
             }
@@ -169,7 +199,7 @@ public final class Announcer {
             }
         });
         File part = new File(cache, file.getName() + ".part");
-        int queued = tts.synthesizeToFile(a.text, new Bundle(), part, utterance);
+        int queued = engineTts.synthesizeToFile(text, new Bundle(), part, utterance);
         try {
             if (queued != TextToSpeech.SUCCESS || !done.await(TTS_WAIT_S, TimeUnit.SECONDS)) {
                 return null;
@@ -193,23 +223,64 @@ public final class Announcer {
         }
     }
 
-    /** Worker thread. Starts the speech engine once and waits for it. */
-    private static boolean ensureTts(Context context) {
-        if (tts != null && ttsReady) {
-            return true;
+    /**
+     * Worker thread. Installed speech engines, the default first. The list is written to the black box
+     * once, so a car with no usable voice shows what it does have.
+     */
+    private static List<String> engines(Context context) {
+        List<String> out = new java.util.ArrayList<>();
+        TextToSpeech probe = engine(context, "");
+        if (probe == null) {
+            if (!enginesLogged) {
+                enginesLogged = true;
+                BlackBox.note("Announcement: no text-to-speech engine started on this head unit");
+            }
+            return out;
+        }
+        String preferred = probe.getDefaultEngine();
+        if (preferred != null && !preferred.isEmpty()) {
+            out.add(preferred);
+        }
+        StringBuilder list = new StringBuilder();
+        for (TextToSpeech.EngineInfo info : probe.getEngines()) {
+            list.append(list.length() == 0 ? "" : ", ").append(info.name).append(" (").append(info.label).append(')');
+            if (!out.contains(info.name)) {
+                out.add(info.name);
+            }
+        }
+        if (!enginesLogged) {
+            enginesLogged = true;
+            BlackBox.note("Announcement: text-to-speech engines [" + list + "], default " + preferred);
+        }
+        return out;
+    }
+
+    /** Worker thread. Starts that engine once ("" for the system default) and waits for it; null when it fails. */
+    private static TextToSpeech engine(Context context, String name) {
+        synchronized (ENGINES) {
+            if (ENGINES.containsKey(name)) {
+                return ENGINES.get(name);
+            }
         }
         CountDownLatch ready = new CountDownLatch(1);
         boolean[] ok = new boolean[1];
-        MAIN.post(() -> tts = new TextToSpeech(context, status -> {
-            ok[0] = status == TextToSpeech.SUCCESS;
-            ready.countDown();
-        }));
+        TextToSpeech[] made = new TextToSpeech[1];
+        MAIN.post(() -> {
+            TextToSpeech.OnInitListener done = status -> {
+                ok[0] = status == TextToSpeech.SUCCESS;
+                ready.countDown();
+            };
+            made[0] = name.isEmpty() ? new TextToSpeech(context, done) : new TextToSpeech(context, done, name);
+        });
         try {
             ready.await(TTS_WAIT_S, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
-        ttsReady = ok[0];
-        return ttsReady;
+        TextToSpeech result = ok[0] ? made[0] : null;
+        synchronized (ENGINES) {
+            ENGINES.put(name, result);
+        }
+        return result;
     }
 }

@@ -40,7 +40,9 @@ public enum ShortcutAction {
     /** Quit the app, same as Quit app in the drawer: stops recording and stays closed until opened again. */
     QUIT("quit_app", R.string.shortcut_action_quit),
     /** Floating picker of announcements; tap one to play it on the picked speakers. */
-    ANNOUNCE("announce_picker", R.string.shortcut_action_announce);
+    ANNOUNCE("announce_picker", R.string.shortcut_action_announce),
+    /** Plays one announcement straight away. Stored as {@code announce_play:<announcement id>}. */
+    ANNOUNCE_PLAY("announce_play", R.string.shortcut_action_announce_play);
 
     public final String key;
     public final int labelRes;
@@ -59,6 +61,20 @@ public enum ShortcutAction {
                 return action;
             }
         }
+        if (key.startsWith(ANNOUNCE_PLAY.key + ":")) {
+            return ANNOUNCE_PLAY;
+        }
         return null;
+    }
+
+    /** Stored key of an action that carries a choice, e.g. which announcement to play. */
+    public static String keyWith(ShortcutAction action, String choice) {
+        return action.key + ":" + choice;
+    }
+
+    /** The choice in a stored key ({@link #keyWith}), or "" when it has none. */
+    public static String choice(String key) {
+        int colon = key == null ? -1 : key.indexOf(':');
+        return colon < 0 ? "" : key.substring(colon + 1);
     }
 }

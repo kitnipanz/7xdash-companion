@@ -59,6 +59,17 @@ public class ShortcutActionTest {
     }
 
     @Test
+    public void announcePlayCarriesWhichAnnouncement() {
+        String key = ShortcutAction.keyWith(ShortcutAction.ANNOUNCE_PLAY, "sound-siren");
+        assertEquals("announce_play:sound-siren", key);
+        assertEquals(ShortcutAction.ANNOUNCE_PLAY, ShortcutAction.fromKey(key));
+        assertEquals("sound-siren", ShortcutAction.choice(key));
+        assertEquals("", ShortcutAction.choice("quit_app"));
+        // other actions never take a choice
+        assertEquals(null, ShortcutAction.fromKey("quit_app:x"));
+    }
+
+    @Test
     public void clickToSpeakHasASafetyCap() {
         assertEquals(10L * 60 * 1000, MegaphoneService.TOGGLE_MAX_MS);
     }

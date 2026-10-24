@@ -51,6 +51,8 @@ public class ShortcutCaptureActivity extends AppCompatActivity implements Sticke
         bind(R.id.shortcut_action_where_parked, ShortcutAction.WHERE_PARKED);
         bind(R.id.shortcut_action_quit, ShortcutAction.QUIT);
         bind(R.id.shortcut_action_announce, ShortcutAction.ANNOUNCE);
+        findViewById(R.id.shortcut_action_announce_play).setOnClickListener(v ->
+                com.kooo.evcam.announce.AnnouncePick.choose(this, this::save));
         bind(R.id.shortcut_action_hold_speak, ShortcutAction.HOLD_SPEAK);
         bind(R.id.shortcut_action_toggle_speak, ShortcutAction.TOGGLE_SPEAK);
         bind(R.id.shortcut_action_cabin, ShortcutAction.CABIN_PASSENGER);
@@ -98,6 +100,10 @@ public class ShortcutCaptureActivity extends AppCompatActivity implements Sticke
     }
 
     private void save(ShortcutAction action) {
+        save(action.key, getString(action.labelRes));
+    }
+
+    private void save(String key, String label) {
         if (captured == null) {
             return;
         }
@@ -105,7 +111,7 @@ public class ShortcutCaptureActivity extends AppCompatActivity implements Sticke
         java.util.List<Shortcut> items = ShortcutBook.put(
                 ShortcutBook.parse(config.getButtonShortcuts()),
                 new Shortcut(captured.keyCode, captured.scanCode, captured.deviceName,
-                        action.key, pressKind.key));
+                        key, pressKind.key));
         config.setButtonShortcuts(ShortcutBook.write(items));
         if (StickerFrame.isSticker(captured.deviceName)) {
             config.setStickerEnabled(true);

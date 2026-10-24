@@ -98,6 +98,10 @@ public class ShortcutListActivity extends AppCompatActivity {
     }
 
     private String actionName(Shortcut item) {
+        String announce = com.kooo.evcam.announce.AnnouncePick.label(this, item.action);
+        if (announce != null) {
+            return announce;
+        }
         ShortcutAction action = ShortcutAction.fromKey(item.action);
         return action == null ? item.action : getString(action.labelRes);
     }

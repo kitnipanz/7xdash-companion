@@ -265,6 +265,13 @@
                         android:layout_marginBottom="8dp"
                         android:text="@string/shortcut_action_announce" />
                     <com.google.android.material.button.MaterialButton
+                        android:id="@+id/sticker_action_announce_play"
+                        style="@style/Widget.Cam.RailSmall"
+                        android:layout_width="match_parent"
+                        android:layout_height="52dp"
+                        android:layout_marginBottom="8dp"
+                        android:text="@string/shortcut_action_announce_play" />
+                    <com.google.android.material.button.MaterialButton
                         android:id="@+id/sticker_action_airplay"
                         style="@style/Widget.Cam.RailSmall"
                         android:layout_width="match_parent"

@@ -1399,4 +1399,13 @@
     <string name="shortcut_action_announce">ประกาศ (เลือกแล้วเล่น, เบต้า)</string>
     <string name="announce_section">ประกาศ (เบต้า)</string>
     <string name="home_card_announce_sub">ข้อความและเสียงออกลำโพง กดค้างเพื่อแก้ไข</string>
+    <string name="shortcut_action_announce_play">เล่นประกาศ (เบต้า)…</string>
+    <string name="announce_pick_title">ปุ่มนี้จะเล่นประกาศไหน</string>
+    <string name="announce_play_named">เล่น: %1$s</string>
+    <string name="announce_missing">ประกาศนี้ถูกลบไปแล้ว</string>
+    <string name="announce_sound_horn">แตร</string>
+    <string name="announce_sound_ding_dong">ติ๊งต่อง</string>
+    <string name="announce_sound_alarm">สัญญาณเตือนภัย</string>
+    <string name="announce_sound_reversing">เสียงเตือนถอยหลัง</string>
+    <string name="announce_sound_attention">เสียงเรียกความสนใจ</string>
 </resources>

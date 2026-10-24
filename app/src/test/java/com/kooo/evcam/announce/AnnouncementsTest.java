@@ -63,14 +63,14 @@ public class AnnouncementsTest {
                 english = true;
             }
         }
-        assertEquals(3, sounds);
+        assertEquals(Tones.ALL.length, sounds);
         assertTrue(thai);
         assertTrue(english);
     }
 
     @Test
     public void tonesStayBelowFullScaleAndUnknownIsNull() {
-        for (String key : new String[] {Tones.CHIME, Tones.BEEP, Tones.SIREN}) {
+        for (String key : Tones.ALL) {
             short[] pcm = Tones.render(key);
             assertTrue(pcm.length > Tones.RATE / 4);
             int peak = 0;
@@ -81,7 +81,23 @@ public class AnnouncementsTest {
             // ramps in: no click on the first sample
             assertTrue(Math.abs(pcm[0]) < 100);
         }
-        assertNull(Tones.render("horn"));
+        assertNull(Tones.render("trumpet"));
+    }
+
+    @Test
+    public void newSoundsJoinASavedListOnceAfterItsSounds() {
+        List<Announcement> list = new java.util.ArrayList<>(Arrays.asList(
+                Announcement.sound("sound-chime", Tones.CHIME, "Chime"),
+                Announcement.phrase("mine", "Hello")));
+        // siren and beep were offered and deleted: they stay deleted
+        assertTrue(AnnouncementStore.addNewSounds(list, "chime,beep,siren"));
+        // chime and the phrase, plus every sound after the first three
+        assertEquals(2 + Tones.ALL.length - 3, list.size());
+        assertEquals(Tones.HORN, list.get(1).sound);
+        assertEquals("mine", list.get(list.size() - 1).id);
+        assertFalse(AnnouncementStore.addNewSounds(list, String.join(",", Tones.ALL)));
+        // ids are what a saved Sentry Mode pick points at; they never change
+        assertEquals("sound-siren", AnnouncementStore.defaultSounds().get(2).id);
     }
 
     @Test

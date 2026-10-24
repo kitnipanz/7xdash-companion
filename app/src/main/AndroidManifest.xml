@@ -69,6 +69,14 @@
     <uses-feature android:name="android.hardware.camera" android:required="true" />
     <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
 
+    <!-- Announcements read phrases with the head unit's text-to-speech. From Android 11 an app
+         only sees the speech engines it declares it looks for -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.TTS_SERVICE" />
+        </intent>
+    </queries>
+
     <application
         android:name=".ZeekrShortcutApp"
         android:localeConfig="@xml/locales_config"

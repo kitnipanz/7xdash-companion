@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.3.1-beta] - 2026-10-24
+
+- Announcements: phrases said "no voice" on the car. 7xDash now declares that it uses text-to-speech (from Android 11 an app cannot see speech engines it does not declare), tries every speech engine on the head unit, and tries several English (US, UK, generic, Australian) and Thai variants. The black box lists the head unit's speech engines and what each answered, so a car with no English or Thai voice shows what it does have.
+- New shortcut action: Play an announcement (beta). Pick which one when you set the button; pressing it plays that announcement straight away. Shortcut lists show it as "Play: <name>".
+- Five more sounds: Horn, Ding-dong, Alarm, Reversing beeps and Attention chime. They join your list once, after your other sounds; sounds you deleted stay deleted.
+
 ## [1.3.0-beta] - 2026-10-24
 
 - New beta Announcements: play a phrase or a sound on the speakers picked for the megaphone, at the megaphone volume. Comes with Chime, Double beep and Siren, and ready phrases in English and Thai; type your own in Settings > Megaphone > Announcements. Phrases are read out by the head unit's own voice (Thai when the phrase has Thai in it). While one plays, AirPlay music on the outside speaker drops to 15%.

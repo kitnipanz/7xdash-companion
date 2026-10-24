@@ -16,6 +16,8 @@ public final class AnnouncementStore {
     private static final String PREFS = "announcements";
     private static final String KEY_LIST = "list";
     private static final String KEY_SENTRY = "sentry";
+    /** Sounds already offered to this list, so ones added in a later version show up once, after the others. */
+    private static final String KEY_SOUNDS_OFFERED = "sounds_offered";
     /** Longest phrase kept: text-to-speech engines refuse very long input. */
     public static final int MAX_TEXT = 200;
 
@@ -27,7 +29,37 @@ public final class AnnouncementStore {
 
     public List<Announcement> all() {
         String saved = prefs.getString(KEY_LIST, null);
-        return saved == null ? defaults() : decode(saved);
+        if (saved == null) {
+            return defaults();
+        }
+        List<Announcement> list = decode(saved);
+        String offered = prefs.getString(KEY_SOUNDS_OFFERED, Tones.CHIME + "," + Tones.BEEP + "," + Tones.SIREN);
+        if (addNewSounds(list, offered)) {
+            save(list);
+        }
+        return list;
+    }
+
+    /**
+     * Adds the sounds not offered before after the last sound in the list (a sound the driver deleted
+     * stays deleted). True when the list changed.
+     */
+    static boolean addNewSounds(List<Announcement> list, String offered) {
+        List<String> known = java.util.Arrays.asList(offered.split(","));
+        int at = 0;
+        for (int i = 0; i < list.size(); i++) {
+            if (list.get(i).isSound()) {
+                at = i + 1;
+            }
+        }
+        boolean changed = false;
+        for (Announcement sound : defaultSounds()) {
+            if (!known.contains(sound.sound)) {
+                list.add(at++, sound);
+                changed = true;
+            }
+        }
+        return changed;
     }
 
     public Announcement find(String id) {
@@ -74,7 +106,8 @@ public final class AnnouncementStore {
     }
 
     private void save(List<Announcement> list) {
-        prefs.edit().putString(KEY_LIST, encode(list)).apply();
+        prefs.edit().putString(KEY_LIST, encode(list))
+                .putString(KEY_SOUNDS_OFFERED, String.join(",", Tones.ALL)).apply();
     }
 
     static String clean(String text) {
@@ -87,10 +120,7 @@ public final class AnnouncementStore {
 
     /** Sounds first, then phrases in English and Thai. Ids stay fixed so a sentry pick survives. */
     static List<Announcement> defaults() {
-        List<Announcement> list = new ArrayList<>();
-        list.add(Announcement.sound("sound-chime", Tones.CHIME, "Chime"));
-        list.add(Announcement.sound("sound-beep", Tones.BEEP, "Double beep"));
-        list.add(Announcement.sound("sound-siren", Tones.SIREN, "Siren"));
+        List<Announcement> list = defaultSounds();
         list.add(Announcement.phrase("en-step-back", "Please step back from the car."));
         list.add(Announcement.phrase("en-reversing", "Caution, this vehicle is reversing."));
         list.add(Announcement.phrase("en-recording", "Please do not touch the car. You are being recorded."));
@@ -100,6 +130,15 @@ public final class AnnouncementStore {
         list.add(Announcement.phrase("th-reversing", "ระวัง รถกำลังถอยหลัง"));
         list.add(Announcement.phrase("th-recording", "กรุณาอย่าแตะต้องรถ กล้องกำลังบันทึกภาพ"));
         list.add(Announcement.phrase("th-thanks", "ขอบคุณครับ"));
+        return list;
+    }
+
+    /** Every built-in sound; the id is "sound-" plus its key. The name is only a fallback (labels come from strings). */
+    static List<Announcement> defaultSounds() {
+        List<Announcement> list = new ArrayList<>();
+        for (String key : Tones.ALL) {
+            list.add(Announcement.sound("sound-" + key, key, key));
+        }
         return list;
     }
 

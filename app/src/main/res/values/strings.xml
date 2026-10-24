@@ -1421,4 +1421,13 @@ Then reopen this app.</string>
     <string name="shortcut_action_announce">Announcements (pick one to play, beta)</string>
     <string name="announce_section">Announcements (beta)</string>
     <string name="home_card_announce_sub">Phrases and sounds outside. Hold to edit</string>
+    <string name="shortcut_action_announce_play">Play an announcement (beta)…</string>
+    <string name="announce_pick_title">Which announcement should this button play?</string>
+    <string name="announce_play_named">Play: %1$s</string>
+    <string name="announce_missing">That announcement was deleted</string>
+    <string name="announce_sound_horn">Horn</string>
+    <string name="announce_sound_ding_dong">Ding-dong</string>
+    <string name="announce_sound_alarm">Alarm</string>
+    <string name="announce_sound_reversing">Reversing beeps</string>
+    <string name="announce_sound_attention">Attention chime</string>
 </resources>

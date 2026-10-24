@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.3.6] - 2026-10-24
+
+- Side mirror: new defaults tuned on the car. Rotate left is -37° (right stays 37°), and the picture on the HUD is 47% wide (was the full strip). Values you already set are kept.
+- AirPlay: the floating window's hint now describes its gestures (pinch to resize, push to a side to dock) instead of the removed corner handle.
+
 ## [1.3.5] - 2026-10-24
 
 - Announcements is no longer a beta feature: its home card, the Announcements entry in Settings › Megaphone and playing when Sentry Mode arms work without Beta features, and "beta" is gone from its shortcut names. Where I parked stays beta.

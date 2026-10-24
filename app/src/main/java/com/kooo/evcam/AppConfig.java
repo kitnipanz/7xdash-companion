@@ -155,6 +155,8 @@ public class AppConfig {
     public static final int SIDE_POPUP_DEFAULT_YAW = 52;
     public static final int SIDE_POPUP_DEFAULT_PITCH = 17;
     public static final int SIDE_POPUP_DEFAULT_ROLL = 37;
+    /** Left side rotates the other way (project owner on the car, 2026-10-24). Right keeps 37°. */
+    public static final int SIDE_POPUP_DEFAULT_ROLL_LEFT = -37;
     private static final String KEY_FORCE_H264_ENCODING = "force_h264_encoding";  // 拍照走相机 JPEG 通道
     private static final String KEY_LICENSE_PLATE = "license_plate";  // 车牌号（可选）
     private static final String KEY_LICENSE_PLATE_ENABLED = "license_plate_enabled";
@@ -1813,8 +1815,8 @@ public class AppConfig {
 
     public static final int SIDE_POPUP_HUD_MIN_WIDTH = 10;
     public static final int SIDE_POPUP_HUD_MAX_WIDTH = 100;
-    /** 默认铺满整条抬头显示（项目所有者 2026-10-18）。以前是 27，约等于 1440 宽上的 16:9。 */
-    public static final int SIDE_POPUP_HUD_DEFAULT_WIDTH = 100;
+    /** 47% (project owner on the car, 2026-10-24). Was 100 (full strip), before that 27. */
+    public static final int SIDE_POPUP_HUD_DEFAULT_WIDTH = 47;
 
     /** 抬头显示上侧视窗的宽度，屏宽的百分比。靠外沿。 */
     public int getSidePopupHudWidthPercent() {
@@ -1974,7 +1976,7 @@ public class AppConfig {
 
     /** 侧视画面平面内旋转多少度（正数顺时针）。左右分开：镜子安装倾斜往往不一样。 */
     public int getSidePopupRollLeft() {
-        return readSidePopupRoll(KEY_SIDE_POPUP_ROLL_LEFT);
+        return readSidePopupRoll(KEY_SIDE_POPUP_ROLL_LEFT, SIDE_POPUP_DEFAULT_ROLL_LEFT);
     }
 
     public void setSidePopupRollLeft(int degrees) {
@@ -1982,7 +1984,7 @@ public class AppConfig {
     }
 
     public int getSidePopupRollRight() {
-        return readSidePopupRoll(KEY_SIDE_POPUP_ROLL_RIGHT);
+        return readSidePopupRoll(KEY_SIDE_POPUP_ROLL_RIGHT, SIDE_POPUP_DEFAULT_ROLL);
     }
 
     public void setSidePopupRollRight(int degrees) {
@@ -1996,9 +1998,10 @@ public class AppConfig {
                 : getSidePopupRollLeft();
     }
 
-    private int readSidePopupRoll(String key) {
+    private int readSidePopupRoll(String key, int fallback) {
         int max = Math.round(com.kooo.evcam.zeekr.SideViewProjection.MAX_ROLL_DEGREES);
-        int legacy = prefs.getInt(KEY_SIDE_POPUP_ROLL, SIDE_POPUP_DEFAULT_ROLL);
+        // A roll saved before left and right were split still counts for both sides
+        int legacy = prefs.getInt(KEY_SIDE_POPUP_ROLL, fallback);
         int v = prefs.contains(key) ? prefs.getInt(key, legacy) : legacy;
         return Math.max(-max, Math.min(max, v));
     }

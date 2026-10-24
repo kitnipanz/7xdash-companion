@@ -1357,7 +1357,7 @@
     <string name="airplay_name_line">แสดงบน iPhone ในชื่อ “%1$s”</string>
     <string name="airplay_how_title">สะท้อนหน้าจอ iPhone</string>
     <string name="airplay_steps">1. ให้ iPhone และรถใช้ Wi-Fi เดียวกัน (ฮอตสปอตของรถก็ได้)\n2. บน iPhone เปิดศูนย์ควบคุม แล้วแตะ การสะท้อนหน้าจอ\n3. เลือก “%1$s”\n\nถ้าจะส่งแค่วิดีโอ ให้แตะปุ่ม AirPlay ในตัวเล่นวิดีโอ แล้วเลือก “%1$s”</string>
-    <string name="airplay_window_hint">หน้าจอ iPhone จะเปิดในหน้าต่างลอย ลากเพื่อย้าย ลากมุมเพื่อปรับขนาด แตะสองครั้งเพื่อสลับเล็กหรือใหญ่ และแตะ × เพื่อหยุด</string>
+    <string name="airplay_window_hint">หน้าจอ iPhone จะเปิดในหน้าต่างลอย ลากเพื่อย้าย ใช้สองนิ้วถ่างหรือหุบเพื่อปรับขนาด ดันไปชิดขอบเพื่อเก็บ แตะสองครั้งเพื่อสลับเล็กหรือใหญ่ และแตะ × เพื่อหยุด</string>
     <string name="airplay_limits">ภาพจะซ่อนเมื่อรถอยู่ในเกียร์หรือกำลังเคลื่อนที่ เว้นแต่เปิดสวิตช์ด้านล่าง แอปที่มีการป้องกันการคัดลอก (Netflix, Disney+, Apple TV) จะแสดงจอดำ</string>
     <string name="airplay_notification">รอการสะท้อนหน้าจอจาก iPhone</string>
 

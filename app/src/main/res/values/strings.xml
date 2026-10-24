@@ -1381,7 +1381,7 @@ Then reopen this app.</string>
     <string name="airplay_name_line">Shows on the iPhone as “%1$s”</string>
     <string name="airplay_how_title">Mirror your iPhone</string>
     <string name="airplay_steps">1. Put the iPhone and the car on the same Wi-Fi (the car\'s hotspot works).\n2. On the iPhone, open Control Center and tap Screen Mirroring.\n3. Choose “%1$s”.\n\nTo send just a video, tap the AirPlay button in the video\'s player and choose “%1$s”.</string>
-    <string name="airplay_window_hint">The iPhone screen opens in a floating window. Drag it to move, drag the corner to resize, double-tap for small or large, and tap × to stop.</string>
+    <string name="airplay_window_hint">The iPhone screen opens in a floating window. Drag it to move, pinch to resize, push it to a side to dock it, double-tap for small or large, and tap × to stop.</string>
     <string name="airplay_limits">The picture hides while the car is in gear or moving, unless the switch below is on. Apps with copy protection (Netflix, Disney+, Apple TV) show a black screen.</string>
     <string name="airplay_notification">Waiting for iPhone screen mirroring</string>
 

@@ -74,6 +74,7 @@ public final class DiagnosticsCollector {
         // 每一节计时：生成报告时界面会卡一下，先弄清是哪一节慢
         Timings timings = new Timings();
         timings.run("device", () -> appendDevice(sb));
+        timings.run("install history", () -> com.kooo.evcam.update.InstallHistory.appendTo(sb, context));
         timings.run("cameras", () -> appendCameras(sb, context));
         timings.run("frame rates", () -> appendPreviewFrameRates(sb));
         timings.run("stall watch", () -> appendStallWatch(sb, context));

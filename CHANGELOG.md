@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.3.10-beta] - 2026-10-25
+
+- Diagnostics: new **Install history** section. Every start records when 7xDash was installed and last updated and which system build the car runs, in the app and in `7xDash/history/install.txt` on the USB stick (that copy outlives an uninstall). A new line appears only when something changed, marked REINSTALLED, app updated or SYSTEM CHANGED, so the next time the car removes the app it can be matched to a system update.
+
 ## [1.3.9] - 2026-10-25
 
 Everything since 1.3.6, the last stable release.

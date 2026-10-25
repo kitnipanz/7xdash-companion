@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.3.15-beta] - 2026-10-25
+
+### Mood light (beta)
+- Mood light is now a beta feature: it shows only while **Beta features** is on (Settings → Interface). It has its own **Mood light (beta)** section under Smart sticker and a home card.
+- **Effects** for ELK-BLEDOM and Happy Lighting lights: Breathe, Blink, Rainbow fade, Rainbow jump, Rainbow strobe and Light off, with an effect speed. Breathe and Blink use the nearest basic color (red, green, blue, yellow, cyan, magenta or white). Each effect plays as a moving LED strip in the picker, so you can see what it looks like first.
+- **Change with gear**: pick a color, brightness and effect for P, R, D and D at 0 km/h, or leave the light as it is for a gear. N leaves the light as it is.
+- **Speed colors in D**: up to 6 "from X km/h" colors. **Blend between speed colors** mixes two solid colors by speed (blue at 100 and red at 120 give 75% blue, 25% red at 105). Effects switch at their speed.
+- **Groups**: name groups of lights (for example Footwell and Dashboard). Lights in a group act together, and each group has its own lights, color and gear and speed colors. A light is in one group at a time; up to 4 groups and 4 lights in all. Your earlier light becomes the first group, "Lights".
+- While the car is on, 7xDash keeps each group's lights connected and changes them with the gear; opening the Mood light screen takes them over until you close it.
 ## [1.3.14] - 2026-10-25
 
 - Auto dim no longer turns off a dim you switched on by hand outside the night hours. It used to re-check every minute and undo it; now it only switches dim when the night window starts or ends (and once when you turn Auto dim on or change its hours).

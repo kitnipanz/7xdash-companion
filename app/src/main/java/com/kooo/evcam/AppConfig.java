@@ -2560,6 +2560,68 @@ public class AppConfig {
         prefs.edit().putInt(KEY_MOOD_LIGHT_BRIGHTNESS, Math.max(0, Math.min(100, brightness))).apply();
     }
 
+    private static final String KEY_MOOD_LIGHT_GEAR = "mood_light_gear";
+    private static final String KEY_MOOD_LIGHT_ADDRESSES = "mood_light_addresses";
+    private static final String KEY_MOOD_LIGHT_GROUPS = "mood_light_groups";
+    private static final String KEY_MOOD_LIGHT_GROUP_SHOWN = "mood_light_group_shown";
+
+    /**
+     * {@code light.MoodLightGroups} as JSON. Empty before groups: the old one set of lights,
+     * rules and colour ({@link #getMoodLightAddresses}, {@link #getMoodLightGearRules}) is then
+     * read as the first group.
+     */
+    public String getMoodLightGroups() {
+        return prefs.getString(KEY_MOOD_LIGHT_GROUPS, "");
+    }
+
+    public void setMoodLightGroups(String json) {
+        prefs.edit().putString(KEY_MOOD_LIGHT_GROUPS, json == null ? "" : json).apply();
+    }
+
+    /** Group open on the mood light screen last time, empty for the first. */
+    public String getMoodLightGroupShown() {
+        return prefs.getString(KEY_MOOD_LIGHT_GROUP_SHOWN, "");
+    }
+
+    public void setMoodLightGroupShown(String id) {
+        prefs.edit().putString(KEY_MOOD_LIGHT_GROUP_SHOWN, id == null ? "" : id).apply();
+    }
+
+    /**
+     * Every light in the mood light group, in the order they were added. Before groups there was
+     * one ({@link #getMoodLightAddress}); it is the group until the list is first written.
+     */
+    public java.util.List<String> getMoodLightAddresses() {
+        java.util.List<String> out = new java.util.ArrayList<>();
+        String raw = prefs.getString(KEY_MOOD_LIGHT_ADDRESSES, null);
+        if (raw == null) {
+            raw = getMoodLightAddress();
+        }
+        for (String line : raw.split("\n")) {
+            String address = line.trim();
+            if (!address.isEmpty() && !out.contains(address)) {
+                out.add(address);
+            }
+        }
+        return out;
+    }
+
+    public void setMoodLightAddresses(java.util.List<String> addresses) {
+        prefs.edit()
+                .putString(KEY_MOOD_LIGHT_ADDRESSES, android.text.TextUtils.join("\n", addresses))
+                .putString(KEY_MOOD_LIGHT_ADDRESS, addresses.isEmpty() ? "" : addresses.get(0))
+                .apply();
+    }
+
+    /** {@code light.GearLightRules} as JSON, empty before the first edit (the defaults, off). */
+    public String getMoodLightGearRules() {
+        return prefs.getString(KEY_MOOD_LIGHT_GEAR, "");
+    }
+
+    public void setMoodLightGearRules(String json) {
+        prefs.edit().putString(KEY_MOOD_LIGHT_GEAR, json == null ? "" : json).apply();
+    }
+
     private static final String KEY_SAVED_CLIPS = "saved_clip_groups";
     private static final String KEY_SAVE_MOMENT_USB = "save_moment_usb";
     private static final String KEY_SAVE_MOMENT_DRIVE = "save_moment_drive";

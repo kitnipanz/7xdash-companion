@@ -296,4 +296,12 @@ public class SettingsShellFragment extends Fragment {
             slidingPane.openPane();
         }
     }
+
+    /** Beta features was switched on the Interface page: the left column adds or drops beta sections. */
+    void betaChanged() {
+        Fragment headers = getChildFragmentManager().findFragmentById(R.id.settings_headers);
+        if (headers instanceof SettingsHeadersFragment) {
+            ((SettingsHeadersFragment) headers).betaChanged();
+        }
+    }
 }

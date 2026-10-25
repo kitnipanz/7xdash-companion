@@ -47,14 +47,20 @@
             android:summary="@string/set_sticker_summary" />
 
         <Preference
-            android:key="pref_mood_light"
-            android:title="@string/set_mood_light_title"
-            android:summary="@string/set_mood_light_summary" />
-
-        <Preference
             android:key="pref_ble_signal"
             android:title="@string/ble_signal_title"
             android:summary="@string/ble_signal_summary" />
+    </PreferenceScreen>
+
+    <!-- Mood light: its own section under Smart sticker; the screen is a separate activity -->
+    <PreferenceScreen
+        android:key="screen_mood_light"
+        android:title="@string/set_section_mood_light">
+
+        <Preference
+            android:key="pref_mood_light"
+            android:title="@string/set_mood_light_title"
+            android:summary="@string/set_mood_light_summary" />
     </PreferenceScreen>
 
     <PreferenceScreen

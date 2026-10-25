@@ -251,6 +251,12 @@ public class HomeFragment extends Fragment {
         addCard(R.drawable.ic_sticker, R.string.home_card_sticker,
                 R.string.home_card_sticker_sub, () -> startActivity(new Intent(requireContext(),
                         com.kooo.evcam.input.StickerActivity.class)), null);
+        // Beta: mood light (colours, effects, following the gear)
+        if (betaShown) {
+            addCard(R.drawable.ic_light, R.string.home_card_mood_light,
+                    R.string.home_card_mood_light_sub, () -> startActivity(new Intent(requireContext(),
+                            com.kooo.evcam.light.MoodLightActivity.class)), null);
+        }
         addCard(R.drawable.ic_shortcut, R.string.home_card_shortcuts,
                 R.string.home_card_shortcuts_sub, () -> startActivity(new Intent(requireContext(),
                         com.kooo.evcam.input.ShortcutListActivity.class)), null);

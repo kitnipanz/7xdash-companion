@@ -134,6 +134,43 @@ public final class MoodLight {
         });
     }
 
+    /**
+     * Power, colour or animation, brightness and speed in one go. Colour and animation share one
+     * slot, so the newest of the two wins.
+     */
+    public void show(LightLook look) {
+        LightLook l = look.copy();
+        g.post(() -> {
+            if (family == null) {
+                return;
+            }
+            LightProtocol.Effect effect = l.effect();
+            if (effect == LightProtocol.Effect.OFF) {
+                pending.clear();
+                pending.put("power", LightProtocol.power(family, false));
+                schedule();
+                return;
+            }
+            // Every slot is rewritten; power first, as in power(), since colour sent while off is lost
+            pending.clear();
+            pending.put("power", LightProtocol.power(family, true));
+            if (effect == LightProtocol.Effect.STATIC) {
+                pending.put("color", LightProtocol.color(family, l.color, l.brightness));
+            } else {
+                pending.put("color", LightProtocol.effect(family, effect, l.color, l.speed));
+                byte[] speed = LightProtocol.effectSpeed(family, l.speed);
+                if (speed != null) {
+                    pending.put("speed", speed);
+                }
+            }
+            byte[] level = LightProtocol.brightness(family, l.brightness);
+            if (level != null) {
+                pending.put("brightness", level);
+            }
+            schedule();
+        });
+    }
+
     /** Close the link and stop the thread. The object is spent after this. */
     public void release() {
         g.post(() -> {

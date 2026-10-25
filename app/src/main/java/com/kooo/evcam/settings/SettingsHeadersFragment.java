@@ -32,6 +32,8 @@ public class SettingsHeadersFragment extends PreferenceFragmentCompat {
 
     /** 上一次建这份列表时，开发者选项是不是解锁着的。 */
     private boolean builtUnlocked;
+    /** Beta features as the list was built: beta sections (Mood light) only show while it is on. */
+    private boolean builtBeta;
     /** 右栏正在显示的分区。 */
     private String selectedKey;
 
@@ -59,6 +61,15 @@ public class SettingsHeadersFragment extends PreferenceFragmentCompat {
     public void onResume() {
         super.onResume();
         if (builtUnlocked != DeveloperMode.isUnlocked()) {
+            build();
+        } else {
+            betaChanged();
+        }
+    }
+
+    /** Beta features was switched: add or drop the beta sections. */
+    void betaChanged() {
+        if (isAdded() && builtBeta != new com.kooo.evcam.AppConfig(requireContext()).isBetaFeaturesEnabled()) {
             build();
         }
     }
@@ -96,6 +107,7 @@ public class SettingsHeadersFragment extends PreferenceFragmentCompat {
     private void build() {
         builtUnlocked = DeveloperMode.isUnlocked();
         Context context = requireContext();
+        builtBeta = new com.kooo.evcam.AppConfig(context).isBetaFeaturesEnabled();
 
         // 分区的名字和顺序只从这里来
         setPreferencesFromResource(R.xml.preferences, null);
@@ -111,6 +123,9 @@ public class SettingsHeadersFragment extends PreferenceFragmentCompat {
             }
             boolean section = child instanceof PreferenceGroup;
             if (section && "screen_developer".equals(key) && !builtUnlocked) {
+                continue;
+            }
+            if (section && "screen_mood_light".equals(key) && !builtBeta) {
                 continue;
             }
             HeaderRow row = new HeaderRow(context, section, order++, GROUP_STARTS.contains(key));
@@ -175,6 +190,8 @@ public class SettingsHeadersFragment extends PreferenceFragmentCompat {
                 return R.drawable.ic_shortcut;
             case "screen_sticker":
                 return R.drawable.ic_sticker;
+            case "screen_mood_light":
+                return R.drawable.ic_light;
             case "screen_controller":
                 return R.drawable.ic_controller;
             case "screen_megaphone":

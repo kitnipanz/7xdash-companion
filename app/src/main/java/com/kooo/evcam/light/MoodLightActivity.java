@@ -46,7 +46,7 @@ import java.util.UUID;
  * <p>The link is open only while this screen is: these lights take one connection at a time,
  * and holding it would lock out their own phone app.</p>
  */
-public class MoodLightActivity extends AppCompatActivity implements MoodLight.Listener {
+public class MoodLightActivity extends AppCompatActivity implements LightGroup.Listener {
 
     private static final int ASK = 48;
     private static final long SCAN_MS = 10_000L;
@@ -114,7 +114,7 @@ public class MoodLightActivity extends AppCompatActivity implements MoodLight.Li
     };
 
     private AppConfig config;
-    private MoodLight light;
+    private LightGroup light;
     private TextView status;
     private TextView scanButton;
     private View controls;
@@ -134,6 +134,18 @@ public class MoodLightActivity extends AppCompatActivity implements MoodLight.Li
     private String connectAfterGrant;
     private int color;
     private int level;
+    private GearLightRules rules;
+    private MoodLightGroups groups;
+    /** The group this screen shows and drives. */
+    private MoodLightGroups.Group group;
+    /** True while the switches are set from a group, so their listeners do not save. */
+    private boolean binding;
+    private LinearLayout groupBar;
+    private com.google.android.material.switchmaterial.SwitchMaterial gearSwitch;
+    private com.google.android.material.switchmaterial.SwitchMaterial blendSwitch;
+    private LinearLayout gearRows;
+    private LinearLayout bandRows;
+    private View gearRules;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -149,8 +161,18 @@ public class MoodLightActivity extends AppCompatActivity implements MoodLight.Li
         brightnessLabel = findViewById(R.id.light_brightness_label);
         devices = findViewById(R.id.light_devices);
         empty = findViewById(R.id.light_empty);
-        color = config.getMoodLightColor();
-        level = config.getMoodLightBrightness();
+        groups = MoodLightGroups.load(config, getString(R.string.mood_light_group_default));
+        group = groups.find(config.getMoodLightGroupShown());
+        if (group == null) {
+            group = groups.groups.get(0);
+        }
+        groupBar = findViewById(R.id.light_groups);
+        color = group.color;
+        level = group.brightness;
+        rules = group.rules;
+        gearRows = findViewById(R.id.light_gear_rows);
+        bandRows = findViewById(R.id.light_band_rows);
+        gearRules = findViewById(R.id.light_gear_rules);
 
         findViewById(R.id.light_close).setOnClickListener(v -> finish());
         scanButton.setOnClickListener(v -> {
@@ -188,17 +210,176 @@ public class MoodLightActivity extends AppCompatActivity implements MoodLight.Li
             }
         });
         showColor();
+        gearSwitch = findViewById(R.id.light_gear_switch);
+        gearSwitch.setOnCheckedChangeListener((button, on) -> {
+            if (!binding) {
+                rules.enabled = on;
+                saveRules();
+            }
+        });
+        blendSwitch = findViewById(R.id.light_band_blend);
+        blendSwitch.setOnCheckedChangeListener((button, on) -> {
+            if (!binding) {
+                rules.blend = on;
+                saveRules();
+            }
+        });
+        findViewById(R.id.light_band_add).setOnClickListener(v -> addBand());
+        findViewById(R.id.light_group_rename).setOnClickListener(v -> renameGroup());
+        findViewById(R.id.light_group_delete).setOnClickListener(v -> deleteGroup());
+        bindGroup();
+    }
+
+    // =================================================================== groups
+
+    /** Show the open group: its colour, rules and lights. */
+    private void bindGroup() {
+        color = group.color;
+        level = group.brightness;
+        rules = group.rules;
+        binding = true;
+        gearSwitch.setChecked(rules.enabled);
+        blendSwitch.setChecked(rules.blend);
+        binding = false;
+        brightness.setProgress(level);
+        showColor();
+        renderGroups();
+        renderGear();
+    }
+
+    private void renderGroups() {
+        groupBar.removeAllViews();
+        int gap = Math.round(8 * getResources().getDisplayMetrics().density);
+        for (MoodLightGroups.Group g : groups.groups) {
+            com.google.android.material.button.MaterialButton tab = groupButton(
+                    getString(R.string.mood_light_tab, g.name, g.lights.size()), gap);
+            if (g == group) {
+                tab.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(this, R.color.energy)));
+                tab.setTextColor(ContextCompat.getColor(this, R.color.on_energy));
+            }
+            tab.setOnClickListener(v -> openGroup(g));
+            groupBar.addView(tab);
+        }
+        if (groups.groups.size() < MoodLightGroups.MAX_GROUPS) {
+            com.google.android.material.button.MaterialButton add = groupButton(getString(R.string.mood_light_group_new), gap);
+            add.setIconResource(R.drawable.ic_add);
+            add.setOnClickListener(v -> newGroup());
+            groupBar.addView(add);
+        }
+        TextView name = findViewById(R.id.light_group_name);
+        TextView summary = findViewById(R.id.light_group_summary);
+        name.setText(group.name);
+        String gear = getString(group.rules.enabled ? R.string.mood_light_group_gear_on : R.string.mood_light_group_gear_off);
+        summary.setText(group.lights.isEmpty() ? getString(R.string.mood_light_group_empty)
+                : getResources().getQuantityString(R.plurals.mood_light_group_summary,
+                        group.lights.size(), group.lights.size(), gear));
+        View delete = findViewById(R.id.light_group_delete);
+        delete.setVisibility(groups.groups.size() > 1 ? View.VISIBLE : View.GONE);
+    }
+
+    private com.google.android.material.button.MaterialButton groupButton(String text, int gap) {
+        com.google.android.material.button.MaterialButton b = (com.google.android.material.button.MaterialButton) LayoutInflater.from(this)
+                .inflate(R.layout.item_group_button, groupBar, false);
+        b.setText(text);
+        LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) b.getLayoutParams();
+        params.setMarginEnd(gap);
+        return b;
+    }
+
+    private void openGroup(MoodLightGroups.Group g) {
+        group = g;
+        config.setMoodLightGroupShown(g.id);
+        ready = false;
+        if (light != null && canConnect()) {
+            light.setAddresses(group.lights);
+            ready = light.readyCount() > 0;
+        }
+        bindGroup();
+        showStatus(null);
+        showControls();
+        render();
+    }
+
+    private void saveGroups() {
+        groups.save(config);
+        GearLight.reload();
+        renderGroups();
+    }
+
+    private void newGroup() {
+        if (groups.groups.size() >= MoodLightGroups.MAX_GROUPS) {
+            status.setText(getString(R.string.mood_light_group_max, MoodLightGroups.MAX_GROUPS));
+            return;
+        }
+        askName(getString(R.string.mood_light_group_new),
+                getString(R.string.mood_light_group_new_name, groups.groups.size() + 1), name -> {
+                    MoodLightGroups.Group g = groups.add(name);
+                    saveGroups();
+                    openGroup(g);
+                });
+    }
+
+    private void renameGroup() {
+        askName(getString(R.string.mood_light_group_rename), group.name, name -> {
+            group.name = name;
+            saveGroups();
+            renderGroups();
+            render();
+        });
+    }
+
+    private void deleteGroup() {
+        if (groups.groups.size() <= 1) {
+            status.setText(R.string.mood_light_group_last);
+            return;
+        }
+        com.kooo.evcam.ui.CamDialogs.showDestructive(new com.google.android.material.dialog.MaterialAlertDialogBuilder(
+                this, R.style.Theme_Cam_MaterialAlertDialog)
+                .setTitle(R.string.mood_light_group_delete)
+                .setMessage(getString(R.string.mood_light_group_delete_ask, group.name))
+                .setPositiveButton(R.string.action_delete, (dialog, which) -> {
+                    groups.remove(group.id);
+                    saveGroups();
+                    openGroup(groups.groups.get(0));
+                })
+                .setNegativeButton(android.R.string.cancel, null));
+    }
+
+    private interface Named {
+        void named(String name);
+    }
+
+    private void askName(String title, String start, Named done) {
+        android.widget.EditText field = com.kooo.evcam.ui.CamDialogs.input(this);
+        field.setText(start);
+        field.setSelectAllOnFocus(true);
+        field.setHint(R.string.mood_light_group_name);
+        field.setSingleLine(true);
+        android.widget.FrameLayout box = new android.widget.FrameLayout(this);
+        int pad = Math.round(24 * getResources().getDisplayMetrics().density);
+        box.setPadding(pad, pad / 3, pad, 0);
+        box.addView(field);
+        com.kooo.evcam.ui.CamDialogs.show(new com.google.android.material.dialog.MaterialAlertDialogBuilder(
+                this, R.style.Theme_Cam_MaterialAlertDialog)
+                .setTitle(title)
+                .setView(box)
+                .setPositiveButton(R.string.action_save, (dialog, which) -> {
+                    String name = field.getText().toString().trim();
+                    done.named(name.isEmpty() ? start : name);
+                })
+                .setNegativeButton(android.R.string.cancel, null));
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        light = new MoodLight(this, this);
+        // One connection at a time: take the light from the gear rules while this screen is up
+        GearLight.pause(true);
+        light = new LightGroup(this, this);
         ready = false;
         showControls();
-        String saved = config.getMoodLightAddress();
-        if (!saved.isEmpty() && canConnect()) {
-            light.connect(saved);
+        if (canConnect()) {
+            light.setAddresses(group.lights);
         }
         render();
     }
@@ -209,29 +390,45 @@ public class MoodLightActivity extends AppCompatActivity implements MoodLight.Li
         // Always give the radio back, even if the scan already ended.
         StickerHub.holdForScan(this, false);
         light.release();
+        GearLight.pause(false);
         super.onPause();
     }
 
     // =================================================================== light
 
     @Override
-    public void onLightConnecting() {
-        status.setText(R.string.mood_light_connecting);
-    }
-
-    @Override
-    public void onLightReady(LightProtocol.Family family) {
-        ready = true;
-        config.setMoodLightFamily(family.name());
-        status.setText(getString(R.string.mood_light_ready, getString(familyLabel(family))));
+    public void onGroupChanged(String address) {
+        ready = light.readyCount() > 0;
+        LightProtocol.Family family = light.family(address);
+        if (family != null) {
+            config.setMoodLightFamily(family.name());
+        }
+        showStatus(address);
         showControls();
         render();
     }
 
-    @Override
-    public void onLightDown(int reason, int code) {
-        ready = false;
-        showControls();
+    /** One line for the whole group; a drop names its reason when nothing is up. */
+    private void showStatus(String changed) {
+        int size = light.size();
+        int up = light.readyCount();
+        if (size == 0) {
+            status.setText(R.string.mood_light_pick);
+        } else if (up > 0) {
+            LightProtocol.Family family = light.family(light.addresses().get(0));
+            if (size == 1 && family != null) {
+                status.setText(getString(R.string.mood_light_ready, getString(familyLabel(family))));
+            } else {
+                status.setText(getString(R.string.mood_light_group_ready, up, size));
+            }
+        } else if (changed != null && light.state(changed) == LightGroup.STATE_DOWN) {
+            showDown(light.reason(changed), light.code(changed));
+        } else {
+            status.setText(R.string.mood_light_connecting);
+        }
+    }
+
+    private void showDown(int reason, int code) {
         switch (reason) {
             case MoodLight.FAIL_BLUETOOTH:
                 status.setText(R.string.sticker_bluetooth_off);
@@ -249,7 +446,6 @@ public class MoodLightActivity extends AppCompatActivity implements MoodLight.Li
                 status.setText(R.string.mood_light_down);
                 break;
         }
-        render();
     }
 
     private void addSwatches(LinearLayout row) {
@@ -274,8 +470,9 @@ public class MoodLightActivity extends AppCompatActivity implements MoodLight.Li
     }
 
     private void send() {
-        config.setMoodLightColor(color);
-        config.setMoodLightBrightness(level);
+        group.color = color;
+        group.brightness = level;
+        groups.save(config);
         showColor();
         if (ready) {
             light.color(color, level);
@@ -318,26 +515,323 @@ public class MoodLightActivity extends AppCompatActivity implements MoodLight.Li
         }
     }
 
+    // =================================================================== gear
+
+    private static final String[] GEAR_KEYS = {
+            GearLightRules.KEY_P, GearLightRules.KEY_R, GearLightRules.KEY_D, GearLightRules.KEY_D_STOPPED
+    };
+    private static final int[] GEAR_LABELS = {
+            R.string.mood_light_gear_p, R.string.mood_light_gear_r,
+            R.string.mood_light_gear_d, R.string.mood_light_gear_d0
+    };
+
+    private void saveRules() {
+        saveGroups();
+        renderGroups();
+        renderGear();
+    }
+
+    private void renderGear() {
+        gearRules.setAlpha(rules.enabled ? 1f : 0.5f);
+        gearRows.removeAllViews();
+        for (int i = 0; i < GEAR_KEYS.length; i++) {
+            String key = GEAR_KEYS[i];
+            int label = GEAR_LABELS[i];
+            LightLook look = rules.look(key);
+            int unset = GearLightRules.KEY_D_STOPPED.equals(key)
+                    ? R.string.mood_light_gear_d0_unset : R.string.mood_light_gear_unset;
+            addLookRow(gearRows, getString(label), look, unset, v -> editLook(getString(label), look, -1,
+                    picked -> {
+                        rules.setLook(key, picked);
+                        saveRules();
+                    }));
+        }
+        bandRows.removeAllViews();
+        for (int i = 0; i < rules.bands.size(); i++) {
+            GearLightRules.Band band = rules.bands.get(i);
+            int index = i;
+            String title = getString(R.string.mood_light_band, band.fromKmh);
+            addLookRow(bandRows, title, band.look, R.string.mood_light_gear_unset,
+                    v -> editBand(index, band));
+        }
+    }
+
+    private void addLookRow(LinearLayout parent, String name, LightLook look, int unset, View.OnClickListener edit) {
+        View line = LayoutInflater.from(this).inflate(R.layout.item_sticker, parent, false);
+        TextView title = line.findViewById(R.id.sticker_name);
+        TextView meta = line.findViewById(R.id.sticker_meta);
+        TextView action = line.findViewById(R.id.sticker_action);
+        View dot = line.findViewById(R.id.sticker_dot);
+        title.setText(name);
+        meta.setText(look == null ? getString(unset) : describe(look));
+        // Swap the row's plain dot for one that plays the look
+        EffectSwatchView playing = new EffectSwatchView(this);
+        playing.setLayoutParams(dot.getLayoutParams());
+        android.view.ViewGroup holder = (android.view.ViewGroup) dot.getParent();
+        int at = holder.indexOfChild(dot);
+        holder.removeViewAt(at);
+        holder.addView(playing, at);
+        playing.show(look == null ? LightProtocol.Effect.OFF : look.effect(),
+                look == null ? 0 : look.color, look == null ? 0 : look.speed);
+        action.setText(R.string.mood_light_gear_edit);
+        action.setOnClickListener(edit);
+        parent.addView(line);
+    }
+
+    private String describe(LightLook look) {
+        LightProtocol.Effect effect = look.effect();
+        String name = getString(effectLabel(effect));
+        if (effect == LightProtocol.Effect.OFF) {
+            return name;
+        }
+        return getString(R.string.mood_light_look_meta, name, look.brightness);
+    }
+
+    private static int effectLabel(LightProtocol.Effect effect) {
+        switch (effect) {
+            case BREATHE: return R.string.mood_light_effect_breathe;
+            case BLINK: return R.string.mood_light_effect_blink;
+            case FADE_ALL: return R.string.mood_light_effect_fade_all;
+            case JUMP_ALL: return R.string.mood_light_effect_jump_all;
+            case STROBE_ALL: return R.string.mood_light_effect_strobe_all;
+            case OFF: return R.string.mood_light_effect_off;
+            default: return R.string.mood_light_effect_static;
+        }
+    }
+
+    private void addBand() {
+        if (rules.bands.size() >= GearLightRules.MAX_BANDS) {
+            status.setText(getString(R.string.mood_light_band_full, GearLightRules.MAX_BANDS));
+            return;
+        }
+        int from = rules.bands.isEmpty() ? 60 : rules.bands.get(rules.bands.size() - 1).fromKmh + 20;
+        editBand(-1, new GearLightRules.Band(Math.min(from, 250),
+                new LightLook(0xFF6000, 80, LightProtocol.Effect.STATIC, 50)));
+    }
+
+    private void editBand(int index, GearLightRules.Band band) {
+        String title = index < 0 ? getString(R.string.mood_light_band_add)
+                : getString(R.string.mood_light_band, band.fromKmh);
+        editLook(title, band.look, band.fromKmh, (picked, from) -> {
+            if (picked == null) {
+                if (index >= 0) {
+                    rules.bands.remove(index);
+                }
+            } else if (index < 0) {
+                rules.bands.add(new GearLightRules.Band(from, picked));
+            } else {
+                band.fromKmh = from;
+                band.look = picked;
+            }
+            saveRules();
+        });
+    }
+
+    private interface LookPicked {
+        /** @param look null for "leave as is" */
+        void picked(LightLook look);
+    }
+
+    private interface BandPicked {
+        /** @param look null for "remove" */
+        void picked(LightLook look, int fromKmh);
+    }
+
+    private void editLook(String title, LightLook start, int fromKmh, LookPicked done) {
+        editLook(title, start, fromKmh, (look, from) -> done.picked(look));
+    }
+
+    /**
+     * One look, previewed on the light as it changes when it is connected.
+     *
+     * @param fromKmh a speed colour's start, or -1 for a gear (its neutral button then means "leave as is")
+     */
+    private void editLook(String title, LightLook start, int fromKmh, BandPicked done) {
+        LightLook look = start == null ? new LightLook(color, level, LightProtocol.Effect.STATIC, 50) : start.copy();
+        boolean band = fromKmh >= 0;
+        View body = LayoutInflater.from(this).inflate(R.layout.dialog_light_look, null, false);
+        EffectSwatchView preview = body.findViewById(R.id.look_preview);
+        TextView effectButton = body.findViewById(R.id.look_effect);
+        SeekBar hueBar = body.findViewById(R.id.look_hue);
+        SeekBar brightnessBar = body.findViewById(R.id.look_brightness);
+        TextView brightnessText = body.findViewById(R.id.look_brightness_label);
+        SeekBar speedBar = body.findViewById(R.id.look_speed);
+        TextView speedText = body.findViewById(R.id.look_speed_label);
+        TextView basicNote = body.findViewById(R.id.look_basic_note);
+        android.widget.EditText from = body.findViewById(R.id.look_from);
+        if (band) {
+            body.findViewById(R.id.look_from_row).setVisibility(View.VISIBLE);
+            from.setText(String.valueOf(fromKmh));
+        }
+        Runnable refresh = () -> {
+            LightProtocol.Effect effect = look.effect();
+            boolean off = effect == LightProtocol.Effect.OFF;
+            boolean animated = !off && effect != LightProtocol.Effect.STATIC;
+            preview.show(look);
+            effectButton.setText(getString(R.string.mood_light_effect, getString(effectLabel(effect))));
+            brightnessText.setText(getString(R.string.mood_light_brightness, look.brightness));
+            speedText.setText(getString(R.string.mood_light_effect_speed, look.speed));
+            int speedShown = animated ? View.VISIBLE : View.GONE;
+            speedText.setVisibility(speedShown);
+            speedBar.setVisibility(speedShown);
+            basicNote.setVisibility(effect == LightProtocol.Effect.BREATHE
+                    || effect == LightProtocol.Effect.BLINK ? View.VISIBLE : View.GONE);
+            if (ready) {
+                light.show(look);
+            }
+        };
+        LinearLayout swatches = body.findViewById(R.id.look_swatches);
+        int size = getResources().getDimensionPixelSize(R.dimen.icon_button_size);
+        for (int rgb : SWATCHES) {
+            View swatch = new View(this);
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(size, size);
+            params.setMarginEnd(size / 4);
+            swatch.setLayoutParams(params);
+            swatch.setBackgroundResource(R.drawable.sticker_dot);
+            swatch.setBackgroundTintList(ColorStateList.valueOf(0xFF000000 | rgb));
+            swatch.setContentDescription(getString(R.string.mood_light_swatch,
+                    String.format(Locale.US, "#%06X", rgb)));
+            swatch.setOnClickListener(v -> {
+                look.color = rgb;
+                refresh.run();
+            });
+            swatches.addView(swatch);
+        }
+        hueBar.setOnSeekBarChangeListener(new Slider() {
+            @Override
+            public void onProgressChanged(SeekBar bar, int progress, boolean fromUser) {
+                if (fromUser) {
+                    look.color = LightProtocol.hue(progress);
+                    refresh.run();
+                }
+            }
+        });
+        brightnessBar.setProgress(look.brightness);
+        brightnessBar.setOnSeekBarChangeListener(new Slider() {
+            @Override
+            public void onProgressChanged(SeekBar bar, int progress, boolean fromUser) {
+                if (fromUser) {
+                    look.brightness = progress;
+                    refresh.run();
+                }
+            }
+        });
+        speedBar.setProgress(look.speed);
+        speedBar.setOnSeekBarChangeListener(new Slider() {
+            @Override
+            public void onProgressChanged(SeekBar bar, int progress, boolean fromUser) {
+                if (fromUser) {
+                    look.speed = progress;
+                    refresh.run();
+                }
+            }
+        });
+        effectButton.setOnClickListener(v -> pickEffect(look, picked -> {
+            look.effect = picked.name();
+            refresh.run();
+        }));
+        refresh.run();
+        com.google.android.material.dialog.MaterialAlertDialogBuilder builder =
+                new com.google.android.material.dialog.MaterialAlertDialogBuilder(this, R.style.Theme_Cam_MaterialAlertDialog)
+                        .setTitle(title)
+                        .setView(body)
+                        .setPositiveButton(R.string.action_save, (dialog, which) ->
+                                done.picked(look, band ? parseKmh(from, fromKmh) : -1))
+                        .setNeutralButton(band ? R.string.mood_light_band_remove : R.string.mood_light_gear_leave,
+                                (dialog, which) -> done.picked(null, fromKmh))
+                        .setNegativeButton(android.R.string.cancel, null)
+                        // The preview changed the light: put this screen's own colour back
+                        .setOnDismissListener(dialog -> {
+                            if (ready) {
+                                light.color(color, level);
+                            }
+                        });
+        com.kooo.evcam.ui.CamDialogs.show(builder);
+    }
+
+    private interface EffectPicked {
+        void picked(LightProtocol.Effect effect);
+    }
+
+    /** Effects as a list, each with a dot playing it in this look's colour and speed. */
+    private void pickEffect(LightLook look, EffectPicked done) {
+        LinearLayout list = new LinearLayout(this);
+        list.setOrientation(LinearLayout.VERTICAL);
+        int pad = Math.round(16 * getResources().getDisplayMetrics().density);
+        list.setPadding(pad, pad / 2, pad, 0);
+        androidx.appcompat.app.AlertDialog[] shown = new androidx.appcompat.app.AlertDialog[1];
+        for (LightProtocol.Effect effect : LightProtocol.Effect.values()) {
+            View row = LayoutInflater.from(this).inflate(R.layout.item_effect_row, list, false);
+            EffectSwatchView dot = row.findViewById(R.id.effect_dot);
+            TextView name = row.findViewById(R.id.effect_name);
+            dot.show(effect, look.color, look.speed);
+            name.setText(effectLabel(effect));
+            row.setSelected(effect == look.effect());
+            name.setTextColor(ContextCompat.getColor(this,
+                    effect == look.effect() ? R.color.text_primary : R.color.text_secondary));
+            name.setTypeface(null, effect == look.effect() ? android.graphics.Typeface.BOLD : android.graphics.Typeface.NORMAL);
+            row.setOnClickListener(v -> {
+                if (shown[0] != null) {
+                    shown[0].dismiss();
+                }
+                done.picked(effect);
+            });
+            list.addView(row);
+        }
+        android.widget.ScrollView scroll = new android.widget.ScrollView(this);
+        scroll.addView(list);
+        shown[0] = com.kooo.evcam.ui.CamDialogs.show(new com.google.android.material.dialog.MaterialAlertDialogBuilder(
+                this, R.style.Theme_Cam_MaterialAlertDialog)
+                .setTitle(R.string.mood_light_effect_pick)
+                .setView(scroll)
+                .setNegativeButton(android.R.string.cancel, null));
+    }
+
+    private static int parseKmh(android.widget.EditText field, int fallback) {
+        try {
+            return Math.max(1, Math.min(250, Integer.parseInt(field.getText().toString().trim())));
+        } catch (NumberFormatException e) {
+            return fallback;
+        }
+    }
+
     // =================================================================== list
 
     private void render() {
         devices.removeAllViews();
-        String saved = config.getMoodLightAddress();
+        List<String> mine = group.lights;
         int shown = 0;
-        if (!saved.isEmpty()) {
-            Seen row = seen.get(saved);
-            addRow(saved, row == null ? null : row.name, row == null ? null : row.rssi, true);
+        TextView title = new TextView(this);
+        title.setText(getResources().getQuantityString(R.plurals.mood_light_group, mine.size(), group.name, mine.size()));
+        title.setTextAppearance(R.style.TextAppearance_Cam_Caption);
+        title.setTextColor(ContextCompat.getColor(this, R.color.text_tertiary));
+        title.setPadding(16, 8, 16, 8);
+        devices.addView(title);
+        for (String address : mine) {
+            Seen row = seen.get(address);
+            addRow(address, row == null ? null : row.name, row == null ? null : row.rssi);
             shown++;
         }
+        // Lights in other groups, then lights found by the scan
+        for (MoodLightGroups.Group g : groups.groups) {
+            if (g == group) {
+                continue;
+            }
+            for (String address : g.lights) {
+                Seen row = seen.get(address);
+                addRow(address, row == null ? null : row.name, row == null ? null : row.rssi);
+                shown++;
+            }
+        }
         for (Seen row : seen.values()) {
-            if (row.light && !row.address.equals(saved)) {
-                addRow(row.address, row.name, row.rssi, false);
+            if (row.light && groups.owner(row.address) == null) {
+                addRow(row.address, row.name, row.rssi);
                 shown++;
             }
         }
         int others = 0;
         for (Seen row : seen.values()) {
-            if (row.light || row.address.equals(saved) || row.name == null || row.name.isEmpty()) {
+            if (row.light || groups.owner(row.address) != null || row.name == null || row.name.isEmpty()) {
                 continue;
             }
             if (others == 0) {
@@ -348,7 +842,7 @@ public class MoodLightActivity extends AppCompatActivity implements MoodLight.Li
                 header.setPadding(16, 16, 16, 8);
                 devices.addView(header);
             }
-            addRow(row.address, row.name, row.rssi, false);
+            addRow(row.address, row.name, row.rssi);
             if (++others >= OTHER_LIMIT) {
                 break;
             }
@@ -356,7 +850,9 @@ public class MoodLightActivity extends AppCompatActivity implements MoodLight.Li
         empty.setVisibility(shown == 0 ? View.VISIBLE : View.GONE);
     }
 
-    private void addRow(String address, String name, Integer rssi, boolean saved) {
+    private void addRow(String address, String name, Integer rssi) {
+        MoodLightGroups.Group owner = groups.owner(address);
+        boolean inGroup = owner == group;
         View line = LayoutInflater.from(this).inflate(R.layout.item_sticker, devices, false);
         TextView title = line.findViewById(R.id.sticker_name);
         TextView meta = line.findViewById(R.id.sticker_meta);
@@ -364,23 +860,33 @@ public class MoodLightActivity extends AppCompatActivity implements MoodLight.Li
         View dot = line.findViewById(R.id.sticker_dot);
         title.setText(name == null || name.isEmpty() ? getString(R.string.sticker_unnamed) : name);
         String detail = rssi == null ? address : getString(R.string.sticker_device_meta, address, rssi);
-        if (saved) {
-            detail = detail + "  " + getString(ready ? R.string.sticker_connected : R.string.sticker_link_off);
+        int state = light == null ? -1 : light.state(address);
+        if (inGroup) {
+            int word = state == LightGroup.STATE_READY ? R.string.sticker_connected
+                    : state == LightGroup.STATE_CONNECTING ? R.string.mood_light_connecting
+                    : R.string.sticker_link_off;
+            detail = detail + "  " + getString(word);
+        } else if (owner != null) {
+            detail = detail + "  " + getString(R.string.mood_light_in_group, owner.name);
         }
         meta.setText(detail);
-        dot.setVisibility(saved ? View.VISIBLE : View.GONE);
+        dot.setVisibility(inGroup ? View.VISIBLE : View.GONE);
         dot.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(this,
-                saved && ready ? R.color.energy : R.color.text_tertiary)));
-        action.setText(saved ? R.string.sticker_forget : R.string.sticker_connect);
+                inGroup && state == LightGroup.STATE_READY ? R.color.energy : R.color.text_tertiary)));
+        action.setText(inGroup ? R.string.mood_light_remove
+                : owner != null ? R.string.mood_light_move_here
+                : group.lights.isEmpty() ? R.string.sticker_connect : R.string.mood_light_add);
         action.setOnClickListener(v -> {
-            if (saved) {
-                config.setMoodLightAddress("");
-                light.release();
-                light = new MoodLight(this, this);
-                ready = false;
+            if (inGroup) {
+                group.lights.remove(address);
+                saveGroups();
+                light.setAddresses(group.lights);
+                ready = light.readyCount() > 0;
+                showStatus(null);
                 showControls();
-                status.setText(R.string.mood_light_pick);
                 render();
+            } else if (owner == null && groups.lightCount() >= LightGroup.MAX_LIGHTS) {
+                status.setText(getString(R.string.mood_light_group_full, LightGroup.MAX_LIGHTS));
             } else {
                 connectAfterGrant = address;
                 if (ensurePermission()) {
@@ -392,12 +898,14 @@ public class MoodLightActivity extends AppCompatActivity implements MoodLight.Li
         devices.addView(line);
     }
 
+    /** Put this light in the open group (out of any other) and dial it; the others keep their links. */
     private void connectTo(String address) {
         stopScan();
-        config.setMoodLightAddress(address);
-        ready = false;
-        showControls();
-        light.connect(address);
+        if (groups.owner(address) != null || groups.lightCount() < LightGroup.MAX_LIGHTS) {
+            groups.moveLight(address, group);
+            saveGroups();
+        }
+        light.setAddresses(group.lights);
         render();
     }
 

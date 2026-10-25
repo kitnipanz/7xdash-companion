@@ -69,8 +69,8 @@ android {
         // versionName 会成为 Release 名称与 APK 文件名
         //
         // 7xDash 用自己的 applicationId，可以和 zeekr-shortcut-car 并排装。版本号从 1 重新起。
-        versionCode = 47
-        versionName = "1.3.14"
+        versionCode = 48
+        versionName = "1.3.15-beta"
 
         buildConfigField("String", "DRIVE_CLIENT_ID", gradleStringLiteral(driveCredential("DRIVE_CLIENT_ID")))
         buildConfigField("String", "DRIVE_CLIENT_SECRET", gradleStringLiteral(driveCredential("DRIVE_CLIENT_SECRET")))

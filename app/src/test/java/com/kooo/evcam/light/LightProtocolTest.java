@@ -69,4 +69,46 @@ public class LightProtocolTest {
         }
         assertNull(LightProtocol.parseFamily(""));
     }
+
+    @Test
+    public void elkEffects() {
+        LightProtocol.Family elk = LightProtocol.Family.ELK;
+        assertEquals("7E 00 03 8A 03 00 00 00 EF",
+                LightProtocol.hex(LightProtocol.effect(elk, LightProtocol.Effect.FADE_ALL, 0, 50)));
+        assertEquals("7E 00 03 8B 03 00 00 00 EF",
+                LightProtocol.hex(LightProtocol.effect(elk, LightProtocol.Effect.BREATHE, 0xFF1010, 50)));
+        assertEquals("7E 00 03 9A 03 00 00 00 EF",
+                LightProtocol.hex(LightProtocol.effect(elk, LightProtocol.Effect.BLINK, 0x00C0FF, 50)));
+        assertEquals("7E 00 02 46 00 00 00 00 EF", LightProtocol.hex(LightProtocol.effectSpeed(elk, 70)));
+    }
+
+    @Test
+    public void trionesEffectsCarrySpeed() {
+        LightProtocol.Family triones = LightProtocol.Family.TRIONES;
+        assertEquals("BB 25 01 44",
+                LightProtocol.hex(LightProtocol.effect(triones, LightProtocol.Effect.FADE_ALL, 0, 100)));
+        assertEquals("BB 37 1F 44",
+                LightProtocol.hex(LightProtocol.effect(triones, LightProtocol.Effect.BLINK, 0xFFFFFF, 0)));
+        assertNull(LightProtocol.effectSpeed(triones, 50));
+    }
+
+    @Test
+    public void nearestBasicColor() {
+        assertEquals(LightProtocol.RED, LightProtocol.basic(0xFF2000));
+        assertEquals(LightProtocol.YELLOW, LightProtocol.basic(0xFFC000));
+        assertEquals(LightProtocol.MAGENTA, LightProtocol.basic(0x8000FF));
+        assertEquals(LightProtocol.WHITE, LightProtocol.basic(0x000000));
+    }
+
+    @Test
+    public void previewFramesFollowEffect() {
+        long period = EffectSwatchView.periodMs(50);
+        assertEquals(0x123456, EffectSwatchView.frame(LightProtocol.Effect.STATIC, 0x123456, 50, 999));
+        // Blink: on for the first half, off for the second, in the nearest basic colour
+        assertEquals(0xFF0000, EffectSwatchView.frame(LightProtocol.Effect.BLINK, 0xFF2000, 50, 0));
+        assertEquals(-1, EffectSwatchView.frame(LightProtocol.Effect.BLINK, 0xFF2000, 50, period * 3 / 4));
+        // Jump: one colour per cycle
+        assertEquals(0x00FF00, EffectSwatchView.frame(LightProtocol.Effect.JUMP_ALL, 0, 50, period + 1));
+        assertTrue(EffectSwatchView.periodMs(100) < EffectSwatchView.periodMs(0));
+    }
 }

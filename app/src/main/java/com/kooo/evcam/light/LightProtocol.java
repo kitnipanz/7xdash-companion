@@ -130,6 +130,109 @@ public final class LightProtocol {
         return bytes(0x7E, 0x00, 0x01, clamp(brightness), 0x00, 0x00, 0x00, 0x00, 0xEF);
     }
 
+    /**
+     * Built-in animations. The lights only run them in a fixed palette, so {@link #BREATHE} and
+     * {@link #BLINK} use the basic colour nearest to the one picked ({@link #basic}).
+     */
+    public enum Effect {
+        STATIC, BREATHE, BLINK, FADE_ALL, JUMP_ALL, STROBE_ALL, OFF;
+
+        public static Effect parse(String name) {
+            if (name != null) {
+                for (Effect effect : values()) {
+                    if (effect.name().equals(name)) {
+                        return effect;
+                    }
+                }
+            }
+            return STATIC;
+        }
+    }
+
+    /** Basic colours the built-in animations know, in each family's order. */
+    static final int RED = 0;
+    static final int GREEN = 1;
+    static final int BLUE = 2;
+    static final int YELLOW = 3;
+    static final int CYAN = 4;
+    static final int MAGENTA = 5;
+    static final int WHITE = 6;
+    /** {@code 0xRRGGBB} of each basic colour, by index. Also the rainbow effects' order. */
+    static final int[] BASIC_RGB = {0xFF0000, 0x00FF00, 0x0000FF, 0xFFFF00, 0x00FFFF, 0xFF00FF, 0xFFFFFF};
+
+    private static final int[] ELK_BREATHE = {0x8B, 0x8C, 0x8D, 0x8E, 0x8F, 0x90, 0x91};
+    private static final int[] ELK_BLINK = {0x96, 0x97, 0x98, 0x99, 0x9A, 0x9B, 0x9C};
+    private static final int[] TRIONES_BREATHE = {0x26, 0x27, 0x28, 0x29, 0x2A, 0x2B, 0x2C};
+    private static final int[] TRIONES_BLINK = {0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37};
+
+    /** Which basic colour ({@link #RED} … {@link #WHITE}) is nearest: channels at half the top one or more count. */
+    static int basic(int rgb) {
+        int r = (rgb >> 16) & 0xFF;
+        int g = (rgb >> 8) & 0xFF;
+        int b = rgb & 0xFF;
+        int top = Math.max(r, Math.max(g, b));
+        if (top == 0) {
+            return WHITE;
+        }
+        boolean hasR = r * 2 >= top;
+        boolean hasG = g * 2 >= top;
+        boolean hasB = b * 2 >= top;
+        if (hasR && hasG && hasB) {
+            return WHITE;
+        }
+        if (hasR && hasG) {
+            return YELLOW;
+        }
+        if (hasG && hasB) {
+            return CYAN;
+        }
+        if (hasR && hasB) {
+            return MAGENTA;
+        }
+        return hasG ? GREEN : hasB ? BLUE : RED;
+    }
+
+    /**
+     * Start a built-in animation. Not for {@link Effect#STATIC} (that is {@link #color}) or
+     * {@link Effect#OFF} (that is {@link #power}).
+     *
+     * @param rgb   picks the basic colour for {@link Effect#BREATHE} and {@link Effect#BLINK}
+     * @param speed 0–100, faster up. ELK takes it as its own command ({@link #effectSpeed}).
+     */
+    public static byte[] effect(Family family, Effect effect, int rgb, int speed) {
+        int basic = basic(rgb);
+        if (family == Family.TRIONES) {
+            int mode;
+            switch (effect) {
+                case BREATHE: mode = TRIONES_BREATHE[basic]; break;
+                case BLINK: mode = TRIONES_BLINK[basic]; break;
+                case JUMP_ALL: mode = 0x38; break;
+                case STROBE_ALL: mode = 0x30; break;
+                default: mode = 0x25; break;
+            }
+            // 1 is fastest, 31 slowest
+            int delay = 31 - clamp(speed) * 30 / 100;
+            return bytes(0xBB, mode, delay, 0x44);
+        }
+        int mode;
+        switch (effect) {
+            case BREATHE: mode = ELK_BREATHE[basic]; break;
+            case BLINK: mode = ELK_BLINK[basic]; break;
+            case JUMP_ALL: mode = 0x88; break;
+            case STROBE_ALL: mode = 0x95; break;
+            default: mode = 0x8A; break;
+        }
+        return bytes(0x7E, 0x00, 0x03, mode, 0x03, 0x00, 0x00, 0x00, 0xEF);
+    }
+
+    /** Animation speed 0–100, or null when the family carries it in {@link #effect}. */
+    public static byte[] effectSpeed(Family family, int speed) {
+        if (family == Family.TRIONES) {
+            return null;
+        }
+        return bytes(0x7E, 0x00, 0x02, clamp(speed), 0x00, 0x00, 0x00, 0x00, 0xEF);
+    }
+
     /** {@code 0xRRGGBB} from hue 0–359 at full saturation and value. */
     public static int hue(int degrees) {
         int h = ((degrees % 360) + 360) % 360;

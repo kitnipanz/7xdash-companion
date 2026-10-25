@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- One button in the mood light group bar. -->
+<com.google.android.material.button.MaterialButton xmlns:android="http://schemas.android.com/apk/res/android"
+    style="@style/Widget.Cam.RailSmall"
+    android:layout_width="wrap_content"
+    android:layout_height="52dp" />

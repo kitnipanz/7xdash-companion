@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- One effect in the picker: a dot playing it, and its name. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="4dp"
+    android:background="?attr/selectableItemBackground"
+    android:gravity="center_vertical"
+    android:minHeight="56dp"
+    android:orientation="horizontal"
+    android:paddingStart="8dp"
+    android:paddingEnd="8dp">
+    <com.kooo.evcam.light.EffectSwatchView
+        android:id="@+id/effect_dot"
+        android:layout_width="220dp"
+        android:layout_height="20dp"
+        android:layout_marginEnd="20dp" />
+    <TextView
+        android:id="@+id/effect_name"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:textAppearance="@style/TextAppearance.Cam.Body" />
+</LinearLayout>

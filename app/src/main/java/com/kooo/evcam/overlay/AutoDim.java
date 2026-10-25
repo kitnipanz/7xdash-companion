@@ -13,6 +13,8 @@ import java.util.Calendar;
 
 /**
  * Experimental: turn dim on at night and off in the morning by wall-clock time.
+ * Only acts when the window starts or ends (or when enabled / hours change), so
+ * a dim the user switched by hand is left alone until the next boundary.
  * Also logs system brightness once when enabled, so we can see if the head unit
  * exposes it (many cars do not).
  */
@@ -25,6 +27,8 @@ public final class AutoDim {
     private static Context appContext;
     private static boolean started;
     private static boolean probed;
+    /** Window state at the last tick; null means apply on the next tick. */
+    private static Boolean lastWant;
 
     private static final Runnable TICK = AutoDim::tick;
 
@@ -33,6 +37,7 @@ public final class AutoDim {
 
     public static void sync(Context context) {
         appContext = context.getApplicationContext();
+        lastWant = null;
         AppConfig config = new AppConfig(appContext);
         if (config.isAutoDimEnabled()) {
             start();
@@ -70,13 +75,20 @@ public final class AutoDim {
         }
         boolean want = nightNow(config.getAutoDimStartHour(), config.getAutoDimEndHour());
         boolean on = config.isDimOverlayEnabled();
-        if (want != on) {
+        boolean edge = shouldApply(lastWant, want);
+        lastWant = want;
+        if (edge && want != on) {
             AppLog.i(TAG, "自动遮罩: " + (want ? "开" : "关")
                     + "（时段 " + config.getAutoDimStartHour() + ":00–"
                     + config.getAutoDimEndHour() + ":00）");
             OverlayCoordinator.setDimOverlayEnabled(appContext, want);
         }
         MAIN.postDelayed(TICK, CHECK_MS);
+    }
+
+    /** Act on the first tick and when the window flips, not every minute. */
+    static boolean shouldApply(Boolean lastWant, boolean want) {
+        return lastWant == null || lastWant != want;
     }
 
     /** True when hour is in [start, end) wrapping midnight. */

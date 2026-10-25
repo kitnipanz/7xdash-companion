@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.3.14] - 2026-10-25
+
+- Auto dim no longer turns off a dim you switched on by hand outside the night hours. It used to re-check every minute and undo it; now it only switches dim when the night window starts or ends (and once when you turn Auto dim on or change its hours).
+
 ## [1.3.13] - 2026-10-25
 
 Everything since 1.3.9, the last stable release.

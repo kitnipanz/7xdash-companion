@@ -21,4 +21,14 @@ public class AutoDimTest {
         assertFalse(AutoDim.inWindow(18, 8, 18));
         assertFalse(AutoDim.inWindow(7, 8, 18));
     }
+
+    @Test
+    public void appliesOnlyOnFirstTickOrWindowEdge() {
+        assertTrue(AutoDim.shouldApply(null, false));
+        assertTrue(AutoDim.shouldApply(null, true));
+        assertFalse(AutoDim.shouldApply(false, false));
+        assertFalse(AutoDim.shouldApply(true, true));
+        assertTrue(AutoDim.shouldApply(false, true));
+        assertTrue(AutoDim.shouldApply(true, false));
+    }
 }

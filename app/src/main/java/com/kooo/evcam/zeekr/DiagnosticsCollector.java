@@ -75,6 +75,7 @@ public final class DiagnosticsCollector {
         Timings timings = new Timings();
         timings.run("device", () -> appendDevice(sb));
         timings.run("install history", () -> com.kooo.evcam.update.InstallHistory.appendTo(sb, context));
+        timings.run("memory log", () -> com.kooo.evcam.blackbox.MemoryLog.appendTo(sb, context));
         timings.run("cameras", () -> appendCameras(sb, context));
         timings.run("frame rates", () -> appendPreviewFrameRates(sb));
         timings.run("stall watch", () -> appendStallWatch(sb, context));

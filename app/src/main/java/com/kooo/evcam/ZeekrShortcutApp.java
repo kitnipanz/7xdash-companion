@@ -37,6 +37,8 @@ public class ZeekrShortcutApp extends Application {
         com.kooo.evcam.settings.UsbSettings.start(this);
         // Install / update / system build history (app storage + USB): matches a removal to an OTA
         com.kooo.evcam.update.InstallHistory.recordAsync(this);
+        // Memory every 5 min (app storage + USB), for spotting a leak over days
+        com.kooo.evcam.blackbox.MemoryLog.start(this);
         com.kooo.evcam.settings.DeveloperMode.init(this);
         // U 盘挂上、卸下、异常掉线进黑匣子（2026-09-26 录像盘掉线，系统那边发生了什么一行都没记下）
         com.kooo.evcam.blackbox.VolumeEvents.register(this);
@@ -185,5 +187,6 @@ public class ZeekrShortcutApp extends Application {
         super.onTrimMemory(level);
         // 系统在催内存。卡顿报告带着日志尾巴，内存紧张和卡住是不是同时发生，一看便知
         AppLog.w("App", "onTrimMemory level " + level);
+        com.kooo.evcam.blackbox.MemoryLog.trim(level);
     }
 }

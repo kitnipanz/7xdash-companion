@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.3.11-beta] - 2026-10-25
+
+- Diagnostics: new **Memory over time** section for spotting a leak. Every 5 minutes 7xDash notes its memory (Java heap, native heap, total and graphics memory, threads, open files), plus a line whenever the system asks for memory back; about a week is kept, also in `7xDash/history/memory.txt` on the USB stick. Each run shows start, peak and latest values and growth per hour (after a 30-minute warm-up), marked GROWING when a value keeps climbing. A new run in the list means 7xDash restarted or was stopped by the system.
+
 ## [1.3.10-beta] - 2026-10-25
 
 - Diagnostics: new **Install history** section. Every start records when 7xDash was installed and last updated and which system build the car runs, in the app and in `7xDash/history/install.txt` on the USB stick (that copy outlives an uninstall). A new line appears only when something changed, marked REINSTALLED, app updated or SYSTEM CHANGED, so the next time the car removes the app it can be matched to a system update.

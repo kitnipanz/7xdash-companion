@@ -1199,7 +1199,8 @@ public final class ChannelRules {
         if (releasedByDark(w, lane)) {
             return false;
         }
-        if (lane.cabinOnly && holder != CameraNeeds.Holder.CABIN) {
+        if (lane.cabinOnly && holder != CameraNeeds.Holder.CABIN
+                && holder != CameraNeeds.Holder.REMOTE_BACKSEAT) {
             return false;
         }
         switch (holder) {
@@ -1212,7 +1213,10 @@ public final class ChannelRules {
             case BOTH_MIRRORS:
                 return isSurround(lane);
             case CABIN:
+            case REMOTE_BACKSEAT:
                 return CameraSlots.KEY_CABIN_REAR.equals(lane.key);
+            case REMOTE_DRIVER:
+                return CameraSlots.KEY_CABIN_FRONT.equals(lane.key);
             default:
                 return true;
         }
@@ -1290,7 +1294,17 @@ public final class ChannelRules {
      * <p>按「不是环视那一路」认：非极氪的自定义车型上，熄屏时除了环视那一路，别的路一律放开（记进规格）。</p>
      */
     static boolean releasedByDark(World w, Lane lane) {
-        return !isSurround(lane) && (!w.screenOn || w.screenDark && lane.device == Device.CLOSED);
+        return !isSurround(lane) && !remoteWatched(w, lane)
+                && (!w.screenOn || w.screenDark && lane.device == Device.CLOSED);
+    }
+
+    /**
+     * A phone is watching this cabin lane (REMOTE_DRIVER / REMOTE_BACKSEAT). The dark rule does not
+     * release it then: the owner chose remote cabin over the head unit's claim on the rear cabin.
+     */
+    static boolean remoteWatched(World w, Lane lane) {
+        return w.holders.contains(CameraNeeds.Holder.REMOTE_DRIVER) && CameraSlots.KEY_CABIN_FRONT.equals(lane.key)
+                || w.holders.contains(CameraNeeds.Holder.REMOTE_BACKSEAT) && CameraSlots.KEY_CABIN_REAR.equals(lane.key);
     }
 
     /**

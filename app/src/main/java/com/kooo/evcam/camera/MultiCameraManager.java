@@ -4053,6 +4053,10 @@ public class MultiCameraManager {
                     case PHOTO:
                         names.add("拍照");
                         break;
+                    case REMOTE_DRIVER:
+                    case REMOTE_BACKSEAT:
+                        names.add("远程观看");
+                        break;
                     default:
                         names.add("后视镜");
                         break;

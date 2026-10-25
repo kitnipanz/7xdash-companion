@@ -1700,6 +1700,7 @@ public class MainActivity extends AppCompatActivity {
         carLink = new com.kooo.evcam.remote.CarLink(this);
         remoteStream = new com.kooo.evcam.remote.RemoteStream(remoteStreamHost(), carLink);
         carLink.setWatchListener((watching, source) -> {
+            holdRemoteCabin(watching, source);
             remoteHandler.removeCallbacks(remotePump);
             if (remoteStream == null) {
                 return;
@@ -1745,12 +1746,17 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public android.view.TextureView driverView() {
-                return textureBack;
+                return liveCabinView(textureBack);
             }
 
             @Override
             public android.view.TextureView backseatView() {
-                return textureLeft;
+                return liveCabinView(textureLeft);
+            }
+
+            @Override
+            public boolean cabinStill(String source, java.util.function.Consumer<android.graphics.Bitmap> done) {
+                return requestCabinStill(source, done);
             }
 
             @Override
@@ -1888,7 +1894,47 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * Remote watch on a cabin camera holds that lane open, screen dark too (the dark rule would let
+     * it go). Released when the phone stops watching it or the link drops.
+     */
+    private static void holdRemoteCabin(boolean watching, String source) {
+        String slot = com.kooo.evcam.remote.RemoteLive.slotFor(source);
+        com.kooo.evcam.camera.CameraNeeds needs = com.kooo.evcam.camera.CameraNeeds.current();
+        if (watching && com.kooo.evcam.remote.RemoteLive.DRIVER.equals(slot)) {
+            needs.claim(com.kooo.evcam.camera.CameraNeeds.Holder.REMOTE_DRIVER);
+        } else {
+            needs.release(com.kooo.evcam.camera.CameraNeeds.Holder.REMOTE_DRIVER);
+        }
+        if (watching && com.kooo.evcam.remote.RemoteLive.BACKSEAT.equals(slot)) {
+            needs.claim(com.kooo.evcam.camera.CameraNeeds.Holder.REMOTE_BACKSEAT);
+        } else {
+            needs.release(com.kooo.evcam.camera.CameraNeeds.Holder.REMOTE_BACKSEAT);
+        }
+    }
+
+    /**
+     * The cabin canvas only has a live picture while the main screen is in front: once it leaves,
+     * the preview stops and a grab is black or stale. Null then, so remote watch takes a still.
+     */
+    private android.view.TextureView liveCabinView(android.view.TextureView view) {
+        return isInBackground ? null : view;
+    }
+
+    /** Remote watch: a still from the watched cabin camera's JPEG channel. False when none was asked. */
+    private boolean requestCabinStill(String source, java.util.function.Consumer<android.graphics.Bitmap> done) {
+        String slot = com.kooo.evcam.remote.RemoteLive.slotFor(source);
+        String key = com.kooo.evcam.remote.RemoteLive.DRIVER.equals(slot)
+                ? com.kooo.evcam.camera.CameraSlots.KEY_CABIN_FRONT
+                : com.kooo.evcam.remote.RemoteLive.BACKSEAT.equals(slot)
+                ? com.kooo.evcam.camera.CameraSlots.KEY_CABIN_REAR : null;
+        com.kooo.evcam.camera.SingleCamera cam = key == null || cameraManager == null
+                ? null : cameraManager.getCamera(key);
+        return cam != null && cam.requestRemoteStill(1280, done);
+    }
+
     private android.graphics.Bitmap grabCabin(android.view.TextureView view) {
+        view = liveCabinView(view);
         if (view == null || !view.isAvailable()) {
             return null;
         }
@@ -1900,6 +1946,40 @@ public class MainActivity extends AppCompatActivity {
         return view.getBitmap(Math.min(1920, w), Math.min(1080, h));
     }
 
+    /** Remote JPEG pump is waiting on a cabin still since this uptime; 0 when not. */
+    private volatile long remoteStillAskedMs;
+
+    /** Camera thread: a cabin still into the mailbox and out to the phone. Clears {@code remoteBusy}. */
+    private void pushCabinStill(String source, android.graphics.Bitmap still) {
+        if (still == null || remoteCompose.isShutdown()) {
+            if (still != null) {
+                still.recycle();
+            }
+            remoteBusy.set(false);
+            return;
+        }
+        try {
+            remoteCompose.execute(() -> {
+                try {
+                    remoteSnap.putCabin(remoteLive, com.kooo.evcam.remote.RemoteLive.slotFor(source), still);
+                    com.kooo.evcam.remote.CarLink link = carLink;
+                    byte[] jpeg = link == null ? null : remoteLive.jpegFor(link.watchSource());
+                    if (jpeg != null) {
+                        link.pushJpeg(jpeg);
+                    }
+                } catch (RuntimeException e) {
+                    AppLog.w(TAG, "remote cabin still failed: " + e.getMessage());
+                } finally {
+                    still.recycle();
+                    remoteBusy.set(false);
+                }
+            });
+        } catch (java.util.concurrent.RejectedExecutionException e) {
+            still.recycle();
+            remoteBusy.set(false);
+        }
+    }
+
     private void pushRemoteFrame() {
         if (carLink == null || !carLink.isWatching()) {
             return;
@@ -1909,31 +1989,49 @@ public class MainActivity extends AppCompatActivity {
                 && remoteStream.msSinceLastPacket() < 3000L) {
             return;
         }
+        long asked = remoteStillAskedMs;
+        if (asked != 0 && android.os.SystemClock.elapsedRealtime() - asked > 3000L) {
+            // The still never came back (capture lost): stop waiting on it
+            remoteStillAskedMs = 0;
+            remoteBusy.set(false);
+        }
         if (!remoteBusy.compareAndSet(false, true)) {
             return;
         }
         final String source = carLink.watchSource();
-        // Already have a fresh-enough frame for this source? Still refresh captures.
-        if (textureFront == null || !textureFront.isAvailable()) {
-            byte[] cached = remoteLive.jpegFor(source);
-            if (cached != null) {
-                carLink.pushJpeg(cached);
-            }
-            remoteBusy.set(false);
-            return;
-        }
         boolean hasLanes = compositeContainer != null
                 && compositeContainer.copyLaneWindows(remoteLanes);
         if (!hasLanes) {
             com.kooo.evcam.zeekr.RemoteFrame.equalVerticalLanes(remoteLanes);
         }
-        int[] grab = remoteGrabSize(textureFront);
+        // Surround canvas not up: cabins are still worth grabbing (they used to be skipped too)
+        int[] grab = textureFront == null || !textureFront.isAvailable() ? null : remoteGrabSize(textureFront);
         final android.graphics.Bitmap surround = grab == null
                 ? null
                 : textureFront.getBitmap(grab[0], grab[1]);
         final android.graphics.Bitmap cabinDriver = grabCabin(textureBack);
         final android.graphics.Bitmap cabinBack = grabCabin(textureLeft);
         if (surround == null && cabinDriver == null && cabinBack == null) {
+            // Cabin with no live canvas (main screen not in front): its camera's still. Else the last frame.
+            final long stillAt = android.os.SystemClock.elapsedRealtime();
+            remoteStillAskedMs = stillAt;
+            if (requestCabinStill(source, still -> {
+                if (remoteStillAskedMs != stillAt) {
+                    if (still != null) {
+                        still.recycle();   // given up on already; a newer grab owns remoteBusy
+                    }
+                    return;
+                }
+                remoteStillAskedMs = 0;
+                pushCabinStill(source, still);
+            })) {
+                return;
+            }
+            remoteStillAskedMs = 0;
+            byte[] cached = remoteLive.jpegFor(source);
+            if (cached != null) {
+                carLink.pushJpeg(cached);
+            }
             remoteBusy.set(false);
             return;
         }
@@ -3411,6 +3509,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         remoteHandler.removeCallbacks(remotePump);
+        holdRemoteCabin(false, null);
         if (remoteStream != null) {
             remoteStream.release();
             remoteStream = null;

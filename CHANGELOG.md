@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.3.8-beta] - 2026-10-25
+
+- Remote view: the Driver face and Backseat cameras now show on 7xDash web when the car screen is off or 7xDash is not in front. While your phone watches a cabin camera, that camera stays open with the screen dark (only that one; the other cabin camera is still let go). When the main screen's preview is not available, the picture comes from the camera's photo output, a few frames a second.
+- Remote view: the cabin cameras are no longer skipped when the surround camera is not up, and a dropped link lets the watched cabin camera go.
+
 ## [1.3.7-beta] - 2026-10-25
 
 - Where I parked: new **Pillar scan** switch on its home card (off by default). While you creep under 3 km/h in D or R, 7xDash reads the column signs from the front and side cameras every 3 seconds and remembers the latest floor and bay. Each new one shows on the HUD; at P it fills in whatever the parked read could not see. Forgotten after 10 minutes or when you drive off from P.

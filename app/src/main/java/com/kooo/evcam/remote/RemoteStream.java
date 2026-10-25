@@ -28,7 +28,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * <p>Surround (drive, ch1–ch4) is read straight off the camera texture inside the preview
  * {@link FisheyeGlPipe}: per-pixel defish, no TextureView readback, no CPU copy. Cabin
  * (driver, backseat) has no GL pipe, so its TextureView is grabbed on the UI thread and
- * drawn into the encoder with a canvas. If the surround pipe is not up (camera wired
+ * drawn into the encoder with a canvas; when that view has no live picture (main screen not in
+ * front) a still from the camera's JPEG channel is drawn instead. If the surround pipe is not up (camera wired
  * direct), surround falls back to the same canvas path through {@link RemoteFrame}.</p>
  *
  * <p>Main thread only, except the packet sink.</p>
@@ -51,6 +52,14 @@ public final class RemoteStream {
         float fisheyeFov();
 
         String fisheyeProjection();
+
+        /**
+         * Cabin still from the camera's JPEG channel, for when its view has no live picture (main
+         * screen not in front, screen dark). {@code done} may run on any thread, null when none came.
+         *
+         * @return false when nothing was asked (camera not open, channel busy)
+         */
+        boolean cabinStill(String source, java.util.function.Consumer<Bitmap> done);
     }
 
     private static final String TAG = "RemoteStream";
@@ -60,6 +69,8 @@ public final class RemoteStream {
     private static final int CANVAS_FPS = 12;
     private static final int BITRATE = 2_000_000;
     private static final long CHECK_MS = 1000L;
+    /** Cabin stills are full still captures: a few a second is plenty, the encoder repeats frames. */
+    private static final long STILL_MS = 300L;
     /** Header: 'V', flags, source, w(2), h(2), pts us(8). */
     public static final int HEADER = 15;
     public static final byte MAGIC = 'V';
@@ -94,6 +105,10 @@ public final class RemoteStream {
     private volatile byte sourceCode;
     private volatile long lastPacketMs;
     private volatile long lastKeyAskMs;
+    private long lastStillMs;
+    /** A still is on its way; the uptime it was asked at, 0 when none. A lost one stops blocking after this long. */
+    private volatile long stillAskedMs;
+    private static final long STILL_LOST_MS = 3000L;
     private boolean running;
 
     private final Runnable canvasTick = new Runnable() {
@@ -272,6 +287,11 @@ public final class RemoteStream {
     /** UI thread: grab the TextureView, then draw into the encoder off-thread. */
     private void feedCanvas() {
         LiveEncoder enc = encoder;
+        long asked = stillAskedMs;
+        if (asked != 0 && SystemClock.elapsedRealtime() - asked > STILL_LOST_MS) {
+            stillAskedMs = 0;
+            drawing.set(false);
+        }
         if (enc == null || !drawing.compareAndSet(false, true)) {
             return;
         }
@@ -289,42 +309,74 @@ public final class RemoteStream {
             AppLog.w(TAG, "grab failed: " + e.getMessage());
         }
         if (grab == null) {
+            // Cabin has no live view: ask its camera for a still instead. drawing stays set until it lands.
+            long now = SystemClock.elapsedRealtime();
+            if (!surround && now - lastStillMs >= STILL_MS) {
+                stillAskedMs = now;
+                if (host.cabinStill(src, still -> {
+                    if (stillAskedMs == now) {
+                        stillAskedMs = 0;
+                        draw(enc, still, src, false);
+                    } else if (still != null) {
+                        still.recycle();
+                    }
+                })) {
+                    lastStillMs = now;
+                    return;
+                }
+                stillAskedMs = 0;
+            }
             drawing.set(false);
             return;
         }
-        final Bitmap bmp = grab;
-        final boolean straighten = surround;
-        final float[] lanes = surround ? windows.clone() : null;
-        final int[] order = surround ? host.laneOrder() : null;
-        final float fov = host.fisheyeFov();
-        final String projection = host.fisheyeProjection();
-        drawExec.execute(() -> {
-            try {
-                if (enc != encoder) {
-                    return;
-                }
-                Surface surface = enc.inputSurface();
-                if (surface == null || !surface.isValid()) {
-                    return;
-                }
-                Bitmap picture = bmp;
-                if (straighten) {
-                    picture = composer.compose(bmp, lanes, order, RemoteFrame.laneForSource(src),
-                            true, fov, projection, 1f);
-                }
-                Canvas canvas = surface.lockHardwareCanvas();
-                try {
-                    drawFitted(canvas, picture);
-                } finally {
-                    surface.unlockCanvasAndPost(canvas);
-                }
-            } catch (RuntimeException e) {
-                AppLog.w(TAG, "canvas frame failed: " + e.getMessage());
-            } finally {
+        draw(enc, grab, src, surround);
+    }
+
+    /** Any thread: draw {@code bmp} into the encoder on drawExec, then recycle it. Null just clears {@link #drawing}. */
+    private void draw(LiveEncoder enc, Bitmap bmp, String src, boolean straighten) {
+        if (bmp == null || drawExec.isShutdown()) {
+            if (bmp != null) {
                 bmp.recycle();
-                drawing.set(false);
             }
-        });
+            drawing.set(false);
+            return;
+        }
+        final float[] lanes = straighten ? windows.clone() : null;
+        final int[] order = straighten ? host.laneOrder() : null;
+        final float fov = straighten ? host.fisheyeFov() : 0f;
+        final String projection = straighten ? host.fisheyeProjection() : null;
+        try {
+            drawExec.execute(() -> {
+                try {
+                    if (enc != encoder) {
+                        return;
+                    }
+                    Surface surface = enc.inputSurface();
+                    if (surface == null || !surface.isValid()) {
+                        return;
+                    }
+                    Bitmap picture = bmp;
+                    if (straighten) {
+                        picture = composer.compose(bmp, lanes, order, RemoteFrame.laneForSource(src),
+                                true, fov, projection, 1f);
+                    }
+                    Canvas canvas = surface.lockHardwareCanvas();
+                    try {
+                        drawFitted(canvas, picture);
+                    } finally {
+                        surface.unlockCanvasAndPost(canvas);
+                    }
+                } catch (RuntimeException e) {
+                    AppLog.w(TAG, "canvas frame failed: " + e.getMessage());
+                } finally {
+                    bmp.recycle();
+                    drawing.set(false);
+                }
+            });
+        } catch (java.util.concurrent.RejectedExecutionException e) {
+            bmp.recycle();
+            drawing.set(false);
+        }
     }
 
     private Bitmap grabSurround(TextureView view) {

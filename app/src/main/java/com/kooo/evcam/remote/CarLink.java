@@ -388,7 +388,7 @@ public final class CarLink {
                 if (gen != generation.get()) {
                     return;
                 }
-                watching.set(false);
+                dropWatch();
                 publish("OFFLINE " + code, "", email);
                 scheduleReconnect();
             }
@@ -398,7 +398,7 @@ public final class CarLink {
                 if (gen != generation.get()) {
                     return;
                 }
-                watching.set(false);
+                dropWatch();
                 String msg = t.getMessage() == null ? t.getClass().getSimpleName() : t.getMessage();
                 publish("FAIL " + msg, "", email);
                 scheduleReconnect();
@@ -431,6 +431,12 @@ public final class CarLink {
             return;
         }
         handler.postDelayed(reconnect, 3000);
+    }
+
+    /** Link dropped: nobody is watching any more. Tell the listener so it lets the cameras go. */
+    private void dropWatch() {
+        boolean wasWatching = watching.getAndSet(false);
+        notifyWatch(wasWatching, source);
     }
 
     private void notifyWatch(boolean wasWatching, String prevSource) {

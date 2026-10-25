@@ -148,17 +148,22 @@ public class ChannelRulesTest {
         for (Holder holder : Holder.values()) {
             w.holders.clear();
             claim(holder);
-            assertFalse(holder + "：熄屏时后座舱谁都不要", ChannelRules.wanted(w, rear));
-            assertFalse(holder + "：熄屏时前座舱谁都不要", ChannelRules.wanted(w, front));
+            // Remote watch on a cabin is the one exception: that cabin stays wanted in the dark
+            assertEquals(holder + "：熄屏时后座舱谁都不要", holder == Holder.REMOTE_BACKSEAT,
+                    ChannelRules.wanted(w, rear));
+            assertEquals(holder + "：熄屏时前座舱谁都不要", holder == Holder.REMOTE_DRIVER,
+                    ChannelRules.wanted(w, front));
             assertEquals(holder + "：环视照它自己的规矩",
-                    holder != Holder.PREVIEW && holder != Holder.CABIN, ChannelRules.wanted(w, surround));
+                    holder != Holder.PREVIEW && holder != Holder.CABIN
+                            && holder != Holder.REMOTE_DRIVER && holder != Holder.REMOTE_BACKSEAT,
+                    ChannelRules.wanted(w, surround));
         }
         w.screenOn = true;
         for (Holder holder : Holder.values()) {
             w.holders.clear();
             claim(holder);
             boolean wantsRear = holder != Holder.MIRROR && holder != Holder.SIDE_POPUP
-                    && holder != Holder.BOTH_MIRRORS;
+                    && holder != Holder.BOTH_MIRRORS && holder != Holder.REMOTE_DRIVER;
             assertEquals(holder + "：亮屏照登记表", wantsRear, ChannelRules.wanted(w, rear));
             assertFalse(ChannelRules.releasedByDark(w, rear));
         }
@@ -2494,8 +2499,8 @@ public class ChannelRulesTest {
         for (Holder holder : Holder.values()) {
             w.holders.clear();
             claim(holder);
-            assertEquals(holder + ": only cabin passenger opens it",
-                    holder == Holder.CABIN, ChannelRules.wanted(w, rear));
+            assertEquals(holder + ": only cabin passenger and remote watch open it",
+                    holder == Holder.CABIN || holder == Holder.REMOTE_BACKSEAT, ChannelRules.wanted(w, rear));
         }
         rear.declared.add(pvR);
         rear.declared.add(recR);
@@ -2506,6 +2511,32 @@ public class ChannelRulesTest {
         assertEquals("only the cabin window's output", java.util.Collections.singleton(mirror),
                 ChannelRules.wantedOutputs(w, rear));
         assertTrue("other lanes keep their rules", ChannelRules.wanted(w, front));
+    }
+
+    /**
+     * Remote watch on a cabin keeps that one cabin open with the screen dark (owner's call: remote
+     * cabin wins over the head unit's claim). The other cabin still goes; nothing is released any more
+     * once the phone stops watching.
+     */
+    @Test
+    public void remoteWatchKeepsTheWatchedCabinInTheDark() {
+        w.screenOn = false;
+        claim(Holder.REMOTE_BACKSEAT);
+        assertTrue(ChannelRules.wanted(w, rear));
+        assertFalse(ChannelRules.releasedByDark(w, rear));
+        assertFalse("the other cabin still goes", ChannelRules.wanted(w, front));
+        assertTrue(ChannelRules.releasedByDark(w, front));
+        assertFalse("surround keeps its own rules", ChannelRules.wanted(w, surround));
+
+        w.holders.clear();
+        claim(Holder.REMOTE_DRIVER);
+        assertTrue(ChannelRules.wanted(w, front));
+        assertFalse(ChannelRules.releasedByDark(w, front));
+        assertFalse(ChannelRules.wanted(w, rear));
+
+        w.holders.clear();
+        assertTrue(ChannelRules.releasedByDark(w, front));
+        assertTrue(ChannelRules.releasedByDark(w, rear));
     }
 
     /** Cabin passenger shows the rear cabin (Cabin 2), never the front cabin slot (the driver face camera). */

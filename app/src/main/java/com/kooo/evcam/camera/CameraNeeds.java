@@ -57,7 +57,14 @@ public final class CameraNeeds {
         /** 快捷键同时打开的左右侧视，和侧视弹窗、超级后视镜共用那一路附加输出。 */
         BOTH_MIRRORS,
         /** 座舱乘客悬浮窗。用的是前座舱那一路自己的附加输出，不占后视镜的槽。 */
-        CABIN
+        CABIN,
+        /**
+         * Remote watch on the driver face camera (front cabin). Held only while a phone watches it.
+         * The lane stays open with the screen dark; frames come from its JPEG channel.
+         */
+        REMOTE_DRIVER,
+        /** Remote watch on the backseat camera (rear cabin). Same rules as {@link #REMOTE_DRIVER}. */
+        REMOTE_BACKSEAT
     }
 
     private static final CameraNeeds CURRENT = new CameraNeeds();

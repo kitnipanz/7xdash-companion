@@ -3015,6 +3015,65 @@ public class SingleCamera {
         return true;
     }
 
+    /**
+     * Remote watch: one still from the JPEG channel, scaled down so the longer side is at most
+     * {@code maxSide}. Works without the main screen (its preview canvas is gone once it leaves the
+     * front). {@code done} gets null when no still came out; it runs on this camera's thread.
+     *
+     * @return false when nothing was sent (channel not open, no session)
+     */
+    public boolean requestRemoteStill(int maxSide, java.util.function.Consumer<android.graphics.Bitmap> done) {
+        JpegCallback waiting = pendingJpeg;
+        // A photo is waiting on the channel: never take its JPEG. A still of ours that never came back
+        // (capture lost) stops blocking after a while.
+        if (waiting != null && !(waiting instanceof RemoteStill && ((RemoteStill) waiting).stale())) {
+            return false;
+        }
+        return requestJpeg(new RemoteStill(maxSide, done));
+    }
+
+    /** One remote watch still: decode the JPEG scaled down, hand it over (null when none came). */
+    private final class RemoteStill implements JpegCallback {
+        private static final long STALE_MS = 3000L;
+        private final int maxSide;
+        private final java.util.function.Consumer<android.graphics.Bitmap> done;
+        private final long sentAt = SystemClock.uptimeMillis();
+
+        RemoteStill(int maxSide, java.util.function.Consumer<android.graphics.Bitmap> done) {
+            this.maxSide = Math.max(1, maxSide);
+            this.done = done;
+        }
+
+        boolean stale() {
+            return SystemClock.uptimeMillis() - sentAt > STALE_MS;
+        }
+
+        @Override
+        public void onJpeg(byte[] data) {
+            android.graphics.Bitmap bitmap = null;
+            try {
+                android.graphics.BitmapFactory.Options bounds = new android.graphics.BitmapFactory.Options();
+                bounds.inJustDecodeBounds = true;
+                android.graphics.BitmapFactory.decodeByteArray(data, 0, data.length, bounds);
+                int sample = 1;
+                while (Math.max(bounds.outWidth, bounds.outHeight) / (sample * 2) >= maxSide) {
+                    sample *= 2;
+                }
+                android.graphics.BitmapFactory.Options opts = new android.graphics.BitmapFactory.Options();
+                opts.inSampleSize = sample;
+                bitmap = android.graphics.BitmapFactory.decodeByteArray(data, 0, data.length, opts);
+            } catch (RuntimeException e) {
+                AppLog.w(TAG, "Camera " + cameraId + " remote still: " + e.getMessage());
+            }
+            done.accept(bitmap);
+        }
+
+        @Override
+        public void onFailed(String reason) {
+            done.accept(null);
+        }
+    }
+
     private void closeJpegReader() {
         if (jpegReader != null) {
             jpegReader.close();

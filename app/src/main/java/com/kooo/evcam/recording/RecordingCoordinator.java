@@ -1180,6 +1180,8 @@ public final class RecordingCoordinator {
         // 屏幕已经黑着才开始的录像（熄屏期间接回的那种），熄屏录制同样要拿锁
         ScreenOffRecording.onRecordingStarted(context);
         AppLog.d(TAG, "开始录制 " + cameras.size() + " 路: " + cameras);
+        com.kooo.evcam.analytics.Analytics.event("recording_start",
+                "why", why.name().toLowerCase(java.util.Locale.ROOT), "cameras", String.valueOf(cameras.size()));
         for (Listener listener : new ArrayList<>(listeners)) {
             listener.onRecordingStarted();
         }
@@ -1363,6 +1365,9 @@ public final class RecordingCoordinator {
             CameraNeeds.current().release(CameraNeeds.Holder.RECORDING);
         }
         pushView();
+        com.kooo.evcam.analytics.Analytics.event("recording_stop",
+                "reason", reason.name().toLowerCase(java.util.Locale.ROOT),
+                "minutes", com.kooo.evcam.analytics.Analytics.minutes(lasted));
         for (Listener listener : new ArrayList<>(listeners)) {
             listener.onRecordingStopped(reason, lasted, willResume);
         }

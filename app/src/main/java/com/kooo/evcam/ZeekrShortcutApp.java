@@ -37,6 +37,8 @@ public class ZeekrShortcutApp extends Application {
         com.kooo.evcam.settings.UsbSettings.start(this);
         // Install / update / system build history (app storage + USB): matches a removal to an OTA
         com.kooo.evcam.update.InstallHistory.recordAsync(this);
+        // Anonymous usage stats (GA4): app_open now, the rest from the feature entry points
+        com.kooo.evcam.analytics.Analytics.start(this);
         // Memory every 5 min (app storage + USB), for spotting a leak over days
         com.kooo.evcam.blackbox.MemoryLog.start(this);
         com.kooo.evcam.settings.DeveloperMode.init(this);

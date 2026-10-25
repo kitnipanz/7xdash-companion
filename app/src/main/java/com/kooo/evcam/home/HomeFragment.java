@@ -355,12 +355,15 @@ public class HomeFragment extends Fragment {
         ((ImageView) view.findViewById(R.id.card_icon)).setImageResource(icon);
         ((TextView) view.findViewById(R.id.card_title)).setText(title);
         ((TextView) view.findViewById(R.id.card_sub)).setText(sub);
+        String card = getResources().getResourceEntryName(title);
         view.setOnClickListener(v -> {
+            com.kooo.evcam.analytics.Analytics.event("home_card", "card", card, "gesture", "tap");
             onTap.run();
             handler.postDelayed(this::refresh, 300);
         });
         if (onHold != null) {
             view.setOnLongClickListener(v -> {
+                com.kooo.evcam.analytics.Analytics.event("home_card", "card", card, "gesture", "hold");
                 onHold.run();
                 return true;
             });

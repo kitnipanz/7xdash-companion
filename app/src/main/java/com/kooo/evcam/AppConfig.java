@@ -35,6 +35,8 @@ public class AppConfig {
     private static final String KEY_HUD_NOTIFICATIONS = "hud_notifications";
     private static final String KEY_PARKING_AUTO = "parking_auto";  // shifting into P reads the parking signs
     private static final String KEY_PARKING_CREEP = "parking_creep";  // under 3 km/h in D/R keeps reading pillar signs
+    private static final String KEY_USAGE_STATS = "usage_stats";  // anonymous usage stats to Google Analytics: the last answer, off until one
+    private static final String KEY_USAGE_STATS_REMEMBERED = "usage_stats_remembered";  // don't ask again on open
     private static final String KEY_BETA_FEATURES = "beta_features";  // show features still in beta (home cards, automatic triggers)
     private static final String KEY_HUD_NOTICE_LEFT = "hud_notice_left_pct";  // 抬头显示通知离左边多少（%）
     private static final String KEY_HUD_NOTICE_RIGHT = "hud_notice_right_pct";  // 离右边多少（%）  // 别的应用的通知投到抬头显示
@@ -460,6 +462,23 @@ public class AppConfig {
 
     public void setBetaFeaturesEnabled(boolean enabled) {
         prefs.edit().putBoolean(KEY_BETA_FEATURES, enabled).apply();
+    }
+
+    /** Anonymous usage stats (see {@link com.kooo.evcam.analytics.Analytics}): the last answer. Off until one. */
+    public boolean isUsageStatsEnabled() {
+        return prefs.getBoolean(KEY_USAGE_STATS, false);
+    }
+
+    /** Whether the first-open question stops asking (ticked "Remember my choice", or set in Settings). */
+    public boolean isUsageStatsRemembered() {
+        return prefs.getBoolean(KEY_USAGE_STATS_REMEMBERED, false);
+    }
+
+    public void setUsageStats(boolean enabled, boolean remember) {
+        prefs.edit()
+                .putBoolean(KEY_USAGE_STATS, enabled)
+                .putBoolean(KEY_USAGE_STATS_REMEMBERED, remember)
+                .apply();
     }
 
     /** Where did I park: read the floor and bay signs every time the car goes into P. On by default. */

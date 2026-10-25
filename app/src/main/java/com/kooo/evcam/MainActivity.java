@@ -778,6 +778,7 @@ public class MainActivity extends AppCompatActivity {
 
     /** 7xDash 主页的卡片用：去某一页（值见 PAGE_）。 */
     public void openPage(String page) {
+        com.kooo.evcam.analytics.Analytics.event("page_open", "page", page);
         if (drawerLayout != null && drawerLayout.isDrawerOpen(navGravity())) {
             drawerLayout.closeDrawer(navGravity());
         }
@@ -3459,6 +3460,8 @@ public class MainActivity extends AppCompatActivity {
         // 人真回来了它会读到亮屏。熄屏 v3 起回到前台不等于屏幕亮着：车辆说黑而安卓亮着时（车机黑着醒了）主界面也可能回到前台，
         // 所以不硬当亮屏
         com.kooo.evcam.screen.ScreenState.refresh();
+        // First open: ask about anonymous usage stats (once a run until the answer is remembered)
+        com.kooo.evcam.analytics.UsageConsent.maybeAsk(this);
 
         // 人已经在界面上了，「因熄屏退下去」这个记号就作废 —— 不管是自己接回来的，
         // 还是用户自己点回来的；下一次熄屏照样再退一次

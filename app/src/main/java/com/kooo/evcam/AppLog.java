@@ -80,6 +80,8 @@ public final class AppLog {
                     saveToPersistentLog(sAppContext);
                     Log.e("AppLog", "Crash log saved successfully");
                 }
+                // Usage stats: the exception class only, sent on the next start
+                com.kooo.evcam.analytics.Analytics.noteCrash(throwable);
                 // 黑匣子在自己的线程上写，崩溃前等它把排队的写完
                 com.kooo.evcam.blackbox.BlackBox.flush(1500);
             } catch (Exception e) {

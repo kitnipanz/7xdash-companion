@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.3.12-beta] - 2026-10-25
+
+- **Anonymous usage stats**, off until you say yes. On first open 7xDash asks whether to turn them on; tick **Remember my choice** and it never asks again, otherwise it asks on the next open. The **Anonymous usage stats** switch in Settings → Interface turns them on or off any time (and stops the question). Both are kept in the USB stick settings copy. With them on, 7xDash sends which features get used to Google Analytics: app start (app version, system build), home card taps and holds, pages opened, shortcuts run (from any card, side rail, key or sticker), recording start and stop (reason, rough length) and a count of crashes (the error type only). Only a random install id is sent, no email, plate or location. Events go out together at most once a minute while in use, about 20–50 KB of data a day. Turning the switch off stops sending at once. Builds without `GA_MEASUREMENT_ID` / `GA_API_SECRET` send nothing.
+
 ## [1.3.11-beta] - 2026-10-25
 
 - Diagnostics: new **Memory over time** section for spotting a leak. Every 5 minutes 7xDash notes its memory (Java heap, native heap, total and graphics memory, threads, open files), plus a line whenever the system asks for memory back; about a week is kept, also in `7xDash/history/memory.txt` on the USB stick. Each run shows start, peak and latest values and growth per hour (after a 30-minute warm-up), marked GROWING when a value keeps climbing. A new run in the list means 7xDash restarted or was stopped by the system.

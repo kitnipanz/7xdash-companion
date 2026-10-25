@@ -553,6 +553,12 @@
             android:title="@string/set_beta_features_title"
             android:summary="@string/set_beta_features_summary" />
 
+        <!-- Anonymous usage stats (GA4): app start, home cards, shortcuts, recording, crash counts -->
+        <SwitchPreferenceCompat
+            android:key="pref_usage_stats"
+            android:title="@string/set_usage_stats_title"
+            android:summary="@string/set_usage_stats_summary" />
+
         <SwitchPreferenceCompat
             android:key="pref_recording_stats"
             android:title="@string/set_recording_stats_title"

@@ -1185,6 +1185,12 @@ public class SettingsPreferenceFragment extends PreferenceFragmentCompat {
             com.kooo.evcam.parking.WhereParked.get().settingsChanged(requireContext());
         });
 
+        bindSwitch("pref_usage_stats", appConfig.isUsageStatsEnabled(), value -> {
+            // Set here counts as a remembered answer: the first-open question stops asking
+            appConfig.setUsageStats(value, true);
+            com.kooo.evcam.analytics.Analytics.setEnabled(value);
+        });
+
         bindSwitch("pref_reduce_motion", appConfig.isReduceMotionWhileRecording(),
                 value -> appConfig.setReduceMotionWhileRecording(value));
         // 车辆状态面板：主界面那个控件自己听这个开关

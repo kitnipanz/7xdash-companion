@@ -69,11 +69,14 @@ android {
         // versionName 会成为 Release 名称与 APK 文件名
         //
         // 7xDash 用自己的 applicationId，可以和 zeekr-shortcut-car 并排装。版本号从 1 重新起。
-        versionCode = 44
-        versionName = "1.3.11-beta"
+        versionCode = 45
+        versionName = "1.3.12-beta"
 
         buildConfigField("String", "DRIVE_CLIENT_ID", gradleStringLiteral(driveCredential("DRIVE_CLIENT_ID")))
         buildConfigField("String", "DRIVE_CLIENT_SECRET", gradleStringLiteral(driveCredential("DRIVE_CLIENT_SECRET")))
+        // GA4 Measurement Protocol, same lookup (Action secrets / local.properties). Empty = no usage stats sent
+        buildConfigField("String", "GA_MEASUREMENT_ID", gradleStringLiteral(driveCredential("GA_MEASUREMENT_ID")))
+        buildConfigField("String", "GA_API_SECRET", gradleStringLiteral(driveCredential("GA_API_SECRET")))
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 

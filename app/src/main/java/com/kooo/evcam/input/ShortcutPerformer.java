@@ -21,6 +21,8 @@ public final class ShortcutPerformer {
         if (context == null || action == null) {
             return;
         }
+        // Every trigger (home card, side rail, steering-wheel key, sticker) comes through here
+        com.kooo.evcam.analytics.Analytics.event("shortcut", "action", action.key);
         switch (action) {
             case RECORD:
                 Intent toggle = new Intent(context, RecordingFloatingService.class);

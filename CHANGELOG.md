@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.5.0] - 2026-10-26
+
+Changes since 1.4.0 (includes 1.4.1-beta and 1.4.2-beta).
+
+### Recording
+- **One encoder for the whole trip.** Each camera used to stop and rebuild its video encoder at every 1-minute video. That lost the last frames of every video and rebuilt the car's encoder thousands of times a week. Now the encoder keeps running: at each minute it asks for a keyframe, and the next video starts exactly on it. Videos follow on from each other with no missing frames, so instant captures and flash-to-pass clips that cross two videos are complete too. If the encoder gives no keyframe within 7 seconds, or is not working right, 7xDash falls back to the old rebuild for that video.
+- **Recording pipeline setting removed** from Developer options. Recording always uses MediaCodec; a saved MediaRecorder choice no longer has any effect.
+
+### Mood light
+- **Car ambient light follows brightness.** In a group, the car's ambient light now takes the look's brightness on the car's own 0–10 scale (1–100 % becomes 1–10, never 0 while on). Brightness 0 still turns it off.
+
+### Car lights lab (experimental)
+- **Renamed from Car ambient light**, and it looks for more lights: Scan also lists rear cabin and reading lights, foot lights and hazard lights, with each row labelled by kind.
+- **Watch** finds a light by its button. It reads every car setting over and over: keep still for 3 seconds (anything that changes by itself then is left out), press the car's own light or hazard button, and what changed shows at the top as "was … · now …", with **Try** to send a value back.
+- Hazard lights, and anything found only by watching, can be sent only in P.
+
 ## [1.4.2-beta] - 2026-10-26
 
 ### Mood light

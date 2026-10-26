@@ -160,29 +160,8 @@ public class StickerActivity extends AppCompatActivity implements StickerHub.Wat
             config.setStickerEnabled(on);
             StickerHub.sync(this);
         });
-        bind(R.id.sticker_action_record, ShortcutAction.RECORD);
-        bind(R.id.sticker_action_mirror, ShortcutAction.MIRROR);
-        bind(R.id.sticker_action_mirror_hud, ShortcutAction.MIRROR_HUD);
-        bind(R.id.sticker_action_both_mirrors, ShortcutAction.BOTH_MIRRORS);
-        bind(R.id.sticker_action_app, ShortcutAction.APP);
-        bind(R.id.sticker_action_dim, ShortcutAction.DIM);
-        bind(R.id.sticker_action_save, ShortcutAction.SAVE);
-        bind(R.id.sticker_action_lock_save, ShortcutAction.LOCK_SAVE);
-        bind(R.id.sticker_action_instant_capture, ShortcutAction.INSTANT_CAPTURE);
-        bind(R.id.sticker_action_drive_upload, ShortcutAction.DRIVE_UPLOAD);
-        bind(R.id.sticker_action_photo, ShortcutAction.PHOTO);
-        bind(R.id.sticker_action_photo_surround, ShortcutAction.PHOTO_SURROUND);
-        bind(R.id.sticker_action_airplay, ShortcutAction.AIRPLAY);
-        bind(R.id.sticker_action_eq, ShortcutAction.EQ);
-        bind(R.id.sticker_action_photo_cabin, ShortcutAction.PHOTO_CABIN);
-        bind(R.id.sticker_action_where_parked, ShortcutAction.WHERE_PARKED);
-        bind(R.id.sticker_action_quit, ShortcutAction.QUIT);
-        bind(R.id.sticker_action_announce, ShortcutAction.ANNOUNCE);
-        findViewById(R.id.sticker_action_announce_play).setOnClickListener(v ->
-                com.kooo.evcam.announce.AnnouncePick.choose(this, this::save));
-        bind(R.id.sticker_action_hold_speak, ShortcutAction.HOLD_SPEAK);
-        bind(R.id.sticker_action_toggle_speak, ShortcutAction.TOGGLE_SPEAK);
-        bind(R.id.sticker_action_cabin, ShortcutAction.CABIN_PASSENGER);
+        ActionTabs.fill(findViewById(R.id.sticker_action_tabs), findViewById(R.id.sticker_action_list),
+                52, null, this::pick);
     }
 
     @Override
@@ -210,8 +189,12 @@ public class StickerActivity extends AppCompatActivity implements StickerHub.Wat
         super.onPause();
     }
 
-    private void bind(int id, ShortcutAction action) {
-        findViewById(id).setOnClickListener(v -> save(action));
+    private void pick(ShortcutAction action) {
+        if (action == ShortcutAction.ANNOUNCE_PLAY) {
+            com.kooo.evcam.announce.AnnouncePick.choose(this, this::save);
+        } else {
+            save(action);
+        }
     }
 
     private void save(ShortcutAction action) {

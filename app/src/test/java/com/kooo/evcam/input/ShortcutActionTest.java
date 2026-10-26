@@ -3,7 +3,12 @@ package com.kooo.evcam.input;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 
+import static org.junit.Assert.assertTrue;
+
 import org.junit.Test;
+
+import java.util.HashSet;
+import java.util.Set;
 
 public class ShortcutActionTest {
 
@@ -77,5 +82,20 @@ public class ShortcutActionTest {
     @Test
     public void moodLightSwitchHasItsOwnKey() {
         assertEquals(ShortcutAction.MOOD_LIGHT, ShortcutAction.fromKey("toggle_mood_light"));
+    }
+
+    @Test
+    public void everyActionIsOnExactlyOneTab() {
+        Set<ShortcutAction> seen = new HashSet<>();
+        for (ShortcutAction.Group group : ShortcutAction.Group.values()) {
+            for (ShortcutAction action : ShortcutAction.in(group)) {
+                assertTrue(action + " listed twice", seen.add(action));
+            }
+            assertTrue(group + " is empty", !ShortcutAction.in(group).isEmpty());
+        }
+        assertEquals(ShortcutAction.values().length, seen.size());
+        assertEquals(ShortcutAction.Group.RECORD, ShortcutAction.INSTANT_CAPTURE.group());
+        assertEquals(ShortcutAction.Group.SOUND, ShortcutAction.OUTSIDE_SPEAKER.group());
+        assertEquals(ShortcutAction.Group.CAR, ShortcutAction.MOOD_LIGHT.group());
     }
 }

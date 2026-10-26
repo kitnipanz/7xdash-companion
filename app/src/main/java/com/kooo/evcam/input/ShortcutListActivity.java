@@ -82,30 +82,39 @@ public class ShortcutListActivity extends AppCompatActivity {
 
     /** Pick a new action for this button and press; "Press type" switches tap / hold / double instead. */
     private void editAction(Shortcut item, int index) {
-        ShortcutAction[] actions = ShortcutAction.values();
-        String[] names = new String[actions.length];
-        int checked = -1;
-        ShortcutAction current = ShortcutAction.fromKey(item.action);
-        for (int i = 0; i < actions.length; i++) {
-            names[i] = getString(actions[i].labelRes);
-            if (actions[i] == current) {
-                checked = i;
-            }
-        }
+        float density = getResources().getDisplayMetrics().density;
+        int pad = Math.round(24 * density);
+        LinearLayout body = new LinearLayout(this);
+        body.setOrientation(LinearLayout.VERTICAL);
+        body.setPadding(pad, Math.round(8 * density), pad, 0);
+        LinearLayout tabs = new LinearLayout(this);
+        LinearLayout.LayoutParams tabParams = new LinearLayout.LayoutParams(
+                android.view.ViewGroup.LayoutParams.MATCH_PARENT, android.view.ViewGroup.LayoutParams.WRAP_CONTENT);
+        tabParams.bottomMargin = Math.round(12 * density);
+        body.addView(tabs, tabParams);
+        android.widget.ScrollView scroll = new android.widget.ScrollView(this);
+        LinearLayout list = new LinearLayout(this);
+        list.setOrientation(LinearLayout.VERTICAL);
+        scroll.addView(list);
+        body.addView(scroll, new LinearLayout.LayoutParams(
+                android.view.ViewGroup.LayoutParams.MATCH_PARENT, android.view.ViewGroup.LayoutParams.WRAP_CONTENT));
         String title = buttonName(item) + " · " + getString(item.pressKind().labelRes);
-        com.kooo.evcam.ui.CamDialogs.show(new com.google.android.material.dialog.MaterialAlertDialogBuilder(
+        androidx.appcompat.app.AlertDialog[] shown = new androidx.appcompat.app.AlertDialog[1];
+        ActionTabs.fill(tabs, list, 52, ShortcutAction.fromKey(item.action), picked -> {
+            if (shown[0] != null) {
+                shown[0].dismiss();
+            }
+            if (picked == ShortcutAction.ANNOUNCE_PLAY) {
+                com.kooo.evcam.announce.AnnouncePick.choose(this,
+                        (key, label) -> replace(index, item, key, item.pressKind().key));
+            } else {
+                replace(index, item, picked.key, item.pressKind().key);
+            }
+        });
+        shown[0] = com.kooo.evcam.ui.CamDialogs.show(new com.google.android.material.dialog.MaterialAlertDialogBuilder(
                 this, R.style.Theme_Cam_MaterialAlertDialog)
                 .setTitle(title)
-                .setSingleChoiceItems(names, checked, (dialog, which) -> {
-                    dialog.dismiss();
-                    ShortcutAction picked = actions[which];
-                    if (picked == ShortcutAction.ANNOUNCE_PLAY) {
-                        com.kooo.evcam.announce.AnnouncePick.choose(this,
-                                (key, label) -> replace(index, item, key, item.pressKind().key));
-                    } else {
-                        replace(index, item, picked.key, item.pressKind().key);
-                    }
-                })
+                .setView(body)
                 .setNeutralButton(R.string.shortcut_edit_press, (dialog, which) -> editPress(item, index))
                 .setNegativeButton(android.R.string.cancel, null));
     }

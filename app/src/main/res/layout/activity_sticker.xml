@@ -152,159 +152,26 @@
                     android:paddingTop="8dp"
                     android:paddingEnd="16dp"
                     android:visibility="gone">
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/sticker_action_record"
-                        style="@style/Widget.Cam.RailSmall"
+                    <TextView
+                        android:id="@+id/sticker_action_caption"
                         android:layout_width="match_parent"
-                        android:layout_height="52dp"
+                        android:layout_height="wrap_content"
+                        android:paddingStart="4dp"
+                        android:paddingBottom="6dp"
+                        android:text="@string/shortcut_step_action"
+                        android:textAppearance="@style/TextAppearance.Cam.Caption"
+                        android:textColor="@color/text_secondary" />
+                    <LinearLayout
+                        android:id="@+id/sticker_action_tabs"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
                         android:layout_marginBottom="8dp"
-                        android:text="@string/shortcut_action_record" />
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/sticker_action_mirror"
-                        style="@style/Widget.Cam.RailSmall"
+                        android:orientation="horizontal" />
+                    <LinearLayout
+                        android:id="@+id/sticker_action_list"
                         android:layout_width="match_parent"
-                        android:layout_height="52dp"
-                        android:layout_marginBottom="8dp"
-                        android:text="@string/shortcut_action_mirror" />
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/sticker_action_mirror_hud"
-                        style="@style/Widget.Cam.RailSmall"
-                        android:layout_width="match_parent"
-                        android:layout_height="52dp"
-                        android:layout_marginBottom="8dp"
-                        android:text="@string/shortcut_action_mirror_hud" />
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/sticker_action_both_mirrors"
-                        style="@style/Widget.Cam.RailSmall"
-                        android:layout_width="match_parent"
-                        android:layout_height="52dp"
-                        android:layout_marginBottom="8dp"
-                        android:text="@string/shortcut_action_both_mirrors" />
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/sticker_action_app"
-                        style="@style/Widget.Cam.RailSmall"
-                        android:layout_width="match_parent"
-                        android:layout_height="52dp"
-                        android:layout_marginBottom="8dp"
-                        android:text="@string/shortcut_action_app" />
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/sticker_action_dim"
-                        style="@style/Widget.Cam.RailSmall"
-                        android:layout_width="match_parent"
-                        android:layout_height="52dp"
-                        android:layout_marginBottom="8dp"
-                        android:text="@string/shortcut_action_dim" />
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/sticker_action_save"
-                        style="@style/Widget.Cam.RailSmall"
-                        android:layout_width="match_parent"
-                        android:layout_height="52dp"
-                        android:layout_marginBottom="8dp"
-                        android:text="@string/shortcut_action_save" />
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/sticker_action_lock_save"
-                        style="@style/Widget.Cam.RailSmall"
-                        android:layout_width="match_parent"
-                        android:layout_height="52dp"
-                        android:layout_marginBottom="8dp"
-                        android:text="@string/shortcut_action_lock_save" />
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/sticker_action_instant_capture"
-                        style="@style/Widget.Cam.RailSmall"
-                        android:layout_width="match_parent"
-                        android:layout_height="52dp"
-                        android:layout_marginBottom="8dp"
-                        android:text="@string/shortcut_action_instant_capture" />
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/sticker_action_drive_upload"
-                        style="@style/Widget.Cam.RailSmall"
-                        android:layout_width="match_parent"
-                        android:layout_height="52dp"
-                        android:layout_marginBottom="8dp"
-                        android:text="@string/shortcut_action_drive_upload" />
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/sticker_action_photo"
-                        style="@style/Widget.Cam.RailSmall"
-                        android:layout_width="match_parent"
-                        android:layout_height="52dp"
-                        android:layout_marginBottom="8dp"
-                        android:text="@string/shortcut_action_photo" />
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/sticker_action_photo_surround"
-                        style="@style/Widget.Cam.RailSmall"
-                        android:layout_width="match_parent"
-                        android:layout_height="52dp"
-                        android:layout_marginBottom="8dp"
-                        android:text="@string/shortcut_action_photo_surround" />
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/sticker_action_photo_cabin"
-                        style="@style/Widget.Cam.RailSmall"
-                        android:layout_width="match_parent"
-                        android:layout_height="52dp"
-                        android:layout_marginBottom="8dp"
-                        android:text="@string/shortcut_action_photo_cabin" />
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/sticker_action_where_parked"
-                        style="@style/Widget.Cam.RailSmall"
-                        android:layout_width="match_parent"
-                        android:layout_height="52dp"
-                        android:layout_marginBottom="8dp"
-                        android:text="@string/shortcut_action_where_parked" />
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/sticker_action_quit"
-                        style="@style/Widget.Cam.RailSmall"
-                        android:layout_width="match_parent"
-                        android:layout_height="52dp"
-                        android:layout_marginBottom="8dp"
-                        android:text="@string/shortcut_action_quit" />
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/sticker_action_announce"
-                        style="@style/Widget.Cam.RailSmall"
-                        android:layout_width="match_parent"
-                        android:layout_height="52dp"
-                        android:layout_marginBottom="8dp"
-                        android:text="@string/shortcut_action_announce" />
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/sticker_action_announce_play"
-                        style="@style/Widget.Cam.RailSmall"
-                        android:layout_width="match_parent"
-                        android:layout_height="52dp"
-                        android:layout_marginBottom="8dp"
-                        android:text="@string/shortcut_action_announce_play" />
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/sticker_action_airplay"
-                        style="@style/Widget.Cam.RailSmall"
-                        android:layout_width="match_parent"
-                        android:layout_height="52dp"
-                        android:layout_marginBottom="8dp"
-                        android:text="@string/shortcut_action_airplay" />
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/sticker_action_eq"
-                        style="@style/Widget.Cam.RailSmall"
-                        android:layout_width="match_parent"
-                        android:layout_height="52dp"
-                        android:layout_marginBottom="8dp"
-                        android:text="@string/shortcut_action_eq" />
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/sticker_action_hold_speak"
-                        style="@style/Widget.Cam.RailSmall"
-                        android:layout_width="match_parent"
-                        android:layout_height="52dp"
-                        android:layout_marginBottom="8dp"
-                        android:text="@string/shortcut_action_hold_speak" />
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/sticker_action_toggle_speak"
-                        style="@style/Widget.Cam.RailSmall"
-                        android:layout_width="match_parent"
-                        android:layout_height="52dp"
-                        android:layout_marginBottom="8dp"
-                        android:text="@string/shortcut_action_toggle_speak" />
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/sticker_action_cabin"
-                        style="@style/Widget.Cam.RailSmall"
-                        android:layout_width="match_parent"
-                        android:layout_height="52dp"
-                        android:text="@string/shortcut_action_cabin" />
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical" />
                 </LinearLayout>
             </LinearLayout>
         </ScrollView>

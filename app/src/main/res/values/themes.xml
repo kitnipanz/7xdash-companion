@@ -97,6 +97,11 @@
         <item name="android:textSize">@dimen/text_body</item>
     </style>
 
+    <!-- Buttons made in code (the shortcut action tabs) take RailSmall through this -->
+    <style name="ThemeOverlay.Cam.RailSmall" parent="">
+        <item name="materialButtonStyle">@style/Widget.Cam.RailSmall</item>
+    </style>
+
     <!-- 只有图标：菜单、退出 -->
     <style name="Widget.Cam.IconButton" parent="Widget.Cam.RailTile">
         <item name="iconGravity">textStart</item>

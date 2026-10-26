@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.5.1] - 2026-10-26
+
+### Shortcuts and Smart sticker
+- **Actions in tabs.** Picking what a button or sticker does now shows four tabs instead of one long list: **Recording**, **Camera**, **Sound** and **Car & app**. Each action has an icon, and each tab lists its actions A to Z. Add shortcut, Smart sticker and the Edit dialog in Shortcuts all use the same tabs; Edit opens on the tab of the button's current action and outlines it.
+- Add shortcut is labelled step by step: **How you press it** (tap, long press, double) and then **What it does**.
+- **Mood light on/off** and **Outside speaker on/off** can now be picked when adding a button or sticker (before, only from Edit). **HUD on/off** can now be picked for a sticker.
+- Action names start with the thing they control, so they sort together: for example "Recording start/stop", "Super mirror on/off", "Photo (cabin)", "Google Drive upload on/off". Saved shortcuts keep working.
+
 ## [1.5.0] - 2026-10-26
 
 Changes since 1.4.0 (includes 1.4.1-beta and 1.4.2-beta).

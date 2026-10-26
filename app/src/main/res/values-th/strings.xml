@@ -1582,4 +1582,10 @@
     <string name="usb_settings_none">ไม่มีสำเนาการตั้งค่าใน USB</string>
     <string name="usb_settings_found">พบสำเนาการตั้งค่าใน USB ไปที่ ตั้งค่า › ระบบ › กู้คืนการตั้งค่าจาก USB เพื่อนำกลับมา</string>
     <string name="announce_record_needed">ไม่มีเสียงอ่านภาษานี้ แตะไมค์ข้างข้อความแล้วอัดเสียงเอง</string>
+    <string name="shortcut_group_record">บันทึก</string>
+    <string name="shortcut_group_camera">กล้อง</string>
+    <string name="shortcut_group_sound">เสียง</string>
+    <string name="shortcut_group_car">รถและแอป</string>
+    <string name="shortcut_step_press">วิธีกด</string>
+    <string name="shortcut_step_action">ให้ทำอะไร</string>
 </resources>

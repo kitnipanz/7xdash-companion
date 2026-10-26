@@ -120,8 +120,6 @@
     <string name="sentry_status_off">Sentry Mode: off</string>
     <string name="sentry_status_reading">Sentry Mode: reading…</string>
     <string name="sentry_status_unknown">Sentry Mode: unavailable</string>
-    <string name="set_recording_mode_title">Recording pipeline</string>
-    <string name="set_recording_mode_summary">%1$s; recording always uses MediaCodec, so this setting has no effect</string>
     <string name="set_force_h264_title">Force H.264</string>
     <string name="set_force_h264_summary">Uses H.264 for every camera, overriding the codec set for each camera in Edit stream profile</string>
     <string name="set_image_adjust_title">Image adjustment</string>

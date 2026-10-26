@@ -1312,10 +1312,6 @@ public class SettingsPreferenceFragment extends PreferenceFragmentCompat {
     // ------------------------------------------------------------------ 原「高级」，现在在开发者选项里
 
     private void bindAdvanced() {
-        bindEnum("pref_recording_mode", SettingsRegistry.RECORDING_MODE,
-                appConfig.getRecordingMode(), value -> appConfig.setRecordingMode(value),
-                this::showRecordingModeSummary);
-
         // 熄屏录制 = 熄屏持续录制 + 唤醒锁（规格 §3.1）。整块只在开发者选项里出现，不用再单独锁
         bindSwitch("pref_screen_off_recording", appConfig.isScreenOffRecordingEnabled(),
                 value -> appConfig.setScreenOffRecordingEnabled(value));
@@ -1353,14 +1349,6 @@ public class SettingsPreferenceFragment extends PreferenceFragmentCompat {
         });
         updateCameraMappingSummary();
 
-    }
-
-    /** 摘要除了选中项，还写明这一项现在不起作用：录制固定走 MediaCodec。 */
-    private void showRecordingModeSummary() {
-        ListPreference pref = findPreference("pref_recording_mode");
-        if (pref != null && getContext() != null) {
-            pref.setSummary(getString(R.string.set_recording_mode_summary, pref.getEntry()));
-        }
     }
 
     private void updateCameraMappingSummary() {

@@ -572,27 +572,9 @@ public class AppConfig {
      * @return true 表示应该使用 CodecVideoRecorder
      */
     public boolean shouldUseCodecRecording() {
-        String mode = getRecordingMode();
-        boolean grid = com.kooo.evcam.profile.RecordSpecs.anyGridEnabled(context);
-        if (grid || isInfoBarEnabled()) {
-            // 四宫格要在编码前用 GL 重排画面，行驶信息条要在画面下面拼一条 ——
-            // 只有 MediaCodec 路径能做到；MediaRecorder 直接吃相机原始输出，没有插手的余地。
-            if (RECORDING_MODE_MEDIA_RECORDER.equals(mode)) {
-                AppLog.i(TAG, (grid ? "已选四宫格录制" : "开着行驶信息条")
-                        + "，忽略 MediaRecorder 模式设置，改用 MediaCodec");
-            }
-            return true;
-        }
-        if (RECORDING_MODE_CODEC.equals(mode)) {
-            // 强制使用 Codec 模式
-            return true;
-        } else if (RECORDING_MODE_MEDIA_RECORDER.equals(mode)) {
-            // 强制使用 MediaRecorder 模式
-            return false;
-        } else {
-            // 自动模式：所有车型默认使用 MediaCodec 模式
-            return true;
-        }
+        // 2026-10-26 起录像只有一个引擎：MediaCodec，编码器整场不停、按关键帧切段（CodecVideoRecorder）。
+        // 「录制模式」不再给选；旧设置里存着的 media_recorder 不再起作用
+        return true;
     }
     
     // ==================== 码率配置相关方法 ====================
@@ -777,7 +759,6 @@ public class AppConfig {
 
     private static java.util.Set<String> developerKeys() {
         java.util.Set<String> keys = new java.util.HashSet<>(java.util.Arrays.asList(
-                SettingsRegistry.RECORDING_MODE.key,  // 录制模式 → 自动
                 KEY_FORCE_H264_ENCODING,              // 强制 H.264 → 关，各路按自己配置里的编码
                 KEY_SCREEN_OFF_RECORDING,             // 熄屏录制 → 关
                 KEY_SCREEN_OFF_WAKE_MINUTES,          // 熄屏录制的最长时长 → 默认（熄屏录制关着，用不到）

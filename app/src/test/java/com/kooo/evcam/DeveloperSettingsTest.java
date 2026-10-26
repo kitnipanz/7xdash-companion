@@ -46,7 +46,6 @@ public class DeveloperSettingsTest {
     private static final List<String> NONE = Collections.emptyList();
 
     static {
-        ROWS.put("pref_recording_mode", Arrays.asList("recording_mode"));
         ROWS.put("pref_force_h264", Arrays.asList("force_h264_encoding"));
         ROWS.put("pref_screen_off_recording", Arrays.asList("screen_off_recording"));
         ROWS.put("pref_screen_off_wake_hours", Arrays.asList("screen_off_wake_min"));

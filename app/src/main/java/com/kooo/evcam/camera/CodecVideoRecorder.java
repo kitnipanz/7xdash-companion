@@ -6,6 +6,7 @@ import android.media.MediaCodecInfo;
 import android.media.MediaCodecList;
 import android.media.MediaFormat;
 import android.media.MediaMuxer;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
@@ -73,6 +74,12 @@ public class CodecVideoRecorder {
     private String mimeType = MIME_TYPE_H264;  // 默认使用 H.264，支持时自动切换到 HEVC
     
     private static final int I_FRAME_INTERVAL = 3;  // I帧间隔（秒）- 改为3秒减少CPU占用和文件大小
+
+    /**
+     * 切段时等关键帧最多等多久。切段先向编码器要一个关键帧；编码器不理，最迟一个 I 帧间隔也会自己出一个。
+     * 过了这么久还没切成（编码器卡了、没出画面），退回旧办法：换编码器切段。
+     */
+    static final long CUT_WAIT_MS = 7000;
     
     // 编码参数（可配置）
     private int frameRate = 20;       // 默认 20fps - 降低帧率减少CPU占用，同时保持流畅
@@ -120,6 +127,15 @@ public class CodecVideoRecorder {
     private boolean csdInFormat;
     /** 排了「开文件」、还没排「收文件」（编码线程上）。快速恢复时据此决定要不要开新文件。 */
     private boolean fileQueued;
+    /** 这一代编码器报的输出格式（编码线程上写）。不换编码器切段时，新文件拿它开轨（{@link #cutAtKeyframe}）。 */
+    private MediaFormat encoderFormat;
+    /**
+     * 到点该切段了，编码器不停，等下一个关键帧（编码线程上）：那一帧之前收旧文件、开新文件，新文件从它开始。
+     * 换编码器、开新录制器、清零都会把它放掉。
+     */
+    private volatile boolean cutPending;
+    /** 排着的那次切段的序号：等关键帧等过了 {@link #CUT_WAIT_MS} 还没切成的话，按它认出是不是同一次。 */
+    private int cutSerial;
     /** 这一次开录开过录没有（{@link #startRecording} 成功过）。停录时没开过录的没有文件要收、不报。 */
     private volatile boolean everStarted;
     /**
@@ -1397,6 +1413,7 @@ public class CodecVideoRecorder {
      * 总之不能让 EGL 挂在一个已经放掉的 Surface 上：那样上下文当前不了，帧没人取。</p>
      */
     private void parkEncoder() {
+        cutPending = false;  // 停放了：这一段跟着停录收掉，不再等关键帧切
         if (aimAtPlaceholder()) {
             releaseEncoder();
             return;
@@ -1487,6 +1504,7 @@ public class CodecVideoRecorder {
         drainLate = false;
         fileQueued = false;
         offCycleName = false;
+        cutPending = false;
         // 排队、换盘状态
         ring.clear();
         backpressure.reset();
@@ -1663,6 +1681,8 @@ public class CodecVideoRecorder {
         formatSeen = false;
         framesThisEncoder = 0;
         csdInFormat = false;
+        encoderFormat = null;
+        cutPending = false;  // 等的是旧编码器的关键帧；换了编码器，新文件随新格式开
         // 检测并选择最优编码格式（forceH264 开启时固定 H.264）
         mimeType = selectBestEncoder();
 
@@ -1718,7 +1738,7 @@ public class CodecVideoRecorder {
         specSizeText = width + "x" + height;
         specCodecText = mimeType.equals(MIME_TYPE_HEVC) ? "H.265" : "H.264";
         nominalFrameRate = effectiveFrameRate;
-        // 实测值不清零：换分段会重建编码器，而相机的出帧率不会因此改变。
+        // 实测值不清零：重建编码器（健康检查、等不到关键帧时的切段）时相机的出帧率不会因此改变。
         // 清零的话每段开头都要重新等一秒，角标先闪回「~标称值」再跳回来。
         rebuildSpecLine();
     }
@@ -2096,14 +2116,12 @@ public class CodecVideoRecorder {
     }
 
     /**
-     * 切换到下一段（在编码线程上执行）
-     * 
-     * 采用简单方案：完整停止当前录制，然后重新开始
-     * 类似 MediaRecorder 的方式，虽然会丢失几帧，但更简单可靠
-     * 
-     * 快速恢复机制：
-     * - 成功时：重置恢复计数器，调度正常的1分钟定时器
-     * - 失败时：使用5秒快速重试，最多重试6次（30秒内），之后回到正常1分钟间隔
+     * 切换到下一段（在编码线程上执行）。
+     *
+     * <p>编码器不停（2026-10-26 起）：向它要一个关键帧，等那一帧出来时收旧文件、开新文件，新文件从它开始
+     * （{@link #cutAtKeyframe}）。交界一帧不丢，也不再每分钟拆一次、建一次编码器 —— 车机的硬件编码器一周要被
+     * 拆建上万次。编码器的输出格式里没带参数集（新文件开轨拿不到）、编码器眼下不健康时，照旧换编码器切段
+     * （{@link #switchByRebuild}）；等关键帧等过 {@link #CUT_WAIT_MS} 也退回那条路。</p>
      */
     private void switchToNextSegment() {
         // 检查是否仍在录制状态（防止与 stopRecording 竞态）
@@ -2111,7 +2129,71 @@ public class CodecVideoRecorder {
             AppLog.w(TAG, "Camera " + cameraId + " Skipping segment switch (not recording, stopping or released)");
             return;
         }
-        
+        if (cutPending) {
+            return;  // 已经在等关键帧了（对齐分段名和到点切段撞在一起）
+        }
+        MediaCodec codec = encoder;
+        if (codec == null || !encoderHealthy || !formatSeen || !csdInFormat || encoderFormat == null || !fileQueued) {
+            switchByRebuild();
+            return;
+        }
+        cutPending = true;
+        final int serial = ++cutSerial;
+        try {
+            Bundle sync = new Bundle();
+            sync.putInt(MediaCodec.PARAMETER_KEY_REQUEST_SYNC_FRAME, 0);
+            codec.setParameters(sync);
+        } catch (RuntimeException e) {
+            // 要不到也不要紧：最迟一个 I 帧间隔编码器自己出关键帧
+            AppLog.w(TAG, "Camera " + cameraId + " sync frame request failed: " + e);
+        }
+        Handler encoderLooper = encoderHandler;
+        if (encoderLooper != null) {
+            encoderLooper.postDelayed(() -> {
+                if (cutPending && serial == cutSerial && !stopRequested && !isReleased) {
+                    cutPending = false;
+                    AppLog.w(TAG, "Camera " + cameraId + " no keyframe within " + CUT_WAIT_MS
+                            + "ms, switching segment by rebuilding the encoder");
+                    StallWatch.runTask(encoderBeat, cameraId, "segment-switch", this::switchByRebuild);
+                }
+            }, CUT_WAIT_MS);
+        }
+    }
+
+    /**
+     * 等到关键帧了（编码线程上，这一帧排进 ring 之前）：收旧文件、开新文件、拿这一代的输出格式开轨。
+     * 编码器不停，PTS 基准写入线程开文件时清，这一帧就是新文件的第 0 帧。
+     */
+    private void cutAtKeyframe() {
+        cutPending = false;
+        if (stopRequested || isReleased || !isRecording.get()) {
+            return;
+        }
+        segmentIndex++;
+        if (fileQueued) {
+            closeCurrentFile("segment-switch", segmentIndex);
+        }
+        openNextFile();
+        queueCommand(new StartTrack(encoderFormat));
+        recoveryAttempts = 0;
+        AppLog.d(TAG, "Camera " + cameraId + " Cut at keyframe to segment " + segmentIndex + ": " + queuedFileName);
+        postForThisRun(this::scheduleNextSegment);
+    }
+
+    /**
+     * 换编码器切段（在编码线程上执行）：完整停止当前录制，然后重新开始。交界丢几帧。
+     * 只在不能等关键帧切段时用（见 {@link #switchToNextSegment}）。
+     *
+     * 快速恢复机制：
+     * - 成功时：重置恢复计数器，调度正常的1分钟定时器
+     * - 失败时：使用5秒快速重试，最多重试6次（30秒内），之后回到正常1分钟间隔
+     */
+    private void switchByRebuild() {
+        if (!isRecording.get() || isReleased || stopRequested) {
+            AppLog.w(TAG, "Camera " + cameraId + " Skipping segment switch (not recording, stopping or released)");
+            return;
+        }
+
         AppLog.d(TAG, "Camera " + cameraId + " Starting segment switch on encoder thread");
         
         boolean switchSuccess = false;
@@ -2558,6 +2640,7 @@ public class CodecVideoRecorder {
      */
     private void onEncoderFormat(MediaFormat format) {
         formatSeen = true;
+        encoderFormat = format;
         encoderHealthy = true;  // 收到格式变化说明编码器正常
         boolean avc = MIME_TYPE_H264.equals(mimeType);
         boolean csd0 = format.containsKey("csd-0");
@@ -2591,6 +2674,10 @@ public class CodecVideoRecorder {
         if (skipAsSample(info.flags)) {
             // 参数集已经随输出格式交给 muxer 了（开轨时），不当样本排
             return;
+        }
+        if (cutPending && (info.flags & MediaCodec.BUFFER_FLAG_KEY_FRAME) != 0) {
+            // 等到的关键帧：先收旧文件、开新文件，这一帧排在新文件的最前面
+            cutAtKeyframe();
         }
         byte[] data = new byte[info.size];
         encodedData.position(info.offset);

@@ -120,8 +120,6 @@
     <string name="sentry_status_off">โหมดเฝ้ารถ: ปิด</string>
     <string name="sentry_status_reading">โหมดเฝ้ารถ: กำลังอ่าน…</string>
     <string name="sentry_status_unknown">โหมดเฝ้ารถ: ไม่พร้อมใช้งาน</string>
-    <string name="set_recording_mode_title">ไปป์ไลน์การบันทึก</string>
-    <string name="set_recording_mode_summary">%1$s; การบันทึกใช้ MediaCodec เสมอ การตั้งค่านี้จึงไม่มีผล</string>
     <string name="set_force_h264_title">บังคับ H.264</string>
     <string name="set_force_h264_summary">ใช้ H.264 กับทุกกล้อง แทนโคเดกที่ตั้งไว้ของแต่ละกล้องในแก้ไขโปรไฟล์สตรีม</string>
     <string name="set_image_adjust_title">ปรับภาพ</string>

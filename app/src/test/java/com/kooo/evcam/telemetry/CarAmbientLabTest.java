@@ -47,4 +47,39 @@ public class CarAmbientLabTest {
         assertNull(CarAmbientLab.functionId(CarAmbientLab.TOPZONES));
         assertNull(CarAmbientLab.functionId(CarAmbientLab.TOPZONES_COLOR));
     }
+
+    @Test
+    public void sortsLightNamesIntoKinds() {
+        assertEquals(CarAmbientLab.Kind.HAZARD, CarAmbientLab.kindOf("SETTING_FUNC_HAZARD_LIGHT"));
+        assertEquals(CarAmbientLab.Kind.HAZARD, CarAmbientLab.kindOf("FUNC_DOUBLE_FLASH"));
+        assertEquals(CarAmbientLab.Kind.FOOT, CarAmbientLab.kindOf("SETTING_FUNC_AMBIENCE_LIGHT_FOOT_ZONE"));
+        assertEquals(CarAmbientLab.Kind.CABIN, CarAmbientLab.kindOf("SETTING_FUNC_READING_LIGHT_REAR"));
+        assertEquals(CarAmbientLab.Kind.CABIN, CarAmbientLab.kindOf("FUNC_DOME_LAMP"));
+        assertEquals(CarAmbientLab.Kind.AMBIENT, CarAmbientLab.kindOf("SETTING_FUNC_AMBIENCE_LIGHT_MAINZONES_INTENSITY"));
+        assertNull(CarAmbientLab.kindOf("DOOR_LOCK"));
+        assertNull(CarAmbientLab.kindOf(null));
+        assertEquals(CarAmbientLab.Kind.CABIN,
+                new CarAmbientLab.Constant("ILight", "SETTING_FUNC_ROOF_LIGHT", 0x20150400).kind);
+    }
+
+    @Test
+    public void hazardAndWatchedNamesOnlyInPark() {
+        assertNull(CarAmbientLab.parkedBlock("P"));
+        assertTrue(CarAmbientLab.parkedBlock("D").startsWith("Refused"));
+        assertTrue(CarAmbientLab.parkedBlock(null).contains("unknown"));
+    }
+
+    @Test
+    public void watchingListsWhatChangedWithBeforeAndNow() {
+        CarAmbientLab.Constant a = new CarAmbientLab.Constant("IVehicle", "FUNC_A", 0x20000001);
+        CarAmbientLab.Constant b = new CarAmbientLab.Constant("IVehicle", "FUNC_B", 0x20000002);
+        CarAmbientLab.Constant c = new CarAmbientLab.Constant("IVehicle", "FUNC_C", 0x20000003);
+        List<CarAmbientLab.Constant> got = CarAmbientLab.changed(Arrays.asList(a, b, c),
+                new String[]{"0", "1", "threw x"}, new String[]{"0", "2", "threw x"});
+        assertEquals(Arrays.asList(b), got);
+        assertEquals("1", b.before);
+        assertEquals("2", b.current);
+        assertTrue(b.watched);
+        assertFalse(a.watched);
+    }
 }

@@ -37,6 +37,26 @@ public final class CarAmbientLab {
     /** Words in ECARX constant names that point at the interior ambient light. */
     static final Pattern AMBIENT = Pattern.compile(
             "AMBIEN|AMBL|ATMOS|ATMO_|MOOD_?LIGHT|INTERIOR_?LIGHT|INNER_?LIGHT|RHYTHM|BREATH_?LIGHT|LIGHT_?COLOU?R|AMB_LIGHT");
+    /** Reading, dome and rear cabin lights. */
+    static final Pattern CABIN = Pattern.compile(
+            "READ(ING)?_?(LIGHT|LAMP)|DOME|ROOF_?(LIGHT|LAMP)|CABIN_?(LIGHT|LAMP)|COURTESY|INTERIOR_?LAMP|INNER_?LAMP"
+                    + "|REAR_?(ROW_?)?(LIGHT|LAMP)|CEILING|VANITY");
+    /** Footwell and welcome lights. */
+    static final Pattern FOOT = Pattern.compile("FOOT|FEET|WELCOME_?(LIGHT|LAMP)");
+    /** Hazard warning lights (double flash). */
+    static final Pattern HAZARD = Pattern.compile(
+            "HAZARD|DOUBLE_?FLASH|DANGER_?(WARN|LIGHT|LAMP)|EMERGENCY_?(FLASH|LIGHT|LAMP)");
+
+    /** Which light a name is about. Checked in this order: a foot ambient zone counts as foot. */
+    public enum Kind {
+        HAZARD(CarAmbientLab.HAZARD), FOOT(CarAmbientLab.FOOT), CABIN(CarAmbientLab.CABIN), AMBIENT(CarAmbientLab.AMBIENT);
+
+        final Pattern pattern;
+
+        Kind(Pattern pattern) {
+            this.pattern = pattern;
+        }
+    }
 
     /** Where the ECARX classes live; the jar is found on the boot class path. */
     static final String PACKAGE = "com.ecarx.xui.adaptapi";
@@ -56,14 +76,20 @@ public final class CarAmbientLab {
         public final String owner;
         public final String name;
         public final int value;
+        /** Which light the name is about; null for other constants of the same class. */
+        public final Kind kind;
         /** Read back from the car: supported state and current value as text; null before {@link #read}. */
         public String supported;
         public String current;
+        /** Seen changing while watching ({@link #changed}): the value before, and sending to it is allowed. */
+        public boolean watched;
+        public String before;
 
         Constant(String owner, String name, int value) {
             this.owner = owner;
             this.name = name;
             this.value = value;
+            this.kind = kindOf(name);
         }
 
         public String hex() {
@@ -82,12 +108,16 @@ public final class CarAmbientLab {
         public final List<Constant> found;
         /** Every other int constant of the same classes, for picking values to send. */
         public final List<Constant> neighbours;
+        /** Every function number in every class, once each: what Watch reads. */
+        public final List<Constant> functions;
         public final boolean carReady;
 
-        Scan(String status, List<Constant> found, List<Constant> neighbours, boolean carReady) {
+        Scan(String status, List<Constant> found, List<Constant> neighbours, List<Constant> functions,
+                boolean carReady) {
             this.status = status;
             this.found = found;
             this.neighbours = neighbours;
+            this.functions = functions;
             this.carReady = carReady;
         }
     }
@@ -96,6 +126,12 @@ public final class CarAmbientLab {
     public static final String TOPZONES = "SETTING_FUNC_AMBIENCE_LIGHT_TOPZONES";
     /** Top-zone colour as {@code 0xRRGGBB} (the car read 0x1FAD3B while showing green). */
     public static final String TOPZONES_COLOR = "SETTING_FUNC_AMBIENCE_LIGHT_TOPZONES_COLOR_SET";
+    /** Main-zone brightness, 0 to 10 (the car read 5). Found on the car with this lab. */
+    public static final String MAINZONES_INTENSITY = "SETTING_FUNC_AMBIENCE_LIGHT_MAINZONES_INTENSITY";
+    /** Top-zone brightness, if the car has its own for the top zone; same 0 to 10 scale assumed. */
+    public static final String TOPZONES_INTENSITY = "SETTING_FUNC_AMBIENCE_LIGHT_TOPZONES_INTENSITY";
+    /** Highest ambient brightness the car takes. */
+    public static final int INTENSITY_MAX = 10;
 
     /** Function numbers looked up by name; a missing name is kept as null so it is not searched again. */
     private static final Map<String, Integer> ids = new LinkedHashMap<>();
@@ -191,6 +227,66 @@ public final class CarAmbientLab {
         return name != null && AMBIENT.matcher(name.toUpperCase(Locale.US)).find();
     }
 
+    /** Which light {@code name} is about, or null when it is not a light this lab looks at. */
+    public static Kind kindOf(String name) {
+        if (name == null) {
+            return null;
+        }
+        String upper = name.toUpperCase(Locale.US);
+        for (Kind kind : Kind.values()) {
+            if (kind.pattern.matcher(upper).find()) {
+                return kind;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Parked only, for hazard lights: switching them from a screen while driving would signal
+     * other drivers something the driver did not mean. Null when allowed, otherwise why not.
+     */
+    static String parkedBlock(String gear) {
+        return "P".equals(gear) ? null : "Refused: only in P (gear " + (gear == null ? "unknown" : gear) + ")";
+    }
+
+    /**
+     * Reads every one of {@code list} from the car, in order, as text (an error reads as its own
+     * text, so it compares equal next time too). Null when the car function interface is missing.
+     */
+    public static String[] readAll(Context context, List<Constant> list) {
+        Object car = EcarxSource.carForLab(context);
+        Object function = car == null ? null : invoke(car, "getICarFunction");
+        Method get = function == null ? null : EcarxSource.findMethod(function, "getFunctionValue", int.class);
+        if (get == null) {
+            return null;
+        }
+        String[] out = new String[list.size()];
+        for (int i = 0; i < out.length; i++) {
+            int id = list.get(i).value;
+            out[i] = safe(() -> get.invoke(function, id));
+        }
+        return out;
+    }
+
+    /**
+     * The constants whose reading differs between {@code before} and {@code now}, with
+     * {@link Constant#before}, {@link Constant#current} and {@link Constant#watched} filled in.
+     */
+    public static List<Constant> changed(List<Constant> list, String[] before, String[] now) {
+        List<Constant> out = new ArrayList<>();
+        int n = Math.min(list.size(), Math.min(before.length, now.length));
+        for (int i = 0; i < n; i++) {
+            if (!java.util.Objects.equals(before[i], now[i])) {
+                Constant k = list.get(i);
+                k.before = before[i];
+                k.current = now[i];
+                k.watched = true;
+                out.add(k);
+            }
+        }
+        return out;
+    }
+
     /**
      * Values that likely go with {@code function}: constants in the same class sharing the
      * longest name start (for example {@code AMBIENCE_LIGHT_MODE_*} for {@code AMBIENCE_LIGHT_MODE}).
@@ -228,6 +324,7 @@ public final class CarAmbientLab {
         }
         List<Constant> found = new ArrayList<>();
         List<Constant> neighbours = new ArrayList<>();
+        Map<Integer, Constant> functions = new LinkedHashMap<>();
         int loaded = 0;
         for (String name : classes) {
             Class<?> c;
@@ -247,7 +344,10 @@ public final class CarAmbientLab {
                 try {
                     Constant k = new Constant(c.getSimpleName(), f.getName(), f.getInt(null));
                     mine.add(k);
-                    if (looksAmbient(f.getName())) {
+                    if (k.looksLikeFunction() && !functions.containsKey(k.value)) {
+                        functions.put(k.value, k);
+                    }
+                    if (k.kind != null) {
                         found.add(k);
                         any = true;
                     }
@@ -260,11 +360,12 @@ public final class CarAmbientLab {
             }
         }
         if (loaded == 0) {
-            return new Scan("This head unit has no ECARX car interface", found, neighbours, false);
+            return new Scan("This head unit has no ECARX car interface", found, neighbours,
+                    new ArrayList<>(functions.values()), false);
         }
         Object car = EcarxSource.carForLab(context);
         Object function = car == null ? null : invoke(car, "getICarFunction");
-        String status = listed + ", " + loaded + " opened, " + found.size() + " ambient-light names";
+        String status = listed + ", " + loaded + " opened, " + found.size() + " light names";
         if (function == null) {
             status += " · car function interface not available";
         } else {
@@ -274,14 +375,14 @@ public final class CarAmbientLab {
                 }
             }
         }
-        StringBuilder log = new StringBuilder("Car ambient lab scan: ").append(status);
+        StringBuilder log = new StringBuilder("Car light lab scan: ").append(status);
         for (Constant k : found) {
-            log.append("\n  ").append(k.owner).append('.').append(k.name).append(' ').append(k.hex())
+            log.append("\n  ").append(k.kind).append(' ').append(k.owner).append('.').append(k.name).append(' ').append(k.hex())
                     .append(" supported=").append(k.supported).append(" value=").append(k.current);
         }
         BlackBox.note(log.toString());
         AppLog.i(TAG, log.toString());
-        return new Scan(status, found, neighbours, function != null);
+        return new Scan(status, found, neighbours, new ArrayList<>(functions.values()), function != null);
     }
 
     /** Reads one function number back into {@code k}. */
@@ -294,12 +395,22 @@ public final class CarAmbientLab {
     }
 
     /**
-     * Sends {@code value} to function {@code k}, only for an ambient-light name. Returns a line
-     * saying what happened and what the car reads after.
+     * Sends {@code value} to function {@code k}, only for a light name ({@link #kindOf}) or one seen
+     * changing while watching ({@link #changed}); hazard lights and watched names only in P
+     * ({@link #parkedBlock}). Returns a line saying what happened and what the car
+     * reads after.
      */
     public static String set(Context context, Constant k, int value) {
-        if (!looksAmbient(k.name)) {
-            return "Refused: not an ambient light function";
+        if (k.kind == null && !k.watched) {
+            return "Refused: not a light function";
+        }
+        // Hazard lights, and anything only known from watching (it could be the hazard switch): parked only
+        if (k.kind == Kind.HAZARD || k.kind == null) {
+            String blocked = parkedBlock(Telemetry.get().latest().gear);
+            if (blocked != null) {
+                BlackBox.note("Car light lab: " + k.name + " = " + value + " " + blocked);
+                return blocked;
+            }
         }
         Object car = EcarxSource.carForLab(context);
         Object function = car == null ? null : invoke(car, "getICarFunction");
@@ -315,7 +426,7 @@ public final class CarAmbientLab {
         }
         read(function, k);
         String line = "set " + k.name + " (" + k.hex() + ") = " + value + " → " + result + " · reads " + k.current;
-        BlackBox.note("Car ambient lab: " + line);
+        BlackBox.note("Car light lab: " + line);
         AppLog.i(TAG, line);
         return line;
     }

@@ -683,11 +683,6 @@
 
         <!-- 原来「高级」里的那几项：录制管线、编码、画面调节、相机映射、调试日志 ——
              都是排查问题时才动的东西，和开发者工具放在一起 -->
-        <ListPreference
-            android:key="pref_recording_mode"
-            android:title="@string/set_recording_mode_title"
-            android:summary="%s" />
-
         <SwitchPreferenceCompat
             android:key="pref_force_h264"
             android:title="@string/set_force_h264_title"

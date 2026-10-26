@@ -15,8 +15,10 @@ import java.util.Locale;
 /**
  * The car's own top-zone ambient light as a light in a group, set through ECARX
  * ({@link CarAmbientLab#TOPZONES} on/off and {@link CarAmbientLab#TOPZONES_COLOR} as
- * {@code 0xRRGGBB}). It can only be on, off or one colour: an animation shows its colour, and
- * brightness 0 or Off turns it off.
+ * {@code 0xRRGGBB}), with the brightness on the car's 0 to 10 scale
+ * ({@link CarAmbientLab#MAINZONES_INTENSITY}, and {@link CarAmbientLab#TOPZONES_INTENSITY} when the
+ * car has it; {@link #level}). It can only be on, off or one colour: an animation shows its colour,
+ * and brightness 0 or Off turns it off.
  *
  * <p>The car is slower to take a value than a Bluetooth light, and the speed blend sends a new
  * colour every few km/h: the newest look wins and at most one value goes to the car every
@@ -42,6 +44,10 @@ final class CarAmbientLight implements LightLink {
     // Worker thread only
     private Integer powerId;
     private Integer colorId;
+    /** Brightness functions the car has (main zones, top zones); empty when it has none. */
+    private int[] levelIds = new int[0];
+    private Integer[] sentLevels = new Integer[0];
+    private Integer wantLevel;
     /** What the car was last set to (or read as); null when not known. */
     private Integer sentPower;
     private Integer sentColor;
@@ -82,6 +88,7 @@ final class CarAmbientLight implements LightLink {
             }
             sentPower = CarAmbientLab.value(app, powerId);
             sentColor = CarAmbientLab.value(app, colorId);
+            findLevels();
             BlackBox.note(String.format(Locale.US,
                     "Car ambient light: on/off 0x%08X %s reads %s, colour 0x%08X %s reads %s",
                     powerId, CarAmbientLab.support(app, powerId), sentPower,
@@ -108,6 +115,8 @@ final class CarAmbientLight implements LightLink {
             wantColor = rgb & 0xFFFFFF;
             if (brightness <= 0) {
                 wantPower = OFF;
+            } else {
+                wantLevel = level(brightness);
             }
             schedule();
         });
@@ -122,6 +131,7 @@ final class CarAmbientLight implements LightLink {
             } else {
                 wantPower = ON;
                 wantColor = l.color & 0xFFFFFF;
+                wantLevel = level(l.brightness);
             }
             schedule();
         });
@@ -145,17 +155,59 @@ final class CarAmbientLight implements LightLink {
         h.postDelayed(flush, Math.max(0, wait));
     }
 
-    /** One value per turn: power on before the colour (a colour sent while off may be lost), off on its own. */
+    /**
+     * Brightness 1 to 100 on the car's 1 to 10 scale, rounded. Never 0 while on: 0 would leave the
+     * light on but dark, and brightness 0 already turns it off.
+     */
+    static int level(int brightness) {
+        int level = Math.round(brightness * CarAmbientLab.INTENSITY_MAX / 100f);
+        return Math.max(1, Math.min(CarAmbientLab.INTENSITY_MAX, level));
+    }
+
+    /** Looks up the brightness functions this car has and reads what they are at now. */
+    private void findLevels() {
+        java.util.List<Integer> ids = new java.util.ArrayList<>();
+        StringBuilder note = new StringBuilder("Car ambient light brightness:");
+        for (String name : new String[]{CarAmbientLab.MAINZONES_INTENSITY, CarAmbientLab.TOPZONES_INTENSITY}) {
+            Integer id = CarAmbientLab.functionId(name);
+            note.append(' ').append(name.replace("SETTING_FUNC_AMBIENCE_LIGHT_", "")).append('=');
+            if (id == null) {
+                note.append("missing");
+                continue;
+            }
+            ids.add(id);
+            note.append(String.format(Locale.US, "0x%08X %s reads %s", id,
+                    CarAmbientLab.support(app, id), CarAmbientLab.value(app, id)));
+        }
+        levelIds = new int[ids.size()];
+        sentLevels = new Integer[ids.size()];
+        for (int i = 0; i < ids.size(); i++) {
+            levelIds[i] = ids.get(i);
+            sentLevels[i] = CarAmbientLab.value(app, levelIds[i]);
+        }
+        BlackBox.note(note.toString());
+    }
+
+    /**
+     * One value per turn: power on first (a value sent while off may be lost), then the brightness,
+     * then the colour; off on its own.
+     */
     private void flush() {
         if (released) {
             return;
         }
         Integer function = null;
         int value = 0;
+        boolean lit = !Integer.valueOf(OFF).equals(sentPower);
+        int levelAt = lit && wantLevel != null ? stale(sentLevels, wantLevel) : -1;
         if (wantPower != null && !wantPower.equals(sentPower)) {
             function = powerId;
             value = wantPower;
             sentPower = wantPower;
+        } else if (levelAt >= 0) {
+            function = levelIds[levelAt];
+            value = wantLevel;
+            sentLevels[levelAt] = wantLevel;
         } else if (wantColor != null && !wantColor.equals(sentColor) && !Integer.valueOf(OFF).equals(sentPower)) {
             function = colorId;
             value = wantColor;
@@ -171,5 +223,15 @@ final class CarAmbientLight implements LightLink {
         }
         // Whatever is still wanted goes in the next turn
         schedule();
+    }
+
+    /** First brightness function not yet at {@code want}; -1 when all are. */
+    static int stale(Integer[] sent, int want) {
+        for (int i = 0; i < sent.length; i++) {
+            if (sent[i] == null || sent[i] != want) {
+                return i;
+            }
+        }
+        return -1;
     }
 }

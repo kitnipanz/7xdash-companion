@@ -32,30 +32,8 @@ public class ShortcutCaptureActivity extends AppCompatActivity implements Sticke
         bindPress(R.id.shortcut_press_tap, PressKind.TAP);
         bindPress(R.id.shortcut_press_long, PressKind.LONG);
         bindPress(R.id.shortcut_press_double, PressKind.DOUBLE);
-        bind(R.id.shortcut_action_record, ShortcutAction.RECORD);
-        bind(R.id.shortcut_action_mirror, ShortcutAction.MIRROR);
-        bind(R.id.shortcut_action_mirror_hud, ShortcutAction.MIRROR_HUD);
-        bind(R.id.shortcut_action_both_mirrors, ShortcutAction.BOTH_MIRRORS);
-        bind(R.id.shortcut_action_app, ShortcutAction.APP);
-        bind(R.id.shortcut_action_dim, ShortcutAction.DIM);
-        bind(R.id.shortcut_action_hud, ShortcutAction.HUD);
-        bind(R.id.shortcut_action_save, ShortcutAction.SAVE);
-        bind(R.id.shortcut_action_lock_save, ShortcutAction.LOCK_SAVE);
-        bind(R.id.shortcut_action_instant_capture, ShortcutAction.INSTANT_CAPTURE);
-        bind(R.id.shortcut_action_drive_upload, ShortcutAction.DRIVE_UPLOAD);
-        bind(R.id.shortcut_action_photo, ShortcutAction.PHOTO);
-        bind(R.id.shortcut_action_photo_surround, ShortcutAction.PHOTO_SURROUND);
-        bind(R.id.shortcut_action_airplay, ShortcutAction.AIRPLAY);
-        bind(R.id.shortcut_action_eq, ShortcutAction.EQ);
-        bind(R.id.shortcut_action_photo_cabin, ShortcutAction.PHOTO_CABIN);
-        bind(R.id.shortcut_action_where_parked, ShortcutAction.WHERE_PARKED);
-        bind(R.id.shortcut_action_quit, ShortcutAction.QUIT);
-        bind(R.id.shortcut_action_announce, ShortcutAction.ANNOUNCE);
-        findViewById(R.id.shortcut_action_announce_play).setOnClickListener(v ->
-                com.kooo.evcam.announce.AnnouncePick.choose(this, this::save));
-        bind(R.id.shortcut_action_hold_speak, ShortcutAction.HOLD_SPEAK);
-        bind(R.id.shortcut_action_toggle_speak, ShortcutAction.TOGGLE_SPEAK);
-        bind(R.id.shortcut_action_cabin, ShortcutAction.CABIN_PASSENGER);
+        ActionTabs.fill(findViewById(R.id.shortcut_action_tabs), findViewById(R.id.shortcut_action_list),
+                64, null, this::pick);
         highlightPress();
     }
 
@@ -95,8 +73,12 @@ public class ShortcutCaptureActivity extends AppCompatActivity implements Sticke
         button.setAlpha(on ? 1f : 0.45f);
     }
 
-    private void bind(int id, ShortcutAction action) {
-        findViewById(id).setOnClickListener(v -> save(action));
+    private void pick(ShortcutAction action) {
+        if (action == ShortcutAction.ANNOUNCE_PLAY) {
+            com.kooo.evcam.announce.AnnouncePick.choose(this, this::save);
+        } else {
+            save(action);
+        }
     }
 
     private void save(ShortcutAction action) {
@@ -165,6 +147,7 @@ public class ShortcutCaptureActivity extends AppCompatActivity implements Sticke
         pressKind = PressKind.TAP;
         highlightPress();
         prompt.setText(getString(R.string.shortcut_picked, buttonName(captured)));
+        findViewById(R.id.shortcut_press_caption).setVisibility(View.VISIBLE);
         pressKinds.setVisibility(View.VISIBLE);
         actions.setVisibility(View.VISIBLE);
         return true;
@@ -199,6 +182,7 @@ public class ShortcutCaptureActivity extends AppCompatActivity implements Sticke
         String control = label == 0 ? String.valueOf(frame.control) : getString(label);
         prompt.setText(getString(R.string.shortcut_picked,
                 control + " " + StickerNames.label(this, StickerFrame.address(device))));
+        findViewById(R.id.shortcut_press_caption).setVisibility(View.VISIBLE);
         pressKinds.setVisibility(View.VISIBLE);
         actions.setVisibility(View.VISIBLE);
     }

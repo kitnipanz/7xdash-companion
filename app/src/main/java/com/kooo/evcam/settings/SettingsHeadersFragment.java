@@ -125,9 +125,6 @@ public class SettingsHeadersFragment extends PreferenceFragmentCompat {
             if (section && "screen_developer".equals(key) && !builtUnlocked) {
                 continue;
             }
-            if (section && "screen_mood_light".equals(key) && !builtBeta) {
-                continue;
-            }
             HeaderRow row = new HeaderRow(context, section, order++, GROUP_STARTS.contains(key));
             row.setKey(key);
             row.setTitle(child.getTitle());

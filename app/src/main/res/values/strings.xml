@@ -17,7 +17,7 @@
     <string name="set_section_dim">Dim overlay</string>
     <string name="set_section_side_mirror">Side mirror</string>
     <string name="set_section_sticker">Smart sticker</string>
-    <string name="set_section_mood_light">Mood light (beta)</string>
+    <string name="set_section_mood_light">Mood light</string>
     <string name="set_section_controller">Controller</string>
     <string name="set_dim_title">Dim overlay</string>
     <string name="set_dim_summary">Covers the whole screen so maps is less bright. Default opacity 90%. Touches still reach the app underneath</string>
@@ -300,7 +300,7 @@ Then reopen this app.</string>
     <string name="ctrl_paired">Paired peripherals</string>
     <string name="set_sticker_title">Smart sticker (experimental)</string>
     <string name="set_sticker_summary">Finds a Bluetooth sticker the head unit does not pair yet. A press runs a saved shortcut</string>
-    <string name="set_mood_light_title">Mood light (beta)</string>
+    <string name="set_mood_light_title">Mood light</string>
     <string name="set_mood_light_summary">Set the color of a cheap Bluetooth RGB light, like ELK-BLEDOM or Happy Lighting ones</string>
     <string name="mood_light_subtitle">Close the light\'s own phone app first. The light takes one connection at a time</string>
     <string name="mood_light_pick">Scan, then tap Connect on your light.</string>
@@ -344,7 +344,6 @@ Then reopen this app.</string>
     <string name="mood_light_master_hint">Off: every group stops following the gear and connected lights turn off. The home card and the Mood light on/off shortcut switch it too.</string>
     <string name="mood_light_turned_on">Mood light on</string>
     <string name="mood_light_turned_off">Mood light off</string>
-    <string name="mood_light_needs_beta">Mood light is a beta feature: turn on Beta features in Settings › Interface first</string>
     <string name="mood_light_sim_title">Try it</string>
     <string name="mood_light_sim_hint">A pretend car runs this group\'s colors. Hold to accelerate, Brake to slow down. Connected lights follow.</string>
     <string name="mood_light_sim_unit">km/h</string>
@@ -995,7 +994,7 @@ Then reopen this app.</string>
     <!-- Interface section · first-launch side question · record unavailable · status bar -->
     <string name="set_section_interface">Interface</string>
     <string name="set_beta_features_title">Beta features</string>
-    <string name="set_beta_features_summary">Show features that are still being tried on the car, and let them run. Now: Where I parked (home card, and reading the signs when the car goes into P), Mood light (home card, settings, and lights following the gear). The Where I parked shortcut still works.</string>
+    <string name="set_beta_features_summary">Show features that are still being tried on the car, and let them run. Now: Where I parked (home card, and reading the signs when the car goes into P). The Where I parked shortcut still works.</string>
     <string name="set_usage_stats_title">Anonymous usage stats</string>
     <string name="set_usage_stats_summary">Send which features get used (app start, home cards, shortcuts, recording, crash counts) to help improve 7xDash. Off until you say yes. A random install id only: no email, plate or location. About 20–50 KB a day</string>
     <string name="usage_consent_title">Share anonymous usage stats?</string>

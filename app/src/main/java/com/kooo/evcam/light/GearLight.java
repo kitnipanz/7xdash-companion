@@ -32,7 +32,7 @@ import java.util.Objects;
  * closes. Gear is a core signal, read for as long as the process lives; speed is a float sensor,
  * so this registers as a full telemetry user only while a D rule of some group needs it.</p>
  *
- * <p>Beta: does nothing unless Beta features is on. Main thread only.</p>
+ * <p>Main thread only.</p>
  */
 public final class GearLight implements Telemetry.Listener {
 
@@ -122,16 +122,10 @@ public final class GearLight implements Telemetry.Listener {
     }
 
     /**
-     * Shortcut and home card: flip the master switch and say which way it went. Beta: with Beta
-     * features off it only says so.
+     * Shortcut and home card: flip the master switch and say which way it went.
      */
     public static void toggle(Context context) {
         AppConfig config = new AppConfig(context);
-        if (!config.isBetaFeaturesEnabled()) {
-            com.kooo.evcam.ui.Notice.makeText(context, R.string.mood_light_needs_beta,
-                    android.widget.Toast.LENGTH_SHORT).show();
-            return;
-        }
         boolean on = !config.isMoodLightOn();
         setOn(context, on);
         com.kooo.evcam.ui.Notice.makeText(context, on ? R.string.mood_light_turned_on : R.string.mood_light_turned_off,
@@ -157,9 +151,7 @@ public final class GearLight implements Telemetry.Listener {
 
     private void update() {
         VehicleState state = Telemetry.get().latest();
-        // Beta: runs only while Settings › Interface › Beta features is on
-        boolean running = !paused && state.gear != null && config.isBetaFeaturesEnabled()
-                && config.isMoodLightOn() && canConnect();
+        boolean running = !paused && state.gear != null && config.isMoodLightOn() && canConnect();
         boolean wantsSpeed = false;
         for (MoodLightGroups.Group group : groups.groups) {
             GearLightRules.Pick pick = group.rules.pick(state.gear, state.speedKmh, picked.get(group.id));

@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.4.0] - 2026-10-26
+
+### Mood light
+Mood light is now a regular feature: it no longer needs **Beta features**. Bluetooth light strips and the car's own ambient light change color with the gear and the speed. Find it on the home screen, or in Settings › Mood light (under Smart sticker).
+
+- **Lights**: ELK-BLEDOM and Happy Lighting (Triones) Bluetooth strips. Tap **Scan**, then **Connect** or **Add to group**.
+- **Car ambient light**: the car's own top-zone ambient light can be in a group too, so it changes with your strips. It shows a solid color or turns off, and keeps the car's own brightness. It does not count towards the 4 Bluetooth lights.
+- **Groups**: name groups of lights (for example Footwell and Dashboard). Each group has its own lights, color and gear and speed colors. Up to 4 groups and 4 Bluetooth lights in all.
+- **Change with gear**: a color and brightness for P, R, D and D at 0 km/h, or Light off, or leave the light as it is. N leaves the light as it is.
+- **Speed colors in D**: up to 8 "from X km/h" colors. **Blend between speed colors** fades from one to the next, so orange at 80 km/h turns to red by 120 km/h.
+- **Try it**: a pretend car runs the group's colors. Pick P, R, N or D and hold **Hold to accelerate** or **Brake**; the connected lights follow, so you can check the colors parked.
+- **On/off**: a master switch in the Mood light screen, an On/Off pill on the home card, and a **Mood light on/off** shortcut for any button or sticker.
+- Strips keep up with fast color changes: power-on goes only when a strip is off, and the latest color is sent once more when changes stop, so a lost command is fixed.
+- Lights show solid colors only. The strips' built-in animations did not look like their previews, so effects are not offered.
+
+### Car ambient light (experimental)
+- Settings › Mood light › **Car ambient light (experimental)** lists the car's ambient-light settings, with what each one reads now, and can send one value after you confirm. It is for finding out what else the car's ambient light can do; try it parked. Every scan and send goes in the black box.
+
 ## [1.3.20-beta] - 2026-10-26
 
 ### Mood light

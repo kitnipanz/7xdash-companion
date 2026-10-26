@@ -1,0 +1,328 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mood light simulator</title>
+<!--
+  Dev tool: the Mood light "Try it" card, run from a Mac's Chrome against a real light through
+  Web Bluetooth. Same packets as light/LightProtocol.java and the same pick / blend rules as
+  light/GearLightRules.java (keep them in step). Serve from localhost: Web Bluetooth needs a
+  secure context.
+-->
+<style>
+  :root {
+    --bg: #111215; --surface: #1c1d21; --sunken: #26282d; --line: #33363c;
+    --text: #f1f2f4; --text2: #b3b6bd; --text3: #7d818a;
+    --energy: #f26b3a; --on-energy: #fff; --recording: #ef5258;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.4 system-ui, -apple-system, sans-serif; }
+  main { max-width: 760px; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  .hint { color: var(--text3); font-size: 13px; margin: 0 0 16px; }
+  .card { background: var(--surface); border-radius: 16px; padding: 20px; margin-bottom: 16px; }
+  .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  button { font: inherit; font-weight: 600; color: var(--text); background: var(--sunken); border: 0;
+           border-radius: 12px; padding: 0 18px; height: 52px; cursor: pointer; user-select: none; touch-action: none; }
+  button.on { background: var(--energy); color: var(--on-energy); }
+  button:disabled { opacity: .4; cursor: default; }
+  #status { color: var(--text2); flex: 1; min-width: 200px; }
+  .speed { display: flex; align-items: baseline; gap: 6px; margin: 16px 0 12px; }
+  .speed b { font-size: 48px; }
+  .speed .unit { color: var(--text2); }
+  .speed .rule { margin-left: auto; color: var(--text2); text-align: right; }
+  .strip { height: 30px; border-radius: 15px; background: #15161a; display: flex; align-items: center;
+           justify-content: space-around; padding: 0 8px; position: relative; overflow: hidden; }
+  .strip::before { content: ""; position: absolute; inset: 0; background: var(--glow, transparent); opacity: .25; }
+  .strip i { width: 16px; height: 16px; border-radius: 50%; background: var(--led, #333); position: relative; }
+  .pedals { display: flex; gap: 12px; margin-top: 16px; }
+  .pedals button { height: 80px; font-size: 17px; }
+  #brake { flex: 1; background: var(--recording); color: #fff; }
+  #throttle { flex: 2; background: var(--energy); color: #fff; }
+  .pedals button.held { filter: brightness(1.25); }
+  table { width: 100%; border-collapse: collapse; }
+  td { padding: 6px 4px; border-top: 1px solid var(--line); }
+  td.sw span { display: inline-block; width: 14px; height: 14px; border-radius: 50%; vertical-align: middle; }
+  details summary { cursor: pointer; color: var(--text2); }
+  textarea { width: 100%; height: 180px; margin-top: 8px; background: var(--sunken); color: var(--text);
+             border: 0; border-radius: 10px; padding: 10px; font: 12px/1.4 ui-monospace, monospace; }
+  .keys { color: var(--text3); font-size: 13px; margin-top: 10px; }
+  #log { color: var(--text3); font: 12px ui-monospace, monospace; white-space: pre; max-height: 120px; overflow: auto; margin-top: 8px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Mood light simulator</h1>
+  <p class="hint">Dev tool. A pretend car runs the gear and speed colors on a real ELK-BLEDOM or Happy Lighting light, from Chrome on this Mac. Close the light's phone app and the 7xDash Mood light screen first: the light takes one connection at a time.</p>
+
+  <div class="card">
+    <div class="row">
+      <button id="connect">Connect light</button>
+      <button id="disconnect" disabled>Disconnect</button>
+      <span id="status">Not connected</span>
+    </div>
+    <div id="log"></div>
+  </div>
+
+  <div class="card">
+    <div class="row" id="gears"></div>
+    <div class="speed"><b id="speed">0</b><span class="unit">km/h</span><span class="rule" id="rule"></span></div>
+    <div class="strip" id="strip"></div>
+    <div class="pedals">
+      <button id="brake">Brake</button>
+      <button id="throttle">Hold to accelerate</button>
+    </div>
+    <div class="keys">Keys: hold ↑ or W to accelerate, ↓ or S to brake; P R N D pick the gear.</div>
+  </div>
+
+  <div class="card">
+    <table id="rules"></table>
+    <details>
+      <summary>Edit rules (JSON, same shape as the app's GearLightRules)</summary>
+      <textarea id="json"></textarea>
+      <div class="row" style="margin-top:8px"><button id="apply">Apply</button><span id="jsonError" style="color:var(--recording)"></span></div>
+    </details>
+  </div>
+</main>
+<script>
+// ---------------------------------------------------------------- rules (GearLightRules.java)
+const STOP_BELOW_KMH = 1, MOVE_FROM_KMH = 3, BAND_HYSTERESIS_KMH = 3, BLEND_STEPS = 20;
+const look = (color, brightness, effect = 'STATIC', speed = 50) => ({ color, brightness, effect, speed });
+let rules = {
+  enabled: true, blend: true,
+  park: look(0x8000FF, 60, 'BREATHE', 30),
+  reverse: look(0xFFFFFF, 100),
+  drive: look(0x0060FF, 50),
+  driveStopped: look(0x00FF00, 40),
+  bands: [[10, 0x00FF00], [20, 0x00FFFF], [40, 0x0000FF], [70, 0x8000FF], [80, 0xFF00FF], [120, 0xFF6000], [150, 0xFF0000]]
+    .map(([fromKmh, c]) => ({ fromKmh, look: look(c, 100) })),
+};
+
+function mix(a, b, t) {
+  let color = 0;
+  for (const shift of [16, 8, 0]) {
+    const from = (a.color >> shift) & 0xFF, to = (b.color >> shift) & 0xFF;
+    color |= Math.round(from + (to - from) * t) << shift;
+  }
+  return look(color, Math.round(a.brightness + (b.brightness - a.brightness) * t), 'STATIC', a.speed);
+}
+const blendable = i => rules.blend && i >= 0 && i + 1 < rules.bands.length
+  && rules.bands[i].look.effect === 'STATIC' && rules.bands[i + 1].look.effect === 'STATIC'
+  && rules.bands[i + 1].fromKmh > rules.bands[i].fromKmh;
+function heldBand(prev) {
+  if (!prev || !prev.startsWith('band:')) return -1;
+  return parseInt(prev.slice(5).split('~')[0], 10);
+}
+function pick(gear, v, prev) {
+  if (!rules.enabled || !gear) return { key: null, look: null };
+  if (gear === 'P') return { key: 'P', look: rules.park };
+  if (gear === 'R') return { key: 'R', look: rules.reverse };
+  if (gear !== 'D') return { key: null, look: null };
+  if (rules.driveStopped) {
+    const wasMoving = prev === 'D' || (prev && prev.startsWith('band:'));
+    if (wasMoving ? v < STOP_BELOW_KMH : v < MOVE_FROM_KMH) return { key: 'D0', look: rules.driveStopped };
+  }
+  let band = -1;
+  rules.bands.forEach((b, i) => { if (v >= b.fromKmh) band = i; });
+  if (blendable(band)) {
+    const lo = rules.bands[band], hi = rules.bands[band + 1];
+    const step = Math.max(0, Math.min(BLEND_STEPS, Math.round((v - lo.fromKmh) / (hi.fromKmh - lo.fromKmh) * BLEND_STEPS)));
+    return { key: `band:${band}~${step}`, look: mix(lo.look, hi.look, step / BLEND_STEPS), band, step };
+  }
+  const held = heldBand(prev);
+  if (held > band && held < rules.bands.length && v >= rules.bands[held].fromKmh - BAND_HYSTERESIS_KMH) band = held;
+  if (band >= 0) return { key: `band:${band}`, look: rules.bands[band].look, band };
+  return { key: 'D', look: rules.drive };
+}
+
+// ---------------------------------------------------------------- packets (LightProtocol.java)
+const ELK = { service: 0xFFF0, write: 0xFFF3 }, TRIONES = { service: 0xFFD5, write: 0xFFD9 };
+const basicRgb = [0xFF0000, 0x00FF00, 0x0000FF, 0xFFFF00, 0x00FFFF, 0xFF00FF, 0xFFFFFF];
+function basic(rgb) {
+  const r = (rgb >> 16) & 255, g = (rgb >> 8) & 255, b = rgb & 255, top = Math.max(r, g, b);
+  if (!top) return 6;
+  const R = r * 2 >= top, G = g * 2 >= top, B = b * 2 >= top;
+  if (R && G && B) return 6; if (R && G) return 3; if (G && B) return 4; if (R && B) return 5;
+  return G ? 1 : B ? 2 : 0;
+}
+const clamp = n => Math.max(0, Math.min(100, n));
+const bytes = (...v) => new Uint8Array(v);
+function packets(family, l) {
+  const tri = family === TRIONES;
+  if (l.effect === 'OFF') return [tri ? bytes(0xCC, 0x24, 0x33) : bytes(0x7E, 0, 4, 0, 0, 0, 0xFF, 0, 0xEF)];
+  const out = [tri ? bytes(0xCC, 0x23, 0x33) : bytes(0x7E, 0, 4, 0xF0, 0, 1, 0xFF, 0, 0xEF)];
+  const r = (l.color >> 16) & 255, g = (l.color >> 8) & 255, b = l.color & 255, k = basic(l.color);
+  if (l.effect === 'STATIC') {
+    const lv = clamp(l.brightness);
+    out.push(tri ? bytes(0x56, r * lv / 100 | 0, g * lv / 100 | 0, b * lv / 100 | 0, 0, 0xF0, 0xAA)
+                 : bytes(0x7E, 0, 5, 3, r, g, b, 0, 0xEF));
+  } else if (tri) {
+    const mode = { BREATHE: [0x26, 0x27, 0x28, 0x29, 0x2A, 0x2B, 0x2C][k], BLINK: [0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37][k],
+                   JUMP_ALL: 0x38, STROBE_ALL: 0x30 }[l.effect] ?? 0x25;
+    out.push(bytes(0xBB, mode, 31 - (clamp(l.speed) * 30 / 100 | 0), 0x44));
+  } else {
+    const mode = { BREATHE: [0x8B, 0x8C, 0x8D, 0x8E, 0x8F, 0x90, 0x91][k], BLINK: [0x96, 0x97, 0x98, 0x99, 0x9A, 0x9B, 0x9C][k],
+                   JUMP_ALL: 0x88, STROBE_ALL: 0x95 }[l.effect] ?? 0x8A;
+    out.push(bytes(0x7E, 0, 3, mode, 3, 0, 0, 0, 0xEF), bytes(0x7E, 0, 2, clamp(l.speed), 0, 0, 0, 0, 0xEF));
+  }
+  if (!tri) out.push(bytes(0x7E, 0, 1, clamp(l.brightness), 0, 0, 0, 0, 0xEF));
+  return out;
+}
+
+// ---------------------------------------------------------------- link (MoodLight.java pacing)
+const WRITE_EVERY_MS = 40;
+let device = null, characteristic = null, family = null, queue = [], pumping = false, lastSent = null;
+const $ = id => document.getElementById(id);
+const hex = p => [...p].map(x => x.toString(16).padStart(2, '0').toUpperCase()).join(' ');
+function log(line) { const el = $('log'); el.textContent = (line + '\n' + el.textContent).slice(0, 4000); }
+function setStatus(t) { $('status').textContent = t; }
+
+$('connect').onclick = async () => {
+  if (!navigator.bluetooth) { setStatus('This browser has no Web Bluetooth: use Chrome on localhost'); return; }
+  try {
+    device = await navigator.bluetooth.requestDevice({ acceptAllDevices: true, optionalServices: [ELK.service, TRIONES.service] });
+    device.addEventListener('gattserverdisconnected', () => { characteristic = null; setStatus('Disconnected'); buttons(); });
+    setStatus('Connecting to ' + (device.name || 'light') + '…');
+    const server = await device.gatt.connect();
+    for (const fam of [ELK, TRIONES]) {
+      try {
+        const service = await server.getPrimaryService(fam.service);
+        characteristic = await service.getCharacteristic(fam.write);
+        family = fam; break;
+      } catch (e) { /* not this family */ }
+    }
+    if (!characteristic) { setStatus('Not a light this page knows (no FFF3 or FFD9)'); device.gatt.disconnect(); return; }
+    setStatus(`Connected · ${device.name || 'light'} · ${family === ELK ? 'ELK-BLEDOM type' : 'Happy Lighting type'}`);
+    lastSent = null; render(true);
+  } catch (e) { setStatus(String(e.message || e)); }
+  buttons();
+};
+$('disconnect').onclick = () => { if (device && device.gatt.connected) device.gatt.disconnect(); };
+function buttons() { const up = !!characteristic; $('connect').disabled = up; $('disconnect').disabled = !up; }
+
+function send(l) {
+  if (!characteristic) return;
+  queue = packets(family, l);   // newest look wins, like the app's coalescing
+  if (!pumping) pump();
+}
+async function pump() {
+  pumping = true;
+  while (queue.length && characteristic) {
+    const p = queue.shift();
+    try {
+      if (characteristic.writeValueWithoutResponse && characteristic.properties.writeWithoutResponse) await characteristic.writeValueWithoutResponse(p);
+      else await characteristic.writeValue(p);
+      log(hex(p));
+    } catch (e) { log('write failed: ' + (e.message || e)); }
+    await new Promise(r => setTimeout(r, WRITE_EVERY_MS));
+  }
+  pumping = false;
+}
+
+// ---------------------------------------------------------------- pretend car (SpeedSimulator.java)
+const MAX_KMH = 180, MAX_REVERSE_KMH = 15, THROTTLE = 16, BRAKE = 40, COAST = 6;
+let gear = 'P', speed = 0, throttle = false, brake = false, key = null, last = performance.now();
+function step(dt) {
+  const top = gear === 'R' ? MAX_REVERSE_KMH : MAX_KMH, drives = gear === 'D' || gear === 'R';
+  speed += (brake ? -BRAKE : throttle && drives ? THROTTLE : -COAST) * dt;
+  speed = Math.max(0, Math.min(top, speed));
+}
+
+const names = { P: 'P · Park', R: 'R · Reverse', D: 'D · Driving', D0: 'D · Stopped (0 km/h)' };
+const effectNames = { STATIC: 'Solid color', BREATHE: 'Breathe', BLINK: 'Blink', FADE_ALL: 'Rainbow fade',
+                      JUMP_ALL: 'Rainbow jump', STROBE_ALL: 'Rainbow strobe', OFF: 'Light off' };
+function label(p) {
+  if (!p.key) return 'N · leaves the light as it is';
+  if (p.key.startsWith('band:')) {
+    const b = rules.bands[p.band];
+    return p.step !== undefined ? `${b.fromKmh} → ${rules.bands[p.band + 1].fromKmh} km/h · ${p.step * 100 / BLEND_STEPS}% of the way`
+                                : `From ${b.fromKmh} km/h`;
+  }
+  return names[p.key];
+}
+
+// Strip preview, same frames as EffectSwatchView
+const css = rgb => '#' + rgb.toString(16).padStart(6, '0');
+function frame(l, t) {
+  const period = 3000 - clamp(l.speed) * 26, phase = (t % period) / period, cycle = Math.floor(t / period), all = basicRgb;
+  switch (l.effect) {
+    case 'OFF': return -1;
+    case 'BREATHE': { const lv = .08 + .92 * (.5 - .5 * Math.cos(2 * Math.PI * phase)), c = all[basic(l.color)];
+      return [16, 8, 0].reduce((o, s) => o | Math.round(((c >> s) & 255) * lv) << s, 0); }
+    case 'BLINK': return phase < .5 ? all[basic(l.color)] : -1;
+    case 'FADE_ALL': return mix(look(all[cycle % 7], 100), look(all[(cycle + 1) % 7], 100), phase).color;
+    case 'JUMP_ALL': return all[cycle % 7];
+    case 'STROBE_ALL': return phase < .25 ? all[cycle % 7] : -1;
+    default: return l.color;
+  }
+}
+const strip = $('strip');
+for (let i = 0; i < 28; i++) strip.appendChild(document.createElement('i'));
+let shown = null, shownAt = performance.now();
+
+function render(force) {
+  const p = pick(gear, speed, key);
+  key = p.key;
+  $('speed').textContent = Math.round(speed);
+  $('rule').textContent = label(p);
+  document.querySelectorAll('#gears button').forEach(b => b.classList.toggle('on', b.dataset.g === gear));
+  if (p.look) {
+    if (!shown || JSON.stringify(shown) !== JSON.stringify(p.look)) { shown = p.look; shownAt = performance.now(); }
+    if (force || JSON.stringify(p.look) !== lastSent) { lastSent = JSON.stringify(p.look); send(p.look); }
+  }
+}
+function tick(now) {
+  step(Math.min(.2, (now - last) / 1000)); last = now;
+  render(false);
+  if (shown) {
+    const c = frame(shown, now - shownAt);
+    strip.style.setProperty('--led', c < 0 ? '#3a3c42' : css(c));
+    strip.style.setProperty('--glow', c < 0 ? 'transparent' : css(c));
+  }
+  requestAnimationFrame(tick);
+}
+
+// ---------------------------------------------------------------- controls
+for (const g of ['P', 'R', 'N', 'D']) {
+  const b = document.createElement('button'); b.textContent = g; b.dataset.g = g;
+  b.onclick = () => setGear(g); $('gears').appendChild(b);
+}
+function setGear(g) { gear = g; if (g !== 'D' && g !== 'R') speed = 0; }
+function hold(el, set) {
+  const on = e => { e.preventDefault(); el.classList.add('held'); set(true); };
+  const off = () => { el.classList.remove('held'); set(false); };
+  el.addEventListener('pointerdown', on);
+  for (const ev of ['pointerup', 'pointerleave', 'pointercancel']) el.addEventListener(ev, off);
+}
+hold($('throttle'), v => throttle = v);
+hold($('brake'), v => brake = v);
+addEventListener('keydown', e => {
+  if (e.target.tagName === 'TEXTAREA') return;
+  if (['ArrowUp', 'w', 'W'].includes(e.key)) { throttle = true; e.preventDefault(); }
+  else if (['ArrowDown', 's', 'S'].includes(e.key)) { brake = true; e.preventDefault(); }
+  else if ('pPrRnNdD'.includes(e.key) && e.key.length === 1) setGear(e.key.toUpperCase());
+});
+addEventListener('keyup', e => {
+  if (['ArrowUp', 'w', 'W'].includes(e.key)) throttle = false;
+  if (['ArrowDown', 's', 'S'].includes(e.key)) brake = false;
+});
+
+function showRules() {
+  const row = (name, l) => `<tr><td>${name}</td><td class="sw"><span style="background:${l ? css(l.color) : 'transparent'}"></span></td>`
+    + `<td>${l ? `${effectNames[l.effect]} · ${l.brightness}%` : 'Leave the light as it is'}</td></tr>`;
+  $('rules').innerHTML = row(names.P, rules.park) + row(names.R, rules.reverse) + row(names.D, rules.drive)
+    + row(names.D0, rules.driveStopped) + rules.bands.map(b => row(`From ${b.fromKmh} km/h`, b.look)).join('');
+  $('json').value = JSON.stringify(rules, null, 1);
+}
+$('apply').onclick = () => {
+  try {
+    const next = JSON.parse($('json').value);
+    next.bands = (next.bands || []).filter(b => b && b.look).sort((a, b) => a.fromKmh - b.fromKmh);
+    rules = next; key = null; $('jsonError').textContent = ''; showRules(); render(true);
+  } catch (e) { $('jsonError').textContent = e.message; }
+};
+showRules(); buttons(); render(false); requestAnimationFrame(tick);
+</script>
+</body>
+</html>

@@ -21,7 +21,7 @@ public final class GearLightRules {
     static final float MOVE_FROM_KMH = 3f;
     /** A speed colour stays until the speed drops this far under where it starts. */
     static final float BAND_HYSTERESIS_KMH = 3f;
-    public static final int MAX_BANDS = 6;
+    public static final int MAX_BANDS = 8;
     /** A blend moves in this many steps between two speed colours, so the light is not rewritten every reading. */
     static final int BLEND_STEPS = 20;
 

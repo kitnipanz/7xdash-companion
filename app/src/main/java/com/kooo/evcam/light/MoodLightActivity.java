@@ -140,6 +140,13 @@ public class MoodLightActivity extends AppCompatActivity implements LightGroup.L
     private MoodLightGroups.Group group;
     /** True while the switches are set from a group, so their listeners do not save. */
     private boolean binding;
+    private final SpeedSimulator sim = new SpeedSimulator();
+    /** This group's rules with Change with gear forced on, for Try it; rebuilt when they change. */
+    private GearLightRules simRules;
+    private String simKey;
+    private LightLook simSent;
+    private long simLast;
+    private final Runnable simTick = this::simTick;
     private LinearLayout groupBar;
     private com.google.android.material.switchmaterial.SwitchMaterial gearSwitch;
     private com.google.android.material.switchmaterial.SwitchMaterial blendSwitch;
@@ -225,6 +232,7 @@ public class MoodLightActivity extends AppCompatActivity implements LightGroup.L
             }
         });
         findViewById(R.id.light_band_add).setOnClickListener(v -> addBand());
+        setupSim();
         findViewById(R.id.light_group_rename).setOnClickListener(v -> renameGroup());
         findViewById(R.id.light_group_delete).setOnClickListener(v -> deleteGroup());
         bindGroup();
@@ -245,6 +253,127 @@ public class MoodLightActivity extends AppCompatActivity implements LightGroup.L
         showColor();
         renderGroups();
         renderGear();
+        simRules = null;
+        simKey = null;
+        renderSim();
+    }
+
+    // =================================================================== try it
+
+    private static final String[] SIM_GEARS = {"P", "R", "N", "D"};
+
+    @android.annotation.SuppressLint("ClickableViewAccessibility")
+    private void setupSim() {
+        LinearLayout gears = findViewById(R.id.light_sim_gears);
+        int gap = Math.round(8 * getResources().getDisplayMetrics().density);
+        for (String g : SIM_GEARS) {
+            com.google.android.material.button.MaterialButton b = (com.google.android.material.button.MaterialButton)
+                    LayoutInflater.from(this).inflate(R.layout.item_group_button, gears, false);
+            b.setText(g);
+            b.setTag(g);
+            ((LinearLayout.LayoutParams) b.getLayoutParams()).setMarginEnd(gap);
+            b.setOnClickListener(v -> {
+                sim.setGear(g);
+                renderSim();
+            });
+            gears.addView(b);
+        }
+        com.google.android.material.button.MaterialButton throttle = findViewById(R.id.light_sim_throttle);
+        com.google.android.material.button.MaterialButton brake = findViewById(R.id.light_sim_brake);
+        // On the card's grey a plain button vanishes: pedals in the accent and the recording red
+        throttle.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(this, R.color.energy)));
+        throttle.setTextColor(ContextCompat.getColor(this, R.color.on_energy));
+        brake.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(this, R.color.recording)));
+        brake.setTextColor(ContextCompat.getColor(this, R.color.on_energy));
+        throttle.setOnTouchListener((v, e) -> pedal(v, e, true));
+        brake.setOnTouchListener((v, e) -> pedal(v, e, false));
+    }
+
+    /** Held down = pedal pressed; the timer runs while anything moves. */
+    private boolean pedal(View v, android.view.MotionEvent e, boolean throttle) {
+        int action = e.getActionMasked();
+        boolean down = action == android.view.MotionEvent.ACTION_DOWN;
+        if (!down && action != android.view.MotionEvent.ACTION_UP && action != android.view.MotionEvent.ACTION_CANCEL) {
+            return true;
+        }
+        v.setPressed(down);
+        if (throttle) {
+            sim.setThrottle(down);
+        } else {
+            sim.setBrake(down);
+        }
+        if (down) {
+            startSim();
+        }
+        return true;
+    }
+
+    private void startSim() {
+        handler.removeCallbacks(simTick);
+        simLast = android.os.SystemClock.uptimeMillis();
+        handler.post(simTick);
+    }
+
+    private void simTick() {
+        long now = android.os.SystemClock.uptimeMillis();
+        sim.step(now - simLast);
+        simLast = now;
+        renderSim();
+        if (sim.moving()) {
+            handler.postDelayed(simTick, 50);
+        }
+    }
+
+    private void renderSim() {
+        if (simRules == null) {
+            simRules = GearLightRules.parse(rules.toJson());
+            simRules.enabled = true;
+        }
+        float speed = sim.speedKmh();
+        GearLightRules.Pick pick = simRules.pick(sim.gear(), speed, simKey);
+        simKey = pick.key;
+        LinearLayout gears = findViewById(R.id.light_sim_gears);
+        for (int i = 0; i < gears.getChildCount(); i++) {
+            com.google.android.material.button.MaterialButton b =
+                    (com.google.android.material.button.MaterialButton) gears.getChildAt(i);
+            boolean on = sim.gear().equals(b.getTag());
+            b.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(this, on ? R.color.energy : R.color.line)));
+            b.setTextColor(ContextCompat.getColor(this, on ? R.color.on_energy : R.color.text_primary));
+        }
+        ((TextView) findViewById(R.id.light_sim_speed)).setText(String.valueOf(Math.round(speed)));
+        ((TextView) findViewById(R.id.light_sim_rule)).setText(simLabel(pick));
+        if (pick.look != null) {
+            ((EffectSwatchView) findViewById(R.id.light_sim_strip)).show(pick.look);
+            if (ready && !pick.look.equals(simSent)) {
+                simSent = pick.look.copy();
+                light.show(pick.look);
+            }
+        }
+    }
+
+    /** Which rule is showing, in the words of the rows above. */
+    private String simLabel(GearLightRules.Pick pick) {
+        if (pick.key == null) {
+            return getString(R.string.mood_light_sim_n);
+        }
+        String label;
+        if (pick.key.startsWith("band:")) {
+            String rest = pick.key.substring("band:".length());
+            int cut = rest.indexOf('~');
+            int index = Integer.parseInt(cut < 0 ? rest : rest.substring(0, cut));
+            int from = simRules.bands.get(index).fromKmh;
+            if (cut >= 0 && index + 1 < simRules.bands.size()) {
+                int step = Integer.parseInt(rest.substring(cut + 1));
+                label = getString(R.string.mood_light_sim_blend, from, simRules.bands.get(index + 1).fromKmh,
+                        step * 100 / GearLightRules.BLEND_STEPS);
+            } else {
+                label = getString(R.string.mood_light_band, from);
+            }
+        } else {
+            int i = java.util.Arrays.asList(GEAR_KEYS).indexOf(pick.key);
+            label = i < 0 ? pick.key : getString(GEAR_LABELS[i]);
+        }
+        return pick.look == null ? getString(R.string.mood_light_sim_leave, label) : label;
     }
 
     private void renderGroups() {
@@ -304,6 +433,9 @@ public class MoodLightActivity extends AppCompatActivity implements LightGroup.L
         groups.save(config);
         GearLight.reload();
         renderGroups();
+        simRules = null;
+        simKey = null;
+        renderSim();
     }
 
     private void newGroup() {
@@ -386,6 +518,9 @@ public class MoodLightActivity extends AppCompatActivity implements LightGroup.L
 
     @Override
     protected void onPause() {
+        sim.setThrottle(false);
+        sim.setBrake(false);
+        handler.removeCallbacks(simTick);
         stopScan();
         // Always give the radio back, even if the scan already ended.
         StickerHub.holdForScan(this, false);

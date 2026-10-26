@@ -318,6 +318,14 @@ Then reopen this app.</string>
     <string name="mood_light_swatch">Color %1$s</string>
     <string name="mood_light_family_elk">ELK-BLEDOM type</string>
     <string name="mood_light_family_triones">Happy Lighting type</string>
+    <string name="mood_light_sim_title">Try it</string>
+    <string name="mood_light_sim_hint">A pretend car runs this group\'s gear and speed colors, even with Change with gear off. Hold Throttle to speed up, Brake to slow down, let go to coast. Connected lights follow too.</string>
+    <string name="mood_light_sim_unit">km/h</string>
+    <string name="mood_light_sim_throttle">Hold to accelerate</string>
+    <string name="mood_light_sim_brake">Brake</string>
+    <string name="mood_light_sim_leave">%1$s · leaves the light as it is</string>
+    <string name="mood_light_sim_n">N · leaves the light as it is</string>
+    <string name="mood_light_sim_blend">%1$d → %2$d km/h · %3$d%% of the way</string>
     <string name="mood_light_groups_title">Groups · lights in a group act together</string>
     <string name="mood_light_tab">%1$s · %2$d</string>
     <string name="mood_light_group_gear_on">follows the gear</string>

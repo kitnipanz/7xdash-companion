@@ -119,4 +119,25 @@ public class GearLightRulesTest {
     public void oldSavedRulesBlend() {
         assertTrue(GearLightRules.parse("{\"enabled\":true,\"bands\":[]}").blend);
     }
+
+    @Test
+    public void blendsAlongAChainOfSpeedColors() {
+        GearLightRules rules = on();
+        rules.bands.clear();
+        int[] from = {10, 20, 40, 70, 80, 120, 150};
+        int[] color = {0x00FF00, 0x00FFFF, 0x0000FF, 0x8000FF, 0xFF00FF, 0xFF6000, 0xFF0000};
+        for (int i = 0; i < from.length; i++) {
+            rules.bands.add(new GearLightRules.Band(from[i], new LightLook(color[i], 100, LightProtocol.Effect.STATIC, 50)));
+        }
+        String key = "D";
+        // Each segment mixes its own two ends
+        assertEquals(0x00FF80, rules.pick("D", 15f, key).look.color);   // green -> cyan, half
+        assertEquals("band:2~10", rules.pick("D", 55f, key).key);       // blue -> purple, half
+        assertEquals(0x4000FF, rules.pick("D", 55f, key).look.color);
+        assertEquals(0xFF3000, rules.pick("D", 135f, key).look.color);  // orange -> red, half
+        // Past the last speed: its colour
+        assertEquals(0xFF0000, rules.pick("D", 170f, key).look.color);
+        // Below the first speed: D's own colour
+        assertEquals(rules.drive, rules.pick("D", 8f, key).look);
+    }
 }

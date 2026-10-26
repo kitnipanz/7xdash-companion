@@ -271,6 +271,92 @@
                         android:layout_height="52dp"
                         android:text="@string/mood_light_band_add" />
                 </LinearLayout>
+                <!-- Try it: a pretend car runs this group's rules; hold Throttle / Brake -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="24dp"
+                    android:background="@drawable/bg_pref_row_static"
+                    android:orientation="vertical"
+                    android:padding="20dp">
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/mood_light_sim_title"
+                        android:textAppearance="@style/TextAppearance.Cam.Body"
+                        android:textColor="@color/text_primary"
+                        android:textStyle="bold" />
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="12dp"
+                        android:text="@string/mood_light_sim_hint"
+                        android:textAppearance="@style/TextAppearance.Cam.Caption"
+                        android:textColor="@color/text_tertiary" />
+                    <LinearLayout
+                        android:id="@+id/light_sim_gears"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal" />
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:gravity="bottom"
+                        android:orientation="horizontal">
+                        <TextView
+                            android:id="@+id/light_sim_speed"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textAppearance="@style/TextAppearance.Cam.Display"
+                            android:textColor="@color/text_primary"
+                            android:textStyle="bold" />
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="6dp"
+                            android:layout_marginBottom="8dp"
+                            android:text="@string/mood_light_sim_unit"
+                            android:textAppearance="@style/TextAppearance.Cam.Body"
+                            android:textColor="@color/text_secondary" />
+                        <TextView
+                            android:id="@+id/light_sim_rule"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="16dp"
+                            android:layout_marginBottom="8dp"
+                            android:layout_weight="1"
+                            android:gravity="end"
+                            android:textAppearance="@style/TextAppearance.Cam.Body"
+                            android:textColor="@color/text_secondary" />
+                    </LinearLayout>
+                    <com.kooo.evcam.light.EffectSwatchView
+                        android:id="@+id/light_sim_strip"
+                        android:layout_width="match_parent"
+                        android:layout_height="28dp"
+                        android:layout_marginTop="12dp" />
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:orientation="horizontal">
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/light_sim_brake"
+                            style="@style/Widget.Cam.RailSmall"
+                            android:layout_width="0dp"
+                            android:layout_height="72dp"
+                            android:layout_marginEnd="12dp"
+                            android:layout_weight="1"
+                            android:text="@string/mood_light_sim_brake" />
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/light_sim_throttle"
+                            style="@style/Widget.Cam.RailSmall"
+                            android:layout_width="0dp"
+                            android:layout_height="72dp"
+                            android:layout_weight="2"
+                            android:text="@string/mood_light_sim_throttle" />
+                    </LinearLayout>
+                </LinearLayout>
             </LinearLayout>
         </ScrollView>
         <ScrollView

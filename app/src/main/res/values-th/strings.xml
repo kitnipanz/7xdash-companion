@@ -316,6 +316,14 @@
     <string name="mood_light_swatch">สี %1$s</string>
     <string name="mood_light_family_elk">แบบ ELK-BLEDOM</string>
     <string name="mood_light_family_triones">แบบ Happy Lighting</string>
+    <string name="mood_light_sim_title">ทดลอง</string>
+    <string name="mood_light_sim_hint">รถจำลองใช้สีตามเกียร์และความเร็วของกลุ่มนี้ แม้ปิดเปลี่ยนตามเกียร์อยู่ กดค้างคันเร่งเพื่อเร่ง กดเบรกเพื่อชะลอ ปล่อยเพื่อไหลไป ไฟที่เชื่อมต่ออยู่จะเปลี่ยนตามด้วย</string>
+    <string name="mood_light_sim_unit">กม./ชม.</string>
+    <string name="mood_light_sim_throttle">กดค้างเพื่อเร่ง</string>
+    <string name="mood_light_sim_brake">เบรก</string>
+    <string name="mood_light_sim_leave">%1$s · ไม่เปลี่ยนไฟ</string>
+    <string name="mood_light_sim_n">N · ไม่เปลี่ยนไฟ</string>
+    <string name="mood_light_sim_blend">%1$d → %2$d กม./ชม. · %3$d%%</string>
     <string name="mood_light_groups_title">กลุ่ม · ไฟในกลุ่มเดียวกันทำงานพร้อมกัน</string>
     <string name="mood_light_tab">%1$s · %2$d</string>
     <string name="mood_light_group_gear_on">เปลี่ยนตามเกียร์</string>

@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.16-beta] - 2026-10-26
+
+### Mood light (beta)
+- New **Try it** card at the bottom of the Mood light screen: a pretend car runs the open group's gear and speed colors, even with Change with gear off. Pick P, R, N or D, hold **Hold to accelerate** to speed up (about 0 to 100 km/h in 6 seconds), hold **Brake** to slow down, or let go to coast. It shows the speed, which rule is showing (for example "80 → 120 km/h · 20% of the way") and the color on an LED strip, and the group's connected lights follow too.
+- Up to 8 speed colors in D (was 6). Every pair of solid colors next to each other blends, so a chain like 10, 20, 40, 70, 80, 120, 150 km/h fades all the way through.
+- For development: `tools/mood-light-sim` is the same simulator as a web page for Chrome on a computer, talking to a real light over Web Bluetooth.
+
 ## [1.3.15-beta] - 2026-10-25
 
 ### Mood light (beta)

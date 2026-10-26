@@ -1266,6 +1266,8 @@ public class SettingsPreferenceFragment extends PreferenceFragmentCompat {
                 startActivity(new Intent(getContext(), ControllerProbeActivity.class)));
         onClick("pref_mood_light", pref ->
                 startActivity(new Intent(getContext(), com.kooo.evcam.light.MoodLightActivity.class)));
+        onClick("pref_car_ambient", pref ->
+                startActivity(new Intent(getContext(), com.kooo.evcam.light.CarAmbientLabActivity.class)));
         onClick("pref_ble_signal", pref ->
                 startActivity(new Intent(getContext(), com.kooo.evcam.input.BleSignalActivity.class)));
         int cabinScreenWidth = getResources().getDisplayMetrics().widthPixels;

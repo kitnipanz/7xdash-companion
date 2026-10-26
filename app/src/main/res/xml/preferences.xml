@@ -61,6 +61,11 @@
             android:key="pref_mood_light"
             android:title="@string/set_mood_light_title"
             android:summary="@string/set_mood_light_summary" />
+
+        <Preference
+            android:key="pref_car_ambient"
+            android:title="@string/car_ambient_title"
+            android:summary="@string/car_ambient_summary" />
     </PreferenceScreen>
 
     <PreferenceScreen

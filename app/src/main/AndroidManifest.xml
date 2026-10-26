@@ -241,6 +241,13 @@
             android:exported="false" />
 
         <activity
+            android:name=".light.CarAmbientLabActivity"
+            android:label="@string/car_ambient_title"
+            android:theme="@style/Theme.Cam"
+            android:screenOrientation="landscape"
+            android:exported="false" />
+
+        <activity
             android:name=".input.BleSignalActivity"
             android:label="@string/ble_signal_title"
             android:theme="@style/Theme.Cam"

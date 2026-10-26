@@ -1124,6 +1124,28 @@ final class EcarxSource {
         }
     }
 
+    /**
+     * 给车载氛围灯实验（{@link CarAmbientLab}）用的车辆对象：有缓存的用缓存的，没有就建一个也缓存起来（要一秒，别在主线程上叫）。
+     * 这台车机没有这套接口、或者建不出来返回 null。
+     */
+    static Object carForLab(Context context) {
+        Object car = cachedCar;
+        if (car != null) {
+            return car;
+        }
+        try {
+            Method create = match(Class.forName(CAR_CLASS).getMethods(), "create", Context.class);
+            car = create == null ? null : create.invoke(null, context.getApplicationContext());
+        } catch (Throwable t) {
+            AppLog.w(TAG, "Car.create for the ambient lab failed: " + describe(t));
+            return null;
+        }
+        if (car != null) {
+            cachedCar = car;
+        }
+        return car;
+    }
+
     // ================================================================= 反射小工具
 
     private static Object call(Object target, String name) {

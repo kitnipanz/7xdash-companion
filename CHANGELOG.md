@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.3.18-beta] - 2026-10-26
+
+### Car ambient light (experimental)
+- New **Car ambient light (experimental)** screen in Settings › Mood light, to find out whether 7xDash can set the car's own ambient light. Nobody knows yet which car setting drives it, so **Scan car** lists every name in the car's system that sounds like ambient light, with whether the car supports it and what it reads now.
+- **Try** on a setting sends one value (one that goes with it, or a number you type) only after you confirm, then shows what the car reads after. It only sends to ambient-light names, never on its own; try it parked. Every scan and send goes in the black box, so a Diagnostics report shows what worked.
+
 ## [1.3.17-beta] - 2026-10-26
 
 ### Mood light (beta)

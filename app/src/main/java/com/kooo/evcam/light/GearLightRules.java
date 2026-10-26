@@ -74,12 +74,12 @@ public final class GearLightRules {
 
     public static GearLightRules defaults() {
         GearLightRules rules = new GearLightRules();
-        rules.park = new LightLook(0x8000FF, 60, LightProtocol.Effect.BREATHE, 30);
+        rules.park = new LightLook(0x8000FF, 60, LightProtocol.Effect.STATIC, 30);
         rules.reverse = new LightLook(0xFFFFFF, 100, LightProtocol.Effect.STATIC, 50);
         rules.drive = new LightLook(0x0060FF, 50, LightProtocol.Effect.STATIC, 50);
         rules.driveStopped = new LightLook(0x00FF00, 40, LightProtocol.Effect.STATIC, 50);
         rules.bands.add(new Band(80, new LightLook(0xFF6000, 70, LightProtocol.Effect.STATIC, 50)));
-        rules.bands.add(new Band(120, new LightLook(0xFF0000, 100, LightProtocol.Effect.BLINK, 70)));
+        rules.bands.add(new Band(120, new LightLook(0xFF0000, 100, LightProtocol.Effect.STATIC, 70)));
         return rules;
     }
 

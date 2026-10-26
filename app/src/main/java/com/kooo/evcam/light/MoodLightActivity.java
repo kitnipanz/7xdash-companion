@@ -855,7 +855,9 @@ public class MoodLightActivity extends AppCompatActivity implements LightGroup.L
             boolean off = effect == LightProtocol.Effect.OFF;
             boolean animated = !off && effect != LightProtocol.Effect.STATIC;
             preview.show(look);
-            effectButton.setText(getString(R.string.mood_light_effect, getString(effectLabel(effect))));
+            effectButton.setText(LightLook.ANIMATIONS
+                    ? getString(R.string.mood_light_effect, getString(effectLabel(effect)))
+                    : getString(effectLabel(effect)));
             brightnessText.setText(getString(R.string.mood_light_brightness, look.brightness));
             speedText.setText(getString(R.string.mood_light_effect_speed, look.speed));
             int speedShown = animated ? View.VISIBLE : View.GONE;
@@ -913,10 +915,19 @@ public class MoodLightActivity extends AppCompatActivity implements LightGroup.L
                 }
             }
         });
-        effectButton.setOnClickListener(v -> pickEffect(look, picked -> {
-            look.effect = picked.name();
-            refresh.run();
-        }));
+        effectButton.setOnClickListener(v -> {
+            if (!LightLook.ANIMATIONS) {
+                // Only a colour or Off: one tap flips between them
+                look.effect = (look.effect() == LightProtocol.Effect.OFF
+                        ? LightProtocol.Effect.STATIC : LightProtocol.Effect.OFF).name();
+                refresh.run();
+                return;
+            }
+            pickEffect(look, picked -> {
+                look.effect = picked.name();
+                refresh.run();
+            });
+        });
         refresh.run();
         com.google.android.material.dialog.MaterialAlertDialogBuilder builder =
                 new com.google.android.material.dialog.MaterialAlertDialogBuilder(this, R.style.Theme_Cam_MaterialAlertDialog)
@@ -948,6 +959,9 @@ public class MoodLightActivity extends AppCompatActivity implements LightGroup.L
         list.setPadding(pad, pad / 2, pad, 0);
         androidx.appcompat.app.AlertDialog[] shown = new androidx.appcompat.app.AlertDialog[1];
         for (LightProtocol.Effect effect : LightProtocol.Effect.values()) {
+            if (!LightLook.ANIMATIONS && LightLook.animated(effect)) {
+                continue;
+            }
             View row = LayoutInflater.from(this).inflate(R.layout.item_effect_row, list, false);
             EffectSwatchView dot = row.findViewById(R.id.effect_dot);
             TextView name = row.findViewById(R.id.effect_name);

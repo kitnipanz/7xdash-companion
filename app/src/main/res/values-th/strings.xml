@@ -394,7 +394,7 @@
     <string name="mood_light_bands_title">สีตามความเร็วในเกียร์ D</string>
     <string name="mood_light_band">ตั้งแต่ %1$d กม./ชม.</string>
     <string name="mood_light_band_blend">ผสมสีระหว่างความเร็ว</string>
-    <string name="mood_light_band_blend_hint">ผสมสีเดียวสองสีที่อยู่ติดกันตามความเร็ว เอฟเฟกต์จะเปลี่ยนที่ความเร็วของมัน</string>
+    <string name="mood_light_band_blend_hint">ผสมสีเดียวสองสีที่อยู่ติดกันตามความเร็ว เช่น สีส้มที่ 80 กม./ชม. ค่อยๆ เป็นสีแดงที่ 120 กม./ชม.</string>
     <string name="mood_light_band_add">เพิ่มสีตามความเร็ว</string>
     <string name="mood_light_band_from">ตั้งแต่ความเร็ว (กม./ชม.)</string>
     <string name="mood_light_band_remove">ลบ</string>

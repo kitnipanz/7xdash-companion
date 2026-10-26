@@ -28,7 +28,9 @@ import java.util.UUID;
  *
  * <p>All state lives on one thread ({@code mood-light}, where GATT callbacks also land). A drag
  * on a slider sends a packet per frame, so writes are coalesced: one pending packet per kind
- * (power, colour, brightness), the newest wins, one write in flight every {@link #WRITE_EVERY_MS}.</p>
+ * (power, colour, brightness), the newest wins, one write in flight every {@link #WRITE_EVERY_MS}.
+ * Writes go without response, so one can be lost without a word: when writes go quiet the last
+ * state is sent once more ({@link #settle}).</p>
  */
 public final class MoodLight implements LightLink {
 
@@ -49,6 +51,15 @@ public final class MoodLight implements LightLink {
     private static final String TAG = "MoodLight";
     private static final long CONNECT_TIMEOUT_MS = 12_000L;
     private static final long WRITE_EVERY_MS = 40L;
+    /** After power: some clones bring back their last colour first, so the next packet waits. */
+    private static final long AFTER_POWER_MS = 200L;
+    /** Quiet this long after the last write, then the last state goes once more. */
+    private static final long SETTLE_MS = 500L;
+
+    private static final String POWER = "power";
+    private static final String COLOR = "color";
+    private static final String BRIGHTNESS = "brightness";
+    private static final String SPEED = "speed";
 
     private final Context app;
     private final Listener listener;
@@ -58,11 +69,18 @@ public final class MoodLight implements LightLink {
     private final Map<String, byte[]> pending = new LinkedHashMap<>();
     private final Runnable timeout = () -> fail(FAIL_TIMEOUT, 0);
     private final Runnable pump = this::pump;
+    private final Runnable settle = this::settle;
+    /** The light's last wanted state, power first: sent once more when writes go quiet. */
+    private final Map<String, byte[]> latest = new LinkedHashMap<>();
 
     private BluetoothGatt gatt;
     private BluetoothGattCharacteristic write;
     private LightProtocol.Family family;
     private boolean pumping;
+    /** Power last sent; null when not known (just connected). */
+    private Boolean lit;
+    /** The last state has been sent twice; nothing to repeat until it changes. */
+    private boolean settled;
 
     public MoodLight(Context context, Listener listener) {
         this.app = context.getApplicationContext();
@@ -112,11 +130,14 @@ public final class MoodLight implements LightLink {
         g.post(() -> {
             if (family != null) {
                 // Colour sent before the light was on is lost on some clones: power goes first.
-                pending.remove("power");
                 Map<String, byte[]> rest = new LinkedHashMap<>(pending);
+                rest.remove(POWER);
                 pending.clear();
-                pending.put("power", LightProtocol.power(family, on));
+                put(POWER, LightProtocol.power(family, on));
                 pending.putAll(rest);
+                if (!on) {
+                    latest.keySet().retainAll(java.util.Collections.singleton(POWER));
+                }
                 schedule();
             }
         });
@@ -128,10 +149,10 @@ public final class MoodLight implements LightLink {
             if (family == null) {
                 return;
             }
-            pending.put("color", LightProtocol.color(family, rgb, brightness));
+            put(COLOR, LightProtocol.color(family, rgb, brightness));
             byte[] level = LightProtocol.brightness(family, brightness);
             if (level != null) {
-                pending.put("brightness", level);
+                put(BRIGHTNESS, level);
             }
             schedule();
         });
@@ -149,30 +170,45 @@ public final class MoodLight implements LightLink {
                 return;
             }
             LightProtocol.Effect effect = l.effect();
+            pending.clear();
+            latest.clear();
             if (effect == LightProtocol.Effect.OFF) {
-                pending.clear();
-                pending.put("power", LightProtocol.power(family, false));
+                put(POWER, LightProtocol.power(family, false));
                 schedule();
                 return;
             }
-            // Every slot is rewritten; power first, as in power(), since colour sent while off is lost
-            pending.clear();
-            pending.put("power", LightProtocol.power(family, true));
-            if (effect == LightProtocol.Effect.STATIC) {
-                pending.put("color", LightProtocol.color(family, l.color, l.brightness));
+            // Power on only when it is not on already: some clones answer power-on by bringing back
+            // their last colour, which can land after (and over) the colour sent next.
+            byte[] on = LightProtocol.power(family, true);
+            if (!Boolean.TRUE.equals(lit)) {
+                put(POWER, on);
             } else {
-                pending.put("color", LightProtocol.effect(family, effect, l.color, l.speed));
+                // Not sent now, but repeated by settle in case the first one was lost
+                latest.put(POWER, on);
+            }
+            if (effect == LightProtocol.Effect.STATIC) {
+                put(COLOR, LightProtocol.color(family, l.color, l.brightness));
+            } else {
+                put(COLOR, LightProtocol.effect(family, effect, l.color, l.speed));
                 byte[] speed = LightProtocol.effectSpeed(family, l.speed);
                 if (speed != null) {
-                    pending.put("speed", speed);
+                    put(SPEED, speed);
                 }
             }
             byte[] level = LightProtocol.brightness(family, l.brightness);
             if (level != null) {
-                pending.put("brightness", level);
+                put(BRIGHTNESS, level);
             }
             schedule();
         });
+    }
+
+    /** Queue a packet; it is also kept as the light's last wanted state, for {@link #settle}. */
+    private void put(String kind, byte[] packet) {
+        pending.put(kind, packet);
+        latest.put(kind, packet);
+        settled = false;
+        g.removeCallbacks(settle);
     }
 
     /** Close the link and stop the thread. The object is spent after this. */
@@ -251,16 +287,38 @@ public final class MoodLight implements LightLink {
     }
 
     private void pump() {
-        if (gatt == null || write == null || pending.isEmpty()) {
+        if (gatt == null || write == null) {
             pumping = false;
+            return;
+        }
+        if (pending.isEmpty()) {
+            pumping = false;
+            if (!settled && !latest.isEmpty()) {
+                g.postDelayed(settle, SETTLE_MS);
+            }
             return;
         }
         Iterator<Map.Entry<String, byte[]>> it = pending.entrySet().iterator();
         Map.Entry<String, byte[]> next = it.next();
+        long wait = WRITE_EVERY_MS;
         if (send(next.getValue())) {
             it.remove();
+            if (POWER.equals(next.getKey())) {
+                lit = java.util.Arrays.equals(next.getValue(), LightProtocol.power(family, true));
+                wait = AFTER_POWER_MS;
+            }
         }
-        g.postDelayed(pump, WRITE_EVERY_MS);
+        g.postDelayed(pump, wait);
+    }
+
+    /** The last state once more, in case a write was lost; once per change. */
+    private void settle() {
+        if (settled || gatt == null || write == null || latest.isEmpty()) {
+            return;
+        }
+        settled = true;
+        pending.putAll(latest);
+        schedule();
     }
 
     /** @return false when the stack was busy; the packet stays queued */
@@ -294,8 +352,12 @@ public final class MoodLight implements LightLink {
     private void teardown() {
         g.removeCallbacks(timeout);
         g.removeCallbacks(pump);
+        g.removeCallbacks(settle);
         pumping = false;
         pending.clear();
+        latest.clear();
+        settled = false;
+        lit = null;
         write = null;
         family = null;
         BluetoothGatt old = gatt;

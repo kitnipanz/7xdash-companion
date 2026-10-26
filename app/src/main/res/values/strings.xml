@@ -398,7 +398,7 @@ Then reopen this app.</string>
     <string name="mood_light_bands_title">Speed colors in D</string>
     <string name="mood_light_band">From %1$d km/h</string>
     <string name="mood_light_band_blend">Blend between speed colors</string>
-    <string name="mood_light_band_blend_hint">Mixes two solid colors next to each other by speed. Effects switch at their speed.</string>
+    <string name="mood_light_band_blend_hint">Mixes two solid colors next to each other by speed, for example orange at 80 km/h fading into red by 120 km/h.</string>
     <string name="mood_light_band_add">Add speed color</string>
     <string name="mood_light_band_from">From speed (km/h)</string>
     <string name="mood_light_band_remove">Remove</string>

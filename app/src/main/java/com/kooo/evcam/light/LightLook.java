@@ -5,6 +5,13 @@ import java.util.Objects;
 /** What the light shows: a colour, an animation, or off. Kept in {@link GearLightRules} as JSON (Gson). */
 public final class LightLook {
 
+    /**
+     * The lights' built-in animations are off for now: on a real strip they did not look like
+     * their previews. A look saved with one shows as a steady colour, and the editor offers only
+     * a colour or Off. The animation code stays, for when they match.
+     */
+    static final boolean ANIMATIONS = false;
+
     /** {@code 0xRRGGBB} */
     public int color = 0xFFFFFF;
     /** 0–100 */
@@ -25,7 +32,12 @@ public final class LightLook {
     }
 
     public LightProtocol.Effect effect() {
-        return LightProtocol.Effect.parse(effect);
+        LightProtocol.Effect e = LightProtocol.Effect.parse(effect);
+        return !ANIMATIONS && animated(e) ? LightProtocol.Effect.STATIC : e;
+    }
+
+    static boolean animated(LightProtocol.Effect e) {
+        return e != LightProtocol.Effect.STATIC && e != LightProtocol.Effect.OFF;
     }
 
     public LightLook copy() {

@@ -59,6 +59,7 @@ public class GearLightRulesTest {
     @Test
     public void speedBandsWithHysteresis() {
         GearLightRules rules = on(); // bands from 80 and 120
+        rules.blend = false;
         assertEquals(GearLightRules.KEY_D, rules.pick("D", 79f, "D").key);
         assertEquals("band:0", rules.pick("D", 80f, "D").key);
         assertEquals("band:1", rules.pick("D", 125f, "band:0").key);
@@ -78,7 +79,10 @@ public class GearLightRulesTest {
         assertTrue(back.enabled);
         assertNull(back.reverse);
         assertEquals(30, back.bands.get(0).fromKmh);
-        assertEquals(LightProtocol.Effect.BLINK, back.bands.get(0).look.effect());
+        // Kept as saved, shown as a steady colour while animations are off
+        assertEquals(LightProtocol.Effect.BLINK.name(), back.bands.get(0).look.effect);
+        assertEquals(LightLook.ANIMATIONS ? LightProtocol.Effect.BLINK : LightProtocol.Effect.STATIC,
+                back.bands.get(0).look.effect());
         assertEquals(rules.park, back.park);
     }
 
@@ -108,9 +112,11 @@ public class GearLightRulesTest {
 
     @Test
     public void animationsOrBlendOffDoNotMix() {
-        GearLightRules rules = on(); // 80 solid, 120 blinking
-        assertEquals("band:0", rules.pick("D", 100f, "D").key);
-        rules.bands.get(1).look.effect = LightProtocol.Effect.STATIC.name();
+        GearLightRules rules = on(); // 80 and 120, both solid
+        assertEquals("band:0~10", rules.pick("D", 100f, "D").key);
+        // A saved animation shows as a steady colour while animations are off, so it still mixes
+        rules.bands.get(1).look.effect = LightProtocol.Effect.BLINK.name();
+        assertEquals(LightLook.ANIMATIONS ? "band:0" : "band:0~10", rules.pick("D", 100f, "D").key);
         rules.blend = false;
         assertEquals("band:0", rules.pick("D", 100f, "D").key);
     }

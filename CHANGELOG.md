@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.3.20-beta] - 2026-10-26
+
+### Mood light
+- **Bluetooth strip keeps up with color changes.** The strip sometimes stayed on an old color while the car's ambient light changed. Power-on now goes only when the strip is off, so it no longer brings back its last color on top of the new one. A command lost on the way is fixed too: half a second after the last change, the strip gets its latest color once more.
+- **Effects are off for now.** The built-in animations did not look like their previews on a real strip, so every gear and speed color is a solid color or off. One button in the editor switches between **Solid color** and **Light off**. Looks saved with an effect show as a steady light in their color. The default P and 120 km/h colors are solid now, so the default speed colors blend.
+
 ## [1.3.19-beta] - 2026-10-26
 
 ### Car ambient light in Mood light

@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.4.2-beta] - 2026-10-26
+
+### Mood light
+- **Car ambient light follows brightness.** In a group, the car's ambient light now takes the look's brightness on the car's own 0–10 scale (1–100 % becomes 1–10, never 0 while on). Brightness 0 still turns it off.
+
+### Car lights lab (experimental)
+- **Renamed from Car ambient light**, and it now looks for more lights: Scan also lists rear cabin and reading lights, foot lights and hazard lights, with each row labelled by kind.
+- **Watch** finds a light by its button. It reads every car setting over and over: keep still for 3 seconds (anything that changes by itself then is left out), press the car's own light or hazard button, and what changed shows at the top as "was … · now …", with **Try** to send a value back.
+- Hazard lights, and anything found only by watching, can be sent only in P.
+
 ## [1.4.1-beta] - 2026-10-26
 
 ### Recording

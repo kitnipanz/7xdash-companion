@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.3.17-beta] - 2026-10-26
+
+### Mood light (beta)
+- **Mood light on/off** master switch. Off, every group stops following the gear and the connected lights turn off; on, each group follows its own rules again. It sits in the Mood light screen's title bar, as an On/Off pill on the Mood light home card, and as a new **Mood light on/off** shortcut for any button or sticker. The pill and the shortcut say which way it went; with Beta features off they only say to turn it on first.
+- The Mood light screen is easier to find your way around: under the group there are three pages, **Color**, **Gear & speed** and **Try it**, one at a time (it opens on the one you used last). **Scan** now sits above the lights list, titled with the open group's name, and an empty list shows the three steps to add a light.
+- Without a connected light the Color page no longer looks greyed out: a note says to connect one, and the color you pick is still saved for the group. Only On and Off wait for a light.
+- Shorter help text throughout, the connection status moved into the group's card, and a new first group is named "Group 1".
+
 ## [1.3.16-beta] - 2026-10-26
 
 ### Mood light (beta)

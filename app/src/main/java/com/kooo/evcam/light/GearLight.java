@@ -40,6 +40,8 @@ public final class GearLight implements Telemetry.Listener {
     private static final String USER = "gear light";
     /** Wait this long before dialling again after a light dropped or never answered. */
     private static final long REDIAL_MS = 15_000L;
+    /** Switched off: time for the power-off packet to go out before the link closes. */
+    private static final long OFF_THEN_CLOSE_MS = 600L;
 
     private static GearLight installed;
 
@@ -100,6 +102,42 @@ public final class GearLight implements Telemetry.Listener {
         installed.update();
     }
 
+    /**
+     * The master switch (Mood light screen, home card, shortcut). Off turns the connected lights
+     * off and stops every group following the gear; on picks them up again.
+     */
+    public static void setOn(Context context, boolean on) {
+        AppConfig config = new AppConfig(context);
+        config.setMoodLightOn(on);
+        if (installed != null && !on) {
+            for (Slot slot : installed.slots.values()) {
+                LightGroup link = slot.link;
+                link.power(false);
+                installed.main.postDelayed(link::release, OFF_THEN_CLOSE_MS);
+            }
+            installed.slots.clear();
+            installed.main.removeCallbacks(installed.redial);
+        }
+        reload();
+    }
+
+    /**
+     * Shortcut and home card: flip the master switch and say which way it went. Beta: with Beta
+     * features off it only says so.
+     */
+    public static void toggle(Context context) {
+        AppConfig config = new AppConfig(context);
+        if (!config.isBetaFeaturesEnabled()) {
+            com.kooo.evcam.ui.Notice.makeText(context, R.string.mood_light_needs_beta,
+                    android.widget.Toast.LENGTH_SHORT).show();
+            return;
+        }
+        boolean on = !config.isMoodLightOn();
+        setOn(context, on);
+        com.kooo.evcam.ui.Notice.makeText(context, on ? R.string.mood_light_turned_on : R.string.mood_light_turned_off,
+                android.widget.Toast.LENGTH_SHORT).show();
+    }
+
     /** The mood light screen wants every link (true) or is done with them (false). */
     public static void pause(boolean on) {
         if (installed == null || installed.paused == on) {
@@ -120,7 +158,8 @@ public final class GearLight implements Telemetry.Listener {
     private void update() {
         VehicleState state = Telemetry.get().latest();
         // Beta: runs only while Settings › Interface › Beta features is on
-        boolean running = !paused && state.gear != null && config.isBetaFeaturesEnabled() && canConnect();
+        boolean running = !paused && state.gear != null && config.isBetaFeaturesEnabled()
+                && config.isMoodLightOn() && canConnect();
         boolean wantsSpeed = false;
         for (MoodLightGroups.Group group : groups.groups) {
             GearLightRules.Pick pick = group.rules.pick(state.gear, state.speedKmh, picked.get(group.id));

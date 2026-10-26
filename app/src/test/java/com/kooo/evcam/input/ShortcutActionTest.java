@@ -73,4 +73,9 @@ public class ShortcutActionTest {
     public void clickToSpeakHasASafetyCap() {
         assertEquals(10L * 60 * 1000, MegaphoneService.TOGGLE_MAX_MS);
     }
+
+    @Test
+    public void moodLightSwitchHasItsOwnKey() {
+        assertEquals(ShortcutAction.MOOD_LIGHT, ShortcutAction.fromKey("toggle_mood_light"));
+    }
 }

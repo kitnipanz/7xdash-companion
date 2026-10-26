@@ -112,6 +112,9 @@ public final class ShortcutPerformer {
             case OUTSIDE_SPEAKER:
                 com.kooo.evcam.audio.OutsideSpeaker.toggle(context);
                 return;
+            case MOOD_LIGHT:
+                com.kooo.evcam.light.GearLight.toggle(context);
+                return;
             case ANNOUNCE_PLAY:
                 com.kooo.evcam.announce.Announcement chosen = new com.kooo.evcam.announce.AnnouncementStore(context)
                         .find(ShortcutAction.choice(actionKey));

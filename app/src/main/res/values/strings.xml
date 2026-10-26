@@ -304,7 +304,7 @@ Then reopen this app.</string>
     <string name="set_mood_light_summary">Set the color of a cheap Bluetooth RGB light, like ELK-BLEDOM or Happy Lighting ones</string>
     <string name="mood_light_subtitle">Close the light\'s own phone app first. The light takes one connection at a time</string>
     <string name="mood_light_pick">Scan, then tap Connect on your light.</string>
-    <string name="mood_light_none">No light yet. Plug it in, then scan.</string>
+    <string name="mood_light_none">No light yet.\n1. Plug in the light and close its own phone app.\n2. Tap Scan.\n3. Tap Connect on your light.</string>
     <string name="mood_light_other">Other nearby devices</string>
     <string name="mood_light_connecting">Connecting…</string>
     <string name="mood_light_ready">Connected · %1$s</string>
@@ -318,8 +318,18 @@ Then reopen this app.</string>
     <string name="mood_light_swatch">Color %1$s</string>
     <string name="mood_light_family_elk">ELK-BLEDOM type</string>
     <string name="mood_light_family_triones">Happy Lighting type</string>
+    <string name="mood_light_connect_hint">No light in this group is connected. Add or connect one on the right to see it change. The color you pick here is still saved for the group.</string>
+    <string name="mood_light_lights_title">Lights</string>
+    <string name="mood_light_lights_in">Lights in %1$s</string>
+    <string name="mood_light_tab_gear">Gear &amp; speed</string>
+    <string name="mood_light_tab_color">Color</string>
+    <string name="mood_light_master">Mood light</string>
+    <string name="mood_light_master_hint">Off: every group stops following the gear and connected lights turn off. The home card and the Mood light on/off shortcut switch it too.</string>
+    <string name="mood_light_turned_on">Mood light on</string>
+    <string name="mood_light_turned_off">Mood light off</string>
+    <string name="mood_light_needs_beta">Mood light is a beta feature: turn on Beta features in Settings › Interface first</string>
     <string name="mood_light_sim_title">Try it</string>
-    <string name="mood_light_sim_hint">A pretend car runs this group\'s gear and speed colors, even with Change with gear off. Hold Throttle to speed up, Brake to slow down, let go to coast. Connected lights follow too.</string>
+    <string name="mood_light_sim_hint">A pretend car runs this group\'s colors. Hold to accelerate, Brake to slow down. Connected lights follow.</string>
     <string name="mood_light_sim_unit">km/h</string>
     <string name="mood_light_sim_throttle">Hold to accelerate</string>
     <string name="mood_light_sim_brake">Brake</string>
@@ -330,12 +340,13 @@ Then reopen this app.</string>
     <string name="mood_light_tab">%1$s · %2$d</string>
     <string name="mood_light_group_gear_on">follows the gear</string>
     <string name="mood_light_group_gear_off">gear off</string>
+    <string name="mood_light_group_master_off">mood light is off</string>
     <string name="mood_light_group_empty">No lights yet: add one from the list on the right</string>
     <plurals name="mood_light_group_summary">
         <item quantity="one">%1$d light · %2$s</item>
         <item quantity="other">%1$d lights · %2$s</item>
     </plurals>
-    <string name="mood_light_group_default">Lights</string>
+    <string name="mood_light_group_default">Group 1</string>
     <string name="mood_light_group_new">New group</string>
     <string name="mood_light_group_new_name">Group %1$d</string>
     <string name="mood_light_group_rename">Rename</string>
@@ -355,7 +366,7 @@ Then reopen this app.</string>
     <string name="mood_light_remove">Remove</string>
     <string name="mood_light_group_full">Up to %1$d lights in all groups together.</string>
     <string name="mood_light_gear_title">Change with gear</string>
-    <string name="mood_light_gear_hint">The light follows P, R and D while the car is on. This screen takes the light while it is open.</string>
+    <string name="mood_light_gear_hint">While the car is on, this group follows P, R and D.</string>
     <string name="mood_light_gear_p">P · Park</string>
     <string name="mood_light_gear_r">R · Reverse</string>
     <string name="mood_light_gear_d">D · Driving</string>
@@ -367,7 +378,7 @@ Then reopen this app.</string>
     <string name="mood_light_bands_title">Speed colors in D</string>
     <string name="mood_light_band">From %1$d km/h</string>
     <string name="mood_light_band_blend">Blend between speed colors</string>
-    <string name="mood_light_band_blend_hint">Between two solid colors the light mixes them by speed: blue at 100 and red at 120 make 75% blue, 25% red at 105. Effects switch at their speed.</string>
+    <string name="mood_light_band_blend_hint">Mixes two solid colors next to each other by speed. Effects switch at their speed.</string>
     <string name="mood_light_band_add">Add speed color</string>
     <string name="mood_light_band_from">From speed (km/h)</string>
     <string name="mood_light_band_remove">Remove</string>
@@ -1494,6 +1505,7 @@ Then reopen this app.</string>
     <string name="home_card_outside_speaker">Outside speaker</string>
     <string name="home_card_outside_speaker_sub">AirPlay audio outside too. Hold for volume</string>
     <string name="shortcut_action_outside_speaker">Outside speaker on/off</string>
+    <string name="shortcut_action_mood_light">Mood light on/off</string>
     <string name="shortcut_action_quit">Quit app</string>
     <string name="outside_speaker_playing">AirPlay audio also plays on the outside speaker</string>
     <string name="outside_speaker_needs_airplay">Outside speaker on. It plays what you AirPlay to 7xDash: turn on AirPlay and play from your phone.</string>

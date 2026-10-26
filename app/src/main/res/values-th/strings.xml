@@ -302,7 +302,7 @@
     <string name="set_mood_light_summary">ตั้งสีไฟ RGB บลูทูธราคาถูก เช่น รุ่น ELK-BLEDOM หรือ Happy Lighting</string>
     <string name="mood_light_subtitle">ปิดแอปมือถือของไฟก่อน ไฟเชื่อมต่อได้ทีละเครื่อง</string>
     <string name="mood_light_pick">สแกน แล้วแตะเชื่อมต่อที่ไฟของคุณ</string>
-    <string name="mood_light_none">ยังไม่พบไฟ เสียบไฟ แล้วสแกน</string>
+    <string name="mood_light_none">ยังไม่มีไฟ\n1. เสียบไฟ และปิดแอปมือถือของไฟ\n2. แตะสแกน\n3. แตะเชื่อมต่อที่ไฟของคุณ</string>
     <string name="mood_light_other">อุปกรณ์อื่นใกล้เคียง</string>
     <string name="mood_light_connecting">กำลังเชื่อมต่อ…</string>
     <string name="mood_light_ready">เชื่อมต่อแล้ว · %1$s</string>
@@ -316,8 +316,18 @@
     <string name="mood_light_swatch">สี %1$s</string>
     <string name="mood_light_family_elk">แบบ ELK-BLEDOM</string>
     <string name="mood_light_family_triones">แบบ Happy Lighting</string>
+    <string name="mood_light_connect_hint">ยังไม่มีไฟในกลุ่มนี้เชื่อมต่ออยู่ เพิ่มหรือเชื่อมต่อไฟทางขวาเพื่อดูการเปลี่ยนสี สีที่เลือกที่นี่ยังบันทึกไว้ให้กลุ่ม</string>
+    <string name="mood_light_lights_title">ไฟ</string>
+    <string name="mood_light_lights_in">ไฟใน %1$s</string>
+    <string name="mood_light_tab_gear">เกียร์และความเร็ว</string>
+    <string name="mood_light_tab_color">สี</string>
+    <string name="mood_light_master">ไฟบรรยากาศ</string>
+    <string name="mood_light_master_hint">ปิด: ทุกกลุ่มหยุดเปลี่ยนตามเกียร์ และไฟที่เชื่อมต่ออยู่จะดับ เปิด/ปิดได้จากการ์ดหน้าหลักและปุ่มลัดเปิด/ปิดไฟบรรยากาศด้วย</string>
+    <string name="mood_light_turned_on">เปิดไฟบรรยากาศแล้ว</string>
+    <string name="mood_light_turned_off">ปิดไฟบรรยากาศแล้ว</string>
+    <string name="mood_light_needs_beta">ไฟบรรยากาศเป็นฟีเจอร์เบต้า: เปิดฟีเจอร์เบต้าที่ การตั้งค่า › อินเทอร์เฟซ ก่อน</string>
     <string name="mood_light_sim_title">ทดลอง</string>
-    <string name="mood_light_sim_hint">รถจำลองใช้สีตามเกียร์และความเร็วของกลุ่มนี้ แม้ปิดเปลี่ยนตามเกียร์อยู่ กดค้างคันเร่งเพื่อเร่ง กดเบรกเพื่อชะลอ ปล่อยเพื่อไหลไป ไฟที่เชื่อมต่ออยู่จะเปลี่ยนตามด้วย</string>
+    <string name="mood_light_sim_hint">รถจำลองใช้สีของกลุ่มนี้ กดค้างเพื่อเร่ง กดเบรกเพื่อชะลอ ไฟที่เชื่อมต่ออยู่จะเปลี่ยนตาม</string>
     <string name="mood_light_sim_unit">กม./ชม.</string>
     <string name="mood_light_sim_throttle">กดค้างเพื่อเร่ง</string>
     <string name="mood_light_sim_brake">เบรก</string>
@@ -328,11 +338,12 @@
     <string name="mood_light_tab">%1$s · %2$d</string>
     <string name="mood_light_group_gear_on">เปลี่ยนตามเกียร์</string>
     <string name="mood_light_group_gear_off">ไม่ตามเกียร์</string>
+    <string name="mood_light_group_master_off">ไฟบรรยากาศปิดอยู่</string>
     <string name="mood_light_group_empty">ยังไม่มีไฟ: เพิ่มจากรายการทางขวา</string>
     <plurals name="mood_light_group_summary">
         <item quantity="other">ไฟ %1$d ดวง · %2$s</item>
     </plurals>
-    <string name="mood_light_group_default">ไฟ</string>
+    <string name="mood_light_group_default">กลุ่ม 1</string>
     <string name="mood_light_group_new">กลุ่มใหม่</string>
     <string name="mood_light_group_new_name">กลุ่ม %1$d</string>
     <string name="mood_light_group_rename">เปลี่ยนชื่อ</string>
@@ -351,7 +362,7 @@
     <string name="mood_light_remove">นำออก</string>
     <string name="mood_light_group_full">ทุกกลุ่มรวมกันมีไฟได้สูงสุด %1$d ดวง</string>
     <string name="mood_light_gear_title">เปลี่ยนตามเกียร์</string>
-    <string name="mood_light_gear_hint">ไฟเปลี่ยนตามเกียร์ P, R และ D ขณะรถเปิดอยู่ ขณะเปิดหน้านี้ หน้านี้จะใช้ไฟเอง</string>
+    <string name="mood_light_gear_hint">ขณะรถเปิดอยู่ กลุ่มนี้เปลี่ยนตามเกียร์ P, R และ D</string>
     <string name="mood_light_gear_p">P · จอด</string>
     <string name="mood_light_gear_r">R · ถอย</string>
     <string name="mood_light_gear_d">D · ขณะขับ</string>
@@ -363,7 +374,7 @@
     <string name="mood_light_bands_title">สีตามความเร็วในเกียร์ D</string>
     <string name="mood_light_band">ตั้งแต่ %1$d กม./ชม.</string>
     <string name="mood_light_band_blend">ผสมสีระหว่างความเร็ว</string>
-    <string name="mood_light_band_blend_hint">ระหว่างสีเดียวสองสี ไฟจะผสมสีตามความเร็ว: น้ำเงินที่ 100 และแดงที่ 120 ได้น้ำเงิน 75% แดง 25% ที่ 105 เอฟเฟกต์จะเปลี่ยนที่ความเร็วของมัน</string>
+    <string name="mood_light_band_blend_hint">ผสมสีเดียวสองสีที่อยู่ติดกันตามความเร็ว เอฟเฟกต์จะเปลี่ยนที่ความเร็วของมัน</string>
     <string name="mood_light_band_add">เพิ่มสีตามความเร็ว</string>
     <string name="mood_light_band_from">ตั้งแต่ความเร็ว (กม./ชม.)</string>
     <string name="mood_light_band_remove">ลบ</string>
@@ -1468,6 +1479,7 @@
     <string name="home_card_outside_speaker">ลำโพงนอกรถ</string>
     <string name="home_card_outside_speaker_sub">เสียง AirPlay ออกลำโพงนอกรถด้วย กดค้างเพื่อปรับเสียง</string>
     <string name="shortcut_action_outside_speaker">เปิด/ปิดลำโพงนอกรถ</string>
+    <string name="shortcut_action_mood_light">เปิด/ปิดไฟบรรยากาศ</string>
     <string name="shortcut_action_quit">ออกจากแอป</string>
     <string name="outside_speaker_playing">เสียง AirPlay เล่นที่ลำโพงนอกรถด้วย</string>
     <string name="outside_speaker_needs_airplay">เปิดลำโพงนอกรถแล้ว จะเล่นเสียงที่ AirPlay มายัง 7xDash: เปิด AirPlay แล้วเล่นจากโทรศัพท์</string>

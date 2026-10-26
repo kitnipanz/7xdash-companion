@@ -253,9 +253,13 @@ public class HomeFragment extends Fragment {
                         com.kooo.evcam.input.StickerActivity.class)), null);
         // Beta: mood light (colours, effects, following the gear)
         if (betaShown) {
+            // Tap opens the screen; the pill is the master switch, same as the shortcut
             addCard(R.drawable.ic_light, R.string.home_card_mood_light,
                     R.string.home_card_mood_light_sub, () -> startActivity(new Intent(requireContext(),
-                            com.kooo.evcam.light.MoodLightActivity.class)), null);
+                            com.kooo.evcam.light.MoodLightActivity.class)), null)
+                    .pill(() -> getString(config.isMoodLightOn() ? R.string.home_state_on : R.string.home_state_off),
+                            () -> config.isMoodLightOn(),
+                            () -> com.kooo.evcam.light.GearLight.toggle(requireContext()));
         }
         addCard(R.drawable.ic_shortcut, R.string.home_card_shortcuts,
                 R.string.home_card_shortcuts_sub, () -> startActivity(new Intent(requireContext(),

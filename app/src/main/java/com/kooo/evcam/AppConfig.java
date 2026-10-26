@@ -2563,6 +2563,26 @@ public class AppConfig {
     private static final String KEY_MOOD_LIGHT_GEAR = "mood_light_gear";
     private static final String KEY_MOOD_LIGHT_ADDRESSES = "mood_light_addresses";
     private static final String KEY_MOOD_LIGHT_GROUPS = "mood_light_groups";
+    private static final String KEY_MOOD_LIGHT_ON = "mood_light_on";
+    private static final String KEY_MOOD_LIGHT_PAGE = "mood_light_page";
+
+    /** Page open on the mood light screen last time: 0 Color, 1 Gear &amp; speed, 2 Try it. */
+    public int getMoodLightPage() {
+        return prefs.getInt(KEY_MOOD_LIGHT_PAGE, 0);
+    }
+
+    public void setMoodLightPage(int page) {
+        prefs.edit().putInt(KEY_MOOD_LIGHT_PAGE, page).apply();
+    }
+
+    /** Master switch: off, no group follows the gear and their lights are turned off. On by default. */
+    public boolean isMoodLightOn() {
+        return prefs.getBoolean(KEY_MOOD_LIGHT_ON, true);
+    }
+
+    public void setMoodLightOn(boolean on) {
+        prefs.edit().putBoolean(KEY_MOOD_LIGHT_ON, on).apply();
+    }
     private static final String KEY_MOOD_LIGHT_GROUP_SHOWN = "mood_light_group_shown";
 
     /**

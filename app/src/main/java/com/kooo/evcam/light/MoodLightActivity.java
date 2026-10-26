@@ -117,7 +117,6 @@ public class MoodLightActivity extends AppCompatActivity implements LightGroup.L
     private LightGroup light;
     private TextView status;
     private TextView scanButton;
-    private View controls;
     private View preview;
     private SeekBar hue;
     private SeekBar brightness;
@@ -161,7 +160,6 @@ public class MoodLightActivity extends AppCompatActivity implements LightGroup.L
         config = new AppConfig(this);
         status = findViewById(R.id.light_status);
         scanButton = findViewById(R.id.light_scan);
-        controls = findViewById(R.id.light_controls);
         preview = findViewById(R.id.light_preview);
         hue = findViewById(R.id.light_hue);
         brightness = findViewById(R.id.light_brightness);
@@ -233,6 +231,17 @@ public class MoodLightActivity extends AppCompatActivity implements LightGroup.L
         });
         findViewById(R.id.light_band_add).setOnClickListener(v -> addBand());
         setupSim();
+        setupPages();
+        com.google.android.material.switchmaterial.SwitchMaterial master = findViewById(R.id.light_master);
+        master.setChecked(config.isMoodLightOn());
+        // This screen holds the lights, so it turns its own off; GearLight takes the setting when the screen closes
+        master.setOnCheckedChangeListener((button, on) -> {
+            GearLight.setOn(this, on);
+            if (!on && ready) {
+                light.power(false);
+            }
+            renderGroups();
+        });
         findViewById(R.id.light_group_rename).setOnClickListener(v -> renameGroup());
         findViewById(R.id.light_group_delete).setOnClickListener(v -> deleteGroup());
         bindGroup();
@@ -256,6 +265,48 @@ public class MoodLightActivity extends AppCompatActivity implements LightGroup.L
         simRules = null;
         simKey = null;
         renderSim();
+    }
+
+    // =================================================================== pages
+
+    private static final int[] PAGES = {R.id.light_page_color, R.id.light_page_gear, R.id.light_page_try};
+    private static final int[] PAGE_NAMES = {R.string.mood_light_tab_color, R.string.mood_light_tab_gear,
+            R.string.mood_light_sim_title};
+
+    private void setupPages() {
+        LinearLayout tabs = findViewById(R.id.light_tabs);
+        int gap = Math.round(8 * getResources().getDisplayMetrics().density);
+        for (int i = 0; i < PAGES.length; i++) {
+            com.google.android.material.button.MaterialButton tab = (com.google.android.material.button.MaterialButton)
+                    LayoutInflater.from(this).inflate(R.layout.item_group_button, tabs, false);
+            tab.setText(PAGE_NAMES[i]);
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(0,
+                    tab.getLayoutParams().height, 1f);
+            params.setMarginEnd(i < PAGES.length - 1 ? gap : 0);
+            tab.setLayoutParams(params);
+            int page = i;
+            tab.setOnClickListener(v -> showPage(page));
+            tabs.addView(tab);
+        }
+        showPage(Math.max(0, Math.min(PAGES.length - 1, config.getMoodLightPage())));
+    }
+
+    private void showPage(int page) {
+        config.setMoodLightPage(page);
+        LinearLayout tabs = findViewById(R.id.light_tabs);
+        for (int i = 0; i < PAGES.length; i++) {
+            boolean on = i == page;
+            findViewById(PAGES[i]).setVisibility(on ? View.VISIBLE : View.GONE);
+            com.google.android.material.button.MaterialButton tab =
+                    (com.google.android.material.button.MaterialButton) tabs.getChildAt(i);
+            tab.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(this, on ? R.color.energy : R.color.line)));
+            tab.setTextColor(ContextCompat.getColor(this, on ? R.color.on_energy : R.color.text_primary));
+        }
+        if (page != 2) {
+            // Leaving Try it lets go of the pedals
+            sim.setThrottle(false);
+            sim.setBrake(false);
+        }
     }
 
     // =================================================================== try it
@@ -398,7 +449,8 @@ public class MoodLightActivity extends AppCompatActivity implements LightGroup.L
         TextView name = findViewById(R.id.light_group_name);
         TextView summary = findViewById(R.id.light_group_summary);
         name.setText(group.name);
-        String gear = getString(group.rules.enabled ? R.string.mood_light_group_gear_on : R.string.mood_light_group_gear_off);
+        String gear = getString(!config.isMoodLightOn() ? R.string.mood_light_group_master_off
+                : group.rules.enabled ? R.string.mood_light_group_gear_on : R.string.mood_light_group_gear_off);
         summary.setText(group.lights.isEmpty() ? getString(R.string.mood_light_group_empty)
                 : getResources().getQuantityString(R.plurals.mood_light_group_summary,
                         group.lights.size(), group.lights.size(), gear));
@@ -619,18 +671,16 @@ public class MoodLightActivity extends AppCompatActivity implements LightGroup.L
         brightnessLabel.setText(getString(R.string.mood_light_brightness, level));
     }
 
+    /**
+     * Colour and brightness stay usable without a light (they are saved for the group); only On and
+     * Off need one, and a note says so instead of greying the whole page out.
+     */
     private void showControls() {
-        controls.setAlpha(ready ? 1f : 0.4f);
-        setEnabledDeep(controls, ready);
-    }
-
-    private static void setEnabledDeep(View view, boolean on) {
-        view.setEnabled(on);
-        if (view instanceof android.view.ViewGroup) {
-            android.view.ViewGroup group = (android.view.ViewGroup) view;
-            for (int i = 0; i < group.getChildCount(); i++) {
-                setEnabledDeep(group.getChildAt(i), on);
-            }
+        findViewById(R.id.light_connect_hint).setVisibility(ready ? View.GONE : View.VISIBLE);
+        for (int id : new int[]{R.id.light_on, R.id.light_off}) {
+            View b = findViewById(id);
+            b.setEnabled(ready);
+            b.setAlpha(ready ? 1f : 0.4f);
         }
     }
 
@@ -936,12 +986,7 @@ public class MoodLightActivity extends AppCompatActivity implements LightGroup.L
         devices.removeAllViews();
         List<String> mine = group.lights;
         int shown = 0;
-        TextView title = new TextView(this);
-        title.setText(getResources().getQuantityString(R.plurals.mood_light_group, mine.size(), group.name, mine.size()));
-        title.setTextAppearance(R.style.TextAppearance_Cam_Caption);
-        title.setTextColor(ContextCompat.getColor(this, R.color.text_tertiary));
-        title.setPadding(16, 8, 16, 8);
-        devices.addView(title);
+        ((TextView) findViewById(R.id.light_lights_title)).setText(getString(R.string.mood_light_lights_in, group.name));
         for (String address : mine) {
             Seen row = seen.get(address);
             addRow(address, row == null ? null : row.name, row == null ? null : row.rssi);

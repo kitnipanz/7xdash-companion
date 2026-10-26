@@ -42,7 +42,9 @@ public enum ShortcutAction {
     /** Floating picker of announcements; tap one to play it on the picked speakers. */
     ANNOUNCE("announce_picker", R.string.shortcut_action_announce),
     /** Plays one announcement straight away. Stored as {@code announce_play:<announcement id>}. */
-    ANNOUNCE_PLAY("announce_play", R.string.shortcut_action_announce_play);
+    ANNOUNCE_PLAY("announce_play", R.string.shortcut_action_announce_play),
+    /** Beta: the mood light master switch. Off turns the lights off and stops them following the gear. */
+    MOOD_LIGHT("toggle_mood_light", R.string.shortcut_action_mood_light);
 
     public final String key;
     public final int labelRes;

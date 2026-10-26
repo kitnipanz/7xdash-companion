@@ -8,8 +8,10 @@
     android:orientation="vertical"
     android:padding="16dp">
     <!--
-  Mood light: same frame as the sticker screen. Left card is the light (on/off, color,
-  brightness), right card is the scan list.
+  Mood light: same frame as the sticker screen. Title bar carries the master switch (always in
+  reach). Left card: the open group, then one page at a time (Color / Gear & speed / Try it).
+  Right card: the lights, with Scan above them. The floating buttons sit over the title bar's
+  right end, so nothing that matters goes there.
 -->
     <LinearLayout
         android:layout_width="match_parent"
@@ -34,21 +36,24 @@
             android:textColor="@color/text_primary"
             android:textStyle="bold" />
         <TextView
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="14dp"
-            android:layout_weight="1"
-            android:ellipsize="end"
-            android:maxLines="2"
-            android:text="@string/mood_light_subtitle"
-            android:textAppearance="@style/TextAppearance.Cam.Caption"
-            android:textColor="@color/text_tertiary" />
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/light_scan"
-            style="@style/Widget.Cam.RailSmall"
+            android:id="@+id/light_master_label"
             android:layout_width="wrap_content"
-            android:layout_height="52dp"
-            android:text="@string/sticker_scan" />
+            android:layout_height="wrap_content"
+            android:layout_marginStart="32dp"
+            android:layout_marginEnd="12dp"
+            android:labelFor="@id/light_master"
+            android:text="@string/mood_light_master"
+            android:textAppearance="@style/TextAppearance.Cam.Body"
+            android:textColor="@color/text_secondary" />
+        <com.google.android.material.switchmaterial.SwitchMaterial
+            android:id="@+id/light_master"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:contentDescription="@string/mood_light_master" />
+        <View
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_weight="1" />
     </LinearLayout>
     <LinearLayout
         android:layout_width="match_parent"
@@ -68,17 +73,7 @@
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
                 android:padding="20dp">
-                <!--
-  Groups: a tab per group (the open one filled) and New; under them the open group's own card,
-  so Rename and Delete sit next to the name they act on.
--->
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="6dp"
-                    android:text="@string/mood_light_groups_title"
-                    android:textAppearance="@style/TextAppearance.Cam.Caption"
-                    android:textColor="@color/text_tertiary" />
+                <!-- Groups: a tab per group (the open one filled) and New; then the open group's card -->
                 <HorizontalScrollView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -94,7 +89,6 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="16dp"
                     android:background="@drawable/bg_pref_row_static"
                     android:gravity="center_vertical"
                     android:minHeight="72dp"
@@ -123,6 +117,13 @@
                             android:layout_height="wrap_content"
                             android:textAppearance="@style/TextAppearance.Cam.Caption"
                             android:textColor="@color/text_secondary" />
+                        <TextView
+                            android:id="@+id/light_status"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/mood_light_pick"
+                            android:textAppearance="@style/TextAppearance.Cam.Caption"
+                            android:textColor="@color/text_tertiary" />
                     </LinearLayout>
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/light_group_rename"
@@ -140,152 +141,175 @@
                         android:contentDescription="@string/mood_light_group_delete"
                         app:icon="@drawable/ic_delete" />
                 </LinearLayout>
-                <TextView
-                    android:id="@+id/light_status"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/mood_light_pick"
-                    android:textAppearance="@style/TextAppearance.Cam.Body"
-                    android:textColor="@color/text_secondary" />
+
+                <!-- Pages: one at a time, picked here -->
                 <LinearLayout
-                    android:id="@+id/light_controls"
+                    android:id="@+id/light_tabs"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
-                    android:orientation="vertical">
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal">
-                        <View
-                            android:id="@+id/light_preview"
-                            android:layout_width="52dp"
-                            android:layout_height="52dp"
-                            android:layout_marginEnd="16dp"
-                            android:background="@drawable/sticker_dot" />
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/light_on"
-                            style="@style/Widget.Cam.RailSmall"
-                            android:layout_width="wrap_content"
-                            android:layout_height="52dp"
-                            android:layout_marginEnd="8dp"
-                            android:text="@string/mood_light_on" />
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/light_off"
-                            style="@style/Widget.Cam.RailSmall"
-                            android:layout_width="wrap_content"
-                            android:layout_height="52dp"
-                            android:text="@string/mood_light_off" />
-                    </LinearLayout>
-                    <LinearLayout
-                        android:id="@+id/light_swatches"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="16dp"
-                        android:orientation="horizontal" />
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="16dp"
-                        android:text="@string/mood_light_hue"
-                        android:textAppearance="@style/TextAppearance.Cam.Body"
-                        android:textColor="@color/text_primary" />
-                    <SeekBar
-                        android:id="@+id/light_hue"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
-                        android:max="359" />
-                    <TextView
-                        android:id="@+id/light_brightness_label"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="16dp"
-                        android:textAppearance="@style/TextAppearance.Cam.Body"
-                        android:textColor="@color/text_primary" />
-                    <SeekBar
-                        android:id="@+id/light_brightness"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
-                        android:max="100" />
-                </LinearLayout>
-                <!-- Gear rules: editable without the light, saved and run by GearLight -->
-                <com.google.android.material.switchmaterial.SwitchMaterial
-                    android:id="@+id/light_gear_switch"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="24dp"
-                    android:text="@string/mood_light_gear_title"
-                    android:textAppearance="@style/TextAppearance.Cam.Body"
-                    android:textColor="@color/text_primary" />
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="8dp"
-                    android:text="@string/mood_light_gear_hint"
-                    android:textAppearance="@style/TextAppearance.Cam.Caption"
-                    android:textColor="@color/text_tertiary" />
-                <LinearLayout
-                    android:id="@+id/light_gear_rules"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical">
-                    <LinearLayout
-                        android:id="@+id/light_gear_rows"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical" />
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
-                        android:layout_marginBottom="8dp"
-                        android:text="@string/mood_light_bands_title"
-                        android:textAppearance="@style/TextAppearance.Cam.Body"
-                        android:textColor="@color/text_primary" />
-                    <com.google.android.material.switchmaterial.SwitchMaterial
-                        android:id="@+id/light_band_blend"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="@string/mood_light_band_blend"
-                        android:textAppearance="@style/TextAppearance.Cam.Body"
-                        android:textColor="@color/text_primary" />
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginBottom="8dp"
-                        android:text="@string/mood_light_band_blend_hint"
-                        android:textAppearance="@style/TextAppearance.Cam.Caption"
-                        android:textColor="@color/text_tertiary" />
-                    <LinearLayout
-                        android:id="@+id/light_band_rows"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical" />
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/light_band_add"
-                        style="@style/Widget.Cam.RailSmall"
-                        android:layout_width="wrap_content"
-                        android:layout_height="52dp"
-                        android:text="@string/mood_light_band_add" />
-                </LinearLayout>
-                <!-- Try it: a pretend car runs this group's rules; hold Throttle / Brake -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="24dp"
+                    android:layout_marginBottom="16dp"
                     android:background="@drawable/bg_pref_row_static"
-                    android:orientation="vertical"
-                    android:padding="20dp">
+                    android:orientation="horizontal"
+                    android:padding="6dp" />
+
+                <!-- Color: set the group's lights by hand -->
+                <LinearLayout
+                    android:id="@+id/light_page_color"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
                     <TextView
+                        android:id="@+id/light_connect_hint"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="@string/mood_light_sim_title"
+                        android:layout_marginBottom="16dp"
+                        android:background="@drawable/bg_pref_row_static"
+                        android:padding="16dp"
+                        android:text="@string/mood_light_connect_hint"
+                        android:textAppearance="@style/TextAppearance.Cam.Body"
+                        android:textColor="@color/text_secondary" />
+                    <LinearLayout
+                        android:id="@+id/light_controls"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+                            <View
+                                android:id="@+id/light_preview"
+                                android:layout_width="52dp"
+                                android:layout_height="52dp"
+                                android:layout_marginEnd="16dp"
+                                android:background="@drawable/sticker_dot" />
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/light_on"
+                                style="@style/Widget.Cam.RailSmall"
+                                android:layout_width="wrap_content"
+                                android:layout_height="52dp"
+                                android:layout_marginEnd="8dp"
+                                android:text="@string/mood_light_on" />
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/light_off"
+                                style="@style/Widget.Cam.RailSmall"
+                                android:layout_width="wrap_content"
+                                android:layout_height="52dp"
+                                android:text="@string/mood_light_off" />
+                        </LinearLayout>
+                        <LinearLayout
+                            android:id="@+id/light_swatches"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="16dp"
+                            android:orientation="horizontal" />
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="16dp"
+                            android:text="@string/mood_light_hue"
+                            android:textAppearance="@style/TextAppearance.Cam.Body"
+                            android:textColor="@color/text_primary" />
+                        <SeekBar
+                            android:id="@+id/light_hue"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:max="359" />
+                        <TextView
+                            android:id="@+id/light_brightness_label"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="16dp"
+                            android:textAppearance="@style/TextAppearance.Cam.Body"
+                            android:textColor="@color/text_primary" />
+                        <SeekBar
+                            android:id="@+id/light_brightness"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:max="100" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- Gear & speed: the group's rules, saved and run by GearLight -->
+                <LinearLayout
+                    android:id="@+id/light_page_gear"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+                    <com.google.android.material.switchmaterial.SwitchMaterial
+                        android:id="@+id/light_gear_switch"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/mood_light_gear_title"
                         android:textAppearance="@style/TextAppearance.Cam.Body"
                         android:textColor="@color/text_primary"
                         android:textStyle="bold" />
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="12dp"
+                        android:text="@string/mood_light_gear_hint"
+                        android:textAppearance="@style/TextAppearance.Cam.Caption"
+                        android:textColor="@color/text_tertiary" />
+                    <LinearLayout
+                        android:id="@+id/light_gear_rules"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
+                        <LinearLayout
+                            android:id="@+id/light_gear_rows"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical" />
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="16dp"
+                            android:text="@string/mood_light_bands_title"
+                            android:textAppearance="@style/TextAppearance.Cam.Body"
+                            android:textColor="@color/text_primary"
+                            android:textStyle="bold" />
+                        <com.google.android.material.switchmaterial.SwitchMaterial
+                            android:id="@+id/light_band_blend"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/mood_light_band_blend"
+                            android:textAppearance="@style/TextAppearance.Cam.Body"
+                            android:textColor="@color/text_primary" />
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="8dp"
+                            android:text="@string/mood_light_band_blend_hint"
+                            android:textAppearance="@style/TextAppearance.Cam.Caption"
+                            android:textColor="@color/text_tertiary" />
+                        <LinearLayout
+                            android:id="@+id/light_band_rows"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical" />
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/light_band_add"
+                            style="@style/Widget.Cam.RailSmall"
+                            android:layout_width="wrap_content"
+                            android:layout_height="52dp"
+                            android:text="@string/mood_light_band_add"
+                            app:icon="@drawable/ic_add" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- Try it: a pretend car runs this group's rules; hold the pedals -->
+                <LinearLayout
+                    android:id="@+id/light_page_try"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:visibility="gone">
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -315,7 +339,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginStart="6dp"
-                            android:layout_marginBottom="8dp"
+                            android:layout_marginBottom="4dp"
                             android:text="@string/mood_light_sim_unit"
                             android:textAppearance="@style/TextAppearance.Cam.Body"
                             android:textColor="@color/text_secondary" />
@@ -324,7 +348,7 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_marginStart="16dp"
-                            android:layout_marginBottom="8dp"
+                            android:layout_marginBottom="4dp"
                             android:layout_weight="1"
                             android:gravity="end"
                             android:textAppearance="@style/TextAppearance.Cam.Body"
@@ -344,7 +368,7 @@
                             android:id="@+id/light_sim_brake"
                             style="@style/Widget.Cam.RailSmall"
                             android:layout_width="0dp"
-                            android:layout_height="72dp"
+                            android:layout_height="96dp"
                             android:layout_marginEnd="12dp"
                             android:layout_weight="1"
                             android:text="@string/mood_light_sim_brake" />
@@ -352,39 +376,75 @@
                             android:id="@+id/light_sim_throttle"
                             style="@style/Widget.Cam.RailSmall"
                             android:layout_width="0dp"
-                            android:layout_height="72dp"
+                            android:layout_height="96dp"
                             android:layout_weight="2"
                             android:text="@string/mood_light_sim_throttle" />
                     </LinearLayout>
                 </LinearLayout>
             </LinearLayout>
         </ScrollView>
-        <ScrollView
+        <LinearLayout
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_marginStart="12dp"
             android:layout_weight="1"
             android:background="@drawable/bg_surface_card"
-            android:fillViewport="true">
+            android:orientation="vertical">
+            <!-- Lights: Scan sits with the list it fills -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="12dp">
-                <LinearLayout
-                    android:id="@+id/light_devices"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical" />
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="24dp"
+                android:paddingTop="12dp"
+                android:paddingEnd="12dp">
                 <TextView
-                    android:id="@+id/light_empty"
+                    android:id="@+id/light_lights_title"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:text="@string/mood_light_lights_title"
+                    android:textAppearance="@style/TextAppearance.Cam.Title"
+                    android:textColor="@color/text_primary"
+                    android:textStyle="bold" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/light_scan"
+                    style="@style/Widget.Cam.RailSmall"
+                    android:layout_width="wrap_content"
+                    android:layout_height="52dp"
+                    android:text="@string/sticker_scan" />
+            </LinearLayout>
+            <ScrollView
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:fillViewport="true">
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:padding="16dp"
-                    android:text="@string/mood_light_none"
-                    android:textAppearance="@style/TextAppearance.Cam.Body"
-                    android:textColor="@color/text_secondary" />
-            </LinearLayout>
-        </ScrollView>
+                    android:orientation="vertical"
+                    android:padding="12dp">
+                    <LinearLayout
+                        android:id="@+id/light_devices"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical" />
+                    <TextView
+                        android:id="@+id/light_empty"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_margin="4dp"
+                        android:background="@drawable/bg_pref_row_static"
+                        android:lineSpacingExtra="6dp"
+                        android:padding="20dp"
+                        android:text="@string/mood_light_none"
+                        android:textAppearance="@style/TextAppearance.Cam.Body"
+                        android:textColor="@color/text_secondary" />
+                </LinearLayout>
+            </ScrollView>
+        </LinearLayout>
     </LinearLayout>
 </LinearLayout>

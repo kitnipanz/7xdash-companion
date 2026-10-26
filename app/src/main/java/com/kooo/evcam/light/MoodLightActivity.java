@@ -608,6 +608,8 @@ public class MoodLightActivity extends AppCompatActivity implements LightGroup.L
             } else {
                 status.setText(getString(R.string.mood_light_group_ready, up, size));
             }
+        } else if (CarAmbientLight.isCar(changed) && light.state(changed) == LightGroup.STATE_DOWN) {
+            status.setText(R.string.mood_light_car_missing);
         } else if (changed != null && light.state(changed) == LightGroup.STATE_DOWN) {
             showDown(light.reason(changed), light.code(changed));
         } else {
@@ -1003,6 +1005,11 @@ public class MoodLightActivity extends AppCompatActivity implements LightGroup.L
                 shown++;
             }
         }
+        // The car's own ambient light is always on offer, before the lights the scan found
+        if (groups.owner(CarAmbientLight.ADDRESS) == null) {
+            addRow(CarAmbientLight.ADDRESS, null, null);
+            shown++;
+        }
         for (Seen row : seen.values()) {
             if (row.light && groups.owner(row.address) == null) {
                 addRow(row.address, row.name, row.rssi);
@@ -1038,12 +1045,19 @@ public class MoodLightActivity extends AppCompatActivity implements LightGroup.L
         TextView meta = line.findViewById(R.id.sticker_meta);
         TextView action = line.findViewById(R.id.sticker_action);
         View dot = line.findViewById(R.id.sticker_dot);
-        title.setText(name == null || name.isEmpty() ? getString(R.string.sticker_unnamed) : name);
-        String detail = rssi == null ? address : getString(R.string.sticker_device_meta, address, rssi);
+        boolean car = CarAmbientLight.isCar(address);
+        if (car) {
+            title.setText(R.string.mood_light_car_name);
+        } else {
+            title.setText(name == null || name.isEmpty() ? getString(R.string.sticker_unnamed) : name);
+        }
+        String detail = car ? getString(R.string.mood_light_car_meta)
+                : rssi == null ? address : getString(R.string.sticker_device_meta, address, rssi);
         int state = light == null ? -1 : light.state(address);
         if (inGroup) {
             int word = state == LightGroup.STATE_READY ? R.string.sticker_connected
                     : state == LightGroup.STATE_CONNECTING ? R.string.mood_light_connecting
+                    : car ? R.string.mood_light_car_missing
                     : R.string.sticker_link_off;
             detail = detail + "  " + getString(word);
         } else if (owner != null) {
@@ -1065,6 +1079,9 @@ public class MoodLightActivity extends AppCompatActivity implements LightGroup.L
                 showStatus(null);
                 showControls();
                 render();
+            } else if (car) {
+                // Not Bluetooth: no permission to ask, and it does not count towards the limit
+                connectTo(address);
             } else if (owner == null && groups.lightCount() >= LightGroup.MAX_LIGHTS) {
                 status.setText(getString(R.string.mood_light_group_full, LightGroup.MAX_LIGHTS));
             } else {
@@ -1081,7 +1098,8 @@ public class MoodLightActivity extends AppCompatActivity implements LightGroup.L
     /** Put this light in the open group (out of any other) and dial it; the others keep their links. */
     private void connectTo(String address) {
         stopScan();
-        if (groups.owner(address) != null || groups.lightCount() < LightGroup.MAX_LIGHTS) {
+        if (groups.owner(address) != null || CarAmbientLight.isCar(address)
+                || groups.lightCount() < LightGroup.MAX_LIGHTS) {
             groups.moveLight(address, group);
             saveGroups();
         }

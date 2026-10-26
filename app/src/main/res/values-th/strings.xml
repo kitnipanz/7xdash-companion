@@ -369,6 +369,9 @@
     <string name="mood_light_group_name">ชื่อกลุ่ม</string>
     <string name="mood_light_group_max">มีได้สูงสุด %1$d กลุ่ม</string>
     <string name="mood_light_group_last">ลบกลุ่มสุดท้ายไม่ได้</string>
+    <string name="mood_light_car_name">ไฟบรรยากาศในรถ</string>
+    <string name="mood_light_car_meta">ติดมากับรถ · สีและเปิด/ปิดเท่านั้น</string>
+    <string name="mood_light_car_missing">ไม่พบในรถคันนี้</string>
     <string name="mood_light_in_group">อยู่ใน %1$s</string>
     <string name="mood_light_move_here">ย้ายมาที่นี่</string>
     <string name="mood_light_group_ready">เชื่อมต่อแล้ว %1$d จาก %2$d ดวง · ทำงานพร้อมกัน</string>

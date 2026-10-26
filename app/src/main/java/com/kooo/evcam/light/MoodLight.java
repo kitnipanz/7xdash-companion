@@ -30,7 +30,7 @@ import java.util.UUID;
  * on a slider sends a packet per frame, so writes are coalesced: one pending packet per kind
  * (power, colour, brightness), the newest wins, one write in flight every {@link #WRITE_EVERY_MS}.</p>
  */
-public final class MoodLight {
+public final class MoodLight implements LightLink {
 
     public static final int FAIL_BLUETOOTH = 1;
     public static final int FAIL_TIMEOUT = 2;
@@ -72,6 +72,7 @@ public final class MoodLight {
     }
 
     /** Drop any link and dial this address. */
+    @Override
     public void connect(String address) {
         g.post(() -> {
             teardown();
@@ -106,6 +107,7 @@ public final class MoodLight {
         });
     }
 
+    @Override
     public void power(boolean on) {
         g.post(() -> {
             if (family != null) {
@@ -120,6 +122,7 @@ public final class MoodLight {
         });
     }
 
+    @Override
     public void color(int rgb, int brightness) {
         g.post(() -> {
             if (family == null) {
@@ -138,6 +141,7 @@ public final class MoodLight {
      * Power, colour or animation, brightness and speed in one go. Colour and animation share one
      * slot, so the newest of the two wins.
      */
+    @Override
     public void show(LightLook look) {
         LightLook l = look.copy();
         g.post(() -> {
@@ -172,6 +176,7 @@ public final class MoodLight {
     }
 
     /** Close the link and stop the thread. The object is spent after this. */
+    @Override
     public void release() {
         g.post(() -> {
             teardown();

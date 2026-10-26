@@ -128,10 +128,15 @@ public final class MoodLightGroups {
         return null;
     }
 
+    /** Bluetooth lights in all groups; the car's own ambient light is not one. */
     public int lightCount() {
         int n = 0;
         for (Group g : groups) {
-            n += g.lights.size();
+            for (String address : g.lights) {
+                if (!CarAmbientLight.isCar(address)) {
+                    n++;
+                }
+            }
         }
         return n;
     }

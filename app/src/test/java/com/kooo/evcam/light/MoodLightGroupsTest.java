@@ -74,4 +74,16 @@ public class MoodLightGroupsTest {
         assertTrue(groups.remove(b.id));
         assertEquals(1, groups.groups.size());
     }
+
+    @Test
+    public void carAmbientLightDoesNotCountTowardsTheBluetoothLimit() {
+        MoodLightGroups groups = MoodLightGroups.parse("", "Lights");
+        MoodLightGroups.Group g = groups.groups.get(0);
+        groups.moveLight("AA:01", g);
+        groups.moveLight(CarAmbientLight.ADDRESS, g);
+        assertEquals(1, groups.lightCount());
+        assertEquals(g, groups.owner(CarAmbientLight.ADDRESS));
+        MoodLightGroups back = MoodLightGroups.parse(groups.toJson(), "Lights");
+        assertEquals(Arrays.asList("AA:01", CarAmbientLight.ADDRESS), back.groups.get(0).lights);
+    }
 }

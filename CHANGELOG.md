@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.19-beta] - 2026-10-26
+
+### Car ambient light in Mood light
+- The car's own ambient light (the top zone) can now be one of the lights in a Mood light group, so it follows gear and speed with your Bluetooth lights. Find **Car ambient light** in the lights list and tap **Add to group**. It does not count towards the 4 Bluetooth lights.
+- It gets the same colour as the rest of the group, blends between speeds too, and turns off when the look is Off or the Mood light switch is off. It cannot animate or dim: an effect shows as a steady colour in that colour, and the car keeps its own brightness.
+- The car takes a new colour at most every quarter second, so it is not flooded while the speed blend changes colour.
+
 ## [1.3.18-beta] - 2026-10-26
 
 ### Car ambient light (experimental)

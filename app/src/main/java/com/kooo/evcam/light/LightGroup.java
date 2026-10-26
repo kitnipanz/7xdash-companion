@@ -16,7 +16,7 @@ import java.util.Map;
  */
 public final class LightGroup {
 
-    /** Each light is its own GATT link; this head unit's radio has room for a few. */
+    /** Each Bluetooth light is its own GATT link; this head unit's radio has room for a few. The car's own light does not count. */
     public static final int MAX_LIGHTS = 4;
 
     public static final int STATE_CONNECTING = 0;
@@ -30,7 +30,7 @@ public final class LightGroup {
 
     private final class Member implements MoodLight.Listener {
         final String address;
-        final MoodLight light;
+        final LightLink light;
         int state = STATE_CONNECTING;
         LightProtocol.Family family;
         /** {@code MoodLight.FAIL_*} of the last drop, 0 for a plain disconnect */
@@ -39,7 +39,9 @@ public final class LightGroup {
 
         Member(String address) {
             this.address = address;
-            this.light = new MoodLight(app, this);
+            this.light = CarAmbientLight.isCar(address)
+                    ? new CarAmbientLight(app, this)
+                    : new MoodLight(app, this);
         }
 
         private boolean current() {

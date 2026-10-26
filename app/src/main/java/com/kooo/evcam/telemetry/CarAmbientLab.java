@@ -92,7 +92,99 @@ public final class CarAmbientLab {
         }
     }
 
+    /** Top-zone ambient light on the 7X: 0 off, 1 on. Found on the car with this lab. */
+    public static final String TOPZONES = "SETTING_FUNC_AMBIENCE_LIGHT_TOPZONES";
+    /** Top-zone colour as {@code 0xRRGGBB} (the car read 0x1FAD3B while showing green). */
+    public static final String TOPZONES_COLOR = "SETTING_FUNC_AMBIENCE_LIGHT_TOPZONES_COLOR_SET";
+
+    /** Function numbers looked up by name; a missing name is kept as null so it is not searched again. */
+    private static final Map<String, Integer> ids = new LinkedHashMap<>();
+
     private CarAmbientLab() {
+    }
+
+    /**
+     * The function number of an ECARX constant, found by its name in the car's library, or null
+     * when this head unit does not have it. Blocking the first time.
+     */
+    public static synchronized Integer functionId(String name) {
+        if (ids.containsKey(name)) {
+            return ids.get(name);
+        }
+        Integer found = null;
+        Set<String> classes = new LinkedHashSet<>();
+        for (String fallback : FALLBACK_CLASSES) {
+            classes.add(fallback);
+        }
+        classes.addAll(listClasses());
+        for (String className : classes) {
+            try {
+                Field f = Class.forName(className, false, CarAmbientLab.class.getClassLoader()).getField(name);
+                if (Modifier.isStatic(f.getModifiers()) && f.getType() == int.class) {
+                    found = f.getInt(null);
+                    break;
+                }
+            } catch (Throwable ignored) {
+                // not in this class
+            }
+        }
+        ids.put(name, found);
+        return found;
+    }
+
+    /** What the car says about this function ("active" when it can be set), as text. Blocking. */
+    public static String support(Context context, int id) {
+        Object function = carFunction(context);
+        Method supported = function == null ? null : EcarxSource.findMethod(function, "isFunctionSupported", int.class);
+        return supported == null ? "?" : safe(() -> supported.invoke(function, id));
+    }
+
+    /** What the car reads for this function, or null. Blocking. */
+    public static Integer value(Context context, int id) {
+        Object function = carFunction(context);
+        Method get = function == null ? null : EcarxSource.findMethod(function, "getFunctionValue", int.class);
+        if (get == null) {
+            return null;
+        }
+        try {
+            Object r = get.invoke(function, id);
+            return r instanceof Integer ? (Integer) r : null;
+        } catch (Throwable t) {
+            return null;
+        }
+    }
+
+    /** Sends one value. Returns null when sent, else why not. Blocking. */
+    public static String write(Context context, int id, int value) {
+        Object function = carFunction(context);
+        if (function == null) {
+            return "No car function interface";
+        }
+        return send(function, id, value);
+    }
+
+    private static Object carFunction(Context context) {
+        Object car = EcarxSource.carForLab(context);
+        return car == null ? null : invoke(car, "getICarFunction");
+    }
+
+    /** {@code setFunctionValue(id, value)}, or the zoned form with zone 0 ("all"); null when sent. */
+    private static String send(Object function, int id, int value) {
+        try {
+            Method setter = EcarxSource.findMethod(function, "setFunctionValue", int.class, int.class);
+            if (setter != null) {
+                Object r = setter.invoke(function, id, value);
+                return Boolean.FALSE.equals(r) ? "car said no" : null;
+            }
+            Method zoned = EcarxSource.findMethod(function, "setFunctionValue", int.class, int.class, int.class);
+            if (zoned == null) {
+                return "No setFunctionValue on this car";
+            }
+            Object r = zoned.invoke(function, id, 0, value);
+            return Boolean.FALSE.equals(r) ? "car said no" : null;
+        } catch (Throwable t) {
+            return "threw " + rootMessage(t);
+        }
     }
 
     static boolean looksAmbient(String name) {
@@ -214,22 +306,8 @@ public final class CarAmbientLab {
         if (function == null) {
             return "No car function interface";
         }
-        String result;
-        Method setter = EcarxSource.findMethod(function, "setFunctionValue", int.class, int.class);
-        try {
-            if (setter != null) {
-                result = String.valueOf(setter.invoke(function, k.value, value));
-            } else {
-                Method zoned = EcarxSource.findMethod(function, "setFunctionValue", int.class, int.class, int.class);
-                if (zoned == null) {
-                    return "No setFunctionValue on this car";
-                }
-                // Zone 0: "all" / not zoned on ECARX
-                result = String.valueOf(zoned.invoke(function, k.value, 0, value));
-            }
-        } catch (Throwable t) {
-            result = "threw " + rootMessage(t);
-        }
+        String failed = send(function, k.value, value);
+        String result = failed == null ? "sent" : failed;
         try {
             Thread.sleep(400);
         } catch (InterruptedException ignored) {

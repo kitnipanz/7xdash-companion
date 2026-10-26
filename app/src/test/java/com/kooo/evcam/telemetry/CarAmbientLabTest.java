@@ -2,6 +2,7 @@ package com.kooo.evcam.telemetry;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
@@ -39,5 +40,11 @@ public class CarAmbientLabTest {
                 Arrays.asList(mode, breathe, music, otherClass, otherFunction));
         assertEquals(Arrays.asList(breathe, music), got);
         assertEquals("AMBIENCE_LIGHT_MODE", CarAmbientLab.stem("SETTING_FUNC_AMBIENCE_LIGHT_MODE"));
+    }
+
+    @Test
+    public void functionMissingFromThisHeadUnitIsNull() {
+        assertNull(CarAmbientLab.functionId(CarAmbientLab.TOPZONES));
+        assertNull(CarAmbientLab.functionId(CarAmbientLab.TOPZONES_COLOR));
     }
 }

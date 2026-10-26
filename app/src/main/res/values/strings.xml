@@ -372,6 +372,9 @@ Then reopen this app.</string>
     <string name="mood_light_group_name">Group name</string>
     <string name="mood_light_group_max">Up to %1$d groups.</string>
     <string name="mood_light_group_last">The last group cannot be deleted.</string>
+    <string name="mood_light_car_name">Car ambient light</string>
+    <string name="mood_light_car_meta">Built into the car · colour and on/off only</string>
+    <string name="mood_light_car_missing">Not found on this car</string>
     <string name="mood_light_in_group">In %1$s</string>
     <string name="mood_light_move_here">Move here</string>
     <string name="mood_light_group_ready">%1$d of %2$d lights connected · all act together</string>

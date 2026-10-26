@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.4.1-beta] - 2026-10-26
+
+### Recording
+- **One encoder for the whole trip.** Each camera used to stop and rebuild its video encoder at every 1-minute video, which lost the last frames of each video and rebuilt the car's encoder thousands of times a week. Now the encoder keeps running: at each minute it asks for a keyframe, and the next video starts exactly on it. Videos follow on from each other with no missing frames, which also fills in instant captures and flash-to-pass clips that cross two videos. If the encoder gives no keyframe within 7 seconds, or is not working right, 7xDash falls back to the old rebuild for that video.
+- **Recording pipeline setting removed** from Developer options. Recording always uses MediaCodec; a saved MediaRecorder choice no longer has any effect.
+
 ## [1.4.0] - 2026-10-26
 
 ### Mood light

@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.5.6-beta] - 2026-10-27
+
+### 7xDash web
+- **Car volume from the web.** A linked car now tells 7xDash web it can take volume steps, and the web shows a **Car volume** card with **Down** and **Up**. Each tap turns the car's main volume one step, the same way as the Volume up/down shortcut actions. The car does not report its volume level, so there is no slider. Each step is written to the black box.
+
 ## [1.5.5-beta] - 2026-10-27
 
 ### Car buttons lab (experimental)

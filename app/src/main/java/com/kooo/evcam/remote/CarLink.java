@@ -372,6 +372,13 @@ public final class CarLink {
                         if (current != null) {
                             handler.post(() -> current.command(j));
                         }
+                    } else if ("volume".equals(type)) {
+                        // The car's main volume, one step per tap on 7xDash web
+                        int step = j.optInt("step");
+                        if (step == 1 || step == -1) {
+                            com.kooo.evcam.audio.CarVolume.step(context, step);
+                            com.kooo.evcam.blackbox.BlackBox.note("car-link: volume " + (step > 0 ? "up" : "down"));
+                        }
                     } else if ("idle".equals(type)) {
                         boolean wasWatching = watching.get();
                         String prevSource = source;

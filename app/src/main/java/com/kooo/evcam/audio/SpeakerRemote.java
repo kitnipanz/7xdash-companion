@@ -57,6 +57,8 @@ public final class SpeakerRemote implements CarLink.Speaker {
             msg.put("volume", config.getOutsideSpeakerVolume());
             msg.put("megaphone", config.getSpeakVolume());
             msg.put("speakers", speakers());
+            // Tells 7xDash web this car takes {"t":"volume","step":±1} (1.5.6)
+            msg.put("carVolume", true);
         } catch (JSONException ignored) {
             // keys and values are plain
         }

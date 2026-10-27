@@ -1629,6 +1629,8 @@ Then reopen this app.</string>
     <string name="shortcut_step_press">How you press it</string>
     <string name="shortcut_step_action">What it does</string>
     <string name="shortcut_action_fog_lamp">Rear fog lamp on/off</string>
+    <string name="shortcut_action_volume_up">Volume up</string>
+    <string name="shortcut_action_volume_down">Volume down</string>
     <string name="shortcut_group_lights">Lights &amp; display</string>
     <string name="fog_lamp_turned_on">Rear fog lamp on</string>
     <string name="fog_lamp_turned_off">Rear fog lamp off</string>

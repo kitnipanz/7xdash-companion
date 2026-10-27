@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.5.4-beta] - 2026-10-27
+
+### Shortcuts and Smart sticker
+- **Volume up** and **Volume down**, new actions in the **Sound** tab for any remote button, steering-wheel key or sticker. Each press turns the car's main volume one step, as the steering wheel button does, from any screen. It uses the volume key way that worked in the Car volume lab (way 3); the car refuses its volume API to apps.
+
 ## [1.5.3-beta] - 2026-10-27
 
 ### Car volume lab (experimental)

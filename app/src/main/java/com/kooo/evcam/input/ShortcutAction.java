@@ -46,7 +46,10 @@ public enum ShortcutAction {
     /** Beta: the mood light master switch. Off turns the lights off and stops them following the gear. */
     MOOD_LIGHT("toggle_mood_light", R.string.shortcut_action_mood_light, R.drawable.ic_light),
     /** Rear fog lamp on or off, through the car's body control (BCM_FUNC_LIGHT_REAR_FOG_LAMPS). */
-    FOG_LAMP("toggle_fog_lamp", R.string.shortcut_action_fog_lamp, R.drawable.ic_fog);
+    FOG_LAMP("toggle_fog_lamp", R.string.shortcut_action_fog_lamp, R.drawable.ic_fog),
+    /** The car's main volume one step up or down, as the steering wheel button does ({@link com.kooo.evcam.audio.CarVolume}). */
+    VOLUME_UP("volume_up", R.string.shortcut_action_volume_up, R.drawable.ic_volume_up),
+    VOLUME_DOWN("volume_down", R.string.shortcut_action_volume_down, R.drawable.ic_volume_down);
 
     /** The tabs actions are picked from, in tab order. */
     public enum Group {
@@ -98,6 +101,8 @@ public enum ShortcutAction {
             case AIRPLAY:
             case EQ:
             case OUTSIDE_SPEAKER:
+            case VOLUME_UP:
+            case VOLUME_DOWN:
                 return Group.SOUND;
             case MOOD_LIGHT:
             case DIM:

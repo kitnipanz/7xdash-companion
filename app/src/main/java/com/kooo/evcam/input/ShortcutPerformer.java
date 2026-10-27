@@ -118,6 +118,12 @@ public final class ShortcutPerformer {
             case FOG_LAMP:
                 com.kooo.evcam.light.FogLamp.toggle(context);
                 return;
+            case VOLUME_UP:
+                com.kooo.evcam.audio.CarVolume.step(context, 1);
+                return;
+            case VOLUME_DOWN:
+                com.kooo.evcam.audio.CarVolume.step(context, -1);
+                return;
             case ANNOUNCE_PLAY:
                 com.kooo.evcam.announce.Announcement chosen = new com.kooo.evcam.announce.AnnouncementStore(context)
                         .find(ShortcutAction.choice(actionKey));

@@ -32,6 +32,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * front) a still from the camera's JPEG channel is drawn instead. If the surround pipe is not up (camera wired
  * direct), surround falls back to the same canvas path through {@link RemoteFrame}.</p>
  *
+ * <p>Surround tries three paths and moves on when one gives no picture: the GPU tap; a grab of
+ * the surround view on screen; stills from the surround camera's JPEG channel (screen not in
+ * front). The encoder repeats its last frame, so a stalled tap would still "send video" (black or
+ * frozen) and the phone then ignores JPEG stopgaps: the tap's own frame count decides instead.
+ * Each change of path goes to the log and the black box with the reason.</p>
+ *
  * <p>Main thread only, except the packet sink.</p>
  */
 public final class RemoteStream {
@@ -54,12 +60,13 @@ public final class RemoteStream {
         String fisheyeProjection();
 
         /**
-         * Cabin still from the camera's JPEG channel, for when its view has no live picture (main
-         * screen not in front, screen dark). {@code done} may run on any thread, null when none came.
+         * Still from the watched camera's JPEG channel (cabin, or the surround composite), for when
+         * its view has no live picture (main screen not in front, screen dark). {@code done} may run
+         * on any thread, null when none came.
          *
          * @return false when nothing was asked (camera not open, channel busy)
          */
-        boolean cabinStill(String source, java.util.function.Consumer<Bitmap> done);
+        boolean cameraStill(String source, java.util.function.Consumer<Bitmap> done);
     }
 
     private static final String TAG = "RemoteStream";
@@ -71,6 +78,10 @@ public final class RemoteStream {
     private static final long CHECK_MS = 1000L;
     /** Cabin stills are full still captures: a few a second is plenty, the encoder repeats frames. */
     private static final long STILL_MS = 300L;
+    /** Surround stills are the whole four-lane composite: one a second. */
+    private static final long SURROUND_STILL_MS = 1000L;
+    /** The GPU tap drew nothing for this long: give up on it for this watch and grab the screen. */
+    private static final long GPU_STALL_MS = 2500L;
     /** Header: 'V', flags, source, w(2), h(2), pts us(8). */
     public static final int HEADER = 15;
     public static final byte MAGIC = 'V';
@@ -110,6 +121,12 @@ public final class RemoteStream {
     private volatile long stillAskedMs;
     private static final long STILL_LOST_MS = 3000L;
     private boolean running;
+    /** This watch gave up on the GPU tap (it stalled or was refused); surround uses the canvas path. */
+    private boolean gpuGaveUp;
+    private long tapSeen;
+    private long tapMovedMs;
+    /** Surround path last logged: gpu, screen or stills. */
+    private String surroundPath = "";
 
     private final Runnable canvasTick = new Runnable() {
         @Override
@@ -127,6 +144,20 @@ public final class RemoteStream {
         public void run() {
             if (!running) {
                 return;
+            }
+            if (mode == Mode.GL && tapped != null) {
+                long drawn = tapped.tapFrames();
+                long now = SystemClock.elapsedRealtime();
+                if (drawn != tapSeen) {
+                    tapSeen = drawn;
+                    tapMovedMs = now;
+                } else if (now - tapMovedMs > GPU_STALL_MS) {
+                    gpuGaveUp = true;
+                    path("screen", "GPU tap drew no frames for " + (now - tapMovedMs) + " ms");
+                    bind(source, true);
+                    main.postDelayed(this, CHECK_MS);
+                    return;
+                }
             }
             // Pipe rebuilt (camera re-session) or came up late: rebind or switch path.
             Mode want = wantedMode(source);
@@ -152,6 +183,11 @@ public final class RemoteStream {
         String src = RemoteLive.slotFor(requested);
         boolean was = running;
         running = true;
+        if (!was) {
+            // A new watch tries the GPU tap again
+            gpuGaveUp = false;
+            surroundPath = "";
+        }
         if (!bind(src, !was)) {
             stop();
             return false;
@@ -181,7 +217,7 @@ public final class RemoteStream {
     }
 
     private Mode wantedMode(String src) {
-        if (isSurround(src) && PreviewDewarp.pipe() != null && PreviewDewarp.laneRects() != null) {
+        if (isSurround(src) && !gpuGaveUp && PreviewDewarp.pipe() != null && PreviewDewarp.laneRects() != null) {
             return Mode.GL;
         }
         return Mode.CANVAS;
@@ -217,19 +253,37 @@ public final class RemoteStream {
         if (mode == Mode.GL) {
             tapped = PreviewDewarp.pipe();
             if (tapped != null && applyTap()) {
+                tapSeen = tapped.tapFrames();
+                tapMovedMs = SystemClock.elapsedRealtime();
+                path("gpu", "GPU tap on the preview pipe");
                 return true;
             }
             // Pipe refused the encoder surface: canvas path, fresh encoder (EGL may hold it).
             AppLog.w(TAG, "GL tap failed, canvas fallback");
+            gpuGaveUp = true;
+            path("screen", "GPU tap refused the encoder");
             unbind();
             encoder = LiveEncoder.start(WIDTH, HEIGHT, CANVAS_FPS, BITRATE, this::onPacket);
             if (encoder == null) {
                 return false;
             }
             mode = Mode.CANVAS;
+        } else if (isSurround(src) && !gpuGaveUp) {
+            path("screen", "no GPU pipe (camera wired direct)");
         }
         main.post(canvasTick);
         return true;
+    }
+
+    /** Log the surround path when it changes (gpu, screen, stills) and why. Main thread. */
+    private void path(String now, String why) {
+        if (!isSurround(source) || now.equals(surroundPath)) {
+            return;
+        }
+        surroundPath = now;
+        String line = "remote surround via " + now + ": " + why;
+        AppLog.i(TAG, line);
+        com.kooo.evcam.blackbox.BlackBox.note(line);
     }
 
     /** Lay the requested surround view out on the tap. */
@@ -308,15 +362,24 @@ public final class RemoteStream {
         } catch (RuntimeException e) {
             AppLog.w(TAG, "grab failed: " + e.getMessage());
         }
+        if (grab != null && surround) {
+            path("screen", "grab of the surround view on screen");
+        }
         if (grab == null) {
-            // Cabin has no live view: ask its camera for a still instead. drawing stays set until it lands.
+            // No live view (main screen not in front): ask the camera for a still. drawing stays set until it lands.
             long now = SystemClock.elapsedRealtime();
-            if (!surround && now - lastStillMs >= STILL_MS) {
+            if (now - lastStillMs >= (surround ? SURROUND_STILL_MS : STILL_MS)) {
                 stillAskedMs = now;
-                if (host.cabinStill(src, still -> {
+                if (surround) {
+                    path("stills", "no live surround picture on screen");
+                    if (!host.copyLaneWindows(windows)) {
+                        RemoteFrame.equalVerticalLanes(windows);
+                    }
+                }
+                if (host.cameraStill(src, still -> {
                     if (stillAskedMs == now) {
                         stillAskedMs = 0;
-                        draw(enc, still, src, false);
+                        draw(enc, still, src, surround);
                     } else if (still != null) {
                         still.recycle();
                     }

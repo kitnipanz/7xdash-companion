@@ -1743,7 +1743,8 @@ public class MainActivity extends AppCompatActivity {
         return new com.kooo.evcam.remote.RemoteStream.Host() {
             @Override
             public android.view.TextureView surroundView() {
-                return textureFront;
+                // Like the cabins: off screen the view holds a stale frame, so remote takes stills instead
+                return isInBackground ? null : textureFront;
             }
 
             @Override
@@ -1757,7 +1758,7 @@ public class MainActivity extends AppCompatActivity {
             }
 
             @Override
-            public boolean cabinStill(String source, java.util.function.Consumer<android.graphics.Bitmap> done) {
+            public boolean cameraStill(String source, java.util.function.Consumer<android.graphics.Bitmap> done) {
                 return requestCabinStill(source, done);
             }
 
@@ -1923,13 +1924,17 @@ public class MainActivity extends AppCompatActivity {
         return isInBackground ? null : view;
     }
 
-    /** Remote watch: a still from the watched cabin camera's JPEG channel. False when none was asked. */
+    /**
+     * Remote watch: a still from the watched camera's JPEG channel (cabin, or the surround composite
+     * for the video path). False when none was asked.
+     */
     private boolean requestCabinStill(String source, java.util.function.Consumer<android.graphics.Bitmap> done) {
         String slot = com.kooo.evcam.remote.RemoteLive.slotFor(source);
         String key = com.kooo.evcam.remote.RemoteLive.DRIVER.equals(slot)
                 ? com.kooo.evcam.camera.CameraSlots.KEY_CABIN_FRONT
                 : com.kooo.evcam.remote.RemoteLive.BACKSEAT.equals(slot)
-                ? com.kooo.evcam.camera.CameraSlots.KEY_CABIN_REAR : null;
+                ? com.kooo.evcam.camera.CameraSlots.KEY_CABIN_REAR
+                : com.kooo.evcam.camera.CameraSlots.KEY_SURROUND;
         com.kooo.evcam.camera.SingleCamera cam = key == null || cameraManager == null
                 ? null : cameraManager.getCamera(key);
         return cam != null && cam.requestRemoteStill(1280, done);
@@ -2017,7 +2022,11 @@ public class MainActivity extends AppCompatActivity {
             // Cabin with no live canvas (main screen not in front): its camera's still. Else the last frame.
             final long stillAt = android.os.SystemClock.elapsedRealtime();
             remoteStillAskedMs = stillAt;
-            if (requestCabinStill(source, still -> {
+            // The JPEG pump's stills are cabin only; surround stills go through the video path
+            String slot = com.kooo.evcam.remote.RemoteLive.slotFor(source);
+            boolean cabin = com.kooo.evcam.remote.RemoteLive.DRIVER.equals(slot)
+                    || com.kooo.evcam.remote.RemoteLive.BACKSEAT.equals(slot);
+            if (cabin && requestCabinStill(source, still -> {
                 if (remoteStillAskedMs != stillAt) {
                     if (still != null) {
                         still.recycle();   // given up on already; a newer grab owns remoteBusy

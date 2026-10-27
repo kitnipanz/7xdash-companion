@@ -273,6 +273,8 @@ public final class FisheyeGlPipe {
     private Correction tapCorrection = new Correction(true, 0f, 1f, 1f);
     private long tapMinNs;
     private long tapLastNs = Long.MIN_VALUE;
+    /** Frames drawn into the tap so far; remote watch reads it to see whether the tap is alive. */
+    private volatile long tapDrawn;
     private final int[] tapSize = new int[2];
     private final float[] texMatrix = new float[16];
     private final int[] size = new int[2];
@@ -580,6 +582,15 @@ public final class FisheyeGlPipe {
     }
 
     /** Stop drawing into the tap. Waits, so the caller can release the encoder right after. */
+    /**
+     * Frames drawn into the tap since this pipe started. Not moving while a tap is set means the
+     * remote encoder gets nothing new (no camera frames reach the pipe, or the tap was dropped);
+     * the encoder then only repeats its last frame. Any thread.
+     */
+    public long tapFrames() {
+        return tapDrawn;
+    }
+
     public void clearTap() {
         if (released) {
             return;
@@ -819,6 +830,8 @@ public final class FisheyeGlPipe {
         if (!EGL14.eglSwapBuffers(display, tapSurface)) {
             AppLog.w(TAG, name + " tap swap failed 0x" + Integer.toHexString(EGL14.eglGetError()));
             destroyTapSurface();
+        } else {
+            tapDrawn++;
         }
         restoreScreen();
     }

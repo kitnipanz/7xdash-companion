@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.5.8-beta] - 2026-10-28
+
+### Remote view
+- **Surround on the web page falls back instead of staying blank.** Surround tries three paths and moves on when one gives no picture: the GPU path (as before); a grab of the surround picture on the car's screen; stills from the surround camera, one a second, when 7xDash is not on screen. The GPU path is checked by the frames it actually draws: before, a stalled GPU path still sent repeated (black) video, and the web page then ignored the backup pictures.
+- The path in use and why it changed are written to the log and the black box (`remote surround via gpu | screen | stills: …`).
+
 ## [1.5.7-beta] - 2026-10-27
 
 ### Crash reports and usage stats

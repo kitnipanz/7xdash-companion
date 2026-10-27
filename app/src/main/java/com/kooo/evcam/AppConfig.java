@@ -37,6 +37,8 @@ public class AppConfig {
     private static final String KEY_PARKING_CREEP = "parking_creep";  // under 3 km/h in D/R keeps reading pillar signs
     private static final String KEY_USAGE_STATS = "usage_stats";  // anonymous usage stats to Google Analytics: the last answer, off until one
     private static final String KEY_USAGE_STATS_REMEMBERED = "usage_stats_remembered";  // don't ask again on open
+    private static final String KEY_CRASH_REPORTS = "crash_reports";  // anonymous crash reports, apart from usage stats
+    private static final String KEY_CONSENT_ASKED = "usage_consent_asked";  // version of the question last shown
     private static final String KEY_BETA_FEATURES = "beta_features";  // show features still in beta (home cards, automatic triggers)
     private static final String KEY_HUD_NOTICE_LEFT = "hud_notice_left_pct";  // 抬头显示通知离左边多少（%）
     private static final String KEY_HUD_NOTICE_RIGHT = "hud_notice_right_pct";  // 离右边多少（%）  // 别的应用的通知投到抬头显示
@@ -476,9 +478,48 @@ public class AppConfig {
 
     public void setUsageStats(boolean enabled, boolean remember) {
         prefs.edit()
+                // Pin crash reports to what they are now, so this does not change them
+                .putBoolean(KEY_CRASH_REPORTS, isCrashReportsEnabled())
                 .putBoolean(KEY_USAGE_STATS, enabled)
                 .putBoolean(KEY_USAGE_STATS_REMEMBERED, remember)
                 .apply();
+    }
+
+    /**
+     * Anonymous crash reports. Before 1.5.7 they were part of usage stats, so with no answer of
+     * its own a remembered yes to usage stats counts as yes here too.
+     */
+    public boolean isCrashReportsEnabled() {
+        if (prefs.contains(KEY_CRASH_REPORTS)) {
+            return prefs.getBoolean(KEY_CRASH_REPORTS, false);
+        }
+        return isUsageStatsEnabled() && isUsageStatsRemembered();
+    }
+
+    /** Set in Settings: a remembered answer, like the usage stats switch. */
+    public void setCrashReports(boolean enabled) {
+        prefs.edit()
+                .putBoolean(KEY_CRASH_REPORTS, enabled)
+                .putBoolean(KEY_USAGE_STATS_REMEMBERED, true)
+                .apply();
+    }
+
+    /** The first-open question's answer: both choices at once, remembered. */
+    public void setConsent(boolean usageStats, boolean crashReports) {
+        prefs.edit()
+                .putBoolean(KEY_USAGE_STATS, usageStats)
+                .putBoolean(KEY_CRASH_REPORTS, crashReports)
+                .putBoolean(KEY_USAGE_STATS_REMEMBERED, true)
+                .apply();
+    }
+
+    /** Which version of the first-open question was last shown (0: none, or the one before 1.5.7). */
+    public int getConsentAsked() {
+        return prefs.getInt(KEY_CONSENT_ASKED, 0);
+    }
+
+    public void setConsentAsked(int version) {
+        prefs.edit().putInt(KEY_CONSENT_ASKED, version).apply();
     }
 
     /** Where did I park: read the floor and bay signs every time the car goes into P. On by default. */

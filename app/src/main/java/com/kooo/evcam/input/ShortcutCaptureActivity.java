@@ -90,11 +90,12 @@ public class ShortcutCaptureActivity extends AppCompatActivity implements Sticke
             return;
         }
         AppConfig config = new AppConfig(this);
+        Shortcut saved = new Shortcut(captured.keyCode, captured.scanCode, captured.deviceName,
+                key, pressKind.key);
         java.util.List<Shortcut> items = ShortcutBook.put(
-                ShortcutBook.parse(config.getButtonShortcuts()),
-                new Shortcut(captured.keyCode, captured.scanCode, captured.deviceName,
-                        key, pressKind.key));
+                ShortcutBook.parse(config.getButtonShortcuts()), saved);
         config.setButtonShortcuts(ShortcutBook.write(items));
+        ShortcutPerformer.noteSaved(saved);
         if (StickerFrame.isSticker(captured.deviceName)) {
             config.setStickerEnabled(true);
             config.setStickerDevices(StickerDevices.write(StickerDevices.put(

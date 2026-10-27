@@ -78,6 +78,74 @@ final class AnalyticsPayload {
         return String.valueOf(bucket);
     }
 
+    /** Packages whose frames are 7xDash's own code (the AirPlay bridge included). */
+    private static final String[] APP_PACKAGES = {"com.kooo.evcam.", "io.github.jqssun.airplay."};
+    static final int MAX_FRAME_PARAMS = 5;
+
+    /**
+     * Where a crash happened, for the app_crash event: the deepest cause's stack, 7xDash frames
+     * only (the top 3 frames of any code when none is ours), as {@code Class.method:line} joined
+     * by {@code " < "} and cut into up to {@link #MAX_FRAME_PARAMS} values of
+     * {@link #MAX_VALUE} characters. Code locations only: never the exception's message.
+     */
+    static List<String> crashFrames(Throwable t) {
+        List<String> out = new java.util.ArrayList<>();
+        if (t == null) {
+            return out;
+        }
+        Throwable root = t;
+        for (int i = 0; root.getCause() != null && root.getCause() != root && i < 10; i++) {
+            root = root.getCause();
+        }
+        StackTraceElement[] stack = root.getStackTrace();
+        List<String> frames = new java.util.ArrayList<>();
+        for (StackTraceElement e : stack) {
+            if (isApp(e.getClassName())) {
+                frames.add(frame(e));
+            }
+        }
+        if (frames.isEmpty()) {
+            for (int i = 0; i < Math.min(3, stack.length); i++) {
+                frames.add(frame(stack[i]));
+            }
+        }
+        StringBuilder chunk = new StringBuilder();
+        for (String f : frames) {
+            String piece = chunk.length() == 0 ? f : " < " + f;
+            if (chunk.length() + piece.length() > MAX_VALUE) {
+                if (chunk.length() > 0) {
+                    out.add(chunk.toString());
+                }
+                if (out.size() == MAX_FRAME_PARAMS) {
+                    return out;
+                }
+                chunk = new StringBuilder(value(f, MAX_VALUE));
+            } else {
+                chunk.append(piece);
+            }
+        }
+        if (chunk.length() > 0 && out.size() < MAX_FRAME_PARAMS) {
+            out.add(chunk.toString());
+        }
+        return out;
+    }
+
+    private static boolean isApp(String className) {
+        for (String p : APP_PACKAGES) {
+            if (className != null && className.startsWith(p)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** "ShortcutPerformer.perform:118"; inner and lambda classes keep their $ part. */
+    private static String frame(StackTraceElement e) {
+        String cls = e.getClassName();
+        String simple = cls.substring(cls.lastIndexOf('.') + 1);
+        return simple + "." + e.getMethodName() + ":" + e.getLineNumber();
+    }
+
     /**
      * The JSON body for one request.
      *

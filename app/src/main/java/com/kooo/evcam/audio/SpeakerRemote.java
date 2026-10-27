@@ -70,6 +70,13 @@ public final class SpeakerRemote implements CarLink.Speaker {
         if (msg == null) {
             return;
         }
+        // Usage stats: which outside speaker controls get used from 7xDash web
+        String[] fields = {"on", "volume", "megaphone", "speakers"};
+        for (String f : fields) {
+            if (msg.has(f)) {
+                com.kooo.evcam.analytics.Analytics.event("remote", "command", "speaker_" + f);
+            }
+        }
         if (msg.has("volume")) {
             OutsideSpeaker.setVolume(context, msg.optInt("volume", config.getOutsideSpeakerVolume()));
         }

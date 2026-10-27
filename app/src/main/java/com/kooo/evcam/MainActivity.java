@@ -645,7 +645,8 @@ public class MainActivity extends AppCompatActivity {
         View btnInstantNow = findViewById(R.id.btn_instant_capture);
         if (btnInstantNow != null) {
             btnInstantNow.setOnClickListener(v -> com.kooo.evcam.input.ShortcutPerformer.perform(
-                    this, com.kooo.evcam.input.ShortcutAction.INSTANT_CAPTURE.key));
+                    this, com.kooo.evcam.input.ShortcutAction.INSTANT_CAPTURE.key,
+                    com.kooo.evcam.input.ShortcutPerformer.FROM_INSTANT, null));
         }
 
         View btnInstant = findViewById(R.id.btn_instant_captures);

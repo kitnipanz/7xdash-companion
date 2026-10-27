@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.5.7-beta] - 2026-10-27
+
+### Crash reports and usage stats
+- **New first-open question: "Help fix and improve 7xDash?"** It explains what each part sends and has three answers: **Send both**, **Crash reports only** and **No thanks**. The answer is remembered (the "Remember my choice" box is gone); closing it without answering asks again on the next open. Change it any time in Settings › Interface.
+- **Asked once more if you said no before.** People who said yes are not asked again.
+- **Crash reports are separate from usage stats**, with their own switch in Settings › Interface. A yes to usage stats from before covers crash reports too.
+- **Crash reports say where a crash happened:** the kind of error plus where in 7xDash's code it happened (class, method and line, up to 5 values). Never the error's message.
+- **Usage stats show how actions are used:** where each action was run from (home card, side rail, button, sticker, instant button, floating button) and how the button was pressed, which actions get put on buttons and stickers, and which 7xDash web controls are used.
+- Thai text for the question and both switches reads more naturally.
+
 ## [1.5.6-beta] - 2026-10-27
 
 ### 7xDash web

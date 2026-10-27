@@ -209,6 +209,7 @@ public class StickerActivity extends AppCompatActivity implements StickerHub.Wat
                 key, pending.press.key);
         config.setButtonShortcuts(ShortcutBook.write(
                 ShortcutBook.put(ShortcutBook.parse(config.getButtonShortcuts()), next)));
+        ShortcutPerformer.noteSaved(next);
         config.setStickerEnabled(true);
         SwitchCompat use = findViewById(R.id.sticker_use);
         if (!use.isChecked()) {

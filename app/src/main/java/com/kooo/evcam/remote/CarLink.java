@@ -377,6 +377,8 @@ public final class CarLink {
                         int step = j.optInt("step");
                         if (step == 1 || step == -1) {
                             com.kooo.evcam.audio.CarVolume.step(context, step);
+                            com.kooo.evcam.analytics.Analytics.event("remote",
+                                    "command", step > 0 ? "volume_up" : "volume_down");
                             com.kooo.evcam.blackbox.BlackBox.note("car-link: volume " + (step > 0 ? "up" : "down"));
                         }
                     } else if ("idle".equals(type)) {

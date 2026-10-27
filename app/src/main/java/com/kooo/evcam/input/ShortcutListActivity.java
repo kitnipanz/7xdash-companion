@@ -149,10 +149,11 @@ public class ShortcutListActivity extends AppCompatActivity {
      * shortcut already on that button and press gives way, as when adding one.
      */
     private void replace(int index, Shortcut item, String action, String press) {
+        Shortcut changed = new Shortcut(item.keyCode, item.scanCode, item.deviceName, action, press);
         List<Shortcut> next = ShortcutBook.put(
-                ShortcutBook.remove(ShortcutBook.parse(config.getButtonShortcuts()), index),
-                new Shortcut(item.keyCode, item.scanCode, item.deviceName, action, press));
+                ShortcutBook.remove(ShortcutBook.parse(config.getButtonShortcuts()), index), changed);
         config.setButtonShortcuts(ShortcutBook.write(next));
+        ShortcutPerformer.noteSaved(changed);
         if (StickerFrame.isSticker(item.deviceName)) {
             StickerHub.sync(this);
         } else {

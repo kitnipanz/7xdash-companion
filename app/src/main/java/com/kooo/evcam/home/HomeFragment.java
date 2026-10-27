@@ -471,7 +471,7 @@ public class HomeFragment extends Fragment {
     }
 
     private void perform(ShortcutAction action) {
-        ShortcutPerformer.perform(requireContext(), action.key);
+        ShortcutPerformer.perform(requireContext(), action.key, ShortcutPerformer.FROM_HOME, null);
     }
 
     /** 拍照卡片：就地拍，留在主页（结果照常弹提示，开着抬头显示通知时也上抬头显示）。 */

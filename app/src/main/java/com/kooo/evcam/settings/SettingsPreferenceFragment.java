@@ -1189,6 +1189,12 @@ public class SettingsPreferenceFragment extends PreferenceFragmentCompat {
             }
         });
 
+        bindSwitch("pref_crash_reports", appConfig.isCrashReportsEnabled(), value -> {
+            // Like usage stats: set here is a remembered answer
+            appConfig.setCrashReports(value);
+            com.kooo.evcam.analytics.Analytics.setCrashReports(value);
+        });
+
         bindSwitch("pref_usage_stats", appConfig.isUsageStatsEnabled(), value -> {
             // Set here counts as a remembered answer: the first-open question stops asking
             appConfig.setUsageStats(value, true);

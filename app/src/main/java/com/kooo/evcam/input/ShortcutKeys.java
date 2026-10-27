@@ -42,7 +42,7 @@ public final class ShortcutKeys {
                         ShortcutBook.parse(new AppConfig(ctx).getButtonShortcuts()),
                         keyCode, scanCode, deviceName, kind);
                 if (hit != null) {
-                    ShortcutPerformer.perform(ctx, hit.action);
+                    ShortcutPerformer.perform(ctx, hit.action, ShortcutPerformer.FROM_BUTTON, kind);
                 }
             });
         }

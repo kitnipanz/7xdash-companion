@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.5.3-beta] - 2026-10-27
+
+### Car volume lab (experimental)
+- **New test screen: can 7xDash change the car's main volume?** Settings → Mood light → **Car volume (experimental)**. It tries four ways, each with **Read**, **Down** and **Up**, and shows what happened:
+  1. **Car volume group**: Android's car audio volume for media (`CarAudioManager.setGroupVolume`).
+  2. **Android media volume**: `AudioManager.adjustStreamVolume` on media.
+  3. **Volume key**: a volume up/down key press handed to the system, like the steering wheel button.
+  4. **ECARX audio library**: lists the audio classes and volume methods in the car's ECARX library and tries their getter/setter pairs.
+- Play some music first, then press Up or Down on each way and listen. Every press and its result is written to the black box.
+
 ## [1.5.2-beta] - 2026-10-27
 
 ### Shortcuts and Smart sticker

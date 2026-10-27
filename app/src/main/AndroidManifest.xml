@@ -90,6 +90,12 @@
         android:usesCleartextTraffic="true"
         android:theme="@style/Theme.Cam">
 
+        <!-- Car Android's own API (CarAudioManager) for the Volume lab; absent on phones and tablets -->
+        <uses-library
+            android:name="android.car"
+            android:required="false" />
+
+
         <!-- 高优先级保活 Provider：在应用启动的最早阶段初始化服务 -->
         <!-- initOrder="2147483647" 确保最先执行（参考保活效果好的应用） -->
         <provider
@@ -243,6 +249,13 @@
         <activity
             android:name=".light.CarAmbientLabActivity"
             android:label="@string/car_ambient_title"
+            android:theme="@style/Theme.Cam"
+            android:screenOrientation="landscape"
+            android:exported="false" />
+
+        <activity
+            android:name=".audio.VolumeLabActivity"
+            android:label="@string/volume_lab_title"
             android:theme="@style/Theme.Cam"
             android:screenOrientation="landscape"
             android:exported="false" />

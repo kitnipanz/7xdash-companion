@@ -66,6 +66,11 @@
             android:key="pref_car_ambient"
             android:title="@string/car_ambient_title"
             android:summary="@string/car_ambient_summary" />
+
+        <Preference
+            android:key="pref_volume_lab"
+            android:title="@string/volume_lab_title"
+            android:summary="@string/volume_lab_summary" />
     </PreferenceScreen>
 
     <PreferenceScreen

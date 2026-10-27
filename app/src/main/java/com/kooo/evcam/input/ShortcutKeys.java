@@ -22,7 +22,9 @@ public final class ShortcutKeys {
     }
 
     public static synchronized boolean dispatch(Context context, KeyEvent event) {
-        if (context == null || event == null || ShortcutCapture.isActive()
+        ButtonLab.onKey(event);
+        // While the Button lab listens, buttons do what they do without 7xDash
+        if (context == null || event == null || ShortcutCapture.isActive() || ButtonLab.isListening()
                 || event.getKeyCode() == KeyEvent.KEYCODE_BACK) {
             return false;
         }

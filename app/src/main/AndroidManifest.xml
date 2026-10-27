@@ -261,6 +261,13 @@
             android:exported="false" />
 
         <activity
+            android:name=".input.ButtonLabActivity"
+            android:label="@string/button_lab_title"
+            android:theme="@style/Theme.Cam"
+            android:screenOrientation="landscape"
+            android:exported="false" />
+
+        <activity
             android:name=".input.BleSignalActivity"
             android:label="@string/ble_signal_title"
             android:theme="@style/Theme.Cam"

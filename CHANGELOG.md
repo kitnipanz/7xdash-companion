@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.5.5-beta] - 2026-10-27
+
+### Car buttons lab (experimental)
+- **New test screen: what does each car button send?** Settings → Mood light → **Car buttons (experimental)**. Press **Listen**, then press the car's buttons one at a time (steering wheel, knobs, screen buttons). Each press shows up as a card:
+  - **Key**: key code, scan code and the input device that sent it.
+  - **Car setting**: an ECARX setting the button changed, with its value before and now (settings that change by themselves are ignored).
+  - **System log**: key-related lines of the system log around the press, when the car lets 7xDash read it.
+- **Simulate from 7xDash.** A key card has **Press again**, which sends the same key from 7xDash (the way Volume up/down works). A car setting card has **Send** buttons for its old and new value; they ask first and only work in P.
+- Shortcuts are paused while listening, so every button does only what the car does. Everything heard and sent is written to the black box.
+
 ## [1.5.4-beta] - 2026-10-27
 
 ### Shortcuts and Smart sticker

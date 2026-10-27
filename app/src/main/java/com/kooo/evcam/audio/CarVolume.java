@@ -28,16 +28,23 @@ public final class CarVolume {
 
     /** One step: {@code +1} up, {@code -1} down. Any thread. */
     public static void step(Context context, int direction) {
+        key(context, direction > 0 ? KeyEvent.KEYCODE_VOLUME_UP : KeyEvent.KEYCODE_VOLUME_DOWN);
+    }
+
+    /**
+     * Presses {@code code} the same way: down and up through the window, which hands volume,
+     * mute and media keys to the system. Other keys stop at the window. Any thread.
+     */
+    public static void key(Context context, int code) {
         Context app = context.getApplicationContext();
         if (Looper.myLooper() != Looper.getMainLooper()) {
-            new Handler(Looper.getMainLooper()).post(() -> press(app, direction));
+            new Handler(Looper.getMainLooper()).post(() -> press(app, code));
         } else {
-            press(app, direction);
+            press(app, code);
         }
     }
 
-    private static void press(Context app, int direction) {
-        int code = direction > 0 ? KeyEvent.KEYCODE_VOLUME_UP : KeyEvent.KEYCODE_VOLUME_DOWN;
+    private static void press(Context app, int code) {
         try {
             if (window == null) {
                 window = new Dialog(app);

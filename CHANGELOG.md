@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.5.9-beta] - 2026-10-28
+
+### Remote view
+- **Stills when the phone cannot play the live video.** The 7xDash web page now tells the car when live video does not play on the phone: the browser cannot play H.264, the phone rejects or fails to decode the stream, or no frame shows within 3 s. The car then stops the video and sends still pictures for the rest of that watch, on every camera, instead of a blank page. The next watch tries video again.
+- The web page shows why under the picture, and the car writes it to the black box (`remote: phone cannot play the live video (…), sending stills`).
+
 ## [1.5.8-beta] - 2026-10-28
 
 ### Remote view

@@ -63,6 +63,8 @@ final class ActionTabs {
             MaterialButton tab = button(tabs.getContext());
             tab.setText(group.labelRes);
             tab.setIconResource(group.iconRes);
+            tab.setSingleLine(true);
+            tab.setEllipsize(android.text.TextUtils.TruncateAt.END);
             tab.setTag(group);
             tab.setOnClickListener(v -> show(group));
             LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(0, rowHeight, 1f);

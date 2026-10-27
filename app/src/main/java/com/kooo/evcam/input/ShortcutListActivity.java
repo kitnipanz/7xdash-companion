@@ -117,6 +117,11 @@ public class ShortcutListActivity extends AppCompatActivity {
                 .setView(body)
                 .setNeutralButton(R.string.shortcut_edit_press, (dialog, which) -> editPress(item, index))
                 .setNegativeButton(android.R.string.cancel, null));
+        // Wide enough for every tab on one line.
+        if (shown[0] != null && shown[0].getWindow() != null) {
+            shown[0].getWindow().setLayout(Math.round(getResources().getDisplayMetrics().widthPixels * 0.7f),
+                    android.view.ViewGroup.LayoutParams.WRAP_CONTENT);
+        }
     }
 
     private void editPress(Shortcut item, int index) {

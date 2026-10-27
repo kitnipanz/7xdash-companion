@@ -1588,4 +1588,9 @@
     <string name="shortcut_group_car">รถและแอป</string>
     <string name="shortcut_step_press">วิธีกด</string>
     <string name="shortcut_step_action">ให้ทำอะไร</string>
+    <string name="shortcut_action_fog_lamp">เปิด/ปิดไฟตัดหมอกหลัง</string>
+    <string name="shortcut_group_lights">ไฟและหน้าจอ</string>
+    <string name="fog_lamp_turned_on">เปิดไฟตัดหมอกหลังแล้ว</string>
+    <string name="fog_lamp_turned_off">ปิดไฟตัดหมอกหลังแล้ว</string>
+    <string name="fog_lamp_failed">ไฟตัดหมอกหลัง: %1$s</string>
 </resources>

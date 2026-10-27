@@ -115,6 +115,9 @@ public final class ShortcutPerformer {
             case MOOD_LIGHT:
                 com.kooo.evcam.light.GearLight.toggle(context);
                 return;
+            case FOG_LAMP:
+                com.kooo.evcam.light.FogLamp.toggle(context);
+                return;
             case ANNOUNCE_PLAY:
                 com.kooo.evcam.announce.Announcement chosen = new com.kooo.evcam.announce.AnnouncementStore(context)
                         .find(ShortcutAction.choice(actionKey));

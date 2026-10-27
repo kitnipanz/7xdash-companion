@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.2-beta] - 2026-10-27
+
+### Shortcuts and Smart sticker
+- **Rear fog lamp on/off**, a new action for any button or sticker. Each press reads the car's rear fog lamp and sends the other way (`BCM_FUNC_LIGHT_REAR_FOG_LAMPS`, 0 off, 1 on), then says "Rear fog lamp on" or "off", or why the car refused.
+- **New Lights & display tab** in the action picker, with Dim display, Mood light on/off and Rear fog lamp on/off (Dim and Mood light moved from Car & app).
+- The Edit dialog in Shortcuts is wider, so all five tabs fit on one line.
+
 ## [1.5.1] - 2026-10-26
 
 ### Shortcuts and Smart sticker

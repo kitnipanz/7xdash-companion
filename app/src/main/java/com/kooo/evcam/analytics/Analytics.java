@@ -31,7 +31,8 @@ import okhttp3.Response;
  *
  * <p>No-op when the build has no measurement id / api secret (GA_MEASUREMENT_ID, GA_API_SECRET from
  * the environment or local.properties), and until the person said yes: in the first-open question
- * ({@link UsageConsent}) or with Settings → Interface → Anonymous usage stats. Sends a random
+ * ({@link UsageConsent}) or with Settings → Interface. Two answers: usage stats (app_open and the
+ * feature events) and crash reports (app_crash), each sent only when allowed. Sends a random
  * install id, never ANDROID_ID, email, plate or location.</p>
  *
  * <p>Events wait in memory and go out together, at most 25 per request, {@link #BATCH_DELAY_S}
@@ -44,6 +45,9 @@ public final class Analytics {
     private static final String PREFS = "analytics";
     private static final String KEY_INSTALL_ID = "install_id";
     private static final String KEY_PENDING_CRASH = "pending_crash";
+    /** The crash's 7xDash stack frames, one app_crash parameter per line. */
+    private static final String KEY_PENDING_FRAMES = "pending_crash_frames";
+    private static final String CRASH_EVENT = "app_crash";
     private static final String ENDPOINT = "https://www.google-analytics.com/mp/collect";
     private static final MediaType JSON = MediaType.get("application/json");
     static final int BATCH_DELAY_S = 60;
@@ -58,8 +62,12 @@ public final class Analytics {
     private static OkHttpClient http;
     private static final List<AnalyticsPayload.Event> queue = new ArrayList<>();
     private static boolean flushScheduled;
+    /** Usage stats allowed. */
     private static volatile boolean on;
+    /** Crash reports allowed; separate from usage stats. */
+    private static volatile boolean crashOn;
     private static boolean openSent;
+    private static boolean crashSent;
 
     private Analytics() {
     }
@@ -79,6 +87,7 @@ public final class Analytics {
         app = context.getApplicationContext();
         AppConfig config = new AppConfig(app);
         on = UsageConsent.sendsAtStart(config.isUsageStatsEnabled(), config.isUsageStatsRemembered());
+        crashOn = UsageConsent.sendsAtStart(config.isCrashReportsEnabled(), config.isUsageStatsRemembered());
         if (!configured()) {
             AppLog.i(TAG, "off: no measurement id / api secret in this build");
             return;
@@ -107,26 +116,50 @@ public final class Analytics {
         if (on) {
             sendOpen();
         }
+        if (crashOn) {
+            sendCrash();
+        }
     }
 
-    /** app_open (and app_crash from the last run) once per process, when sending is allowed. */
+    /** app_open once per process, when usage stats are allowed. */
     private static synchronized void sendOpen() {
         if (openSent || worker == null) {
             return;
         }
         openSent = true;
         event("app_open", "app_version", BuildConfig.VERSION_NAME, "system_build", Build.DISPLAY);
-        SharedPreferences prefs = app.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
-        String crash = prefs.getString(KEY_PENDING_CRASH, null);
-        if (crash != null) {
-            prefs.edit().remove(KEY_PENDING_CRASH).apply();
-            event("app_crash", "exception", crash);
-        }
     }
 
-    /** Sending allowed: the person said yes (remembered, or this run). */
+    /** app_crash for the last run's crash, once per process, when crash reports are allowed. */
+    private static synchronized void sendCrash() {
+        if (crashSent || worker == null) {
+            return;
+        }
+        crashSent = true;
+        SharedPreferences prefs = app.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        String crash = prefs.getString(KEY_PENDING_CRASH, null);
+        if (crash == null) {
+            return;
+        }
+        String frames = prefs.getString(KEY_PENDING_FRAMES, "");
+        prefs.edit().remove(KEY_PENDING_CRASH).remove(KEY_PENDING_FRAMES).apply();
+        Map<String, String> params = new LinkedHashMap<>();
+        params.put("exception", crash);
+        String[] lines = frames.isEmpty() ? new String[0] : frames.split("\n");
+        for (int i = 0; i < lines.length; i++) {
+            params.put("frames_" + (i + 1), lines[i]);
+        }
+        queue(CRASH_EVENT, params);
+    }
+
+    /** Usage stats allowed: the person said yes (remembered, or this run). */
     static boolean enabled() {
         return on;
+    }
+
+    /** Crash reports allowed. */
+    static boolean crashReportsEnabled() {
+        return crashOn;
     }
 
     /**
@@ -139,22 +172,43 @@ public final class Analytics {
             sendOpen();
         } else {
             synchronized (queue) {
-                queue.clear();
+                // A waiting crash report stays if crash reports are still allowed
+                queue.removeIf(e -> !CRASH_EVENT.equals(e.name) || !crashOn);
+            }
+        }
+    }
+
+    /** Crash reports switched on or off (first-open question or Settings), apart from usage stats. */
+    public static void setCrashReports(boolean enabled) {
+        crashOn = enabled;
+        if (enabled) {
+            sendCrash();
+        } else {
+            synchronized (queue) {
+                queue.removeIf(e -> CRASH_EVENT.equals(e.name));
             }
         }
     }
 
     /** Queue an event. {@code params} are name/value pairs. Never throws, never blocks. */
     public static void event(String name, String... params) {
+        if (!enabled()) {
+            return;
+        }
+        Map<String, String> map = new LinkedHashMap<>();
+        for (int i = 0; i + 1 < params.length; i += 2) {
+            map.put(params[i], params[i + 1]);
+        }
+        queue(name, map);
+    }
+
+    private static void queue(String name, Map<String, String> map) {
         try {
-            if (worker == null || !enabled()) {
+            if (worker == null) {
                 return;
             }
-            Map<String, String> map = new LinkedHashMap<>();
-            for (int i = 0; i + 1 < params.length; i += 2) {
-                map.put(params[i], params[i + 1]);
-            }
             AnalyticsPayload.Event e = new AnalyticsPayload.Event(name, map, System.currentTimeMillis());
+            AppLog.d(TAG, "queued " + name + " " + map);
             synchronized (queue) {
                 queue.add(e);
                 while (queue.size() > MAX_QUEUED) {
@@ -176,16 +230,18 @@ public final class Analytics {
     }
 
     /**
-     * From the crash handler: remember the exception class (only the class, no message or stack)
-     * so the next start sends app_crash. Written with commit, the process is about to end.
+     * From the crash handler: remember the exception class and where it happened (7xDash code
+     * locations, {@link AnalyticsPayload#crashFrames}; never the message) so the next start sends
+     * app_crash. Written with commit, the process is about to end.
      */
     public static void noteCrash(Throwable throwable) {
         try {
-            if (app == null || worker == null || !enabled() || throwable == null) {
+            if (app == null || worker == null || !crashReportsEnabled() || throwable == null) {
                 return;
             }
             app.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
                     .putString(KEY_PENDING_CRASH, throwable.getClass().getName())
+                    .putString(KEY_PENDING_FRAMES, String.join("\n", AnalyticsPayload.crashFrames(throwable)))
                     .commit();
         } catch (RuntimeException ignored) {
             // the crash handler goes on regardless
@@ -201,7 +257,7 @@ public final class Analytics {
             }
             batch = new ArrayList<>(queue.subList(0, Math.min(queue.size(), AnalyticsPayload.MAX_EVENTS)));
         }
-        if (!enabled()) {
+        if (!enabled() && !crashReportsEnabled()) {
             return;
         }
         String body = AnalyticsPayload.build(clientId, sessionId, userProps, batch, BuildConfig.DEBUG);

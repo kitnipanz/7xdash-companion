@@ -117,6 +117,11 @@ public class ShortcutListActivity extends AppCompatActivity {
                 .setView(body)
                 .setNeutralButton(R.string.shortcut_edit_press, (dialog, which) -> editPress(item, index))
                 .setNegativeButton(android.R.string.cancel, null));
+        // Wide enough for every tab on one line.
+        if (shown[0] != null && shown[0].getWindow() != null) {
+            shown[0].getWindow().setLayout(Math.round(getResources().getDisplayMetrics().widthPixels * 0.7f),
+                    android.view.ViewGroup.LayoutParams.WRAP_CONTENT);
+        }
     }
 
     private void editPress(Shortcut item, int index) {
@@ -144,10 +149,11 @@ public class ShortcutListActivity extends AppCompatActivity {
      * shortcut already on that button and press gives way, as when adding one.
      */
     private void replace(int index, Shortcut item, String action, String press) {
+        Shortcut changed = new Shortcut(item.keyCode, item.scanCode, item.deviceName, action, press);
         List<Shortcut> next = ShortcutBook.put(
-                ShortcutBook.remove(ShortcutBook.parse(config.getButtonShortcuts()), index),
-                new Shortcut(item.keyCode, item.scanCode, item.deviceName, action, press));
+                ShortcutBook.remove(ShortcutBook.parse(config.getButtonShortcuts()), index), changed);
         config.setButtonShortcuts(ShortcutBook.write(next));
+        ShortcutPerformer.noteSaved(changed);
         if (StickerFrame.isSticker(item.deviceName)) {
             StickerHub.sync(this);
         } else {

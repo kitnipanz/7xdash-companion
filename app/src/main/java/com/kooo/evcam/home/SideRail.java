@@ -223,7 +223,7 @@ public class SideRail extends LinearLayout {
     }
 
     private void perform(ShortcutAction action) {
-        ShortcutPerformer.perform(getContext(), action.key);
+        ShortcutPerformer.perform(getContext(), action.key, ShortcutPerformer.FROM_RAIL, null);
     }
 
     private void goHome() {

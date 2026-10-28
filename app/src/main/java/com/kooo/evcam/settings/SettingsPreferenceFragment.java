@@ -1189,6 +1189,12 @@ public class SettingsPreferenceFragment extends PreferenceFragmentCompat {
             }
         });
 
+        bindSwitch("pref_crash_reports", appConfig.isCrashReportsEnabled(), value -> {
+            // Like usage stats: set here is a remembered answer
+            appConfig.setCrashReports(value);
+            com.kooo.evcam.analytics.Analytics.setCrashReports(value);
+        });
+
         bindSwitch("pref_usage_stats", appConfig.isUsageStatsEnabled(), value -> {
             // Set here counts as a remembered answer: the first-open question stops asking
             appConfig.setUsageStats(value, true);
@@ -1268,6 +1274,10 @@ public class SettingsPreferenceFragment extends PreferenceFragmentCompat {
                 startActivity(new Intent(getContext(), com.kooo.evcam.light.MoodLightActivity.class)));
         onClick("pref_car_ambient", pref ->
                 startActivity(new Intent(getContext(), com.kooo.evcam.light.CarAmbientLabActivity.class)));
+        onClick("pref_volume_lab", pref ->
+                startActivity(new Intent(getContext(), com.kooo.evcam.audio.VolumeLabActivity.class)));
+        onClick("pref_button_lab", pref ->
+                startActivity(new Intent(getContext(), com.kooo.evcam.input.ButtonLabActivity.class)));
         onClick("pref_ble_signal", pref ->
                 startActivity(new Intent(getContext(), com.kooo.evcam.input.BleSignalActivity.class)));
         int cabinScreenWidth = getResources().getDisplayMetrics().widthPixels;

@@ -1,5 +1,93 @@
 # Changelog
 
+## [1.6.0] - 2026-10-28
+
+Changes since 1.5.1 (includes 1.5.2-beta to 1.5.9-beta).
+
+### Car volume
+- **Volume up** and **Volume down**, new actions in the **Sound** tab for any remote button, steering-wheel key or Smart sticker. Each press turns the car's main volume one step, as the steering wheel button does, from any screen.
+- **Car volume from 7xDash web.** A linked car shows a **Car volume** card on the web page with **Down** and **Up**, one step per tap. The car does not report its volume level, so there is no slider.
+
+### Shortcuts and Smart sticker
+- **Rear fog lamp on/off**, a new action. Each press reads the car's rear fog lamp and sends the other way, then says "Rear fog lamp on" or "off", or why the car refused.
+- **New Lights & display tab** in the action picker, with Dim display, Mood light on/off and Rear fog lamp on/off (Dim and Mood light moved from Car & app).
+- The Edit dialog in Shortcuts is wider, so all five tabs fit on one line.
+
+### Remote view
+- **No more blank page when the phone cannot play the live video.** The web page tells the car when live video does not play (the browser cannot play H.264, the phone rejects or fails to decode the stream, or no frame shows within 3 s). The car then sends still pictures for the rest of that watch, and the page shows why under the picture. The next watch tries video again.
+- **Surround falls back instead of staying blank.** Surround tries the GPU path first, then a grab of the surround picture on the car's screen, then stills from the surround camera (one a second) when 7xDash is not on screen. The GPU path is checked by the frames it actually draws.
+- The path in use and any switch to stills, with the reason, are written to the log and the black box.
+
+### Crash reports and usage stats
+- **New first-open question: "Help fix and improve 7xDash?"** It explains what each part sends and has three answers: **Send both**, **Crash reports only** and **No thanks**. The answer is remembered; closing it without answering asks again on the next open. People who said no before are asked once more; people who said yes are not asked again.
+- **Crash reports are separate from usage stats**, each with its own switch in Settings › Interface. A yes to usage stats from before covers crash reports too.
+- **Crash reports say where a crash happened:** the kind of error plus where in 7xDash's code it happened (class, method and line). Never the error's message.
+- **Usage stats show how actions are used:** where each action was run from and how the button was pressed, which actions get put on buttons and stickers, and which 7xDash web controls are used.
+- Thai text for the question and both switches reads more naturally.
+
+### Labs (experimental, Settings › Mood light)
+- **Car volume:** tries four ways to change the car's main volume, each with Read, Down and Up. The volume key way is the one that works on the 7X and is what Volume up/down use.
+- **Car buttons:** press **Listen**, then the car's buttons one at a time, to see what each one sends: a key (code, scan code, device), a car setting that changed, or system log lines. **Press again** sends the same key from 7xDash; **Send** sends a car setting value (asks first, only in P). Shortcuts are paused while listening.
+
+## [1.5.9-beta] - 2026-10-28
+
+### Remote view
+- **Stills when the phone cannot play the live video.** The 7xDash web page now tells the car when live video does not play on the phone: the browser cannot play H.264, the phone rejects or fails to decode the stream, or no frame shows within 3 s. The car then stops the video and sends still pictures for the rest of that watch, on every camera, instead of a blank page. The next watch tries video again.
+- The web page shows why under the picture, and the car writes it to the black box (`remote: phone cannot play the live video (…), sending stills`).
+
+## [1.5.8-beta] - 2026-10-28
+
+### Remote view
+- **Surround on the web page falls back instead of staying blank.** Surround tries three paths and moves on when one gives no picture: the GPU path (as before); a grab of the surround picture on the car's screen; stills from the surround camera, one a second, when 7xDash is not on screen. The GPU path is checked by the frames it actually draws: before, a stalled GPU path still sent repeated (black) video, and the web page then ignored the backup pictures.
+- The path in use and why it changed are written to the log and the black box (`remote surround via gpu | screen | stills: …`).
+
+## [1.5.7-beta] - 2026-10-27
+
+### Crash reports and usage stats
+- **New first-open question: "Help fix and improve 7xDash?"** It explains what each part sends and has three answers: **Send both**, **Crash reports only** and **No thanks**. The answer is remembered (the "Remember my choice" box is gone); closing it without answering asks again on the next open. Change it any time in Settings › Interface.
+- **Asked once more if you said no before.** People who said yes are not asked again.
+- **Crash reports are separate from usage stats**, with their own switch in Settings › Interface. A yes to usage stats from before covers crash reports too.
+- **Crash reports say where a crash happened:** the kind of error plus where in 7xDash's code it happened (class, method and line, up to 5 values). Never the error's message.
+- **Usage stats show how actions are used:** where each action was run from (home card, side rail, button, sticker, instant button, floating button) and how the button was pressed, which actions get put on buttons and stickers, and which 7xDash web controls are used.
+- Thai text for the question and both switches reads more naturally.
+
+## [1.5.6-beta] - 2026-10-27
+
+### 7xDash web
+- **Car volume from the web.** A linked car now tells 7xDash web it can take volume steps, and the web shows a **Car volume** card with **Down** and **Up**. Each tap turns the car's main volume one step, the same way as the Volume up/down shortcut actions. The car does not report its volume level, so there is no slider. Each step is written to the black box.
+
+## [1.5.5-beta] - 2026-10-27
+
+### Car buttons lab (experimental)
+- **New test screen: what does each car button send?** Settings → Mood light → **Car buttons (experimental)**. Press **Listen**, then press the car's buttons one at a time (steering wheel, knobs, screen buttons). Each press shows up as a card:
+  - **Key**: key code, scan code and the input device that sent it.
+  - **Car setting**: an ECARX setting the button changed, with its value before and now (settings that change by themselves are ignored).
+  - **System log**: key-related lines of the system log around the press, when the car lets 7xDash read it.
+- **Simulate from 7xDash.** A key card has **Press again**, which sends the same key from 7xDash (the way Volume up/down works). A car setting card has **Send** buttons for its old and new value; they ask first and only work in P.
+- Shortcuts are paused while listening, so every button does only what the car does. Everything heard and sent is written to the black box.
+
+## [1.5.4-beta] - 2026-10-27
+
+### Shortcuts and Smart sticker
+- **Volume up** and **Volume down**, new actions in the **Sound** tab for any remote button, steering-wheel key or sticker. Each press turns the car's main volume one step, as the steering wheel button does, from any screen. It uses the volume key way that worked in the Car volume lab (way 3); the car refuses its volume API to apps.
+
+## [1.5.3-beta] - 2026-10-27
+
+### Car volume lab (experimental)
+- **New test screen: can 7xDash change the car's main volume?** Settings → Mood light → **Car volume (experimental)**. It tries four ways, each with **Read**, **Down** and **Up**, and shows what happened:
+  1. **Car volume group**: Android's car audio volume for media (`CarAudioManager.setGroupVolume`).
+  2. **Android media volume**: `AudioManager.adjustStreamVolume` on media.
+  3. **Volume key**: a volume up/down key press handed to the system, like the steering wheel button.
+  4. **ECARX audio library**: lists the audio classes and volume methods in the car's ECARX library and tries their getter/setter pairs.
+- Play some music first, then press Up or Down on each way and listen. Every press and its result is written to the black box.
+
+## [1.5.2-beta] - 2026-10-27
+
+### Shortcuts and Smart sticker
+- **Rear fog lamp on/off**, a new action for any button or sticker. Each press reads the car's rear fog lamp and sends the other way (`BCM_FUNC_LIGHT_REAR_FOG_LAMPS`, 0 off, 1 on), then says "Rear fog lamp on" or "off", or why the car refused.
+- **New Lights & display tab** in the action picker, with Dim display, Mood light on/off and Rear fog lamp on/off (Dim and Mood light moved from Car & app).
+- The Edit dialog in Shortcuts is wider, so all five tabs fit on one line.
+
 ## [1.5.1] - 2026-10-26
 
 ### Shortcuts and Smart sticker

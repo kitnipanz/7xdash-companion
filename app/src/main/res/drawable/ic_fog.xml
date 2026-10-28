@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- ic_fog：后雾灯（灯罩、光束和穿过光束的波浪线）。统一图标集（24dp 网格、线宽 1.7、圆头）。 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M14.5,5.5a6.5,6.5 0,0 1,0 13z M3.5,8h8 M3.5,12h8 M3.5,16h8 M8,5c-1.6,2.3 1.6,4.7 0,7s1.6,4.7 0,7"
+        android:strokeWidth="1.7"
+        android:strokeColor="@color/text_primary"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+</vector>

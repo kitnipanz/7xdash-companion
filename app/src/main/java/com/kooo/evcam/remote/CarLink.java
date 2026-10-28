@@ -51,6 +51,13 @@ public final class CarLink {
     /** Fired when the phone starts/stops watch or changes camera source. */
     public interface WatchListener {
         void onWatch(boolean watching, String source);
+
+        /**
+         * The phone cannot play the live video ({@code {"t":"novideo","reason":…}} from 7xDash web):
+         * send stills for the rest of this watch. Main thread.
+         */
+        default void onNoVideo(String reason) {
+        }
     }
 
     public static final class Snapshot {
@@ -371,6 +378,21 @@ public final class CarLink {
                         Speaker current = speaker;
                         if (current != null) {
                             handler.post(() -> current.command(j));
+                        }
+                    } else if ("novideo".equals(type)) {
+                        WatchListener listener = watchListener;
+                        String reason = j.optString("reason");
+                        if (listener != null) {
+                            handler.post(() -> listener.onNoVideo(reason));
+                        }
+                    } else if ("volume".equals(type)) {
+                        // The car's main volume, one step per tap on 7xDash web
+                        int step = j.optInt("step");
+                        if (step == 1 || step == -1) {
+                            com.kooo.evcam.audio.CarVolume.step(context, step);
+                            com.kooo.evcam.analytics.Analytics.event("remote",
+                                    "command", step > 0 ? "volume_up" : "volume_down");
+                            com.kooo.evcam.blackbox.BlackBox.note("car-link: volume " + (step > 0 ? "up" : "down"));
                         }
                     } else if ("idle".equals(type)) {
                         boolean wasWatching = watching.get();

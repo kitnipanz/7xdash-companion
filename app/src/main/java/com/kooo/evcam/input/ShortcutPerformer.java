@@ -16,13 +16,40 @@ public final class ShortcutPerformer {
     private ShortcutPerformer() {
     }
 
+    /** Usage stats: a button or sticker was given an action (added, or changed in Edit). */
+    public static void noteSaved(Shortcut s) {
+        ShortcutAction action = s == null ? null : ShortcutAction.fromKey(s.action);
+        if (action == null) {
+            return;
+        }
+        com.kooo.evcam.analytics.Analytics.event("shortcut_saved", "action", action.key,
+                "press", s.press, "on", StickerFrame.isSticker(s.deviceName) ? FROM_STICKER : FROM_BUTTON);
+    }
+
+    /** Where an action was run from, for the shortcut event. */
+    public static final String FROM_HOME = "home_card";
+    public static final String FROM_RAIL = "side_rail";
+    public static final String FROM_BUTTON = "button";
+    public static final String FROM_STICKER = "sticker";
+    public static final String FROM_INSTANT = "instant_button";
+    public static final String FROM_FLOATING = "floating";
+
     public static void perform(Context context, String actionKey) {
+        perform(context, actionKey, "other", null);
+    }
+
+    /**
+     * Runs {@code actionKey}; {@code from} (FROM_*) and {@code press} (tap, long, double; null when
+     * not a button) only go to the shortcut event, so usage stats show where actions are run from.
+     */
+    public static void perform(Context context, String actionKey, String from, PressKind press) {
         ShortcutAction action = ShortcutAction.fromKey(actionKey);
         if (context == null || action == null) {
             return;
         }
         // Every trigger (home card, side rail, steering-wheel key, sticker) comes through here
-        com.kooo.evcam.analytics.Analytics.event("shortcut", "action", action.key);
+        com.kooo.evcam.analytics.Analytics.event("shortcut", "action", action.key, "from", from,
+                "press", press == null ? "none" : press.key);
         switch (action) {
             case RECORD:
                 Intent toggle = new Intent(context, RecordingFloatingService.class);
@@ -114,6 +141,15 @@ public final class ShortcutPerformer {
                 return;
             case MOOD_LIGHT:
                 com.kooo.evcam.light.GearLight.toggle(context);
+                return;
+            case FOG_LAMP:
+                com.kooo.evcam.light.FogLamp.toggle(context);
+                return;
+            case VOLUME_UP:
+                com.kooo.evcam.audio.CarVolume.step(context, 1);
+                return;
+            case VOLUME_DOWN:
+                com.kooo.evcam.audio.CarVolume.step(context, -1);
                 return;
             case ANNOUNCE_PLAY:
                 com.kooo.evcam.announce.Announcement chosen = new com.kooo.evcam.announce.AnnouncementStore(context)

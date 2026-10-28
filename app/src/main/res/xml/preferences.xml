@@ -66,6 +66,16 @@
             android:key="pref_car_ambient"
             android:title="@string/car_ambient_title"
             android:summary="@string/car_ambient_summary" />
+
+        <Preference
+            android:key="pref_volume_lab"
+            android:title="@string/volume_lab_title"
+            android:summary="@string/volume_lab_summary" />
+
+        <Preference
+            android:key="pref_button_lab"
+            android:title="@string/button_lab_title"
+            android:summary="@string/button_lab_summary" />
     </PreferenceScreen>
 
     <PreferenceScreen
@@ -564,7 +574,13 @@
             android:title="@string/set_beta_features_title"
             android:summary="@string/set_beta_features_summary" />
 
-        <!-- Anonymous usage stats (GA4): app start, home cards, shortcuts, recording, crash counts -->
+        <!-- Anonymous crash reports (GA4 app_crash: error class and 7xDash code locations), apart from usage stats -->
+        <SwitchPreferenceCompat
+            android:key="pref_crash_reports"
+            android:title="@string/set_crash_reports_title"
+            android:summary="@string/set_crash_reports_summary" />
+
+        <!-- Anonymous usage stats (GA4): app start, home cards, pages, shortcuts, recording -->
         <SwitchPreferenceCompat
             android:key="pref_usage_stats"
             android:title="@string/set_usage_stats_title"

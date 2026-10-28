@@ -1100,7 +1100,7 @@ public final class StickerHub {
             Shortcut hit = ShortcutBook.match(items, frame.control, 0,
                     StickerFrame.deviceName(address), frame.press);
             if (hit != null) {
-                ShortcutPerformer.perform(context, hit.action);
+                ShortcutPerformer.perform(context, hit.action, ShortcutPerformer.FROM_STICKER, frame.press);
             }
         });
     }

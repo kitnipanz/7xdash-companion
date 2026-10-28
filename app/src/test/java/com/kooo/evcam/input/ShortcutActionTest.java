@@ -96,6 +96,11 @@ public class ShortcutActionTest {
         assertEquals(ShortcutAction.values().length, seen.size());
         assertEquals(ShortcutAction.Group.RECORD, ShortcutAction.INSTANT_CAPTURE.group());
         assertEquals(ShortcutAction.Group.SOUND, ShortcutAction.OUTSIDE_SPEAKER.group());
-        assertEquals(ShortcutAction.Group.CAR, ShortcutAction.MOOD_LIGHT.group());
+        assertEquals(ShortcutAction.Group.LIGHTS, ShortcutAction.MOOD_LIGHT.group());
+        assertEquals(ShortcutAction.Group.LIGHTS, ShortcutAction.DIM.group());
+        assertEquals(ShortcutAction.Group.LIGHTS, ShortcutAction.FOG_LAMP.group());
+        assertEquals(ShortcutAction.Group.SOUND, ShortcutAction.VOLUME_UP.group());
+        assertEquals(ShortcutAction.Group.SOUND, ShortcutAction.VOLUME_DOWN.group());
+        assertEquals(ShortcutAction.FOG_LAMP, ShortcutAction.fromKey("toggle_fog_lamp"));
     }
 }

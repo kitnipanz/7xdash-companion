@@ -126,6 +126,8 @@ public class MainActivity extends AppCompatActivity {
     private final float[] remoteLanes = new float[16];
     /** H.264 live watch. JPEG pump below only fills in until video packets flow. */
     private com.kooo.evcam.remote.RemoteStream remoteStream;
+    /** This watch's phone said it cannot play the live video: send stills until the watch ends. */
+    private boolean remoteVideoRefused;
     private com.kooo.evcam.audio.SpeakerRemote speakerRemote;
     private final Runnable remotePump = new Runnable() {
         @Override
@@ -645,7 +647,8 @@ public class MainActivity extends AppCompatActivity {
         View btnInstantNow = findViewById(R.id.btn_instant_capture);
         if (btnInstantNow != null) {
             btnInstantNow.setOnClickListener(v -> com.kooo.evcam.input.ShortcutPerformer.perform(
-                    this, com.kooo.evcam.input.ShortcutAction.INSTANT_CAPTURE.key));
+                    this, com.kooo.evcam.input.ShortcutAction.INSTANT_CAPTURE.key,
+                    com.kooo.evcam.input.ShortcutPerformer.FROM_INSTANT, null));
         }
 
         View btnInstant = findViewById(R.id.btn_instant_captures);
@@ -1700,25 +1703,46 @@ public class MainActivity extends AppCompatActivity {
         remoteLive.attach(this);
         carLink = new com.kooo.evcam.remote.CarLink(this);
         remoteStream = new com.kooo.evcam.remote.RemoteStream(remoteStreamHost(), carLink);
-        carLink.setWatchListener((watching, source) -> {
-            holdRemoteCabin(watching, source);
-            remoteHandler.removeCallbacks(remotePump);
-            if (remoteStream == null) {
-                return;
+        carLink.setWatchListener(new com.kooo.evcam.remote.CarLink.WatchListener() {
+            @Override
+            public void onWatch(boolean watching, String source) {
+                holdRemoteCabin(watching, source);
+                remoteHandler.removeCallbacks(remotePump);
+                if (remoteStream == null) {
+                    return;
+                }
+                if (!watching) {
+                    // The next watch tries video again
+                    remoteVideoRefused = false;
+                    remoteStream.stop();
+                    return;
+                }
+                if (remoteVideoRefused) {
+                    remoteStream.stop();
+                } else if (!remoteStream.start(source)) {
+                    AppLog.w(TAG, "remote video unavailable, JPEG only");
+                }
+                // Instant switch: push cached JPEG for the requested slot, then keep pumping.
+                byte[] cached = remoteLive.jpegFor(source);
+                if (cached != null) {
+                    carLink.pushJpeg(cached);
+                }
+                remoteHandler.post(remotePump);
             }
-            if (!watching) {
-                remoteStream.stop();
-                return;
+
+            @Override
+            public void onNoVideo(String reason) {
+                // The phone cannot show the video: stills (the JPEG pump) for the rest of this watch
+                remoteVideoRefused = true;
+                String line = "remote: phone cannot play the live video (" + reason + "), sending stills";
+                AppLog.w(TAG, line);
+                com.kooo.evcam.blackbox.BlackBox.note(line);
+                if (remoteStream != null) {
+                    remoteStream.stop();
+                }
+                remoteHandler.removeCallbacks(remotePump);
+                remoteHandler.post(remotePump);
             }
-            if (!remoteStream.start(source)) {
-                AppLog.w(TAG, "remote video unavailable, JPEG only");
-            }
-            // Instant switch: push cached JPEG for the requested slot, then keep pumping.
-            byte[] cached = remoteLive.jpegFor(source);
-            if (cached != null) {
-                carLink.pushJpeg(cached);
-            }
-            remoteHandler.post(remotePump);
         });
         carLink.setUi(snap -> {
             lastLink = snap;
@@ -1742,7 +1766,8 @@ public class MainActivity extends AppCompatActivity {
         return new com.kooo.evcam.remote.RemoteStream.Host() {
             @Override
             public android.view.TextureView surroundView() {
-                return textureFront;
+                // Like the cabins: off screen the view holds a stale frame, so remote takes stills instead
+                return isInBackground ? null : textureFront;
             }
 
             @Override
@@ -1756,7 +1781,7 @@ public class MainActivity extends AppCompatActivity {
             }
 
             @Override
-            public boolean cabinStill(String source, java.util.function.Consumer<android.graphics.Bitmap> done) {
+            public boolean cameraStill(String source, java.util.function.Consumer<android.graphics.Bitmap> done) {
                 return requestCabinStill(source, done);
             }
 
@@ -1922,13 +1947,17 @@ public class MainActivity extends AppCompatActivity {
         return isInBackground ? null : view;
     }
 
-    /** Remote watch: a still from the watched cabin camera's JPEG channel. False when none was asked. */
+    /**
+     * Remote watch: a still from the watched camera's JPEG channel (cabin, or the surround composite
+     * for the video path). False when none was asked.
+     */
     private boolean requestCabinStill(String source, java.util.function.Consumer<android.graphics.Bitmap> done) {
         String slot = com.kooo.evcam.remote.RemoteLive.slotFor(source);
         String key = com.kooo.evcam.remote.RemoteLive.DRIVER.equals(slot)
                 ? com.kooo.evcam.camera.CameraSlots.KEY_CABIN_FRONT
                 : com.kooo.evcam.remote.RemoteLive.BACKSEAT.equals(slot)
-                ? com.kooo.evcam.camera.CameraSlots.KEY_CABIN_REAR : null;
+                ? com.kooo.evcam.camera.CameraSlots.KEY_CABIN_REAR
+                : com.kooo.evcam.camera.CameraSlots.KEY_SURROUND;
         com.kooo.evcam.camera.SingleCamera cam = key == null || cameraManager == null
                 ? null : cameraManager.getCamera(key);
         return cam != null && cam.requestRemoteStill(1280, done);
@@ -2016,7 +2045,11 @@ public class MainActivity extends AppCompatActivity {
             // Cabin with no live canvas (main screen not in front): its camera's still. Else the last frame.
             final long stillAt = android.os.SystemClock.elapsedRealtime();
             remoteStillAskedMs = stillAt;
-            if (requestCabinStill(source, still -> {
+            // The JPEG pump's stills are cabin only; surround stills go through the video path
+            String slot = com.kooo.evcam.remote.RemoteLive.slotFor(source);
+            boolean cabin = com.kooo.evcam.remote.RemoteLive.DRIVER.equals(slot)
+                    || com.kooo.evcam.remote.RemoteLive.BACKSEAT.equals(slot);
+            if (cabin && requestCabinStill(source, still -> {
                 if (remoteStillAskedMs != stillAt) {
                     if (still != null) {
                         still.recycle();   // given up on already; a newer grab owns remoteBusy

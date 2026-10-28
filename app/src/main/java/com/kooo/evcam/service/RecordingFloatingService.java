@@ -852,7 +852,8 @@ public class RecordingFloatingService extends Service {
         quitButton.setArmed(false);
         AppLog.i(TAG, "Quit from the floating button");
         com.kooo.evcam.input.ShortcutPerformer.perform(this,
-                com.kooo.evcam.input.ShortcutAction.QUIT.key);
+                com.kooo.evcam.input.ShortcutAction.QUIT.key,
+                com.kooo.evcam.input.ShortcutPerformer.FROM_FLOATING, null);
     }
 
     /**

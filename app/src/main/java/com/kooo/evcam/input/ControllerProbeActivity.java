@@ -318,6 +318,7 @@ public class ControllerProbeActivity extends AppCompatActivity implements Sticke
                 key, pressKind.key);
         config.setButtonShortcuts(ShortcutBook.write(
                 ShortcutBook.put(ShortcutBook.parse(config.getButtonShortcuts()), next)));
+        ShortcutPerformer.noteSaved(next);
         if (StickerFrame.isSticker(pending.deviceName)) {
             config.setStickerEnabled(true);
             config.setStickerDevices(StickerDevices.write(StickerDevices.put(

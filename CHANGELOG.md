@@ -1,5 +1,34 @@
 # Changelog
 
+## [1.6.0] - 2026-10-28
+
+Changes since 1.5.1 (includes 1.5.2-beta to 1.5.9-beta).
+
+### Car volume
+- **Volume up** and **Volume down**, new actions in the **Sound** tab for any remote button, steering-wheel key or Smart sticker. Each press turns the car's main volume one step, as the steering wheel button does, from any screen.
+- **Car volume from 7xDash web.** A linked car shows a **Car volume** card on the web page with **Down** and **Up**, one step per tap. The car does not report its volume level, so there is no slider.
+
+### Shortcuts and Smart sticker
+- **Rear fog lamp on/off**, a new action. Each press reads the car's rear fog lamp and sends the other way, then says "Rear fog lamp on" or "off", or why the car refused.
+- **New Lights & display tab** in the action picker, with Dim display, Mood light on/off and Rear fog lamp on/off (Dim and Mood light moved from Car & app).
+- The Edit dialog in Shortcuts is wider, so all five tabs fit on one line.
+
+### Remote view
+- **No more blank page when the phone cannot play the live video.** The web page tells the car when live video does not play (the browser cannot play H.264, the phone rejects or fails to decode the stream, or no frame shows within 3 s). The car then sends still pictures for the rest of that watch, and the page shows why under the picture. The next watch tries video again.
+- **Surround falls back instead of staying blank.** Surround tries the GPU path first, then a grab of the surround picture on the car's screen, then stills from the surround camera (one a second) when 7xDash is not on screen. The GPU path is checked by the frames it actually draws.
+- The path in use and any switch to stills, with the reason, are written to the log and the black box.
+
+### Crash reports and usage stats
+- **New first-open question: "Help fix and improve 7xDash?"** It explains what each part sends and has three answers: **Send both**, **Crash reports only** and **No thanks**. The answer is remembered; closing it without answering asks again on the next open. People who said no before are asked once more; people who said yes are not asked again.
+- **Crash reports are separate from usage stats**, each with its own switch in Settings › Interface. A yes to usage stats from before covers crash reports too.
+- **Crash reports say where a crash happened:** the kind of error plus where in 7xDash's code it happened (class, method and line). Never the error's message.
+- **Usage stats show how actions are used:** where each action was run from and how the button was pressed, which actions get put on buttons and stickers, and which 7xDash web controls are used.
+- Thai text for the question and both switches reads more naturally.
+
+### Labs (experimental, Settings › Mood light)
+- **Car volume:** tries four ways to change the car's main volume, each with Read, Down and Up. The volume key way is the one that works on the 7X and is what Volume up/down use.
+- **Car buttons:** press **Listen**, then the car's buttons one at a time, to see what each one sends: a key (code, scan code, device), a car setting that changed, or system log lines. **Press again** sends the same key from 7xDash; **Send** sends a car setting value (asks first, only in P). Shortcuts are paused while listening.
+
 ## [1.5.9-beta] - 2026-10-28
 
 ### Remote view

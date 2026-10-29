@@ -41,9 +41,11 @@ final class AirPlayWindow {
     }
 
     private static final String PREFS = "airplay_window";
-    /** Small and large widths as a share of the screen width. */
+    /** Bumped when saved places and sizes should be forgotten. */
+    private static final int LAYOUT = 1;
+    /** Small and large widths as a share of the screen width; it opens large (full width). */
     private static final float SMALL = 0.42f;
-    private static final float LARGE = 0.86f;
+    private static final float LARGE = 1f;
     private static final float MIN = 0.22f;
     /** Smallest side a pinch shrinks the window to. */
     private static final int MIN_SIDE_DP = 120;
@@ -68,6 +70,10 @@ final class AirPlayWindow {
         this.listener = listener;
         wm = context.getSystemService(WindowManager.class);
         prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        if (prefs.getInt("layout", 0) < LAYOUT) {
+            // Sizes saved before it opened full width are dropped once, so everyone starts full width.
+            prefs.edit().clear().putInt("layout", LAYOUT).apply();
+        }
         density = context.getResources().getDisplayMetrics().density;
     }
 
@@ -119,7 +125,7 @@ final class AirPlayWindow {
                 PixelFormat.TRANSLUCENT);
         lp.gravity = Gravity.TOP | Gravity.START;
         DisplayMetrics dm = screen();
-        lp.width = Math.round(prefs.getFloat("width", SMALL) * dm.widthPixels);
+        lp.width = Math.round(prefs.getFloat("width", LARGE) * dm.widthPixels);
         lp.height = heightFor(lp.width);
         fitWidth();
         lp.x = com.kooo.evcam.zeekr.RearViewTouchModel.clampX(

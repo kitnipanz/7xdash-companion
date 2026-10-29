@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.6.2-beta] - 2026-10-29
+
+### AirPlay
+- **The AirPlay window opens full width.** Double-tap now switches between small and full width (large was 86% before).
+- Window sizes and places saved before this version are forgotten once, so everyone starts full width. A size you set after that is kept as before.
+
 ## [1.6.1-beta] - 2026-10-29
 
 ### Mood light

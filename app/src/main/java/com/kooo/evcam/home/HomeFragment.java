@@ -315,7 +315,8 @@ public class HomeFragment extends Fragment {
      * not fit at their minimum height the grid scrolls.
      */
     private void layoutGrid(boolean force) {
-        if (grid == null || gridScroll == null) {
+        // posted from a layout change: the page may have been left (Settings opened) before it runs
+        if (grid == null || gridScroll == null || !isAdded()) {
             return;
         }
         int width = gridScroll.getWidth();
@@ -487,31 +488,44 @@ public class HomeFragment extends Fragment {
         }
     }
 
-    /** 盲区：关 → 中控 → 抬头显示 → 关。没有抬头显示时跳过那一档。 */
+    /** 盲区：关 → 中控 → 抬头显示 → 两块屏 → 关。没有抬头显示时只有关、中控两档。 */
     private void cycleBlindSpot() {
         Context context = requireContext();
+        boolean hud = HudDisplay.find(context) != null;
         if (!config.isSidePopupEnabled()) {
-            config.setSidePopupOnHud(false);
+            setBlindSpotScreens(true, false);
             if (!OverlayCoordinator.setSidePopupEnabled(context, true)) {
                 com.kooo.evcam.ui.Notice.makeText(context, R.string.msg_need_overlay, Toast.LENGTH_SHORT).show();
             }
             return;
         }
-        if (!config.isSidePopupOnHud() && HudDisplay.find(context) != null) {
-            config.setSidePopupOnHud(true);
-            SideViewPopupService.applyConfig();
-            SideViewPopupService.start(context);
+        boolean screen = config.isSidePopupOnScreen();
+        boolean onHud = config.isSidePopupOnHud();
+        if (hud && screen && !onHud) {
+            setBlindSpotScreens(false, true);
+        } else if (hud && !screen && onHud) {
+            setBlindSpotScreens(true, true);
+        } else {
+            OverlayCoordinator.setSidePopupEnabled(context, false);
             return;
         }
-        config.setSidePopupOnHud(false);
-        OverlayCoordinator.setSidePopupEnabled(context, false);
+        SideViewPopupService.applyConfig();
+        SideViewPopupService.start(context);
+    }
+
+    private void setBlindSpotScreens(boolean screen, boolean hud) {
+        config.setSidePopupOnScreen(screen);
+        config.setSidePopupOnHud(hud);
     }
 
     private String blindSpotText() {
         if (!config.isSidePopupEnabled()) {
             return getString(R.string.home_state_off);
         }
-        return getString(config.isSidePopupOnHud() ? R.string.home_state_hud : R.string.home_state_screen);
+        boolean screen = config.isSidePopupOnScreen();
+        boolean hud = config.isSidePopupOnHud();
+        return getString(screen && hud ? R.string.home_state_screen_hud
+                : hud ? R.string.home_state_hud : R.string.home_state_screen);
     }
 
     /** 闪远光抓拍：打开时把它依赖的「锁定影像」一起打开，不然开关拨了不起作用。 */

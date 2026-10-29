@@ -8,7 +8,8 @@ package com.kooo.evcam.zeekr;
  * <ul>
  *   <li>左灯只弹左侧那一路，右灯只弹右侧那一路；双闪、不打灯、读不到都不弹。</li>
  *   <li><b>原厂画面优先</b>：挂 R 档、原厂 360 在显示、原厂画面弹着（360 或侧方小窗）、
- *       泊车辅助开着，任何一样成立都不弹；已经弹着的立刻收。</li>
+ *       泊车辅助开着，任何一样成立都不弹；已经弹着的立刻收。设置「盖在原厂画面上」（默认开）
+ *       时只有 R 档拦。</li>
  *   <li>车速低于设定值不弹（默认 30 km/h：再慢原厂自己会弹侧方小窗）；车速读不到不拦。
  *       只在「还没弹」时看车速 —— 弹出来之后减速不收，免得在门槛上来回闪。</li>
  *   <li>灯一灭就收。</li>
@@ -36,6 +37,8 @@ public final class SideViewDecision {
         public Float speedKmh;
         /** 设置里的门槛，km/h；0 表示不看车速。 */
         public int minSpeedKmh;
+        /** 原厂画面（360、原厂侧方小窗、泊车辅助）在时也照弹；R 档仍然不弹。 */
+        public boolean overFactoryView;
         /** 此刻已经弹着的是哪一路（{@link LaneCycle#LEFT} / {@link LaneCycle#RIGHT}），没弹是 {@link #NONE}。 */
         public int showing = NONE;
     }
@@ -78,10 +81,18 @@ public final class SideViewDecision {
         return "D".equals(in.gear);
     }
 
-    /** 原厂有画面在屏幕上（或马上要有）：倒车、360、原厂弹窗、泊车辅助。 */
+    /**
+     * 原厂有画面在屏幕上（或马上要有）：倒车、360、原厂弹窗、泊车辅助。
+     * 设了 {@link Input#overFactoryView} 时只认 R 档，其余照弹。
+     */
     public static boolean factoryViewActive(Input in) {
-        return "R".equals(in.gear)
-                || Boolean.TRUE.equals(in.stock360Shown)
+        if ("R".equals(in.gear)) {
+            return true;
+        }
+        if (in.overFactoryView) {
+            return false;
+        }
+        return Boolean.TRUE.equals(in.stock360Shown)
                 || Boolean.TRUE.equals(in.stockPopupShown)
                 || Boolean.TRUE.equals(in.parkAssistOn);
     }

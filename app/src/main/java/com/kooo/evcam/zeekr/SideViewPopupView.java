@@ -1,14 +1,19 @@
 package com.kooo.evcam.zeekr;
 
 import android.content.Context;
+import android.animation.TimeInterpolator;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
+import android.graphics.Outline;
 import android.graphics.PixelFormat;
 import android.graphics.RectF;
 import android.os.Build;
 import android.util.Size;
 import android.view.Gravity;
+import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewOutlineProvider;
+import android.view.animation.DecelerateInterpolator;
 import android.view.WindowManager;
 
 import com.kooo.evcam.AppConfig;
@@ -68,8 +73,12 @@ public class SideViewPopupView extends ViewGroup {
     private int frameY;
     private int frameW;
     private int frameH;
+    /** 中控屏上宽幅圆角（像特斯拉的盲区画面）；抬头显示不受影响。 */
+    private boolean wide;
+    /** 画面的宽高比，宽幅时拉直按它收窄上下，不拉扁。 */
+    private float aspect = 1f;
     private final FisheyeMesh.SourceMap turnedMap = (u, v, out) ->
-            SideViewProjection.sourcePoint(u, v, viewFov, yaw, pitch, roll, lane, out, 0);
+            SideViewProjection.sourcePoint(u, v, viewFov, yaw, pitch, roll, lane, aspect, out, 0);
 
     public SideViewPopupView(Context context, AppConfig appConfig) {
         super(context);
@@ -78,6 +87,16 @@ public class SideViewPopupView extends ViewGroup {
         setBackgroundColor(0xFF000000);
         textureView = new AutoFitTextureView(context);
         addView(textureView);
+        setOutlineProvider(new ViewOutlineProvider() {
+            @Override
+            public void getOutline(View view, Outline outline) {
+                if (wide && !onHud()) {
+                    outline.setRoundRect(0, 0, view.getWidth(), view.getHeight(), CORNER_DP * density());
+                } else {
+                    outline.setRect(0, 0, view.getWidth(), view.getHeight());
+                }
+            }
+        });
         readConfig();
     }
 
@@ -184,6 +203,9 @@ public class SideViewPopupView extends ViewGroup {
     }
 
     private void readConfig() {
+        wide = appConfig.isSidePopupWide();
+        setClipToOutline(wide);
+        invalidateOutline();
         straighten = appConfig.isSidePopupStraighten();
         viewFov = appConfig.getSidePopupFov();
         yaw = appConfig.getSidePopupYaw();
@@ -210,6 +232,9 @@ public class SideViewPopupView extends ViewGroup {
             }
             if (show) {
                 liftAboveShade();
+                if (visibilityChanged || sideChanged) {
+                    slideIn();
+                }
             }
             return;
         }
@@ -229,6 +254,7 @@ public class SideViewPopupView extends ViewGroup {
             visible = show;
             if (show) {
                 liftAboveShade();
+                slideIn();
             }
         } catch (Exception e) {
             AppLog.e(TAG, "侧视窗添加失败", e);
@@ -285,12 +311,35 @@ public class SideViewPopupView extends ViewGroup {
         }
     }
 
+    private static final float CORNER_DP = 22f;
+    private static final float SLIDE_DP = 56f;
+    private static final long SLIDE_MS = 220L;
+    private static final TimeInterpolator SLIDE_EASE = new DecelerateInterpolator(2f);
+
+    private float density() {
+        return getResources().getDisplayMetrics().density;
+    }
+
+    /** 宽幅时从右边（它所在的那一角）滑进来、淡入；方块照旧直接出现。 */
+    private void slideIn() {
+        animate().cancel();
+        if (!wide || onHud()) {
+            setTranslationX(0f);
+            setAlpha(1f);
+            return;
+        }
+        setTranslationX(SLIDE_DP * density());
+        setAlpha(0f);
+        animate().translationX(0f).alpha(1f).setDuration(SLIDE_MS).setInterpolator(SLIDE_EASE).start();
+    }
+
     /**
-     * 大小和位置。边长按屏幕高度的百分比，最多半个屏幕宽（两边在中线相接，不能超过一半）；
-     * 上下位置是剩余高度里的百分比，0 贴顶、100 贴底。
+     * 大小和位置。边长按屏幕高度的百分比，最多半个屏幕宽；上下位置是剩余高度里的百分比，
+     * 0 贴顶、100 贴底。左右见 {@link #mainScreenX}。
      */
     private void place(int side) {
         if (onHud()) {
+            aspect = 1f;
             // 窗口若从屏幕中间起，这台抬头显示会把相机层留在靠原点的位置。
             // 右侧那一路离原点远，就多出一块错位的画面。窗口改从 (0,0) 铺满，画面再挪到该在的地方。
             boolean onLeft = HudFrame.pinToLeftEdge(side == LaneCycle.LEFT,
@@ -316,11 +365,32 @@ public class SideViewPopupView extends ViewGroup {
         int h = getResources().getDisplayMetrics().heightPixels;
         int size = Math.round(Math.min(h * appConfig.getSidePopupSizePercent() / 100f, w / 2f));
         size = Math.max(AppConfig.REARVIEW_MIN_SIZE, size);
-        int center = w / 2;
-        params.width = size;
-        params.height = size;
-        params.x = side == LaneCycle.LEFT ? center - size : center;
-        params.y = Math.round(Math.max(0, h - size) * appConfig.getSidePopupVerticalPercent() / 100f);
+        int[] box = wide ? wideBox(w, size) : new int[] {size, size};
+        params.width = box[0];
+        params.height = box[1];
+        aspect = (float) box[0] / box[1];
+        if (wide) {
+            // 宽幅：两边都在右上角，像特斯拉那样固定一处，不跟着灯换位置；上下位置的设置不用
+            params.x = Math.max(0, w - box[0]);
+            params.y = 0;
+        } else {
+            params.x = mainScreenX(side == LaneCycle.LEFT, w, box[0]);
+            params.y = Math.round(Math.max(0, h - box[1]) * appConfig.getSidePopupVerticalPercent() / 100f);
+        }
+        invalidateOutline();
+    }
+
+    /** 宽幅窗口的宽、高：16:9，宽是方块边长的 1.2 倍，最多半个屏幕宽。 */
+    static int[] wideBox(int screenWidth, int size) {
+        int width = Math.min(Math.round(size * WIDE_SCALE), screenWidth / 2);
+        return new int[] {width, Math.round(width * 9f / 16f)};
+    }
+
+    private static final float WIDE_SCALE = 1.2f;
+
+    /** 中控屏上靠右摆：右侧那一路贴右边，左侧那一路摆在屏幕正中。 */
+    static int mainScreenX(boolean leftLane, int screenWidth, int size) {
+        return Math.max(0, leftLane ? (screenWidth - size) / 2 : screenWidth - size);
     }
 
     // ------------------------------------------------------------------ 布局与绘制
@@ -394,6 +464,11 @@ public class SideViewPopupView extends ViewGroup {
             int upPercent = Math.round(pitch / SideViewProjection.MAX_PITCH_DEGREES * 100f);
             RearViewGeometry.Viewport viewport = SideViewAim.viewport(lane, zoomPercent, backPercent, upPercent);
             float[] rect = RearViewGeometry.combinedSourceRect(plan, lane, viewport);
+            if (aspect > 1f) {
+                // 宽幅：横向取景不变，上下按比例少取一些，和方块时同样的比例，不拉扁
+                float cropH = rect[3] / aspect;
+                rect = new float[] {rect[0], rect[1] + (rect[3] - cropH) / 2f, rect[2], cropH};
+            }
             sourceRect.set(rect[0] * width, rect[1] * height,
                     (rect[0] + rect[2]) * width, (rect[1] + rect[3]) * height);
             destRect.set(0, 0, width, height);

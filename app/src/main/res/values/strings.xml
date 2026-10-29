@@ -300,6 +300,8 @@ Then reopen this app.</string>
     <string name="set_sticker_summary">Finds a Bluetooth sticker the head unit does not pair yet. A press runs a saved shortcut</string>
     <string name="set_mood_light_title">Mood light</string>
     <string name="set_mood_light_summary">Set the color of a cheap Bluetooth RGB light, like ELK-BLEDOM or Happy Lighting ones</string>
+    <string name="set_mood_light_blind_spot_title">Blink orange for a car in the blind spot</string>
+    <string name="set_mood_light_blind_spot_summary">While the turn signal is on and the car warns of a vehicle in the blind spot on that side, the mood lights blink orange, then go back to their usual color</string>
     <string name="mood_light_subtitle">Close the light\'s own phone app first. The light takes one connection at a time</string>
     <string name="mood_light_pick">Scan, then tap Connect on your light.</string>
     <string name="mood_light_none">No light yet.\n1. Plug in the light and close its own phone app.\n2. Tap Scan.\n3. Tap Connect on your light.</string>
@@ -635,9 +637,11 @@ Then reopen this app.</string>
     <string name="msg_rearview_on">Super mirror on. Drag the sides to move it; swipe the middle up or down to reframe.</string>
     <string name="msg_rearview_reset">Super mirror window and view reset</string>
     <string name="set_side_popup_title">Turn-signal side view</string>
-    <string name="set_side_popup_summary">While you signal, a pop-up shows the camera on that side: left signal, left camera. It closes when the signal goes off. The car\'s own views come first: no pop-up in reverse or while the stock 360 or side view is showing. Not shown while the Super mirror is on</string>
+    <string name="set_side_popup_summary">While you signal, a pop-up shows the camera on that side: left signal, left camera. It closes when the signal goes off. No pop-up in reverse. Not shown while the Super mirror is on</string>
+    <string name="set_side_popup_screen_title">On the centre screen</string>
+    <string name="set_side_popup_screen_summary">Shows that side camera on the centre screen. Turn on with On the driver HUD to show it on both</string>
     <string name="set_side_popup_hud_title">On the driver HUD</string>
-    <string name="set_side_popup_hud_summary">Puts that side camera on the windscreen instead of the centre screen. A small picture, so the car\'s own speed and lane graphics stay. If this car has no HUD display, it stays on the centre screen</string>
+    <string name="set_side_popup_hud_summary">Shows that side camera on the windscreen as a small picture, so the car\'s own speed and lane graphics stay. If this car has no HUD display, it shows on the centre screen instead</string>
     <string name="set_side_popup_hud_width_title">HUD width (%)</string>
     <string name="set_side_popup_hud_width_summary">How wide the picture is on the windscreen. It stays on the outer edge, clear of the car graphic. 27 is about 16:9 on this car</string>
     <string name="set_side_popup_hud_height_title">HUD height (%)</string>
@@ -661,11 +665,17 @@ Then reopen this app.</string>
     <string name="set_side_popup_roll_right_title">Rotate right (°)</string>
     <string name="set_side_popup_roll_summary">Positive turns the picture clockwise to level a tilted horizon. Left and right are separate. If it turns the wrong way, drag the other way</string>
     <string name="set_side_popup_close_delay_ms_title">Stay open after the signal (ms)</string>
-    <string name="set_side_popup_close_delay_ms_summary">1000 ms = 1 second. 0 closes it as soon as the signal goes off. A stock view still closes it straight away</string>
+    <string name="set_side_popup_close_delay_ms_summary">1000 ms = 1 second. 0 closes it as soon as the signal goes off. Reversing still closes it straight away, and so does the car\'s own view when Show over the car\'s own view is off</string>
+    <string name="set_side_popup_style_title">Pop-up style</string>
+    <string name="set_side_popup_style_summary">On the centre screen. Wide is a landscape picture with rounded corners in the top-right corner for both sides, like Tesla\'s blind-spot camera</string>
+    <string name="opt_side_popup_square">Square</string>
+    <string name="opt_side_popup_wide">Wide</string>
+    <string name="set_side_popup_over_factory_title">Show over the car\'s own view</string>
+    <string name="set_side_popup_over_factory_summary">Opens even while the car shows its 360 view, its own side view or park assist. Never in R</string>
     <string name="set_side_popup_instant_title">Instant pop-up</string>
     <string name="set_side_popup_instant_summary">In D, keeps the side view ready in the background so the picture is there as soon as you signal. The camera stays on while driving, which uses a little more power</string>
     <string name="set_side_popup_size_title">Pop-up size (% of screen height)</string>
-    <string name="set_side_popup_size_summary">Up to half the screen width: the left and right pop-ups meet at the middle</string>
+    <string name="set_side_popup_size_summary">Up to half the screen width. The right side opens at the right edge, the left side near the middle</string>
     <string name="set_side_popup_vertical_title">Height on screen (%)</string>
     <string name="set_side_popup_vertical_summary">0 is the top, 100 the bottom</string>
     <string name="msg_floating_reset">Floating button reset</string>
@@ -1439,7 +1449,7 @@ Then reopen this app.</string>
     <string name="home_card_rear">Rear camera</string>
     <string name="home_card_rear_sub">Rear-view mirror on or off</string>
     <string name="home_card_blind">Blind spot</string>
-    <string name="home_card_blind_sub">Turn signal shows the side. Tap: off, screen, HUD</string>
+    <string name="home_card_blind_sub">Turn signal shows the side. Tap: off, screen, HUD, both</string>
     <string name="home_card_capture">Instant capture</string>
     <string name="home_card_capture_sub">Saves 10 s before and after. Tap here, press a shortcut, or flash the high beam</string>
     <string name="home_card_flash">Flash-to-pass capture</string>
@@ -1524,6 +1534,7 @@ Then reopen this app.</string>
     <string name="home_state_off">Off</string>
     <string name="home_state_screen">Screen</string>
     <string name="home_state_hud">HUD</string>
+    <string name="home_state_screen_hud">Screen + HUD</string>
 
     <!-- AirPlay 投屏 -->
     <string name="airplay_title">AirPlay</string>

@@ -734,6 +734,10 @@ public class SettingsPreferenceFragment extends PreferenceFragmentCompat {
                         toast(getString(R.string.msg_side_popup_on));
                     }
                 });
+        bindSwitch("pref_side_popup_screen", appConfig.isSidePopupOnScreen(), value -> {
+            appConfig.setSidePopupOnScreen(value);
+            com.kooo.evcam.zeekr.SideViewPopupService.applyConfig();
+        });
         bindSwitch("pref_side_popup_hud", appConfig.isSidePopupOnHud(), value -> {
             appConfig.setSidePopupOnHud(value);
             com.kooo.evcam.zeekr.SideViewPopupService.applyConfig();
@@ -797,6 +801,15 @@ public class SettingsPreferenceFragment extends PreferenceFragmentCompat {
                     appConfig.setSidePopupRollRight(value);
                     com.kooo.evcam.zeekr.SideViewPopupService.applyConfig();
                 });
+        bindSegmented("pref_side_popup_style", SettingsRegistry.SIDE_POPUP_STYLE,
+                appConfig.getSidePopupStyle(), value -> {
+                    appConfig.setSidePopupStyle(value);
+                    com.kooo.evcam.zeekr.SideViewPopupService.applyConfig();
+                });
+        bindSwitch("pref_side_popup_over_factory", appConfig.isSidePopupOverFactory(), value -> {
+            appConfig.setSidePopupOverFactory(value);
+            com.kooo.evcam.zeekr.SideViewPopupService.applyConfig();
+        });
         bindSwitch("pref_side_popup_instant", appConfig.isSidePopupInstant(), value -> {
             appConfig.setSidePopupInstant(value);
             com.kooo.evcam.zeekr.SideViewPopupService.applyConfig();
@@ -1272,6 +1285,10 @@ public class SettingsPreferenceFragment extends PreferenceFragmentCompat {
                 startActivity(new Intent(getContext(), ControllerProbeActivity.class)));
         onClick("pref_mood_light", pref ->
                 startActivity(new Intent(getContext(), com.kooo.evcam.light.MoodLightActivity.class)));
+        bindSwitch("pref_mood_light_blind_spot_blink", appConfig.isMoodLightBlindSpotBlink(), value -> {
+            appConfig.setMoodLightBlindSpotBlink(value);
+            com.kooo.evcam.light.GearLight.reload();
+        });
         onClick("pref_car_ambient", pref ->
                 startActivity(new Intent(getContext(), com.kooo.evcam.light.CarAmbientLabActivity.class)));
         onClick("pref_volume_lab", pref ->

@@ -298,6 +298,8 @@
     <string name="set_sticker_summary">ค้นหาสติกเกอร์บลูทูธที่หัวเครื่องยังไม่ได้จับคู่ การกดจะสั่งปุ่มลัดที่บันทึกไว้</string>
     <string name="set_mood_light_title">ไฟบรรยากาศ</string>
     <string name="set_mood_light_summary">ตั้งสีไฟ RGB บลูทูธราคาถูก เช่น รุ่น ELK-BLEDOM หรือ Happy Lighting</string>
+    <string name="set_mood_light_blind_spot_title">กะพริบส้มเมื่อมีรถในจุดบอด</string>
+    <string name="set_mood_light_blind_spot_summary">เมื่อเปิดไฟเลี้ยว แล้วรถเตือนว่ามีรถอยู่ในจุดบอดฝั่งนั้น ไฟบรรยากาศจะกะพริบสีส้ม แล้วกลับเป็นสีเดิมเมื่อหมดเตือน</string>
     <string name="mood_light_subtitle">ปิดแอปมือถือของไฟก่อน ไฟเชื่อมต่อได้ทีละเครื่อง</string>
     <string name="mood_light_pick">สแกน แล้วแตะเชื่อมต่อที่ไฟของคุณ</string>
     <string name="mood_light_none">ยังไม่มีไฟ\n1. เสียบไฟ และปิดแอปมือถือของไฟ\n2. แตะสแกน\n3. แตะเชื่อมต่อที่ไฟของคุณ</string>
@@ -631,9 +633,11 @@
     <string name="msg_rearview_on">เปิดกระจกมองหลังอัจฉริยะแล้ว ลากด้านข้างเพื่อย้าย ปัดตรงกลางขึ้นหรือลงเพื่อจัดเฟรมใหม่</string>
     <string name="msg_rearview_reset">รีเซ็ตหน้าต่างและมุมมองของกระจกมองหลังอัจฉริยะแล้ว</string>
     <string name="set_side_popup_title">ภาพด้านข้างเมื่อเปิดไฟเลี้ยว</string>
-    <string name="set_side_popup_summary">ขณะเปิดไฟเลี้ยว ป๊อปอัปจะแสดงกล้องด้านนั้น: เลี้ยวซ้าย กล้องซ้าย และปิดเมื่อไฟเลี้ยวดับ ภาพของรถเองมาก่อน: ไม่แสดงขณะถอยหรือขณะภาพ 360 หรือภาพด้านข้างของรถแสดงอยู่ ไม่แสดงขณะเปิดกระจกมองหลังอัจฉริยะ</string>
+    <string name="set_side_popup_summary">ขณะเปิดไฟเลี้ยว ป๊อปอัปจะแสดงกล้องด้านนั้น: เลี้ยวซ้าย กล้องซ้าย และปิดเมื่อไฟเลี้ยวดับ ไม่แสดงขณะถอย ไม่แสดงขณะเปิดกระจกมองหลังอัจฉริยะ</string>
+    <string name="set_side_popup_screen_title">บนหน้าจอกลาง</string>
+    <string name="set_side_popup_screen_summary">แสดงกล้องด้านนั้นบนหน้าจอกลาง เปิดคู่กับ "บน HUD ของผู้ขับ" เพื่อให้ขึ้นทั้งสองที่</string>
     <string name="set_side_popup_hud_title">บน HUD ของผู้ขับ</string>
-    <string name="set_side_popup_hud_summary">แสดงกล้องด้านนั้นบนกระจกหน้าแทนหน้าจอกลาง เป็นภาพเล็ก ข้อมูลความเร็วและเลนของรถจึงยังอยู่ ถ้ารถคันนี้ไม่มี HUD จะแสดงที่หน้าจอกลาง</string>
+    <string name="set_side_popup_hud_summary">แสดงกล้องด้านนั้นบนกระจกหน้าเป็นภาพเล็ก ข้อมูลความเร็วและเลนของรถจึงยังอยู่ ถ้ารถคันนี้ไม่มี HUD จะแสดงที่หน้าจอกลางแทน</string>
     <string name="set_side_popup_hud_width_title">ความกว้างบน HUD (%)</string>
     <string name="set_side_popup_hud_width_summary">ความกว้างของภาพบนกระจกหน้า ภาพอยู่ชิดขอบด้านนอก ไม่บังกราฟิกรถ 27 ประมาณ 16:9 บนรถคันนี้</string>
     <string name="set_side_popup_hud_height_title">ความสูงบน HUD (%)</string>
@@ -657,11 +661,17 @@
     <string name="set_side_popup_roll_right_title">หมุนภาพขวา (°)</string>
     <string name="set_side_popup_roll_summary">ค่าบวกหมุนภาพตามเข็มนาฬิกาเพื่อปรับเส้นขอบฟ้าที่เอียง ซ้ายและขวาตั้งแยกกัน ถ้าหมุนผิดทาง ให้ลากไปอีกทาง</string>
     <string name="set_side_popup_close_delay_ms_title">เปิดค้างหลังไฟเลี้ยวดับ (มิลลิวินาที)</string>
-    <string name="set_side_popup_close_delay_ms_summary">1000 มิลลิวินาที = 1 วินาที 0 คือปิดทันทีที่ไฟเลี้ยวดับ ภาพของรถยังปิดป๊อปอัปทันที</string>
+    <string name="set_side_popup_close_delay_ms_summary">1000 มิลลิวินาที = 1 วินาที 0 คือปิดทันทีที่ไฟเลี้ยวดับ เข้าเกียร์ถอยยังปิดป๊อปอัปทันที และภาพของรถก็ปิดทันทีถ้าปิด "แสดงทับภาพของรถ" ไว้</string>
+    <string name="set_side_popup_style_title">รูปแบบป๊อปอัป</string>
+    <string name="set_side_popup_style_summary">บนจอกลาง แบบกว้างเป็นภาพแนวนอนมุมโค้ง ขึ้นที่มุมขวาบนทั้งสองฝั่ง คล้ายกล้องจุดบอดของ Tesla</string>
+    <string name="opt_side_popup_square">สี่เหลี่ยม</string>
+    <string name="opt_side_popup_wide">กว้าง</string>
+    <string name="set_side_popup_over_factory_title">แสดงทับภาพของรถ</string>
+    <string name="set_side_popup_over_factory_summary">ขึ้นได้แม้รถกำลังแสดงภาพ 360 ภาพด้านข้างของรถเอง หรือระบบช่วยจอด ยกเว้นตอนเข้าเกียร์ R</string>
     <string name="set_side_popup_instant_title">ป๊อปอัปทันใจ</string>
     <string name="set_side_popup_instant_summary">ในเกียร์ D จะเตรียมภาพด้านข้างไว้เบื้องหลัง ภาพจึงขึ้นทันทีที่เปิดไฟเลี้ยว กล้องเปิดค้างขณะขับ ใช้พลังงานมากขึ้นเล็กน้อย</string>
     <string name="set_side_popup_size_title">ขนาดป๊อปอัป (% ของความสูงจอ)</string>
-    <string name="set_side_popup_size_summary">ได้สูงสุดครึ่งความกว้างจอ: ป๊อปอัปซ้ายและขวาจะชนกันตรงกลาง</string>
+    <string name="set_side_popup_size_summary">ได้สูงสุดครึ่งความกว้างจอ ฝั่งขวาขึ้นชิดขอบขวา ฝั่งซ้ายขึ้นแถวกลางจอ</string>
     <string name="set_side_popup_vertical_title">ความสูงบนจอ (%)</string>
     <string name="set_side_popup_vertical_summary">0 คือด้านบน 100 คือด้านล่าง</string>
     <string name="msg_floating_reset">รีเซ็ตปุ่มลอยแล้ว</string>
@@ -1413,7 +1423,7 @@
     <string name="home_card_rear">กล้องหลัง</string>
     <string name="home_card_rear_sub">เปิดหรือปิดกระจกมองหลัง</string>
     <string name="home_card_blind">จุดบอด</string>
-    <string name="home_card_blind_sub">เปิดไฟเลี้ยวเพื่อดูด้านข้าง แตะ: ปิด หน้าจอ HUD</string>
+    <string name="home_card_blind_sub">เปิดไฟเลี้ยวเพื่อดูด้านข้าง แตะ: ปิด หน้าจอ HUD ทั้งสอง</string>
     <string name="home_card_capture">จับภาพทันที</string>
     <string name="home_card_capture_sub">บันทึก 10 วินาทีก่อนและหลัง แตะที่นี่ กดปุ่มลัด หรือกะพริบไฟสูง</string>
     <string name="home_card_flash">จับภาพด้วยไฟสูง</string>
@@ -1498,6 +1508,7 @@
     <string name="home_state_off">ปิด</string>
     <string name="home_state_screen">หน้าจอ</string>
     <string name="home_state_hud">HUD</string>
+    <string name="home_state_screen_hud">จอ + HUD</string>
 
     <!-- AirPlay 投屏 -->
     <string name="airplay_title">AirPlay</string>

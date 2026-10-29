@@ -125,6 +125,7 @@ public class AppConfig {
     private static final String KEY_INFO_BAR_ITEMS = "info_bar_items";  // 信息条上放哪几项（系统信息里勾的）
     private static final String KEY_INFO_BAR_ALL = "info_bar_all";  // 开发者：连没验证的栏目一起启用
     private static final String KEY_SIDE_POPUP = "side_popup_enabled";  // 打转向灯弹侧视
+    private static final String KEY_SIDE_POPUP_SCREEN = "side_popup_screen";  // 侧视弹在中控；和抬头显示各自开关
     private static final String KEY_SIDE_POPUP_HUD = "side_popup_hud";  // 侧视投到驾驶员抬头显示
     private static final String KEY_SIDE_POPUP_HUD_WIDTH = "side_popup_hud_width";  // 抬头显示上的宽度，屏宽的百分比
     // 新键。2.11.6 的 side_popup_hud_height 默认写过 100，那一版画面更差，不能沿用。
@@ -139,6 +140,8 @@ public class AppConfig {
     public static final int SIDE_POPUP_DEFAULT_MIN_SPEED = 30;
     public static final int SIDE_POPUP_MAX_MIN_SPEED = 80;
     private static final String KEY_SIDE_POPUP_STRAIGHTEN = "side_popup_straighten";  // 侧视拉直鱼眼
+    private static final String KEY_SIDE_POPUP_STYLE = "side_popup_style";
+    private static final String KEY_SIDE_POPUP_OVER_FACTORY = "side_popup_over_factory";
     private static final String KEY_SIDE_POPUP_INSTANT = "side_popup_instant";  // D 档时备着相机，打灯即出画面
     private static final String KEY_SIDE_POPUP_CLOSE_DELAY_MS = "side_popup_close_delay_ms";  // 灯灭后再留多少毫秒
     private static final String KEY_SIDE_POPUP_SIZE = "side_popup_size";  // 边长，屏幕高度的百分比
@@ -1860,8 +1863,26 @@ public class AppConfig {
     }
 
     public void setSidePopupOnHud(boolean enabled) {
-        prefs.edit().putBoolean(KEY_SIDE_POPUP_HUD, enabled).apply();
+        SharedPreferences.Editor edit = prefs.edit();
+        if (!prefs.contains(KEY_SIDE_POPUP_SCREEN)) {
+            // 中控那个开关还跟着旧规则走：先把它此刻的值记下，拨抬头显示不再连带它
+            edit.putBoolean(KEY_SIDE_POPUP_SCREEN, isSidePopupOnScreen());
+        }
+        edit.putBoolean(KEY_SIDE_POPUP_HUD, enabled).apply();
         AppLog.i(TAG, "侧视投抬头显示: " + (enabled ? "开" : "关"));
+    }
+
+    /**
+     * 侧视弹在中控屏。和 {@link #isSidePopupOnHud} 各管各的，两个都开就两块屏一起弹。
+     * 以前只有「投抬头显示」一个开关（开 = 只在抬头显示），没设过时照它来：投了抬头显示就不在中控。
+     */
+    public boolean isSidePopupOnScreen() {
+        return prefs.getBoolean(KEY_SIDE_POPUP_SCREEN, !isSidePopupOnHud());
+    }
+
+    public void setSidePopupOnScreen(boolean enabled) {
+        prefs.edit().putBoolean(KEY_SIDE_POPUP_SCREEN, enabled).apply();
+        AppLog.i(TAG, "侧视弹在中控: " + (enabled ? "开" : "关"));
     }
 
     public static final int SIDE_POPUP_HUD_MIN_WIDTH = 10;
@@ -1950,6 +1971,30 @@ public class AppConfig {
 
     public void setSidePopupStraighten(boolean on) {
         prefs.edit().putBoolean(KEY_SIDE_POPUP_STRAIGHTEN, on).apply();
+    }
+
+    /** 中控屏上侧视弹窗的样式，见 {@code SettingsRegistry.SIDE_POPUP_STYLE}。 */
+    public String getSidePopupStyle() {
+        return com.kooo.evcam.settings.SettingsRegistry.SIDE_POPUP_STYLE.sanitize(
+                prefs.getString(KEY_SIDE_POPUP_STYLE, null));
+    }
+
+    public void setSidePopupStyle(String style) {
+        prefs.edit().putString(KEY_SIDE_POPUP_STYLE, style).apply();
+    }
+
+    /** 宽幅圆角的侧视弹窗（像特斯拉的盲区画面）。 */
+    public boolean isSidePopupWide() {
+        return "wide".equals(getSidePopupStyle());
+    }
+
+    /** 原厂画面（360、侧方小窗、泊车辅助）在时侧视照弹；R 档不弹。默认开。 */
+    public boolean isSidePopupOverFactory() {
+        return prefs.getBoolean(KEY_SIDE_POPUP_OVER_FACTORY, true);
+    }
+
+    public void setSidePopupOverFactory(boolean on) {
+        prefs.edit().putBoolean(KEY_SIDE_POPUP_OVER_FACTORY, on).apply();
     }
 
     /** D 档时把侧视窗备着（透明、相机照推），打灯即出画面；代价是开车时相机一直开着。默认开。 */
@@ -2604,6 +2649,17 @@ public class AppConfig {
 
     public void setMoodLightOn(boolean on) {
         prefs.edit().putBoolean(KEY_MOOD_LIGHT_ON, on).apply();
+    }
+
+    private static final String KEY_MOOD_LIGHT_BLIND_SPOT_BLINK = "mood_light_blind_spot_blink";
+
+    /** Blink the mood lights orange while signalling towards a car in the blind spot ({@code light.BlindSpotBlink}). On by default. */
+    public boolean isMoodLightBlindSpotBlink() {
+        return prefs.getBoolean(KEY_MOOD_LIGHT_BLIND_SPOT_BLINK, true);
+    }
+
+    public void setMoodLightBlindSpotBlink(boolean on) {
+        prefs.edit().putBoolean(KEY_MOOD_LIGHT_BLIND_SPOT_BLINK, on).apply();
     }
     private static final String KEY_MOOD_LIGHT_GROUP_SHOWN = "mood_light_group_shown";
 

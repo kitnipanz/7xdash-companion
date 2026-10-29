@@ -6,6 +6,7 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.SystemClock;
 
 import androidx.core.content.ContextCompat;
 
@@ -29,7 +30,8 @@ import java.util.Objects;
  * <p>Drives every light in a group alike ({@link LightGroup}). Holds a group's connections while
  * the gear is known (the car is awake) and its rules are on; lets go when the gear goes unknown.
  * The mood light screen takes every link for itself ({@link #pause}) and hands them back when it
- * closes. Gear is a core signal, read for as long as the process lives; speed is a float sensor,
+ * closes. While the turn signal is on towards a side the blind-spot assist warns about, every
+ * group blinks orange instead ({@link BlindSpotBlink}). Gear is a core signal, read for as long as the process lives; speed is a float sensor,
  * so this registers as a full telemetry user only while a D rule of some group needs it.</p>
  *
  * <p>Main thread only.</p>
@@ -65,6 +67,7 @@ public final class GearLight implements Telemetry.Listener {
     private final AppConfig config;
     private final Handler main = new Handler(Looper.getMainLooper());
     private final Runnable redial = this::redial;
+    private final Runnable blinkTick = this::update;
     /** Background scan for lights that keep missing (after a reboot a dial may need a scan first). */
     private final LightScan scan;
     private final Map<String, Slot> slots = new HashMap<>();
@@ -74,6 +77,8 @@ public final class GearLight implements Telemetry.Listener {
     private MoodLightGroups groups;
     private boolean paused;
     private boolean speedHeld;
+    /** When the blind-spot blink started (uptime), -1 while it is not blinking. */
+    private long blinkSinceMs = -1L;
 
     private GearLight(Context app) {
         this.app = app;
@@ -159,6 +164,7 @@ public final class GearLight implements Telemetry.Listener {
     private void update() {
         VehicleState state = Telemetry.get().latest();
         boolean running = !paused && state.gear != null && config.isMoodLightOn() && canConnect();
+        LightLook blink = blink(running && BlindSpotBlink.active(config.isMoodLightBlindSpotBlink(), state));
         boolean wantsSpeed = false;
         for (MoodLightGroups.Group group : groups.groups) {
             GearLightRules.Pick pick = group.rules.pick(state.gear, state.speedKmh, picked.get(group.id));
@@ -181,7 +187,7 @@ public final class GearLight implements Telemetry.Listener {
                 BlackBox.note("Mood light gear (" + group.name + "): " + before + " -> " + pick.key);
             }
             slot.pickedKey = pick.key;
-            apply(slot, pick.look);
+            apply(slot, blink != null ? blink : pick.look);
         }
         // Groups that were deleted
         Iterator<Map.Entry<String, Slot>> it = slots.entrySet().iterator();
@@ -193,6 +199,22 @@ public final class GearLight implements Telemetry.Listener {
             }
         }
         holdSpeed(wantsSpeed && !paused);
+    }
+
+    /** Start, keep or stop the blind-spot blink; the look to show now, or null when not blinking. */
+    private LightLook blink(boolean on) {
+        long now = SystemClock.uptimeMillis();
+        if (on != (blinkSinceMs >= 0)) {
+            blinkSinceMs = on ? now : -1L;
+            BlackBox.note("Mood light blind-spot blink " + (on ? "on" : "off"));
+        }
+        main.removeCallbacks(blinkTick);
+        if (!on) {
+            return null;
+        }
+        long since = now - blinkSinceMs;
+        main.postDelayed(blinkTick, BlindSpotBlink.HALF_MS - since % BlindSpotBlink.HALF_MS);
+        return BlindSpotBlink.look(since);
     }
 
     private void apply(Slot slot, LightLook look) {

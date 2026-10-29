@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.6.6-beta] - 2026-10-30
+
+### Blind spot (turn-signal side view)
+- **Centre screen and HUD switch on separately.** Settings → Side mirror has **On the centre screen** and **On the driver HUD**: either one, or both at once. With both, the HUD picture shares the centre screen's camera stream. The home **Blind spot** card cycles off, screen, HUD, screen + HUD. Your current choice carries over.
+- **Shows over the car's own view**, a new setting, on by default: the side view opens even while the car shows its 360 view, its own side view or park assist. Never in R.
+- **Pop-up style: Square or Wide.** Wide is a landscape picture with rounded corners in the top-right corner for both sides, sliding in from the right, like Tesla's blind-spot camera.
+- **Square sits to the right.** The right side opens at the right edge, the left side in the middle of the screen.
+
+### Mood light
+- **Blink orange for a car in the blind spot**, a new setting, on by default: while you signal and the car warns of a car on that side, the mood lights blink orange. It does nothing yet: the car's left/right blind-spot warning signal still has to be found.
+
+### Fixes
+- The app could crash when Settings was opened right as the home page was laid out.
+
 ## [1.6.5-beta] - 2026-10-29
 
 ### AirPlay

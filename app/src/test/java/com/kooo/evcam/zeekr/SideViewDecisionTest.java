@@ -1,6 +1,7 @@
 package com.kooo.evcam.zeekr;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
 import org.junit.Test;
 
@@ -117,5 +118,39 @@ public class SideViewDecisionTest {
         SideViewDecision.Input b = driving(1);
         b.speedKmh = null;
         assertEquals(LaneCycle.LEFT, SideViewDecision.decide(b));
+    }
+
+    @Test
+    public void overFactoryViewStillShowsWithStockViews() {
+        SideViewDecision.Input in = driving(2);
+        in.overFactoryView = true;
+        in.stock360Shown = true;
+        in.stockPopupShown = true;
+        in.parkAssistOn = true;
+        assertEquals(LaneCycle.RIGHT, SideViewDecision.decide(in));
+        assertFalse(SideViewDecision.factoryViewActive(in));
+    }
+
+    @Test
+    public void overFactoryViewNeverInReverse() {
+        SideViewDecision.Input in = driving(1);
+        in.overFactoryView = true;
+        in.gear = "R";
+        assertEquals(SideViewDecision.NONE, SideViewDecision.decide(in));
+    }
+
+    @Test
+    public void mainScreenRightLaneHugsRightEdgeLeftLaneSitsInMiddle() {
+        assertEquals(1920 - 400, SideViewPopupView.mainScreenX(false, 1920, 400));
+        assertEquals((1920 - 400) / 2, SideViewPopupView.mainScreenX(true, 1920, 400));
+        assertEquals(0, SideViewPopupView.mainScreenX(true, 300, 400));
+    }
+
+    @Test
+    public void wideBoxIsSixteenByNineAndAtMostHalfTheScreen() {
+        int[] box = SideViewPopupView.wideBox(2560, 880);
+        assertEquals(1056, box[0]);
+        assertEquals(594, box[1]);
+        assertEquals(1280, SideViewPopupView.wideBox(2560, 2000)[0]);
     }
 }

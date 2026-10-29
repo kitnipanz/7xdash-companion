@@ -55,7 +55,8 @@ public class MirrorDecoderLatencyTest {
         // first 30 frames back to back, then 15 frames 300 ms apart like a still screen
         for (int i = 0; i < 45; i++) {
             long at = SystemClock.elapsedRealtime();
-            d.feed(frames.get(i), i * 33_333_333L);
+            // stamped 50 ms in the past, like a sender clock synced over a network
+            d.feed(frames.get(i), System.currentTimeMillis() * 1_000_000L - 50_000_000L);
             if (i >= 30) {
                 boolean ok = shown.tryAcquire(250, TimeUnit.MILLISECONDS);
                 long took = SystemClock.elapsedRealtime() - at;

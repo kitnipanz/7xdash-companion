@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.4-beta] - 2026-10-29
+
+### AirPlay
+- **Car Wi-Fi stays awake while mirroring.** When the car joins a network (pocket Wi-Fi), Android's Wi-Fi power saving lets it doze between beacons and collect packets in bursts, which made the mirrored picture lag and stutter. 7xDash now keeps it fully awake while mirroring and lets it doze again after.
+- **Mirroring delay in the AirPlay log.** Every 5 s a "mirror delay" line shows how late pictures arrive (the sender's encoding plus Wi-Fi), how long decoding takes, the frame rate, and dropped pictures.
+- Tip: with the Mac and the car both on pocket Wi-Fi, every packet crosses Wi-Fi twice. Joining the Mac to the car's hotspot is one hop.
+
 ## [1.6.3-beta] - 2026-10-29
 
 ### AirPlay

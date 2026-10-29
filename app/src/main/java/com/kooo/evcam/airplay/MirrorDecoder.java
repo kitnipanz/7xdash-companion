@@ -48,6 +48,7 @@ final class MirrorDecoder {
     private boolean firstQueued;
     private boolean broken;
     private int dropped;
+    private final DelayStats stats = new DelayStats();
 
     void setSize(int w, int h) {
         synchronized (lock) {
@@ -131,6 +132,7 @@ final class MirrorDecoder {
         firstQueued = false;
         broken = false;
         dropped = 0;
+        stats.reset();
         AirPlayLog.i("decoder started " + width + "x" + height + " (" + c.getName()
                 + (lowLatency ? ", low latency asked" : "") + ")");
     }
@@ -171,8 +173,10 @@ final class MirrorDecoder {
         }
         buf.clear();
         buf.put(data);
-        codec.queueInputBuffer(idx, 0, data.length, ntpTimeNs / 1000, 0);
+        long ptsUs = ntpTimeNs / 1000;
+        codec.queueInputBuffer(idx, 0, data.length, ptsUs, 0);
         firstQueued = true;
+        stats.queued(ptsUs, System.currentTimeMillis() * 1_000_000L - ntpTimeNs, System.nanoTime());
     }
 
     private void stopCodec() {
@@ -219,6 +223,14 @@ final class MirrorDecoder {
                 c.releaseOutputBuffer(index, true);
             } catch (IllegalStateException ignored) {
                 // stopped meanwhile
+                return;
+            }
+            String line;
+            synchronized (lock) {
+                line = stats.shown(info.presentationTimeUs, System.nanoTime(), dropped);
+            }
+            if (line != null) {
+                AirPlayLog.i(line);
             }
         }
 
@@ -238,6 +250,77 @@ final class MirrorDecoder {
         public void onOutputFormatChanged(@NonNull MediaCodec c, @NonNull MediaFormat format) {
             AirPlayLog.i("decoder output " + format.getInteger(MediaFormat.KEY_WIDTH)
                     + "x" + format.getInteger(MediaFormat.KEY_HEIGHT));
+        }
+    }
+
+    /**
+     * How late the picture is, every few seconds: age is the sender's timestamp to arrival here
+     * (the sender's encoding plus the network, on the synced AirPlay clock), decode is arrival to
+     * the picture being handed to the screen. Guarded by the decoder's lock.
+     */
+    static final class DelayStats {
+        static final long EVERY_NS = 5_000_000_000L;
+        private static final int SLOTS = 64;
+        private final long[] pts = new long[SLOTS];
+        private final long[] at = new long[SLOTS];
+        private int next;
+        private long since;
+        private int frames;
+        private int aged;
+        private long ageSum;
+        private long ageMax;
+        private long decodeSum;
+        private long decodeMax;
+        private int decoded;
+
+        void reset() {
+            java.util.Arrays.fill(at, 0L);
+            since = 0;
+            frames = aged = decoded = 0;
+            ageSum = ageMax = decodeSum = decodeMax = 0;
+        }
+
+        void queued(long ptsUs, long ageNs, long nowNs) {
+            pts[next] = ptsUs;
+            at[next] = nowNs;
+            next = (next + 1) % SLOTS;
+            // before the clocks sync, or across a resync, the age means nothing
+            if (ageNs > -1_000_000_000L && ageNs < 10_000_000_000L) {
+                aged++;
+                ageSum += ageNs;
+                ageMax = Math.max(ageMax, ageNs);
+            }
+        }
+
+        /** A log line when a period is over, else null. */
+        String shown(long ptsUs, long nowNs, int dropped) {
+            if (since == 0) {
+                since = nowNs;
+            }
+            frames++;
+            for (int i = 0; i < SLOTS; i++) {
+                if (at[i] != 0 && pts[i] == ptsUs) {
+                    long d = nowNs - at[i];
+                    decoded++;
+                    decodeSum += d;
+                    decodeMax = Math.max(decodeMax, d);
+                    at[i] = 0;
+                    break;
+                }
+            }
+            long span = nowNs - since;
+            if (span < EVERY_NS) {
+                return null;
+            }
+            String line = String.format(java.util.Locale.US,
+                    "mirror delay: age avg %d max %d ms, decode avg %d max %d ms, %.0f fps, %d dropped",
+                    aged == 0 ? -1 : ageSum / aged / 1_000_000, ageMax / 1_000_000,
+                    decoded == 0 ? -1 : decodeSum / decoded / 1_000_000, decodeMax / 1_000_000,
+                    frames * 1e9 / span, dropped);
+            long keepSince = nowNs;
+            reset();
+            since = keepSince;
+            return line;
         }
     }
 

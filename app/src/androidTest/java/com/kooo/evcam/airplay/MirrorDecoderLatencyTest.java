@@ -47,7 +47,7 @@ public class MirrorDecoderLatencyTest {
         }, new Handler(t.getLooper()));
         Surface surface = st.getSurface();
 
-        MirrorDecoder d = new MirrorDecoder();
+        MirrorDecoder d = new MirrorDecoder(60);
         d.setSize(1280, 720);
         d.setSurface(surface);
         int late = 0;

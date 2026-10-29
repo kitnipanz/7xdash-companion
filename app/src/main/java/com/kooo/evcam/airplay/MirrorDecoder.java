@@ -29,14 +29,24 @@ final class MirrorDecoder {
     private static final long FEED_WAIT_MS = 200L;
     private static final long FIRST_FEED_WAIT_MS = 1000L;
     /**
-     * Ask the decoder to hand pictures out at once. {@code low-latency} is Android 11's key; the
-     * vendor keys reach Qualcomm and Exynos decoders on older Android. Unknown keys are ignored.
+     * Ask the decoder to hand pictures out at once. {@code low-latency} is Android 11's key,
+     * {@code vdec-lowlatency} MediaTek's; the vendor keys reach Exynos and Amlogic decoders on older
+     * Android. Unknown keys are ignored. Qualcomm gets its own below. Picked as in moonlight-android
+     * and jqssun/android-airplay-server's DecoderSelector.
      */
     private static final String[] LOW_LATENCY_KEYS = {
             "low-latency",
-            "vendor.qti-ext-dec-low-latency.enable",
+            "vdec-lowlatency",
             "vendor.rtc-ext-dec-low-latency.enable",
+            "vendor.low-latency.enable",
     };
+    /** Qualcomm: hand pictures out in decode order (mirroring has no B-frames) and right away. */
+    private static final String[] QTI_KEYS = {
+            "vendor.qti-ext-dec-picture-order.enable",
+            "vendor.qti-ext-dec-low-latency.enable",
+    };
+
+    private final int fps;
 
     private final Object lock = new Object();
     private MediaCodec codec;
@@ -49,6 +59,10 @@ final class MirrorDecoder {
     private boolean broken;
     private int dropped;
     private final DelayStats stats = new DelayStats();
+
+    MirrorDecoder(int fps) {
+        this.fps = fps;
+    }
 
     void setSize(int w, int h) {
         synchronized (lock) {
@@ -112,20 +126,22 @@ final class MirrorDecoder {
         thread = new HandlerThread("MirrorDecoder", Process.THREAD_PRIORITY_DISPLAY);
         thread.start();
         Handler handler = new Handler(thread.getLooper());
-        MediaCodec c = MediaCodec.createDecoderByType(AVC);
+        String name = hardwareDecoder();
+        boolean qti = name != null && isQti(name);
+        MediaCodec c = create(name);
         boolean lowLatency = true;
         try {
             c.setCallback(new Callback(c), handler);
-            c.configure(format(true), surface, null, 0);
+            c.configure(format(true, qti), surface, null, 0);
             c.start();
         } catch (Exception e) {
             // some decoders refuse the low-latency keys; try once without them
             AirPlayLog.w("decoder refused low latency: " + e);
             c.release();
             lowLatency = false;
-            c = MediaCodec.createDecoderByType(AVC);
+            c = create(name);
             c.setCallback(new Callback(c), handler);
-            c.configure(format(false), surface, null, 0);
+            c.configure(format(false, qti), surface, null, 0);
             c.start();
         }
         codec = c;
@@ -137,17 +153,81 @@ final class MirrorDecoder {
                 + (lowLatency ? ", low latency asked" : "") + ")");
     }
 
-    private MediaFormat format(boolean lowLatency) {
+    private MediaFormat format(boolean lowLatency, boolean qti) {
         MediaFormat format = MediaFormat.createVideoFormat(AVC, width, height);
         format.setInteger(MediaFormat.KEY_MAX_INPUT_SIZE, Math.max(width * height * 3 / 4, 1024 * 1024));
+        format.setInteger(MediaFormat.KEY_FRAME_RATE, fps);
         if (lowLatency) {
-            // realtime: the decoder keeps up rather than saving power
-            format.setInteger(MediaFormat.KEY_PRIORITY, 0);
+            if (qti) {
+                // Qualcomm clocks up for the highest rate; others take realtime priority
+                format.setInteger(MediaFormat.KEY_OPERATING_RATE, Short.MAX_VALUE);
+                for (String key : QTI_KEYS) {
+                    format.setInteger(key, 1);
+                }
+            } else {
+                format.setInteger(MediaFormat.KEY_PRIORITY, 0);
+            }
             for (String key : LOW_LATENCY_KEYS) {
                 format.setInteger(key, 1);
             }
         }
         return format;
+    }
+
+    private static MediaCodec create(String name) throws java.io.IOException {
+        return name != null ? MediaCodec.createByCodecName(name) : MediaCodec.createDecoderByType(AVC);
+    }
+
+    /**
+     * The first hardware H.264 decoder that plays High profile. Android's own pick can be a
+     * software decoder on some head units, which falls behind and stutters.
+     */
+    static String hardwareDecoder() {
+        try {
+            String fallback = null;
+            for (android.media.MediaCodecInfo info
+                    : new android.media.MediaCodecList(android.media.MediaCodecList.REGULAR_CODECS).getCodecInfos()) {
+                if (info.isEncoder() || !supportsAvc(info) || isSoftware(info)) {
+                    continue;
+                }
+                if (fallback == null) {
+                    fallback = info.getName();
+                }
+                for (android.media.MediaCodecInfo.CodecProfileLevel pl
+                        : info.getCapabilitiesForType(AVC).profileLevels) {
+                    if (pl.profile == android.media.MediaCodecInfo.CodecProfileLevel.AVCProfileHigh) {
+                        return info.getName();
+                    }
+                }
+            }
+            return fallback;
+        } catch (RuntimeException e) {
+            AirPlayLog.w("decoder list failed: " + e);
+            return null;
+        }
+    }
+
+    private static boolean supportsAvc(android.media.MediaCodecInfo info) {
+        for (String type : info.getSupportedTypes()) {
+            if (type.equalsIgnoreCase(AVC)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    static boolean isSoftware(android.media.MediaCodecInfo info) {
+        if (android.os.Build.VERSION.SDK_INT >= 29 && info.isSoftwareOnly()) {
+            return true;
+        }
+        String n = info.getName().toLowerCase(java.util.Locale.US);
+        return n.startsWith("omx.google.") || n.startsWith("c2.android.") || n.contains(".sw.")
+                || n.endsWith(".sw") || n.contains("ffmpeg") || n.equals("avcdecoder");
+    }
+
+    static boolean isQti(String name) {
+        String n = name.toLowerCase(java.util.Locale.US);
+        return n.startsWith("omx.qcom") || n.startsWith("c2.qti");
     }
 
     /** Waits for a free input buffer (the codec thread hands them back); drops the packet if none comes. */

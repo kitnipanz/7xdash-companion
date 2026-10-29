@@ -85,7 +85,9 @@ public class AirPlayService extends Service implements RaopCallbackHandler {
         t.start();
         WORK = new Handler(t.getLooper());
     }
-    private static final int FPS = 30;
+
+    /** Frames a second asked of the sender; a Mac mirrors at up to 60, which is much smoother than 30. */
+    private static final int FPS = 60;
 
     private static volatile AirPlayService live;
     /** What the receiver is doing; the page turns it into text in the app's language. */
@@ -108,7 +110,7 @@ public class AirPlayService extends Service implements RaopCallbackHandler {
     private WifiManager.MulticastLock multicast;
     /** Held while mirroring: keeps the car's Wi-Fi out of power save, which holds packets back. */
     private WifiManager.WifiLock wifiAwake;
-    private final MirrorDecoder decoder = new MirrorDecoder();
+    private final MirrorDecoder decoder = new MirrorDecoder(FPS);
     private CastPlayer cast;
     private NetworkReport net;
     /** The floating window's surface; given to whichever of mirroring and casting is on. */

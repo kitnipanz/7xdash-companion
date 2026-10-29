@@ -5,14 +5,14 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Outline;
 import android.graphics.PixelFormat;
-import android.graphics.SurfaceTexture;
 import android.graphics.drawable.GradientDrawable;
 import android.util.DisplayMetrics;
 import android.view.GestureDetector;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.Surface;
-import android.view.TextureView;
+import android.view.SurfaceHolder;
+import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewOutlineProvider;
 import android.view.WindowManager;
@@ -57,7 +57,8 @@ final class AirPlayWindow {
     private final float density;
 
     private FrameLayout root;
-    private TextureView video;
+    /** A SurfaceView, not a TextureView: the picture goes straight to the screen compositor instead of through this app's busy UI thread. */
+    private SurfaceView video;
     private TextView status;
     private WindowManager.LayoutParams lp;
     private Surface surface;
@@ -99,14 +100,15 @@ final class AirPlayWindow {
         });
         root.setClipToOutline(true);
 
-        video = new TextureView(context);
-        video.setSurfaceTextureListener(textureListener);
+        video = new SurfaceView(context);
+        video.getHolder().addCallback(surfaceCallback);
         root.addView(video, new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
 
         status = new TextView(context);
         status.setTextAppearance(R.style.TextAppearance_Cam_Body);
         status.setTextColor(ContextCompat.getColor(context, R.color.text_secondary));
+        status.setBackgroundColor(0xFF000000);
         status.setGravity(Gravity.CENTER);
         int pad = Math.round(24 * density);
         status.setPadding(pad, pad, pad, pad);
@@ -157,7 +159,6 @@ final class AirPlayWindow {
         status = null;
         if (surface != null) {
             listener.onSurface(null);
-            surface.release();
             surface = null;
         }
     }
@@ -193,7 +194,8 @@ final class AirPlayWindow {
             return;
         }
         boolean showVideo = playing && !blocked;
-        video.setAlpha(showVideo ? 1f : 0f);
+        // the status card covers the picture; hiding the SurfaceView would drop its surface and the
+        // decoder would wait for the next keyframe, which a Mac sends rarely
         status.setVisibility(showVideo ? View.GONE : View.VISIBLE);
         status.setText(blocked ? R.string.airplay_paused_driving : R.string.airplay_waiting);
     }
@@ -285,29 +287,22 @@ final class AirPlayWindow {
         save();
     }
 
-    private final TextureView.SurfaceTextureListener textureListener = new TextureView.SurfaceTextureListener() {
+    private final SurfaceHolder.Callback surfaceCallback = new SurfaceHolder.Callback() {
         @Override
-        public void onSurfaceTextureAvailable(@NonNull SurfaceTexture st, int w, int h) {
-            surface = new Surface(st);
+        public void surfaceCreated(@NonNull SurfaceHolder holder) {
+            surface = holder.getSurface();
             listener.onSurface(surface);
         }
 
         @Override
-        public void onSurfaceTextureSizeChanged(@NonNull SurfaceTexture st, int w, int h) {
+        public void surfaceChanged(@NonNull SurfaceHolder holder, int format, int w, int h) {
         }
 
         @Override
-        public boolean onSurfaceTextureDestroyed(@NonNull SurfaceTexture st) {
+        public void surfaceDestroyed(@NonNull SurfaceHolder holder) {
+            // the holder owns the surface: let go of it, do not release it
             listener.onSurface(null);
-            if (surface != null) {
-                surface.release();
-                surface = null;
-            }
-            return true;
-        }
-
-        @Override
-        public void onSurfaceTextureUpdated(@NonNull SurfaceTexture st) {
+            surface = null;
         }
     };
 

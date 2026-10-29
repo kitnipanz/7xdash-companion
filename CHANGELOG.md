@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.5-beta] - 2026-10-29
+
+### AirPlay
+- **Smoother mirroring, as in the original AirPlay receiver app.** The picture now runs at up to 60 fps (was 30) and goes straight to the screen instead of through 7xDash's busy display thread, so it no longer waits on the cameras and overlays.
+- 7xDash picks the car's hardware H.264 decoder by name (Android's own pick can be a slow software one), and asks Qualcomm decoders to hand out each picture at once at full clock speed.
+- While the picture is hidden (waiting, or while driving) a black card covers it, so the picture comes back at once instead of waiting for the sender's next full frame. The picture's corners may look square.
+
 ## [1.6.4-beta] - 2026-10-29
 
 ### AirPlay

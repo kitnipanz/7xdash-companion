@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.3-beta] - 2026-10-29
+
+### AirPlay
+- **Less delay when mirroring, mostly from a Mac.** Each picture now shows the moment it is decoded. Before, the newest picture waited inside the decoder until the next one arrived, and a Mac sends nothing while its screen is still, so typing or a stopped mouse showed up late (in a test, about half the pictures of a still screen waited about 300 ms).
+- The car's video decoder is asked for low-latency output on older Android too (Qualcomm and Exynos keys), and falls back to the plain way if it refuses.
+- The AirPlay log names the decoder and says whether low latency was asked, and notes when the decoder falls behind and drops pictures.
+
 ## [1.6.2-beta] - 2026-10-29
 
 ### AirPlay

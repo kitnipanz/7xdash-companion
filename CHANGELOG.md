@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.1-beta] - 2026-10-29
+
+### Mood light
+- **LED lights reconnect on their own more reliably**, without opening the Mood light screen. When a light drops or misses its dial, 7xDash tries again sooner (2 s, 2 s, 5 s, 10 s, then every 15 s), and from the third miss every other try waits up to 60 s for the light to appear, which catches lights that power up after the head unit.
+- **Background light scan.** After two misses, 7xDash looks for your saved lights for 20 s, at most once a minute, and dials one as soon as it hears it. It does not drop Smart sticker links, so with a sticker connected this scan may find nothing on some head units; the quicker retries still apply.
+- The black box notes the first missed dial (then every tenth) with the reason, and "up after N missed dials" when the light comes back.
+
 ## [1.6.0] - 2026-10-28
 
 Changes since 1.5.1 (includes 1.5.2-beta to 1.5.9-beta).

@@ -50,6 +50,22 @@ public final class MoodLight implements LightLink {
 
     private static final String TAG = "MoodLight";
     private static final long CONNECT_TIMEOUT_MS = 12_000L;
+    /** A dial that waits for the light to advertise (autoConnect): Android keeps at it, we give it this long. */
+    private static final long WAIT_TIMEOUT_MS = 60_000L;
+    /**
+     * Lights heard in a scan this run (the Mood light screen's, or {@link GearLight}'s background
+     * one). A device from a scan carries its address type; one made from the address alone does
+     * not, and after a reboot a light with a random address may never answer a dial made that way.
+     */
+    private static final java.util.Map<String, BluetoothDevice> HEARD =
+            new java.util.concurrent.ConcurrentHashMap<>();
+
+    /** A scan heard this device: later dials to its address use it. */
+    static void heard(BluetoothDevice device) {
+        if (device != null && device.getAddress() != null) {
+            HEARD.put(device.getAddress(), device);
+        }
+    }
     private static final long WRITE_EVERY_MS = 40L;
     /** After power: some clones bring back their last colour first, so the next packet waits. */
     private static final long AFTER_POWER_MS = 200L;
@@ -92,6 +108,15 @@ public final class MoodLight implements LightLink {
     /** Drop any link and dial this address. */
     @Override
     public void connect(String address) {
+        dial(address, false);
+    }
+
+    @Override
+    public void redial(String address, boolean waitForIt) {
+        dial(address, waitForIt);
+    }
+
+    private void dial(String address, boolean waitForIt) {
         g.post(() -> {
             teardown();
             BluetoothManager manager = (BluetoothManager) app.getSystemService(Context.BLUETOOTH_SERVICE);
@@ -100,9 +125,11 @@ public final class MoodLight implements LightLink {
                 down(FAIL_BLUETOOTH, 0);
                 return;
             }
-            BluetoothDevice device;
+            BluetoothDevice device = HEARD.get(address);
             try {
-                device = adapter.getRemoteDevice(address);
+                if (device == null) {
+                    device = adapter.getRemoteDevice(address);
+                }
             } catch (IllegalArgumentException e) {
                 AppLog.w(TAG, "bad address " + address);
                 down(FAIL_GATT, -1);
@@ -110,7 +137,7 @@ public final class MoodLight implements LightLink {
             }
             main.post(listener::onLightConnecting);
             try {
-                gatt = device.connectGatt(app, false, callback, BluetoothDevice.TRANSPORT_LE,
+                gatt = device.connectGatt(app, waitForIt, callback, BluetoothDevice.TRANSPORT_LE,
                         BluetoothDevice.PHY_LE_1M, g);
             } catch (SecurityException e) {
                 down(FAIL_BLUETOOTH, 0);
@@ -120,8 +147,9 @@ public final class MoodLight implements LightLink {
                 down(FAIL_GATT, -1);
                 return;
             }
-            AppLog.d(TAG, "dial " + address);
-            g.postDelayed(timeout, CONNECT_TIMEOUT_MS);
+            AppLog.d(TAG, "dial " + address + (waitForIt ? " (waiting for it)" : "")
+                    + (HEARD.containsKey(address) ? " (heard in a scan)" : ""));
+            g.postDelayed(timeout, waitForIt ? WAIT_TIMEOUT_MS : CONNECT_TIMEOUT_MS);
         });
     }
 

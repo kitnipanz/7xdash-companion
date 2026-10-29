@@ -36,6 +36,8 @@ public final class LightGroup {
         /** {@code MoodLight.FAIL_*} of the last drop, 0 for a plain disconnect */
         int reason;
         int code;
+        /** Dials in a row that did not bring the light up; 0 once it is up. */
+        int misses;
 
         Member(String address) {
             this.address = address;
@@ -59,6 +61,11 @@ public final class LightGroup {
         @Override
         public void onLightReady(LightProtocol.Family found) {
             if (current()) {
+                if (misses > 0) {
+                    com.kooo.evcam.blackbox.BlackBox.note("Mood light " + address + " up after "
+                            + misses + " missed dial" + (misses == 1 ? "" : "s"));
+                }
+                misses = 0;
                 state = STATE_READY;
                 family = found;
                 listener.onGroupChanged(address);
@@ -68,6 +75,12 @@ public final class LightGroup {
         @Override
         public void onLightDown(int why, int status) {
             if (current()) {
+                if (misses == 0 || misses % 10 == 0) {
+                    // First miss of a run, then every tenth: enough to see the pattern, not a flood
+                    com.kooo.evcam.blackbox.BlackBox.note("Mood light " + address + " down: reason "
+                            + why + " status " + status + " (miss " + (misses + 1) + ")");
+                }
+                misses++;
                 state = STATE_DOWN;
                 reason = why;
                 code = status;
@@ -104,14 +117,54 @@ public final class LightGroup {
         }
     }
 
-    /** Dial again every light that is down. */
+    /**
+     * Dial again every light that is down. After a few misses every other dial waits for the
+     * light to show up (it may power up after the head unit) instead of giving up after seconds.
+     */
     public void redialDown() {
         for (Member m : members.values()) {
             if (m.state == STATE_DOWN) {
-                m.state = STATE_CONNECTING;
-                m.light.connect(m.address);
+                redial(m);
             }
         }
+    }
+
+    /** A background scan heard this light: dial it now if it is down. */
+    public void heard(String address) {
+        Member m = members.get(address);
+        if (m != null && m.state == STATE_DOWN) {
+            redial(m);
+        }
+    }
+
+    private void redial(Member m) {
+        m.state = STATE_CONNECTING;
+        m.light.redial(m.address, waitsForIt(m.misses));
+    }
+
+    /** Pure: the 3rd, 5th, 7th… dial in a row waits for the light; the rest are quick dials. */
+    static boolean waitsForIt(int misses) {
+        return misses >= 3 && misses % 2 == 1;
+    }
+
+    /** The most dials in a row any light here has missed; 0 when all are up or dialling for the first time. */
+    public int mostMisses() {
+        int most = 0;
+        for (Member m : members.values()) {
+            most = Math.max(most, m.misses);
+        }
+        return most;
+    }
+
+    /** Bluetooth lights that are down (the car's own light has no radio and is left out). */
+    public List<String> downLights() {
+        List<String> out = new ArrayList<>();
+        for (Member m : members.values()) {
+            if (m.state == STATE_DOWN && !CarAmbientLight.isCar(m.address)) {
+                out.add(m.address);
+            }
+        }
+        return out;
     }
 
     public List<String> addresses() {

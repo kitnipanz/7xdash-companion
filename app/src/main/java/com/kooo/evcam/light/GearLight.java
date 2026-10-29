@@ -38,8 +38,11 @@ public final class GearLight implements Telemetry.Listener {
 
     private static final String TAG = "GearLight";
     private static final String USER = "gear light";
-    /** Wait this long before dialling again after a light dropped or never answered. */
-    private static final long REDIAL_MS = 15_000L;
+    /**
+     * Wait before dialling again after a light dropped or never answered: quick at first (the light
+     * may just be powering up with the car), then every 15 s. Index by misses in a row.
+     */
+    private static final long[] REDIAL_MS = {2_000L, 2_000L, 5_000L, 10_000L, 15_000L};
     /** Switched off: time for the power-off packet to go out before the link closes. */
     private static final long OFF_THEN_CLOSE_MS = 600L;
 
@@ -62,6 +65,8 @@ public final class GearLight implements Telemetry.Listener {
     private final AppConfig config;
     private final Handler main = new Handler(Looper.getMainLooper());
     private final Runnable redial = this::redial;
+    /** Background scan for lights that keep missing (after a reboot a dial may need a scan first). */
+    private final LightScan scan;
     private final Map<String, Slot> slots = new HashMap<>();
     /** Last pick per group, kept while its links are down too (hysteresis needs it). */
     private final Map<String, String> picked = new HashMap<>();
@@ -73,6 +78,7 @@ public final class GearLight implements Telemetry.Listener {
     private GearLight(Context app) {
         this.app = app;
         this.config = new AppConfig(app);
+        this.scan = new LightScan(app, this::heard);
         load();
     }
 
@@ -117,6 +123,7 @@ public final class GearLight implements Telemetry.Listener {
             }
             installed.slots.clear();
             installed.main.removeCallbacks(installed.redial);
+            installed.scan.stop();
         }
         reload();
     }
@@ -217,6 +224,7 @@ public final class GearLight implements Telemetry.Listener {
 
     private void disconnectAll() {
         main.removeCallbacks(redial);
+        scan.stop();
         for (Slot slot : slots.values()) {
             slot.link.release();
         }
@@ -224,8 +232,21 @@ public final class GearLight implements Telemetry.Listener {
     }
 
     private void redial() {
+        java.util.List<String> missing = new java.util.ArrayList<>();
         for (Slot slot : slots.values()) {
+            if (slot.link.mostMisses() >= 2) {
+                missing.addAll(slot.link.downLights());
+            }
             slot.link.redialDown();
+        }
+        // Missed twice or more: also listen for them, so the next dial knows their address type
+        scan.look(missing);
+    }
+
+    /** The background scan heard a saved light: dial it now if it is down. */
+    private void heard(String address) {
+        for (Slot slot : slots.values()) {
+            slot.link.heard(address);
         }
     }
 
@@ -241,8 +262,20 @@ public final class GearLight implements Telemetry.Listener {
             update();
         } else if (state == LightGroup.STATE_DOWN) {
             main.removeCallbacks(redial);
-            main.postDelayed(redial, REDIAL_MS);
+            main.postDelayed(redial, redialDelay(slot.link.mostMisses()));
         }
+        boolean anyDown = false;
+        for (Slot s : slots.values()) {
+            anyDown |= !s.link.downLights().isEmpty();
+        }
+        if (!anyDown) {
+            scan.stop();
+        }
+    }
+
+    /** Pure: how long to wait before the next dial after this many misses in a row. */
+    static long redialDelay(int misses) {
+        return REDIAL_MS[Math.max(0, Math.min(misses, REDIAL_MS.length - 1))];
     }
 
     private boolean canConnect() {

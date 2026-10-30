@@ -143,7 +143,6 @@ public class AppConfig {
     private static final String KEY_SIDE_POPUP_STYLE = "side_popup_style";
     private static final String KEY_SIDE_POPUP_DOOR = "side_popup_door";
     private static final String KEY_BSD_SNIFFER = "bsd_sniffer";
-    private static final String KEY_SENTRY_LITE = "sentry_lite";
     private static final String KEY_BSD_LEFT_ID = "bsd_warn_left_id";
     private static final String KEY_BSD_LEFT_VALUE = "bsd_warn_left_value";
     private static final String KEY_BSD_RIGHT_ID = "bsd_warn_right_id";
@@ -1988,16 +1987,6 @@ public class AppConfig {
     public void setBlindSpotSnifferEnabled(boolean on) {
         prefs.edit().putBoolean(KEY_BSD_SNIFFER, on).apply();
         AppLog.i(TAG, "盲区信号试验: " + (on ? "开" : "关"));
-    }
-
-    /** Sentry-lite (experimental): motion near the parked car saves an instant capture and tells 7xDash web. Off by default. */
-    public boolean isSentryLiteEnabled() {
-        return prefs.getBoolean(KEY_SENTRY_LITE, false);
-    }
-
-    public void setSentryLiteEnabled(boolean on) {
-        prefs.edit().putBoolean(KEY_SENTRY_LITE, on).apply();
-        AppLog.i(TAG, "哨兵简版: " + (on ? "开" : "关"));
     }
 
     /** 盲区报警学到的号码（盲区报警查找页）：每一侧一个车辆设置号码和报警时读到的值；0 = 没学。 */

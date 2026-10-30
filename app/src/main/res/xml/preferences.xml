@@ -695,12 +695,6 @@
             android:title="@string/set_screen_off_keep_title"
             android:summary="@string/set_screen_off_keep_summary" />
 
-        <SwitchPreferenceCompat
-            android:key="pref_sentry_lite"
-            android:defaultValue="false"
-            android:title="@string/set_sentry_lite_title"
-            android:summary="@string/set_sentry_lite_summary" />
-
         <Preference
             android:key="pref_usb_backup"
             android:title="@string/usb_settings_backup_title"

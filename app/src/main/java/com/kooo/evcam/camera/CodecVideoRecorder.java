@@ -114,17 +114,6 @@ public class CodecVideoRecorder {
 
     // MediaMuxer 那一侧（文件、轨道、fsync、换盘）只在写入线程上动，字段在「写入线程」那一节
 
-    /** Told the size of every encoded frame (encoder thread). Null for none. */
-    public interface SampleSink {
-        void onSample(int size, boolean keyframe);
-    }
-
-    private volatile SampleSink sampleSink;
-
-    public void setSampleSink(SampleSink sink) {
-        sampleSink = sink;
-    }
-
     /** 排着等写的和写过多留的已编码样本，编码线程和写入线程之间就这一份（见 SampleRing）。 */
     private final SampleRing ring = new SampleRing();
     /** 这一代编码器报过输出格式没有（编码线程上写）。健康检查看它：画了很多帧还没报，就当编码器坏了。 */
@@ -2698,10 +2687,6 @@ public class CodecVideoRecorder {
         ring.offerSample(info.presentationTimeUs, info.flags, data, SystemClock.elapsedRealtime());
         kickWriter();
         noteEncodedBytes(info.size);
-        SampleSink sink = sampleSink;
-        if (sink != null) {
-            sink.onSample(info.size, (info.flags & MediaCodec.BUFFER_FLAG_KEY_FRAME) != 0);
-        }
     }
 
     /** 叫醒写入线程。叫过了、它还没开始干的话不再叫。 */

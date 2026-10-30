@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.6.9-beta] - 2026-10-30
+
+### Removed
+- **Sentry-lite** is gone again: the car's own Sentry Mode already covers it. The setting disappears; nothing else changes.
+
 ## [1.6.8-beta] - 2026-10-30
 
 ### Sentry-lite (experimental)

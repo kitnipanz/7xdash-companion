@@ -4292,12 +4292,10 @@ public class MultiCameraManager {
         if (recording && !was) {
             com.kooo.evcam.storage.AutoLock.get().recordingStarted(context,
                     useRelayWrite ? finalSaveDir : null);
-            com.kooo.evcam.recording.SentryLite.setRecording(true);
         } else if (!recording) {
             // 信息条那份在开录时就登记了（还没真正录上），开录失败也要撤；没登记过时无害
             com.kooo.evcam.telemetry.Telemetry.get().release("recording");
             com.kooo.evcam.storage.AutoLock.get().recordingStopped();
-            com.kooo.evcam.recording.SentryLite.setRecording(false);
         }
     }
 
@@ -4391,10 +4389,6 @@ public class MultiCameraManager {
 
         CodecVideoRecorder codecRecorder = new CodecVideoRecorder(cameraId, encodeSize.width, encodeSize.height);
         codecRecorder.setBrandLine(plan.brandLine);
-        if (CameraSlots.KEY_SURROUND.equals(key)) {
-            // Sentry-lite reads motion from the surround view's frame sizes
-            codecRecorder.setSampleSink(com.kooo.evcam.recording.SentryLite::onSample);
-        }
         if (plan.infoBar) {
             codecRecorder.setInfoBar(
                     new com.kooo.evcam.telemetry.InfoBarRenderer(context, encodeSize.width));

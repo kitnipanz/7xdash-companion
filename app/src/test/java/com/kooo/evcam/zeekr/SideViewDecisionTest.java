@@ -153,4 +153,51 @@ public class SideViewDecisionTest {
         assertEquals(594, box[1]);
         assertEquals(1280, SideViewPopupView.wideBox(2560, 2000)[0]);
     }
+
+    private static SideViewDecision.Input parkedWithDoor(int doors) {
+        SideViewDecision.Input in = driving(0);
+        in.gear = "P";
+        in.speedKmh = 0f;
+        in.doorCamera = true;
+        in.doorsOpen = doors;
+        return in;
+    }
+
+    @Test
+    public void openDoorWhileParkedShowsThatSide() {
+        assertEquals(LaneCycle.LEFT, SideViewDecision.decide(
+                parkedWithDoor(com.kooo.evcam.telemetry.VehicleState.FRONT_LEFT)));
+        assertEquals(LaneCycle.RIGHT, SideViewDecision.decide(
+                parkedWithDoor(com.kooo.evcam.telemetry.VehicleState.REAR_RIGHT)));
+    }
+
+    @Test
+    public void doorsClosedOrSettingOffOrMovingShowsNothing() {
+        assertEquals(SideViewDecision.NONE, SideViewDecision.decide(parkedWithDoor(0)));
+        SideViewDecision.Input off = parkedWithDoor(com.kooo.evcam.telemetry.VehicleState.FRONT_LEFT);
+        off.doorCamera = false;
+        assertEquals(SideViewDecision.NONE, SideViewDecision.decide(off));
+        SideViewDecision.Input moving = parkedWithDoor(com.kooo.evcam.telemetry.VehicleState.FRONT_LEFT);
+        moving.gear = "D";
+        moving.speedKmh = 20f;
+        assertEquals(SideViewDecision.NONE, SideViewDecision.decide(moving));
+    }
+
+    @Test
+    public void signalBeatsDoor() {
+        SideViewDecision.Input in = parkedWithDoor(com.kooo.evcam.telemetry.VehicleState.FRONT_LEFT);
+        in.gear = "D";
+        in.speedKmh = 60f;
+        in.turnSignal = 2;
+        assertEquals(LaneCycle.RIGHT, SideViewDecision.decide(in));
+    }
+
+    @Test
+    public void slowSignalFallsBackToOpenDoor() {
+        SideViewDecision.Input in = parkedWithDoor(com.kooo.evcam.telemetry.VehicleState.FRONT_RIGHT);
+        in.gear = "D";
+        in.speedKmh = 1f;
+        in.turnSignal = 1;
+        assertEquals(LaneCycle.RIGHT, SideViewDecision.decide(in));
+    }
 }

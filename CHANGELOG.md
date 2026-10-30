@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.6.7-beta] - 2026-10-30
+
+### Blind spot
+- **Blind-spot warning finder**, in Settings → Side mirror. With a car in your blind spot, the car setting that changes lights up; tap Left or Right on it and 7xDash remembers it. From then on, while you signal, the side view gets a **red edge** on the warning side (screen and HUD) and the orange mood-light blink from 1.6.6 works.
+- **Report blind-spot signals (experimental)**, off by default: while the screen is on, every change of a blind-spot-looking car setting goes to the log and black box and shows on the HUD as "BSD? name old→new", so you notice what the car sends as a car passes.
+- The blind-spot assist switch in the info bar now reads the car's Lane Change Assist setting (0x20070300), which follows the car's own switch. The old number always read 0.
+
+### Side view
+- **Show the side when a door opens**, on by default: while stopped (P or under 3 km/h), opening a door shows the camera on that side, to see cars and bikes coming from behind. It closes when the doors close. A turn signal still wins.
+
 ## [1.6.6-beta] - 2026-10-30
 
 ### Blind spot (turn-signal side view)

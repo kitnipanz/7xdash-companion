@@ -141,6 +141,12 @@ public class AppConfig {
     public static final int SIDE_POPUP_MAX_MIN_SPEED = 80;
     private static final String KEY_SIDE_POPUP_STRAIGHTEN = "side_popup_straighten";  // 侧视拉直鱼眼
     private static final String KEY_SIDE_POPUP_STYLE = "side_popup_style";
+    private static final String KEY_SIDE_POPUP_DOOR = "side_popup_door";
+    private static final String KEY_BSD_SNIFFER = "bsd_sniffer";
+    private static final String KEY_BSD_LEFT_ID = "bsd_warn_left_id";
+    private static final String KEY_BSD_LEFT_VALUE = "bsd_warn_left_value";
+    private static final String KEY_BSD_RIGHT_ID = "bsd_warn_right_id";
+    private static final String KEY_BSD_RIGHT_VALUE = "bsd_warn_right_value";
     private static final String KEY_SIDE_POPUP_OVER_FACTORY = "side_popup_over_factory";
     private static final String KEY_SIDE_POPUP_INSTANT = "side_popup_instant";  // D 档时备着相机，打灯即出画面
     private static final String KEY_SIDE_POPUP_CLOSE_DELAY_MS = "side_popup_close_delay_ms";  // 灯灭后再留多少毫秒
@@ -1971,6 +1977,41 @@ public class AppConfig {
 
     public void setSidePopupStraighten(boolean on) {
         prefs.edit().putBoolean(KEY_SIDE_POPUP_STRAIGHTEN, on).apply();
+    }
+
+    /** 试验：亮屏时盯着像盲区的车辆设置，一变就写日志、黑匣子，并在抬头显示上提示。默认关。 */
+    public boolean isBlindSpotSnifferEnabled() {
+        return prefs.getBoolean(KEY_BSD_SNIFFER, false);
+    }
+
+    public void setBlindSpotSnifferEnabled(boolean on) {
+        prefs.edit().putBoolean(KEY_BSD_SNIFFER, on).apply();
+        AppLog.i(TAG, "盲区信号试验: " + (on ? "开" : "关"));
+    }
+
+    /** 盲区报警学到的号码（盲区报警查找页）：每一侧一个车辆设置号码和报警时读到的值；0 = 没学。 */
+    public com.kooo.evcam.telemetry.BlindSpotWatch.Learned getBlindSpotLearned() {
+        return new com.kooo.evcam.telemetry.BlindSpotWatch.Learned(
+                prefs.getInt(KEY_BSD_LEFT_ID, 0), prefs.getInt(KEY_BSD_LEFT_VALUE, 0),
+                prefs.getInt(KEY_BSD_RIGHT_ID, 0), prefs.getInt(KEY_BSD_RIGHT_VALUE, 0));
+    }
+
+    /** 记下一侧：{@code left} 为 true 是左侧。{@code id} 0 = 忘掉这一侧。 */
+    public void setBlindSpotLearned(boolean left, int id, int value) {
+        prefs.edit()
+                .putInt(left ? KEY_BSD_LEFT_ID : KEY_BSD_RIGHT_ID, id)
+                .putInt(left ? KEY_BSD_LEFT_VALUE : KEY_BSD_RIGHT_VALUE, value)
+                .apply();
+        AppLog.i(TAG, "盲区报警学到" + (left ? "左" : "右") + "侧: 0x" + Integer.toHexString(id) + " = " + value);
+    }
+
+    /** 停着开门时弹那一侧的侧视，看后面来车。默认开。 */
+    public boolean isSidePopupOnDoor() {
+        return prefs.getBoolean(KEY_SIDE_POPUP_DOOR, true);
+    }
+
+    public void setSidePopupOnDoor(boolean on) {
+        prefs.edit().putBoolean(KEY_SIDE_POPUP_DOOR, on).apply();
     }
 
     /** 中控屏上侧视弹窗的样式，见 {@code SettingsRegistry.SIDE_POPUP_STYLE}。 */

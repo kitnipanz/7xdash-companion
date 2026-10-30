@@ -77,6 +77,9 @@ public class SideViewPopupView extends ViewGroup {
     private boolean wide;
     /** 画面的宽高比，宽幅时拉直按它收窄上下，不拉扁。 */
     private float aspect = 1f;
+    /** 盲区在报警：画面四周一圈红边，像特斯拉那样。 */
+    private boolean warning;
+    private final android.graphics.Paint warnPaint = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
     private final FisheyeMesh.SourceMap turnedMap = (u, v, out) ->
             SideViewProjection.sourcePoint(u, v, viewFov, yaw, pitch, roll, lane, aspect, out, 0);
 
@@ -97,7 +100,17 @@ public class SideViewPopupView extends ViewGroup {
                 }
             }
         });
+        warnPaint.setStyle(android.graphics.Paint.Style.STROKE);
+        warnPaint.setColor(WARN_COLOR);
         readConfig();
+    }
+
+    /** 盲区报警时画一圈红边；不报了就去掉。 */
+    public void setWarning(boolean on) {
+        if (warning != on) {
+            warning = on;
+            invalidate();
+        }
     }
 
     public AutoFitTextureView getTextureView() {
@@ -312,6 +325,8 @@ public class SideViewPopupView extends ViewGroup {
     }
 
     private static final float CORNER_DP = 22f;
+    private static final float WARN_DP = 6f;
+    private static final int WARN_COLOR = 0xFFE53935;
     private static final float SLIDE_DP = 56f;
     private static final long SLIDE_MS = 220L;
     private static final TimeInterpolator SLIDE_EASE = new DecelerateInterpolator(2f);
@@ -478,6 +493,21 @@ public class SideViewPopupView extends ViewGroup {
             drawTextureOnce(canvas);
         }
         canvas.restoreToCount(save);
+        drawWarning(canvas, hudFrame, width, height);
+    }
+
+    private void drawWarning(Canvas canvas, boolean hudFrame, int width, int height) {
+        if (!warning) {
+            return;
+        }
+        float stroke = WARN_DP * density();
+        warnPaint.setStrokeWidth(stroke);
+        float x = hudFrame ? frameX : 0f;
+        float y = hudFrame ? frameY : 0f;
+        float half = stroke / 2f;
+        float radius = wide && !onHud() ? CORNER_DP * density() : 0f;
+        canvas.drawRoundRect(x + half, y + half, x + width - half, y + height - half,
+                Math.max(0f, radius - half), Math.max(0f, radius - half), warnPaint);
     }
 
     private void drawTextureOnce(Canvas canvas) {

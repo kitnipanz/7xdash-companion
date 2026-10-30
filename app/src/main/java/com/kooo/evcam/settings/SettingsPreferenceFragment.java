@@ -806,6 +806,10 @@ public class SettingsPreferenceFragment extends PreferenceFragmentCompat {
                     appConfig.setSidePopupStyle(value);
                     com.kooo.evcam.zeekr.SideViewPopupService.applyConfig();
                 });
+        bindSwitch("pref_side_popup_door", appConfig.isSidePopupOnDoor(), value -> {
+            appConfig.setSidePopupOnDoor(value);
+            com.kooo.evcam.zeekr.SideViewPopupService.applyConfig();
+        });
         bindSwitch("pref_side_popup_over_factory", appConfig.isSidePopupOverFactory(), value -> {
             appConfig.setSidePopupOverFactory(value);
             com.kooo.evcam.zeekr.SideViewPopupService.applyConfig();
@@ -1293,6 +1297,12 @@ public class SettingsPreferenceFragment extends PreferenceFragmentCompat {
                 startActivity(new Intent(getContext(), com.kooo.evcam.light.CarAmbientLabActivity.class)));
         onClick("pref_volume_lab", pref ->
                 startActivity(new Intent(getContext(), com.kooo.evcam.audio.VolumeLabActivity.class)));
+        bindSwitch("pref_side_popup_bsd_sniffer", appConfig.isBlindSpotSnifferEnabled(), value -> {
+            appConfig.setBlindSpotSnifferEnabled(value);
+            com.kooo.evcam.telemetry.BlindSpotSniffer.applyConfig();
+        });
+        onClick("pref_side_popup_bsd_finder", pref ->
+                startActivity(new Intent(getContext(), com.kooo.evcam.zeekr.BlindSpotFinderActivity.class)));
         onClick("pref_button_lab", pref ->
                 startActivity(new Intent(getContext(), com.kooo.evcam.input.ButtonLabActivity.class)));
         onClick("pref_ble_signal", pref ->

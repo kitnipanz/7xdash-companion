@@ -417,6 +417,23 @@
             android:title="@string/set_side_popup_style_title"
             android:summary="@string/set_side_popup_style_summary" />
 
+        <Preference
+            android:key="pref_side_popup_bsd_finder"
+            android:dependency="pref_side_popup"
+            android:title="@string/bsd_finder_title"
+            android:summary="@string/bsd_finder_summary" />
+
+        <SwitchPreferenceCompat
+            android:key="pref_side_popup_bsd_sniffer"
+            android:title="@string/set_bsd_sniffer_title"
+            android:summary="@string/set_bsd_sniffer_summary" />
+
+        <SwitchPreferenceCompat
+            android:key="pref_side_popup_door"
+            android:dependency="pref_side_popup"
+            android:title="@string/set_side_popup_door_title"
+            android:summary="@string/set_side_popup_door_summary" />
+
         <SwitchPreferenceCompat
             android:key="pref_side_popup_over_factory"
             android:dependency="pref_side_popup"

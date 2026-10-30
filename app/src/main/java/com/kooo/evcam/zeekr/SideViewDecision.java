@@ -1,5 +1,7 @@
 package com.kooo.evcam.zeekr;
 
+import com.kooo.evcam.telemetry.VehicleState;
+
 /**
  * 打转向灯弹侧视：此刻该不该弹、弹哪一边。
  *
@@ -13,6 +15,8 @@ package com.kooo.evcam.zeekr;
  *   <li>车速低于设定值不弹（默认 30 km/h：再慢原厂自己会弹侧方小窗）；车速读不到不拦。
  *       只在「还没弹」时看车速 —— 弹出来之后减速不收，免得在门槛上来回闪。</li>
  *   <li>灯一灭就收。</li>
+ *   <li><b>开门看后方</b>（设置开着时）：停着（P 档或车速低于 {@link #DOOR_MAX_KMH}）、没打灯，
+ *       哪一侧有门开着就弹那一侧，看后面来的车和自行车；门都关上就收。打灯优先。</li>
  * </ul>
  *
  * <p>纯 Java，不碰 Android，见 {@code SideViewDecisionTest}。</p>
@@ -21,6 +25,10 @@ public final class SideViewDecision {
 
     /** 不弹。 */
     public static final int NONE = -1;
+    /** 开门弹侧视只在停着时：车速低于这个（km/h）或挂 P。 */
+    public static final float DOOR_MAX_KMH = 3f;
+    private static final int LEFT_DOORS = VehicleState.FRONT_LEFT | VehicleState.REAR_LEFT;
+    private static final int RIGHT_DOORS = VehicleState.FRONT_RIGHT | VehicleState.REAR_RIGHT;
 
     private SideViewDecision() {
     }
@@ -39,6 +47,10 @@ public final class SideViewDecision {
         public int minSpeedKmh;
         /** 原厂画面（360、原厂侧方小窗、泊车辅助）在时也照弹；R 档仍然不弹。 */
         public boolean overFactoryView;
+        /** 开门弹那一侧（设置）。 */
+        public boolean doorCamera;
+        /** {@link VehicleState#doorsOpen}：开着的门的位；null 读不到。 */
+        public Integer doorsOpen;
         /** 此刻已经弹着的是哪一路（{@link LaneCycle#LEFT} / {@link LaneCycle#RIGHT}），没弹是 {@link #NONE}。 */
         public int showing = NONE;
     }
@@ -50,8 +62,9 @@ public final class SideViewDecision {
         if (factoryViewActive(in)) {
             return NONE;
         }
+        int door = doorLane(in);
         if (Boolean.TRUE.equals(in.hazard) || in.turnSignal == null) {
-            return NONE;
+            return door;
         }
         int lane;
         if (in.turnSignal == 1) {
@@ -59,16 +72,33 @@ public final class SideViewDecision {
         } else if (in.turnSignal == 2) {
             lane = LaneCycle.RIGHT;
         } else {
-            return NONE;
+            return door;
         }
         if (in.showing == lane) {
             // 已经弹着同一边：不再看车速
             return lane;
         }
         if (in.minSpeedKmh > 0 && in.speedKmh != null && in.speedKmh < in.minSpeedKmh) {
-            return NONE;
+            return door;
         }
         return lane;
+    }
+
+    /** 停着、有门开着时该弹哪一侧；不弹是 {@link #NONE}。两侧都开着时留在已经弹着的那一侧，否则左侧。 */
+    static int doorLane(Input in) {
+        if (!in.doorCamera || in.doorsOpen == null || in.doorsOpen == 0) {
+            return NONE;
+        }
+        boolean stopped = "P".equals(in.gear) || (in.speedKmh != null && in.speedKmh < DOOR_MAX_KMH);
+        if (!stopped) {
+            return NONE;
+        }
+        boolean left = (in.doorsOpen & LEFT_DOORS) != 0;
+        boolean right = (in.doorsOpen & RIGHT_DOORS) != 0;
+        if (left && right) {
+            return in.showing == LaneCycle.RIGHT ? LaneCycle.RIGHT : LaneCycle.LEFT;
+        }
+        return left ? LaneCycle.LEFT : right ? LaneCycle.RIGHT : NONE;
     }
 
     /**

@@ -251,20 +251,26 @@ public class SideViewPopupService extends Service {
         in.speedKmh = s.speedKmh;
         in.minSpeedKmh = appConfig.getSidePopupMinSpeed();
         in.overFactoryView = appConfig.isSidePopupOverFactory();
+        in.doorCamera = appConfig.isSidePopupOnDoor();
+        in.doorsOpen = s.doorsOpen;
         in.showing = popup != null && popup.isShowing() ? popup.lane() : SideViewDecision.NONE;
 
         boolean blocked = ScreenState.dark() || RearViewMirrorService.isRunning()
                 || BothMirrorsService.isRunning()
                 || (!appConfig.isSidePopupOnScreen() && !appConfig.isSidePopupOnHud());
         int want = blocked ? SideViewDecision.NONE : SideViewDecision.decide(in);
+        showWarning(s.blindSpotWarning);
         lastReady = !blocked && appConfig.isSidePopupInstant() && SideViewDecision.shouldStayReady(in);
 
         if (want != SideViewDecision.NONE) {
             cancelDelayedClose();
             handler.removeCallbacks(readyExpired);
             if (want != in.showing) {
-                AppLog.i(TAG, "转向灯：弹出「" + LaneCycle.labelOf(want) + "」路");
+                boolean byDoor = want == SideViewDecision.doorLane(in)
+                        && (in.turnSignal == null || in.turnSignal == 0 || Boolean.TRUE.equals(in.hazard));
+                AppLog.i(TAG, (byDoor ? "开门：弹出「" : "转向灯：弹出「") + LaneCycle.labelOf(want) + "」路");
                 showPopup(want);
+                showWarning(s.blindSpotWarning);
             }
             return;
         }
@@ -292,6 +298,16 @@ public class SideViewPopupService extends Service {
         } else if (popup != null && popup.isAttached() && !closePending) {
             handler.removeCallbacks(readyExpired);
             handler.postDelayed(readyExpired, blocked ? 0 : READY_GRACE_MS);
+        }
+    }
+
+    /** 盲区报警的那一侧正好是弹着的那一路：红边。中控、抬头显示两块一起。 */
+    private void showWarning(Integer sides) {
+        for (SideViewPopupView view : new SideViewPopupView[]{popup, hudCopy}) {
+            if (view != null) {
+                int bit = view.lane() == LaneCycle.LEFT ? VehicleState.TURN_LEFT : VehicleState.TURN_RIGHT;
+                view.setWarning(sides != null && (sides & bit) != 0);
+            }
         }
     }
 

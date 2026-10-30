@@ -527,11 +527,11 @@ public class TimelinePlayerActivity extends AppCompatActivity {
                     zoomedCell = PlaybackViewport.NO_CELL;
                     applyViewMode(0L);
                     positionText.setText("");
-                    infoText.setText(R.string.msg_no_surround_clips);
-                    com.kooo.evcam.ui.Notice.makeText(this, R.string.msg_no_surround_clips_long,
-                            Toast.LENGTH_LONG).show();
+                    infoText.setText("");
+                    showEmpty(true);
                     return;
                 }
+                showEmpty(false);
                 // 默认打开最近的一条；界面刚重建过就回到原来那一条
                 int target = pendingSessionIndex >= 0 && pendingSessionIndex < sessions.size()
                         ? pendingSessionIndex : sessions.size() - 1;
@@ -603,6 +603,23 @@ public class TimelinePlayerActivity extends AppCompatActivity {
         lane.settleUntilMs = 0L;
         lane.justCorrected = false;
         lane.seekLeadMs = 0L;
+    }
+
+    /** Nothing to play: a centred message over the player, and no controls that do nothing. */
+    private void showEmpty(boolean empty) {
+        android.widget.TextView view = findViewById(R.id.timeline_empty);
+        View controls = findViewById(R.id.timeline_controls);
+        if (view == null) {
+            return;
+        }
+        if (empty) {
+            com.kooo.evcam.ui.EmptyState.show(view, R.drawable.ic_video,
+                    R.string.msg_no_surround_clips, R.string.empty_videos_hint);
+        }
+        view.setVisibility(empty ? View.VISIBLE : View.GONE);
+        if (controls != null) {
+            controls.setVisibility(empty ? View.INVISIBLE : View.VISIBLE);
+        }
     }
 
     /** 左栏顶部的一行汇总：共几条、合计多长多大。 */

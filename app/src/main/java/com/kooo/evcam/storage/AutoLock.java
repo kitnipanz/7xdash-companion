@@ -259,6 +259,31 @@ public final class AutoLock implements Telemetry.Listener {
         });
     }
 
+    /**
+     * Sentry-lite saw motion: the same as a high-beam flash (lock 10 s either side, surround clip
+     * into {@code instant captures}), quietly, and only while recording.
+     */
+    public void instantFromSentry(Context context) {
+        Context appContext = context.getApplicationContext();
+        main.post(() -> {
+            if (app == null) {
+                app = appContext;
+            }
+            com.kooo.evcam.recording.CaptureLog.attach(appContext);
+            long now = System.currentTimeMillis();
+            if (!recording || now - lastInstantAt < LockWindow.BEFORE_MS + LockWindow.AFTER_MS) {
+                com.kooo.evcam.recording.CaptureLog.line("sentry capture skipped: "
+                        + (recording ? "too soon after the last one" : "not recording"));
+                return;
+            }
+            lastInstantAt = now;
+            com.kooo.evcam.recording.CaptureLog.line("sentry capture");
+            worker.post(() -> segmentMs = segmentLengths(appContext));
+            lockAround(appContext, now, true);
+            com.kooo.evcam.recording.InstantCapture.perform(appContext);
+        });
+    }
+
     // ================================================================= 锁
 
     /** 这一刻前后 10 秒：现在锁一遍，窗口结束后再锁一遍。主线程。 */

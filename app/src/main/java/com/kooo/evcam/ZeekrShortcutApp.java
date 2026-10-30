@@ -53,6 +53,7 @@ public class ZeekrShortcutApp extends Application {
         com.kooo.evcam.light.GearLight.install(this);
         com.kooo.evcam.telemetry.BlindSpotWatch.install(this);
         com.kooo.evcam.telemetry.BlindSpotSniffer.install(this);
+        com.kooo.evcam.recording.SentryLite.install(this);
         // 「这一趟」的录像选择落盘（规格 1.2）：进程被杀又拉回来时还在；车机真正开机就清。
         // 「这一趟要录」变了、人按了停止时写到盘上才返回（commit）：熄屏那一刻改的「这一趟要录」要赶在车机几秒后结束进程之前落盘
         // （2026-10-10）；别的几项排队异步写（apply），不在主线程上等盘（审查 2026-10-11）

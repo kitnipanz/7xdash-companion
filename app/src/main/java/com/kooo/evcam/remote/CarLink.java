@@ -302,6 +302,34 @@ public final class CarLink {
         }
     }
 
+    /**
+     * Sentry-lite events ({@code {"t":"sentry",…}}). The car is often parked without signal, so
+     * they wait here, oldest first, and go out on every hello until the hub says {@code sentried}.
+     */
+    private final java.util.Deque<String> pendingSentry = new java.util.concurrent.ConcurrentLinkedDeque<>();
+    static final int MAX_PENDING_SENTRY = 10;
+
+    public void sendSentry(String json) {
+        pendingSentry.addLast(json);
+        while (pendingSentry.size() > MAX_PENDING_SENTRY) {
+            pendingSentry.pollFirst();
+        }
+        WebSocket ws = socket;
+        if (ws != null && !email.isEmpty()) {
+            ws.send(json);
+        }
+    }
+
+    private void flushSentry() {
+        WebSocket ws = socket;
+        if (ws == null || email.isEmpty()) {
+            return;
+        }
+        for (String json : pendingSentry) {
+            ws.send(json);
+        }
+    }
+
     private void dial() {
         int gen = generation.incrementAndGet();
         WebSocket old = socket;
@@ -347,6 +375,14 @@ public final class CarLink {
                         publish("ONLINE", j.optString("code"), email);
                         notifyWatch(wasWatching, prevSource);
                         flushPark();
+                        flushSentry();
+                    } else if ("sentried".equals(type)) {
+                        long at = j.optLong("at");
+                        for (String sent : pendingSentry) {
+                            if (new JSONObject(sent).optLong("at") == at) {
+                                pendingSentry.remove(sent);
+                            }
+                        }
                     } else if ("parked".equals(type)) {
                         String sent = pendingPark;
                         if (sent != null && j.optLong("at") == new JSONObject(sent).optLong("at")) {

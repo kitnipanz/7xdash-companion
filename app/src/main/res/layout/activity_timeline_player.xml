@@ -276,9 +276,21 @@
                   这里不放 ⑤ 状态条：它写的是现在的设置和 U 盘余量，不是这段录像的，
                   压在录像上会被当成这段录像的参数（项目拥有者 2026-10-01 定）。
                 -->
+                <!-- Nothing recorded yet: a centred message instead of an empty player -->
+                <TextView
+                    android:id="@+id/timeline_empty"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@color/preview_background"
+                    android:clickable="true"
+                    android:gravity="center"
+                    android:padding="32dp"
+                    android:textAppearance="@style/TextAppearance.Cam.Body"
+                    android:visibility="gone" />
             </FrameLayout>
             <!-- 进度条与控制 -->
             <LinearLayout
+                android:id="@+id/timeline_controls"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:background="@color/bg"

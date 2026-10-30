@@ -1344,6 +1344,10 @@ public class SettingsPreferenceFragment extends PreferenceFragmentCompat {
         }
         bindSwitch("pref_screen_off_keep_recording", appConfig.isScreenOffKeepRecording(),
                 value -> appConfig.setScreenOffKeepRecording(value));
+        bindSwitch("pref_sentry_lite", appConfig.isSentryLiteEnabled(), value -> {
+            appConfig.setSentryLiteEnabled(value);
+            com.kooo.evcam.recording.SentryLite.applyConfig();
+        });
     }
 
     // ------------------------------------------------------------------ 原「高级」，现在在开发者选项里

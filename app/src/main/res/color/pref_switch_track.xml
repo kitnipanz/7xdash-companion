@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 开关轨道：开是能量橙，关是半透明的灰（日夜都压得住卡片底色），不可用再淡一档 -->
+<!-- 开关轨道：开是能量橙，关是半透明的灰（日夜都压得住卡片底色），不可用再淡一档（开着的淡橙，关着的淡灰） -->
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- on but locked by the switch it depends on: still reads as on, just dimmed -->
+    <item android:alpha="0.35" android:color="@color/energy" android:state_checked="true" android:state_enabled="false" />
     <item android:alpha="0.3" android:color="@color/text_tertiary" android:state_enabled="false" />
     <item android:color="@color/energy" android:state_checked="true" />
     <item android:alpha="0.45" android:color="@color/text_tertiary" />

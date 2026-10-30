@@ -686,6 +686,8 @@ Then reopen this app.</string>
     <string name="bsd_finder_left">Left</string>
     <string name="bsd_finder_right">Right</string>
     <string name="bsd_finder_not_number">This one does not read as a number</string>
+    <string name="set_sentry_lite_title">Sentry-lite (experimental)</string>
+    <string name="set_sentry_lite_summary">While parked and still recording, someone moving near the car saves an instant capture (10 seconds before and after) and lists it with a photo on 7xDash web. Starts 1 minute after the screen goes off, or straight away when the car\'s Sentry Mode is on. Only works while the head unit is awake.</string>
     <string name="set_bsd_sniffer_title">Report blind-spot signals (experimental)</string>
     <string name="set_bsd_sniffer_summary">While the screen is on, watches every car setting that looks blind-spot related. Each change is written to the log and black box and shown on the HUD as \"BSD?\" with its name and value, so you notice when the car sends something as a car passes. Then teach it in the Blind-spot warning finder</string>
     <string name="set_side_popup_door_title">Show the side when a door opens</string>
@@ -1682,4 +1684,11 @@ Then reopen this app.</string>
     <string name="fog_lamp_turned_on">Rear fog lamp on</string>
     <string name="fog_lamp_turned_off">Rear fog lamp off</string>
     <string name="fog_lamp_failed">Rear fog lamp: %1$s</string>
+    <string name="empty_videos_hint">Start recording from Home. Videos appear here as soon as the first surround clip is saved.</string>
+    <string name="empty_captures_usb_hint">Insert the USB drive used for recording. Captures are saved on it in the instant captures folder.</string>
+    <string name="empty_captures_hint">Flash the high beam, tap Instant capture on Home, or press its shortcut. Each one saves 10 seconds before and after.</string>
+    <string name="set_side_cat_where">Where it shows</string>
+    <string name="set_side_cat_when">When it shows</string>
+    <string name="set_side_cat_picture">Picture</string>
+    <string name="set_side_cat_blind_spot">Blind spot</string>
 </resources>

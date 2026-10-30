@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.6.8-beta] - 2026-10-30
+
+### Sentry-lite (experimental)
+- **Settings → System → Sentry-lite**, off by default. While parked and still recording, someone moving near the car saves an instant capture (10 seconds before and after, in the instant captures folder) and sends the event with a photo from each surround camera to 7xDash web, which lists the last 10. It starts 1 minute after the screen goes off, or straight away when the car's own Sentry Mode is on. Only works while the head unit is awake.
+- Motion is judged from the surround recording itself, so the thresholds are first guesses: each event writes its motion level to the black box to tune them. Events made without signal are sent when the car reconnects.
+
+### Look and feel
+- **Home:** card names line up in every row, and "Off" is grey instead of orange, so the cards that are on stand out.
+- **Videos and Saved captures:** with nothing to show, a centred message says why and what to do (start recording, insert the USB drive, flash the high beam). Videos no longer shows play controls or a pop-up when there is nothing to play.
+- **Settings:** a setting that is on but locked by the one above it keeps a dimmed orange switch instead of looking off. Long descriptions wrap into short lines instead of one line across the screen. Side mirror is split into Where it shows, When it shows, Picture and Blind spot.
+
 ## [1.6.7-beta] - 2026-10-30
 
 ### Blind spot

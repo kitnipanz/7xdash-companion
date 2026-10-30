@@ -19,4 +19,6 @@
     <dimen name="rail_tile_height">104dp</dimen>
     <dimen name="rail_small_height">72dp</dimen>
     <dimen name="icon_button_size">48dp</dimen>
+    <!-- Settings descriptions wrap here: one line across a 3200 px screen is too long to read -->
+    <dimen name="pref_summary_max_width">760dp</dimen>
 </resources>

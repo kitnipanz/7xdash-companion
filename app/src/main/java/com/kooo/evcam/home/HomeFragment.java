@@ -431,8 +431,12 @@ public class HomeFragment extends Fragment {
 
         Card state(Label label, State on) {
             refreshers.add(() -> {
+                boolean active = on.get();
                 state.setText(label.get());
-                view.setActivated(on.get());
+                view.setActivated(active);
+                // on is the accent; off steps back so the cards that are on stand out
+                state.setTextColor(ContextCompat.getColor(requireContext(),
+                        active ? R.color.energy_text : R.color.text_tertiary));
             });
             return this;
         }

@@ -949,6 +949,8 @@ public class SettingsPreferenceFragment extends PreferenceFragmentCompat {
         // 按钮显示出来时自己问协调器在不在录，这里不用再推状态
         bindOverlaySwitch("pref_recording_floating", appConfig.isRecordingFloatingEnabled(),
                 OverlayCoordinator::setRecordButtonEnabled, null);
+        bindOverlaySwitch("pref_dash_panel", appConfig.isDashPanelEnabled(),
+                OverlayCoordinator::setDashPanelEnabled, null);
 
         // 整档上移 50%（原来 32–100）：最小的也要比原来的最小大一半
         bindSlider("pref_button_size", 48, 150,

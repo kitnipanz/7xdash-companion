@@ -139,6 +139,15 @@ public final class ShortcutPerformer {
             case OUTSIDE_SPEAKER:
                 com.kooo.evcam.audio.OutsideSpeaker.toggle(context);
                 return;
+            case DASH_PANEL:
+                AppConfig dash = new AppConfig(context);
+                boolean dashOn = !dash.isDashPanelEnabled();
+                if (!OverlayCoordinator.setDashPanelEnabled(context, dashOn)) {
+                    toast(context);
+                } else {
+                    hud(context, R.string.home_card_dash_panel, dashOn);
+                }
+                return;
             case MOOD_LIGHT:
                 com.kooo.evcam.light.GearLight.toggle(context);
                 return;

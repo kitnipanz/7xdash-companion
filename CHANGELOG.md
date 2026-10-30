@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.6.11-beta] - 2026-10-31
+
+### Dash panel
+- **A small card that floats over any app**, from the new **Dash panel** card on Home or Settings → Floating button: speed, gear, turn signals, the clock and whether 7xDash is recording, with buttons for a surround photo, an instant capture, Super mirror and opening 7xDash. Drag to move, pinch to resize, push to a side to dock. Off by default.
+- **Switch it on and off** with the pill on the Home card, in Settings → Floating button, or from a button or sticker (new shortcut action **Dash panel on / off**).
+
+### Diagnostics
+- The report now says whether this head unit allows **split screen** and **floating windows** for normal apps, to see if 7xDash could sit next to another app.
+
 ## [1.6.10-beta] - 2026-10-30
 
 ### What's new screen

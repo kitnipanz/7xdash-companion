@@ -1693,4 +1693,9 @@ Then reopen this app.</string>
     <string name="set_whats_new_title">What\'s new</string>
     <string name="set_whats_new_summary">What changed in the last few versions</string>
     <string name="whats_new_none">No notes for this version</string>
+    <string name="home_card_dash_panel">Dash panel</string>
+    <string name="home_card_dash_panel_sub">Speed, gear and buttons over any app</string>
+    <string name="set_dash_panel_summary">A small card that floats over maps, music or any other app: speed, gear, turn signals, the clock and whether 7xDash is recording, with buttons for a surround photo, an instant capture, Super mirror and opening 7xDash. Drag to move, pinch to resize, push to a side to dock</string>
+    <string name="dash_panel_need_overlay">Allow 7xDash to display over other apps first</string>
+    <string name="shortcut_action_dash_panel">Dash panel on / off</string>
 </resources>

@@ -1669,4 +1669,9 @@
     <string name="set_whats_new_title">มีอะไรใหม่</string>
     <string name="set_whats_new_summary">สิ่งที่เปลี่ยนในไม่กี่เวอร์ชันล่าสุด</string>
     <string name="whats_new_none">ไม่มีบันทึกสำหรับเวอร์ชันนี้</string>
+    <string name="home_card_dash_panel">แผงหน้าปัด</string>
+    <string name="home_card_dash_panel_sub">ความเร็ว เกียร์ และปุ่ม ลอยเหนือทุกแอป</string>
+    <string name="set_dash_panel_summary">การ์ดเล็กที่ลอยเหนือแผนที่ เพลง หรือแอปอื่น: ความเร็ว เกียร์ ไฟเลี้ยว นาฬิกา และสถานะการบันทึกของ 7xDash พร้อมปุ่มถ่ายรูปรอบคัน บันทึกคลิปทันที กระจกมองหลัง และเปิด 7xDash ลากเพื่อย้าย บีบเพื่อปรับขนาด ดันไปขอบเพื่อเก็บ</string>
+    <string name="dash_panel_need_overlay">อนุญาตให้ 7xDash แสดงทับแอปอื่นก่อน</string>
+    <string name="shortcut_action_dash_panel">เปิด / ปิดแผงหน้าปัด</string>
 </resources>

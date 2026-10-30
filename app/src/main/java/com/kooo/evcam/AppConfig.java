@@ -2518,6 +2518,40 @@ public class AppConfig {
         AppLog.d(TAG, "录制悬浮按钮时间文字大小设置: " + sizeSp + "sp");
     }
 
+    // ==================== Dash panel ====================
+
+    private static final String KEY_DASH_PANEL = "dash_panel";
+    private static final String KEY_DASH_PANEL_BOUNDS = "dash_panel_bounds";
+
+    /** Floating Dash panel over other apps (overlay.DashPanelService). Off by default. */
+    public boolean isDashPanelEnabled() {
+        return prefs.getBoolean(KEY_DASH_PANEL, false);
+    }
+
+    public void setDashPanelEnabled(boolean on) {
+        prefs.edit().putBoolean(KEY_DASH_PANEL, on).apply();
+    }
+
+    /** x, y, width, height in pixels; width 0 = never moved. */
+    public int[] getDashPanelBounds() {
+        int[] out = new int[4];
+        String[] parts = prefs.getString(KEY_DASH_PANEL_BOUNDS, "").split(",");
+        if (parts.length == 4) {
+            try {
+                for (int i = 0; i < 4; i++) {
+                    out[i] = Integer.parseInt(parts[i].trim());
+                }
+            } catch (NumberFormatException e) {
+                return new int[4];
+            }
+        }
+        return out;
+    }
+
+    public void setDashPanelBounds(int x, int y, int width, int height) {
+        prefs.edit().putString(KEY_DASH_PANEL_BOUNDS, x + "," + y + "," + width + "," + height).apply();
+    }
+
     // ==================== 全屏遮罩 ====================
 
     public boolean isDimOverlayEnabled() {

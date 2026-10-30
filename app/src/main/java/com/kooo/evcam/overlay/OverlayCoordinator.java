@@ -95,6 +95,11 @@ public final class OverlayCoordinator {
             }, REAR_VIEW_DELAY_MS);
         }
 
+        if (config.isDashPanelEnabled() && allowed) {
+            DashPanelService.show(context);
+            AppLog.d(TAG, "Dash panel shown from settings");
+        }
+
         if (config.isRecordingFloatingEnabled() && allowed) {
             sendToRecordingFloating(context, RecordingFloatingService.ACTION_SHOW);
             AppLog.d(TAG, "悬浮按钮已启动");
@@ -126,6 +131,20 @@ public final class OverlayCoordinator {
     /**
      * 开 / 关全屏遮罩。返回值含义同 {@link #setRecordButtonEnabled}。
      */
+    /** Dash panel on / off. Same return value as {@link #setRecordButtonEnabled}. */
+    public static boolean setDashPanelEnabled(Context context, boolean enabled) {
+        if (enabled && !canShowOverlay(context)) {
+            return false;
+        }
+        new AppConfig(context).setDashPanelEnabled(enabled);
+        if (enabled) {
+            DashPanelService.show(context);
+        } else {
+            DashPanelService.hide(context);
+        }
+        return true;
+    }
+
     public static boolean setDimOverlayEnabled(Context context, boolean enabled) {
         if (enabled && !canShowOverlay(context)) {
             return false;

@@ -276,6 +276,13 @@ public class HomeFragment extends Fragment {
                 R.string.home_card_announce_sub, () -> com.kooo.evcam.announce.AnnouncePicker.toggle(requireContext()),
                 () -> startActivity(new Intent(requireContext(),
                         com.kooo.evcam.announce.AnnouncementsActivity.class)));
+        // Dash panel: speed, gear and four buttons floating over maps or any other app.
+        // Tap opens its settings; the pill is the switch, same as the shortcut
+        addCard(R.drawable.ic_dash_panel, R.string.home_card_dash_panel,
+                R.string.home_card_dash_panel_sub,
+                () -> page(MainActivity.PAGE_SETTINGS_PREFIX + "screen_floating"), null)
+                .pill(() -> getString(config.isDashPanelEnabled() ? R.string.home_state_on : R.string.home_state_off),
+                        () -> config.isDashPanelEnabled(), this::toggleDashPanel);
 
         // Beta: 停在哪。点卡片当场读一次，长按开扫描窗（手动扫一次、看读到什么）；胶囊开关决定挂 P 时自动读，另一颗决定 3 km/h 以下边开边读柱子上的牌
         if (betaShown) {
@@ -468,6 +475,14 @@ public class HomeFragment extends Fragment {
         recToggle.setBackgroundTintList(ColorStateList.valueOf(
                 ContextCompat.getColor(context, rec ? R.color.recording : R.color.energy)));
         recToggle.setTextColor(ContextCompat.getColor(context, R.color.on_energy));
+    }
+
+    private void toggleDashPanel() {
+        Context context = requireContext();
+        if (!com.kooo.evcam.overlay.OverlayCoordinator.setDashPanelEnabled(context, !config.isDashPanelEnabled())) {
+            com.kooo.evcam.ui.Notice.makeText(context, R.string.dash_panel_need_overlay,
+                    android.widget.Toast.LENGTH_LONG).show();
+        }
     }
 
     private boolean recording() {

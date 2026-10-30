@@ -69,8 +69,8 @@ android {
         // versionName 会成为 Release 名称与 APK 文件名
         //
         // 7xDash 用自己的 applicationId，可以和 zeekr-shortcut-car 并排装。版本号从 1 重新起。
-        versionCode = 76
-        versionName = "1.6.9-beta"
+        versionCode = 77
+        versionName = "1.6.10-beta"
 
         buildConfigField("String", "DRIVE_CLIENT_ID", gradleStringLiteral(driveCredential("DRIVE_CLIENT_ID")))
         buildConfigField("String", "DRIVE_CLIENT_SECRET", gradleStringLiteral(driveCredential("DRIVE_CLIENT_SECRET")))
@@ -176,6 +176,31 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
+}
+
+/** CHANGELOG.md into the APK's assets, so the app can show "What's new" after an update (update/WhatsNew). */
+abstract class CopyChangelog : DefaultTask() {
+    @get:InputFile
+    abstract val source: RegularFileProperty
+
+    @get:OutputDirectory
+    abstract val outputDir: DirectoryProperty
+
+    @TaskAction
+    fun copy() {
+        val dir = outputDir.get().asFile
+        dir.mkdirs()
+        source.get().asFile.copyTo(File(dir, "CHANGELOG.md"), overwrite = true)
+    }
+}
+
+androidComponents {
+    onVariants { variant ->
+        val task = tasks.register<CopyChangelog>("copyChangelog" + variant.name.replaceFirstChar { it.uppercase() }) {
+            source.set(rootProject.file("CHANGELOG.md"))
+        }
+        variant.sources.assets?.addGeneratedSourceDirectory(task, CopyChangelog::outputDir)
+    }
 }
 
 /**

@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.6.10-beta] - 2026-10-30
+
+### What's new screen
+- **The first time 7xDash opens after an update, it shows what changed**, like Tesla's release notes: every version since the one you last opened, newest first. It shows once per update and works without a connection.
+- **Settings → Check for updates → What's new** shows the last three versions any time.
+
 ## [1.6.9-beta] - 2026-10-30
 
 ### Removed

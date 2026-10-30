@@ -1419,6 +1419,8 @@ public class MainActivity extends AppCompatActivity {
         }
 
         if (!appConfig.isFirstLaunch()) {
+            // after an update: what changed, once (Tesla-style release notes)
+            com.kooo.evcam.update.WhatsNewDialog.maybeShow(this);
             return;
         }
 

@@ -875,6 +875,11 @@
             android:key="pref_check_update"
             android:title="@string/set_check_update_title" />
 
+        <Preference
+            android:key="pref_whats_new"
+            android:title="@string/set_whats_new_title"
+            android:summary="@string/set_whats_new_summary" />
+
         <SwitchPreferenceCompat
             android:key="pref_update_beta"
             android:title="@string/set_update_beta_title"

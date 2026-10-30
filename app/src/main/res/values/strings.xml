@@ -1689,4 +1689,8 @@ Then reopen this app.</string>
     <string name="set_side_cat_when">When it shows</string>
     <string name="set_side_cat_picture">Picture</string>
     <string name="set_side_cat_blind_spot">Blind spot</string>
+    <string name="whats_new_title">What\'s new in %1$s</string>
+    <string name="set_whats_new_title">What\'s new</string>
+    <string name="set_whats_new_summary">What changed in the last few versions</string>
+    <string name="whats_new_none">No notes for this version</string>
 </resources>

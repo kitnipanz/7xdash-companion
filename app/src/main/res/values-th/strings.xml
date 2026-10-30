@@ -1665,4 +1665,8 @@
     <string name="set_side_cat_when">แสดงเมื่อไร</string>
     <string name="set_side_cat_picture">ภาพ</string>
     <string name="set_side_cat_blind_spot">จุดบอด</string>
+    <string name="whats_new_title">มีอะไรใหม่ใน %1$s</string>
+    <string name="set_whats_new_title">มีอะไรใหม่</string>
+    <string name="set_whats_new_summary">สิ่งที่เปลี่ยนในไม่กี่เวอร์ชันล่าสุด</string>
+    <string name="whats_new_none">ไม่มีบันทึกสำหรับเวอร์ชันนี้</string>
 </resources>

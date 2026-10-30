@@ -1581,6 +1581,8 @@ public class SettingsPreferenceFragment extends PreferenceFragmentCompat {
         }
         onClick("pref_check_update",
                 pref -> com.kooo.evcam.update.UpdateFlow.start(getActivity()));
+        onClick("pref_whats_new",
+                pref -> com.kooo.evcam.update.WhatsNewDialog.showLatest(requireActivity()));
         bindSwitch("pref_update_beta", appConfig.isUpdateBetaEnabled(),
                 value -> appConfig.setUpdateBetaEnabled(value));
     }

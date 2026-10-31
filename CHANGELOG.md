@@ -1,5 +1,54 @@
 # Changelog
 
+## [1.7.0] - 2026-10-31
+
+Changes since 1.6.0 (includes 1.6.1-beta to 1.6.13-beta).
+
+### Floating tools over any app
+- **Macro pad (new).** A small pad of six buttons that floats over maps, CarPlay or anything else. Choose what each button does on the **Macro pad** card on Home, from the same action tabs as Shortcuts. Tap a button to run it; drag to move, pinch to resize, push to an edge to tuck it away. An empty button shows a plus that opens its picker. Starts with Recording, Photo, Instant capture, Super mirror, Dim display and Announcements.
+- **Dash panel (new).** A mini instrument cluster over any app: speed, gear, turn signals, the clock and whether 7xDash is recording, with buttons for a surround photo, an instant capture, Super mirror and opening 7xDash.
+- Both are off by default. Switch them with the pill on their Home card, in Settings → Floating button, or with the new shortcut actions **Macro pad on / off** and **Dash panel on / off**.
+
+### Battery at arrival (beta)
+- **See your battery at the destination while navigating with CarPlay.** Share the place from Google Maps or Apple Maps on the iPhone (Share → **Send to 7xDash**) and the Dash panel shows km to go and battery when you arrive, for example "198 km · 26%": white when fine, orange below 15%, red with how many km short.
+- Worked out from the car's own battery % and range estimate, with road distance from a free OpenStreetMap route service (a straight-line guess, marked "~", without internet).
+- Needs Settings → Interface → **Beta features** and wireless CarPlay, so the iPhone is on the car's Wi-Fi. The **Battery at arrival** card has a QR code that opens the iPhone setup page. Not tried in the car yet.
+
+### Blind spot and side view
+- **Centre screen and HUD switch on separately**, or both at once. The Blind spot card cycles off, screen, HUD, screen + HUD.
+- **Shows over the car's own view** (on by default): the side view opens even while the car shows its 360 view, its own side view or park assist. Never in R.
+- **Pop-up style: Square or Wide.** Wide is a landscape picture in the top-right corner, like Tesla's blind-spot camera. Square now sits to the right.
+- **Show the side when a door opens** (on by default): while stopped, opening a door shows the camera on that side, to see cars and bikes coming from behind.
+- **Blind-spot warning finder** in Settings → Side mirror: teach 7xDash which car signal is the blind-spot warning, and the side view gets a red edge on that side.
+- The blind-spot assist switch in the info bar now follows the car's own Lane Change Assist switch.
+
+### AirPlay
+- **Smoother, quicker mirroring:** up to 60 fps (was 30), drawn straight to the screen, using the car's hardware decoder in low-latency mode. A still Mac screen no longer shows up late.
+- **The car's Wi-Fi stays awake while mirroring**, so pocket Wi-Fi no longer makes the picture stutter.
+- The AirPlay window opens full width; double-tap switches between small and full width.
+- The AirPlay log shows the mirroring delay every 5 seconds.
+
+### What's new
+- **After an update, 7xDash shows what changed** since the version you last opened, once. **Settings → Check for updates → What's new** shows the last three versions any time.
+
+### Mood light
+- **LED lights reconnect on their own more reliably**, with quicker retries and a short background scan for your saved lights.
+- **Blink orange for a car in the blind spot** while you signal, once the blind-spot warning has been found.
+
+### Look and feel
+- **Home:** card names line up in every row, and "Off" is grey, so the cards that are on stand out.
+- **Videos and Saved captures:** with nothing to show, a message says why and what to do.
+- **Settings:** a switch locked by the one above it stays dimmed orange instead of looking off; long descriptions wrap; Side mirror is split into Where it shows, When it shows, Picture and Blind spot.
+
+### Diagnostics
+- The report says whether this head unit allows split screen and floating windows for normal apps.
+
+### Fixes
+- The app could crash when Settings was opened right as the Home page was laid out.
+
+### Guide
+- A new online guide shows every feature on the real Home screen, with how to use each one, in Thai and English: https://kitnipanz.github.io/7xdash-companion/
+
 ## [1.6.13-beta] - 2026-10-31
 
 ### Macro pad

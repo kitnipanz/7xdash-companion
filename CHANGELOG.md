@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.6.12-beta] - 2026-10-31
+
+### Battery at arrival (beta)
+- **See how much battery you will have when you get there, while navigating with CarPlay.** In Google Maps or Apple Maps on the iPhone, open the destination → Share → **Send to 7xDash**. The Dash panel's top line then shows km to go and battery at arrival (for example "198 km · 26%"): white when fine, orange below 15%, red with how many km short when the range will not reach.
+- Uses the car's own battery % and range estimate, so driving style and air conditioning are already counted. Road distance comes from a free OpenStreetMap route service and is checked again every few minutes; without internet it guesses from the straight line ("~").
+- **Battery at arrival** card on Home and its own screen: the estimate in big numbers, a Clear destination button, and a QR code that opens the iPhone setup page (how to make the Shortcut once, plus a box to paste a link). The destination clears itself when you arrive.
+- Needs **Settings → Interface → Beta features** on, and wireless CarPlay so the iPhone is on the car's Wi-Fi. Not tried in the car yet.
+
 ## [1.6.11-beta] - 2026-10-31
 
 ### Dash panel

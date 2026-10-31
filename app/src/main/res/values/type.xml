@@ -31,6 +31,7 @@
     <dimen name="text_title">26sp</dimen>
     <dimen name="text_display">28sp</dimen>
     <dimen name="text_clock">88sp</dimen>
+    <dimen name="text_hero">64sp</dimen>
 
     <!--
       字重和字距和主题里保持一致：父样式（Material3）自带的那份会盖掉主题设的，
@@ -72,6 +73,12 @@
     <!-- 大数字：计时、张数这类需要隔着一米看清的 -->
     <style name="TextAppearance.Cam.Display">
         <item name="android:textSize">@dimen/text_display</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+    </style>
+
+    <!-- A number to read at a glance while driving (battery at arrival) -->
+    <style name="TextAppearance.Cam.Hero">
+        <item name="android:textSize">@dimen/text_hero</item>
         <item name="android:fontFamily">sans-serif-medium</item>
     </style>
 

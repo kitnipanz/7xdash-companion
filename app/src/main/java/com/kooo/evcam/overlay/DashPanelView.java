@@ -52,6 +52,9 @@ public final class DashPanelView extends View {
     private VehicleState state;
     private boolean rec;
     private boolean blinkOn = true;
+    /** Battery at arrival line (beta), or null. */
+    private String arrival;
+    private int arrivalColor = TEXT;
 
     public DashPanelView(Context context) {
         super(context);
@@ -73,6 +76,12 @@ public final class DashPanelView extends View {
         this.rec = recording;
         this.blinkOn = blinkOn;
         invalidate();
+    }
+
+    /** The battery at arrival line at the top, or null for none. */
+    public void arrival(String line, int color) {
+        this.arrival = line;
+        this.arrivalColor = color;
     }
 
     /** Which button a tap at (x, y) in this view hit, or -1. */
@@ -128,6 +137,16 @@ public final class DashPanelView extends View {
             fill.setColor(recording);
             float tw = text.measureText("REC");
             canvas.drawCircle(w - 6 * u - tw - 6 * u, 12 * u, 3.5f * u, fill);
+        }
+
+        // top centre: battery at arrival
+        if (arrival != null) {
+            text.setTextAlign(Paint.Align.CENTER);
+            text.setTextSize(11 * u);
+            text.setColor(arrivalColor);
+            text.setFakeBoldText(true);
+            canvas.drawText(arrival, w / 2f, 16 * u, text);
+            text.setFakeBoldText(false);
         }
 
         // middle: speed, unit, gear

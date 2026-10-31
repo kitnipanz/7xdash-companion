@@ -284,6 +284,14 @@ public class HomeFragment extends Fragment {
                 .pill(() -> getString(config.isDashPanelEnabled() ? R.string.home_state_on : R.string.home_state_off),
                         () -> config.isDashPanelEnabled(), this::toggleDashPanel);
 
+        // Beta: battery at arrival for the place shared from the phone. Tap opens its screen; the
+        // state shows the estimate while there is a destination
+        if (betaShown) {
+            addCard(R.drawable.ic_arrival, R.string.arrival_title, R.string.home_card_arrival_sub,
+                    () -> startActivity(new Intent(requireContext(), com.kooo.evcam.trip.ArrivalActivity.class)), null)
+                    .state(this::arrivalLabel, () -> com.kooo.evcam.trip.Trip.get().status().destination != null);
+        }
+
         // Beta: 停在哪。点卡片当场读一次，长按开扫描窗（手动扫一次、看读到什么）；胶囊开关决定挂 P 时自动读，另一颗决定 3 km/h 以下边开边读柱子上的牌
         if (betaShown) {
             addCard(R.drawable.ic_parking, R.string.home_card_parking,
@@ -475,6 +483,15 @@ public class HomeFragment extends Fragment {
         recToggle.setBackgroundTintList(ColorStateList.valueOf(
                 ContextCompat.getColor(context, rec ? R.color.recording : R.color.energy)));
         recToggle.setTextColor(ContextCompat.getColor(context, R.color.on_energy));
+    }
+
+    private String arrivalLabel() {
+        com.kooo.evcam.trip.Trip.Status s = com.kooo.evcam.trip.Trip.get().status();
+        String line = com.kooo.evcam.trip.ArrivalText.line(requireContext(), s);
+        if (line != null) {
+            return line;
+        }
+        return getString(com.kooo.evcam.trip.Trip.active(requireContext()) ? R.string.home_state_on : R.string.home_state_off);
     }
 
     private void toggleDashPanel() {

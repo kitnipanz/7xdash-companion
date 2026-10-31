@@ -189,6 +189,10 @@ public class DashPanelService extends Service implements Telemetry.Listener {
         if (view == null) {
             return;
         }
+        com.kooo.evcam.trip.Trip.Status trip = com.kooo.evcam.trip.Trip.get().status();
+        view.arrival(com.kooo.evcam.trip.ArrivalText.line(this, trip), com.kooo.evcam.trip.ArrivalText.color(trip,
+                0xFFFFFFFF, androidx.core.content.ContextCompat.getColor(this, com.kooo.evcam.R.color.energy),
+                androidx.core.content.ContextCompat.getColor(this, com.kooo.evcam.R.color.recording)));
         view.show(Telemetry.get().latest(),
                 RecordingCoordinator.get(this).isRecordingOrResuming(), blink);
     }

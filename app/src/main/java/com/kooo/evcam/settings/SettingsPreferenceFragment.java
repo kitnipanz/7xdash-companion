@@ -1203,6 +1203,7 @@ public class SettingsPreferenceFragment extends PreferenceFragmentCompat {
             appConfig.setBetaFeaturesEnabled(value);
             com.kooo.evcam.parking.WhereParked.get().settingsChanged(requireContext());
             com.kooo.evcam.light.GearLight.reload();
+            com.kooo.evcam.trip.Trip.get().apply(requireContext());
             if (getParentFragment() instanceof SettingsShellFragment) {
                 ((SettingsShellFragment) getParentFragment()).betaChanged();
             }

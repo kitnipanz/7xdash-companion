@@ -406,6 +406,8 @@ public class MainActivity extends AppCompatActivity {
         // 按设置把该开的悬浮窗恢复出来（画面悬浮窗 / 超级后视镜 /
         // 录制悬浮按钮 / 补盲）。该不该开、能不能开都在协调器里判断。
         OverlayCoordinator.restoreOnLaunch(this);
+        // Battery at arrival (beta): listen for places shared from the phone if it is on
+        com.kooo.evcam.trip.Trip.install(this);
 
         // 人自己点开的：先停在 7xDash 主页。开机自启、悬浮按钮要录、带着页面进来的不停
         if (savedInstanceState == null && !autoStartFromBoot

@@ -1065,7 +1065,7 @@ Then reopen this app.</string>
     <!-- Interface section · first-launch side question · record unavailable · status bar -->
     <string name="set_section_interface">Interface</string>
     <string name="set_beta_features_title">Beta features</string>
-    <string name="set_beta_features_summary">Show features that are still being tried on the car, and let them run. Now: Where I parked (home card, and reading the signs when the car goes into P). The Where I parked shortcut still works.</string>
+    <string name="set_beta_features_summary">Show features that are still being tried on the car, and let them run. Now: Where I parked (home card, and reading the signs when the car goes into P) and Battery at arrival. The Where I parked shortcut still works.</string>
     <string name="set_usage_stats_title">Anonymous usage stats</string>
     <string name="set_usage_stats_summary">Which features get used: app start, home cards, pages, actions and what ran them, buttons you set up, recording, 7xDash web controls. A random install id only: no email, plate or location. About 20–50 KB a day</string>
     <string name="usage_consent_title">Help fix and improve 7xDash?</string>
@@ -1698,4 +1698,39 @@ Then reopen this app.</string>
     <string name="set_dash_panel_summary">A small card that floats over maps, music or any other app: speed, gear, turn signals, the clock and whether 7xDash is recording, with buttons for a surround photo, an instant capture, Super mirror and opening 7xDash. Drag to move, pinch to resize, push to a side to dock</string>
     <string name="dash_panel_need_overlay">Allow 7xDash to display over other apps first</string>
     <string name="shortcut_action_dash_panel">Dash panel on / off</string>
+    <!-- Battery at arrival (beta) -->
+    <string name="arrival_title">Battery at arrival</string>
+    <string name="arrival_beta">BETA</string>
+    <string name="arrival_switch">Receive places from iPhone</string>
+    <string name="home_card_arrival_sub">Beta · Share a place from your iPhone</string>
+    <string name="arrival_percent">%1$d%% at arrival</string>
+    <string name="arrival_short">Short by %1$d km</string>
+    <string name="arrival_detail">%1$s to go · %2$d km of range to spare</string>
+    <string name="arrival_detail_short">%1$s to go · charge on the way</string>
+    <string name="arrival_waiting">Waiting for GPS, battery and range from the car</string>
+    <string name="arrival_waiting_short">Waiting for car</string>
+    <string name="arrival_none">No destination yet</string>
+    <string name="arrival_none_hint">In Google Maps or Apple Maps on your iPhone: open the place → Share → Send to 7xDash</string>
+    <string name="arrival_unnamed">Shared place</string>
+    <string name="arrival_clear">Clear destination</string>
+    <string name="arrival_off">Turn on the switch to receive places from your iPhone</string>
+    <string name="arrival_off_setup">Turn the switch on to show the setup code</string>
+    <string name="arrival_need_beta">Turn on Settings → Interface → Beta features first</string>
+    <string name="arrival_setup_title">Set up your iPhone</string>
+    <string name="arrival_setup_hint">Connect CarPlay wirelessly, then scan this with the iPhone camera. The page shows how to make the Send to 7xDash Shortcut.</string>
+    <string name="arrival_no_network">No Wi-Fi with the phone yet. Connect CarPlay wirelessly and come back.</string>
+    <string name="arrival_port_failed">Could not open port %1$d on this head unit</string>
+    <string name="arrival_web_paste">Paste a Google Maps or Apple Maps link</string>
+    <string name="arrival_web_send">Send to 7xDash</string>
+    <string name="arrival_web_set">7xDash: going to %1$s</string>
+    <string name="arrival_web_nothing">7xDash: nothing was sent</string>
+    <string name="arrival_web_no_place">7xDash: could not find a place in that link</string>
+    <string name="arrival_web_shortcut_title">Make the Shortcut (once)</string>
+    <string name="arrival_web_shortcut_address">Address for the Shortcut (tap and hold to copy):</string>
+    <string name="arrival_web_host_hint">The iPhone has to be on the car\'s Wi-Fi, which wireless CarPlay does for you. With a cable it will not reach the car.</string>
+    <string name="arrival_step_1">Open Shortcuts, tap +, and name it Send to 7xDash.</string>
+    <string name="arrival_step_2">Tap the ⓘ button and turn on Show in Share Sheet.</string>
+    <string name="arrival_step_3">Add the action Get Contents of URL and paste the address above as the URL.</string>
+    <string name="arrival_step_4">Tap the arrow on that action: Method POST, Request Body Form, add a Text field named link with the value Shortcut Input.</string>
+    <string name="arrival_step_5">To use it: in Google Maps or Apple Maps open the destination, tap Share, then Send to 7xDash.</string>
 </resources>

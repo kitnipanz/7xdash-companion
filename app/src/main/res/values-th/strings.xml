@@ -1050,7 +1050,7 @@
     <!-- Interface section · first-launch side question · record unavailable · status bar -->
     <string name="set_section_interface">อินเทอร์เฟซ</string>
     <string name="set_beta_features_title">ฟีเจอร์เบต้า</string>
-    <string name="set_beta_features_summary">แสดงและเปิดใช้ฟีเจอร์ที่ยังทดลองในรถอยู่ ตอนนี้มี: จอดไว้ที่ไหน (การ์ดในหน้าหลัก และอ่านป้ายเมื่อเข้าเกียร์ P) ปุ่มลัดจอดไว้ที่ไหนยังใช้ได้</string>
+    <string name="set_beta_features_summary">แสดงและเปิดใช้ฟีเจอร์ที่ยังทดลองในรถอยู่ ตอนนี้มี: จอดไว้ที่ไหน (การ์ดในหน้าหลัก และอ่านป้ายเมื่อเข้าเกียร์ P) และแบตเมื่อถึงที่หมาย ปุ่มลัดจอดไว้ที่ไหนยังใช้ได้</string>
     <string name="set_usage_stats_title">สถิติการใช้งาน (ไม่ระบุตัวตน)</string>
     <string name="set_usage_stats_summary">ฟีเจอร์ที่ใช้ เช่น การเปิดแอป การ์ดหน้าหลัก หน้าที่เปิด การทำงานที่ใช้และกดจากตรงไหน ปุ่มที่ตั้งค่าไว้ การบันทึก และการควบคุมจาก 7xDash เว็บ ใช้แค่รหัสสุ่มที่สร้างตอนติดตั้งแอป ไม่มีอีเมล ป้ายทะเบียน หรือตำแหน่ง ประมาณ 20–50 KB ต่อวัน</string>
     <string name="usage_consent_title">ช่วยให้ 7xDash ดีขึ้นไหม?</string>
@@ -1674,4 +1674,39 @@
     <string name="set_dash_panel_summary">การ์ดเล็กที่ลอยเหนือแผนที่ เพลง หรือแอปอื่น: ความเร็ว เกียร์ ไฟเลี้ยว นาฬิกา และสถานะการบันทึกของ 7xDash พร้อมปุ่มถ่ายรูปรอบคัน บันทึกคลิปทันที กระจกมองหลัง และเปิด 7xDash ลากเพื่อย้าย บีบเพื่อปรับขนาด ดันไปขอบเพื่อเก็บ</string>
     <string name="dash_panel_need_overlay">อนุญาตให้ 7xDash แสดงทับแอปอื่นก่อน</string>
     <string name="shortcut_action_dash_panel">เปิด / ปิดแผงหน้าปัด</string>
+    <!-- Battery at arrival (beta) -->
+    <string name="arrival_title">แบตเมื่อถึงที่หมาย</string>
+    <string name="arrival_beta">BETA</string>
+    <string name="arrival_switch">รับสถานที่จาก iPhone</string>
+    <string name="home_card_arrival_sub">Beta · แชร์สถานที่จาก iPhone</string>
+    <string name="arrival_percent">ถึงแล้วเหลือ %1$d%%</string>
+    <string name="arrival_short">ไม่พออีก %1$d กม.</string>
+    <string name="arrival_detail">อีก %1$s · ระยะวิ่งเหลือ %2$d กม.</string>
+    <string name="arrival_detail_short">อีก %1$s · ต้องแวะชาร์จระหว่างทาง</string>
+    <string name="arrival_waiting">รอ GPS แบตเตอรี่ และระยะวิ่งจากรถ</string>
+    <string name="arrival_waiting_short">รอข้อมูลรถ</string>
+    <string name="arrival_none">ยังไม่มีที่หมาย</string>
+    <string name="arrival_none_hint">ใน Google Maps หรือ Apple Maps บน iPhone: เปิดสถานที่ → แชร์ → Send to 7xDash</string>
+    <string name="arrival_unnamed">สถานที่ที่แชร์มา</string>
+    <string name="arrival_clear">ล้างที่หมาย</string>
+    <string name="arrival_off">เปิดสวิตช์เพื่อรับสถานที่จาก iPhone</string>
+    <string name="arrival_off_setup">เปิดสวิตช์เพื่อแสดงโค้ดตั้งค่า</string>
+    <string name="arrival_need_beta">เปิด การตั้งค่า → อินเทอร์เฟซ → ฟีเจอร์เบต้า ก่อน</string>
+    <string name="arrival_setup_title">ตั้งค่า iPhone</string>
+    <string name="arrival_setup_hint">เชื่อม CarPlay แบบไร้สาย แล้วสแกนด้วยกล้อง iPhone หน้านั้นจะบอกวิธีสร้างคำสั่งลัด Send to 7xDash</string>
+    <string name="arrival_no_network">ยังไม่มี Wi-Fi กับโทรศัพท์ เชื่อม CarPlay แบบไร้สายแล้วกลับมาที่นี่</string>
+    <string name="arrival_port_failed">เปิดพอร์ต %1$d บนจอรถนี้ไม่ได้</string>
+    <string name="arrival_web_paste">วางลิงก์ Google Maps หรือ Apple Maps</string>
+    <string name="arrival_web_send">ส่งไป 7xDash</string>
+    <string name="arrival_web_set">7xDash: ไปที่ %1$s</string>
+    <string name="arrival_web_nothing">7xDash: ไม่มีอะไรส่งมา</string>
+    <string name="arrival_web_no_place">7xDash: หาสถานที่ในลิงก์นี้ไม่เจอ</string>
+    <string name="arrival_web_shortcut_title">สร้างคำสั่งลัด (ครั้งเดียว)</string>
+    <string name="arrival_web_shortcut_address">ที่อยู่สำหรับคำสั่งลัด (แตะค้างเพื่อคัดลอก):</string>
+    <string name="arrival_web_host_hint">iPhone ต้องอยู่บน Wi-Fi ของรถ ซึ่ง CarPlay ไร้สายทำให้อยู่แล้ว ถ้าเสียบสายจะส่งมาไม่ถึง</string>
+    <string name="arrival_step_1">เปิดแอป Shortcuts แตะ + แล้วตั้งชื่อว่า Send to 7xDash</string>
+    <string name="arrival_step_2">แตะปุ่ม ⓘ แล้วเปิด Show in Share Sheet (แสดงในแผ่นแชร์)</string>
+    <string name="arrival_step_3">เพิ่มคำสั่ง Get Contents of URL (รับเนื้อหาของ URL) แล้ววางที่อยู่ด้านบนเป็น URL</string>
+    <string name="arrival_step_4">แตะลูกศรของคำสั่งนั้น: Method เป็น POST, Request Body เป็น Form, เพิ่มช่อง Text ชื่อ link ค่าเป็น Shortcut Input</string>
+    <string name="arrival_step_5">วิธีใช้: ใน Google Maps หรือ Apple Maps เปิดที่หมาย แตะแชร์ แล้วเลือก Send to 7xDash</string>
 </resources>

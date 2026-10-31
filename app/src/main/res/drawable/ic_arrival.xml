@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- ic_arrival: battery at arrival. Same icon set (24dp grid, 1.7 stroke, round caps): a battery on its side with a finish flag. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M4,11h10a1.5,1.5 0,0 1,1.5 1.5v5a1.5,1.5 0,0 1,-1.5 1.5h-10a1.5,1.5 0,0 1,-1.5 -1.5v-5a1.5,1.5 0,0 1,1.5 -1.5z M17.5,14v2 M6,14v2 M9,14v2 M17,9v-5 M17,4h4l-1,1.5l1,1.5h-4"
+        android:strokeWidth="1.7"
+        android:strokeColor="@color/text_primary"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+</vector>

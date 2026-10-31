@@ -2552,6 +2552,46 @@ public class AppConfig {
         prefs.edit().putString(KEY_DASH_PANEL_BOUNDS, x + "," + y + "," + width + "," + height).apply();
     }
 
+    // ==================== Battery at arrival (beta) ====================
+
+    private static final String KEY_ARRIVAL = "arrival";
+    private static final String KEY_ARRIVAL_TOKEN = "arrival_token";
+    private static final String KEY_ARRIVAL_DESTINATION = "arrival_destination";
+
+    /** Battery at arrival (trip.Trip): listen for places shared from the phone. Off by default; beta. */
+    public boolean isArrivalEnabled() {
+        return prefs.getBoolean(KEY_ARRIVAL, false);
+    }
+
+    public void setArrivalEnabled(boolean on) {
+        prefs.edit().putBoolean(KEY_ARRIVAL, on).apply();
+    }
+
+    /** The secret part of the phone's address, made once and kept so the iPhone Shortcut keeps working. */
+    public String getArrivalToken() {
+        String token = prefs.getString(KEY_ARRIVAL_TOKEN, "");
+        if (token.isEmpty()) {
+            byte[] bytes = new byte[5];
+            new java.security.SecureRandom().nextBytes(bytes);
+            StringBuilder sb = new StringBuilder();
+            for (byte b : bytes) {
+                sb.append(String.format(java.util.Locale.US, "%02x", b));
+            }
+            token = sb.toString();
+            prefs.edit().putString(KEY_ARRIVAL_TOKEN, token).apply();
+        }
+        return token;
+    }
+
+    /** The current destination as "lat,lng,setAtMillis,name", or "" for none. */
+    public String getArrivalDestination() {
+        return prefs.getString(KEY_ARRIVAL_DESTINATION, "");
+    }
+
+    public void setArrivalDestination(String value) {
+        prefs.edit().putString(KEY_ARRIVAL_DESTINATION, value == null ? "" : value).apply();
+    }
+
     // ==================== 全屏遮罩 ====================
 
     public boolean isDimOverlayEnabled() {

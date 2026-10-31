@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.6.13-beta] - 2026-10-31
+
+### Macro pad
+- **Your own floating buttons over any app.** A small pad of six buttons, like the floating buttons, that sits over maps, CarPlay or anything else. Tap a button to run it; drag to move, pinch to resize, push to an edge to tuck it away.
+- **Choose what each button does** on the new **Macro pad** card on Home: tap a button on the big copy of the pad and pick any action from the same tabs as Shortcuts, or Clear it. The pad changes straight away. An empty button shows a plus; tapping it on the pad opens the picker for it.
+- Starts with Recording, Photo, Instant capture, Super mirror, Dim display and Announcements.
+- Switch it on and off with the pill on the card, in Settings → Floating button, or with the new shortcut action **Macro pad on / off**. Off by default.
+
 ## [1.6.12-beta] - 2026-10-31
 
 ### Battery at arrival (beta)

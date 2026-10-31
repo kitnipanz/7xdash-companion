@@ -2552,6 +2552,50 @@ public class AppConfig {
         prefs.edit().putString(KEY_DASH_PANEL_BOUNDS, x + "," + y + "," + width + "," + height).apply();
     }
 
+    // ==================== Macro pad ====================
+
+    private static final String KEY_MACRO_PAD = "macro_pad";
+    private static final String KEY_MACRO_PAD_SLOTS = "macro_pad_slots";
+    private static final String KEY_MACRO_PAD_BOUNDS = "macro_pad_bounds";
+
+    /** Floating Macro pad over other apps (overlay.MacroPadService). Off by default. */
+    public boolean isMacroPadEnabled() {
+        return prefs.getBoolean(KEY_MACRO_PAD, false);
+    }
+
+    public void setMacroPadEnabled(boolean on) {
+        prefs.edit().putBoolean(KEY_MACRO_PAD, on).apply();
+    }
+
+    /** The pad's buttons as stored by {@link com.kooo.evcam.overlay.MacroPadSlots}; null = never set. */
+    public String getMacroPadSlots() {
+        return prefs.getString(KEY_MACRO_PAD_SLOTS, null);
+    }
+
+    public void setMacroPadSlots(String slots) {
+        prefs.edit().putString(KEY_MACRO_PAD_SLOTS, slots).apply();
+    }
+
+    /** x, y, width, height in pixels; width 0 = never moved. */
+    public int[] getMacroPadBounds() {
+        int[] out = new int[4];
+        String[] parts = prefs.getString(KEY_MACRO_PAD_BOUNDS, "").split(",");
+        if (parts.length == 4) {
+            try {
+                for (int i = 0; i < 4; i++) {
+                    out[i] = Integer.parseInt(parts[i].trim());
+                }
+            } catch (NumberFormatException e) {
+                return new int[4];
+            }
+        }
+        return out;
+    }
+
+    public void setMacroPadBounds(int x, int y, int width, int height) {
+        prefs.edit().putString(KEY_MACRO_PAD_BOUNDS, x + "," + y + "," + width + "," + height).apply();
+    }
+
     // ==================== Battery at arrival (beta) ====================
 
     private static final String KEY_ARRIVAL = "arrival";

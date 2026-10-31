@@ -3206,6 +3206,7 @@ public class MainActivity extends AppCompatActivity {
         com.kooo.evcam.zeekr.SideViewPopupService.stop(this);
         com.kooo.evcam.overlay.DimOverlayService.hide(this);
         com.kooo.evcam.overlay.DashPanelService.hide(this);
+        com.kooo.evcam.overlay.MacroPadService.hide(this);
         // 释放持续唤醒锁
         WakeUpHelper.releasePersistentWakeLock();
 

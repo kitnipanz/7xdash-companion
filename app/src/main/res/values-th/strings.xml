@@ -1709,4 +1709,14 @@
     <string name="arrival_step_3">เพิ่มคำสั่ง Get Contents of URL (รับเนื้อหาของ URL) แล้ววางที่อยู่ด้านบนเป็น URL</string>
     <string name="arrival_step_4">แตะลูกศรของคำสั่งนั้น: Method เป็น POST, Request Body เป็น Form, เพิ่มช่อง Text ชื่อ link ค่าเป็น Shortcut Input</string>
     <string name="arrival_step_5">วิธีใช้: ใน Google Maps หรือ Apple Maps เปิดที่หมาย แตะแชร์ แล้วเลือก Send to 7xDash</string>
+    <!-- Macro pad -->
+    <string name="macro_pad_title">มาโครแพด</string>
+    <string name="home_card_macro_pad_sub">ปุ่มของเราเอง ลอยทับทุกแอป แตะเพื่อเลือกปุ่ม</string>
+    <string name="set_macro_pad_summary">แผงปุ่มลอย 6 ปุ่มทับทุกแอป เลือกได้ว่าแต่ละปุ่มทำอะไรที่การ์ดมาโครแพด</string>
+    <string name="macro_pad_switch">แสดงมาโครแพด</string>
+    <string name="macro_pad_hint">แตะปุ่มด้านล่างเพื่อเลือกว่าจะให้ทำอะไร บนแพด: แตะปุ่มเพื่อสั่งงาน ลากเพื่อย้าย ถ่างนิ้วเพื่อขยาย ดันชิดขอบจอเพื่อเก็บ</string>
+    <string name="macro_pad_empty">ว่าง</string>
+    <string name="macro_pad_button">ปุ่ม %1$d</string>
+    <string name="macro_pad_clear">ล้าง</string>
+    <string name="shortcut_action_macro_pad">เปิด / ปิดมาโครแพด</string>
 </resources>

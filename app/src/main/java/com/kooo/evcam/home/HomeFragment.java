@@ -283,6 +283,11 @@ public class HomeFragment extends Fragment {
                 () -> page(MainActivity.PAGE_SETTINGS_PREFIX + "screen_floating"), null)
                 .pill(() -> getString(config.isDashPanelEnabled() ? R.string.home_state_on : R.string.home_state_off),
                         () -> config.isDashPanelEnabled(), this::toggleDashPanel);
+        // Macro pad: your own buttons floating over any app. Tap to choose them; the pill is the switch
+        addCard(R.drawable.ic_macro_pad, R.string.macro_pad_title, R.string.home_card_macro_pad_sub,
+                () -> startActivity(new Intent(requireContext(), com.kooo.evcam.input.MacroPadActivity.class)), null)
+                .pill(() -> getString(config.isMacroPadEnabled() ? R.string.home_state_on : R.string.home_state_off),
+                        () -> config.isMacroPadEnabled(), this::toggleMacroPad);
 
         // Beta: battery at arrival for the place shared from the phone. Tap opens its screen; the
         // state shows the estimate while there is a destination
@@ -492,6 +497,14 @@ public class HomeFragment extends Fragment {
             return line;
         }
         return getString(com.kooo.evcam.trip.Trip.active(requireContext()) ? R.string.home_state_on : R.string.home_state_off);
+    }
+
+    private void toggleMacroPad() {
+        Context context = requireContext();
+        if (!com.kooo.evcam.overlay.OverlayCoordinator.setMacroPadEnabled(context, !config.isMacroPadEnabled())) {
+            com.kooo.evcam.ui.Notice.makeText(context, R.string.dash_panel_need_overlay,
+                    android.widget.Toast.LENGTH_LONG).show();
+        }
     }
 
     private void toggleDashPanel() {

@@ -1733,4 +1733,14 @@ Then reopen this app.</string>
     <string name="arrival_step_3">Add the action Get Contents of URL and paste the address above as the URL.</string>
     <string name="arrival_step_4">Tap the arrow on that action: Method POST, Request Body Form, add a Text field named link with the value Shortcut Input.</string>
     <string name="arrival_step_5">To use it: in Google Maps or Apple Maps open the destination, tap Share, then Send to 7xDash.</string>
+    <!-- Macro pad -->
+    <string name="macro_pad_title">Macro pad</string>
+    <string name="home_card_macro_pad_sub">Your own buttons over any app. Tap to choose them</string>
+    <string name="set_macro_pad_summary">A floating pad of six buttons over any app. Choose what each one does on the Macro pad card</string>
+    <string name="macro_pad_switch">Show the Macro pad</string>
+    <string name="macro_pad_hint">Tap a button below to choose what it does. On the pad: tap a button to run it, drag to move, pinch to resize, push to an edge to tuck it away.</string>
+    <string name="macro_pad_empty">Empty</string>
+    <string name="macro_pad_button">Button %1$d</string>
+    <string name="macro_pad_clear">Clear</string>
+    <string name="shortcut_action_macro_pad">Macro pad on / off</string>
 </resources>

@@ -951,6 +951,8 @@ public class SettingsPreferenceFragment extends PreferenceFragmentCompat {
                 OverlayCoordinator::setRecordButtonEnabled, null);
         bindOverlaySwitch("pref_dash_panel", appConfig.isDashPanelEnabled(),
                 OverlayCoordinator::setDashPanelEnabled, null);
+        bindOverlaySwitch("pref_macro_pad", appConfig.isMacroPadEnabled(),
+                OverlayCoordinator::setMacroPadEnabled, null);
 
         // 整档上移 50%（原来 32–100）：最小的也要比原来的最小大一半
         bindSlider("pref_button_size", 48, 150,

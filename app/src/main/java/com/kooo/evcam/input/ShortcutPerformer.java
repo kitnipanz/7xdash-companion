@@ -148,6 +148,15 @@ public final class ShortcutPerformer {
                     hud(context, R.string.home_card_dash_panel, dashOn);
                 }
                 return;
+            case MACRO_PAD:
+                AppConfig pad = new AppConfig(context);
+                boolean padOn = !pad.isMacroPadEnabled();
+                if (!OverlayCoordinator.setMacroPadEnabled(context, padOn)) {
+                    toast(context);
+                } else {
+                    hud(context, R.string.macro_pad_title, padOn);
+                }
+                return;
             case MOOD_LIGHT:
                 com.kooo.evcam.light.GearLight.toggle(context);
                 return;

@@ -503,6 +503,11 @@
             android:title="@string/home_card_dash_panel"
             android:summary="@string/set_dash_panel_summary" />
 
+        <SwitchPreferenceCompat
+            android:key="pref_macro_pad"
+            android:title="@string/macro_pad_title"
+            android:summary="@string/set_macro_pad_summary" />
+
         <ListPreference
             android:key="pref_floating_tap"
             android:dependency="pref_recording_floating"

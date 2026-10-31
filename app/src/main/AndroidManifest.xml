@@ -192,6 +192,11 @@
             android:name=".overlay.DimOverlayService"
             android:exported="false" />
 
+        <!-- Macro pad: floating grid of the driver's own buttons over other apps -->
+        <service
+            android:name=".overlay.MacroPadService"
+            android:exported="false" />
+
         <!-- Dash panel: floating speed / gear / buttons card over other apps -->
         <service
             android:name=".overlay.DashPanelService"
@@ -306,6 +311,12 @@
             android:screenOrientation="landscape"
             android:exported="false" />
 
+        <activity
+            android:name=".input.MacroPadActivity"
+            android:label="@string/macro_pad_title"
+            android:theme="@style/Theme.Cam"
+            android:screenOrientation="landscape"
+            android:exported="false" />
         <activity
             android:name=".input.ShortcutCaptureActivity"
             android:label="@string/shortcut_add"

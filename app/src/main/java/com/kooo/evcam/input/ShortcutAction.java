@@ -51,7 +51,9 @@ public enum ShortcutAction {
     VOLUME_UP("volume_up", R.string.shortcut_action_volume_up, R.drawable.ic_volume_up),
     VOLUME_DOWN("volume_down", R.string.shortcut_action_volume_down, R.drawable.ic_volume_down),
     /** The floating Dash panel on or off (overlay.DashPanelService). */
-    DASH_PANEL("toggle_dash_panel", R.string.shortcut_action_dash_panel, R.drawable.ic_dash_panel);
+    DASH_PANEL("toggle_dash_panel", R.string.shortcut_action_dash_panel, R.drawable.ic_dash_panel),
+    /** The floating Macro pad on or off (overlay.MacroPadService). */
+    MACRO_PAD("toggle_macro_pad", R.string.shortcut_action_macro_pad, R.drawable.ic_macro_pad);
 
     /** The tabs actions are picked from, in tab order. */
     public enum Group {

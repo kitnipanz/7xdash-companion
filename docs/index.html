@@ -384,6 +384,20 @@ window.FEATURES = [
     options: ["จำขนาดและตำแหน่งไว้ให้", "ถ้าเปิด แบตเมื่อถึงที่หมาย ไว้ บรรทัดบนจะบอกระยะที่เหลือและแบตตอนถึง"],
     notes: ["ต้องอนุญาตให้ 7xDash แสดงทับแอปอื่น ครั้งแรกแอปจะถามเอง"] } },
 
+{ id: "macro", spot: "macro", group: "cards", img: "macro",
+  en: { name: "Macro pad", what: "Your own six buttons, floating over any app.",
+    intro: "A small pad of six buttons that floats over maps, CarPlay or anything else, like the floating buttons. You choose what each button does: record, photo, capture, Super mirror, dim, megaphone, announcements, volume, lights and more.",
+    open: "The switch on the Macro pad card, Settings → Floating button, or the Macro pad on / off shortcut.",
+    steps: ["Tap the switch on the Macro pad card. The pad appears at the bottom right.", "Tap the card itself to set it up: it shows a big copy of the pad.", "Tap a button there and pick its action from the same tabs as Shortcuts, or tap Clear to empty it. The pad changes straight away.", "On the pad: tap a button to run it. Drag to move, pinch to resize, push it to an edge to tuck it away."],
+    options: ["Six buttons, three across and two down. It starts with Recording, Photo, Instant capture, Super mirror, Dim display and Announcements.", "Any action from Shortcuts, including Play an announcement (pick which one) and Dash panel on / off.", "Size and position are remembered."],
+    notes: ["An empty button shows a plus; tapping it on the pad opens the picker for that button.", "The pad can't tell a hold from a tap, so Hold to speak works as tap on, tap off.", "7xDash needs permission to show over other apps. It asks the first time."] },
+  th: { name: "มาโครแพด", what: "ปุ่ม 6 ปุ่มของเราเอง ลอยทับทุกแอป",
+    intro: "แผงปุ่มเล็กๆ 6 ปุ่ม ลอยทับแผนที่ CarPlay หรือแอปอื่นได้ เหมือนปุ่มลอย เลือกเองได้ว่าแต่ละปุ่มทำอะไร เช่น อัดคลิป ถ่ายรูป จับภาพ กระจกมองหลัง หรี่จอ โทรโข่ง ประกาศ เพิ่มเสียง หรือเปิดไฟ",
+    open: "สวิตช์บนการ์ด มาโครแพด, ตั้งค่า → ปุ่มลอย หรือปุ่มลัด เปิด / ปิดมาโครแพด",
+    steps: ["แตะสวิตช์บนการ์ด มาโครแพด แพดจะขึ้นที่มุมขวาล่าง", "แตะตัวการ์ดเพื่อตั้งปุ่ม จะเห็นแพดแบบใหญ่", "แตะปุ่มที่อยากเปลี่ยน แล้วเลือกคำสั่งจากแท็บเดียวกับเมนูปุ่มลัด หรือกด ล้าง เพื่อเว้นว่าง แพดจะเปลี่ยนตามทันที", "บนแพด แตะปุ่มเพื่อสั่งงาน ลากเพื่อย้าย ถ่างนิ้วเพื่อขยาย ดันชิดขอบจอเพื่อเก็บ"],
+    options: ["6 ปุ่ม แถวละ 3 สองแถว เริ่มต้นเป็น อัดคลิป ถ่ายรูป จับภาพทันที กระจกมองหลัง หรี่จอ และประกาศ", "ใช้คำสั่งไหนก็ได้ที่มีในปุ่มลัด รวมถึงเล่นเสียงประกาศที่เลือกไว้ และเปิด/ปิดแผงหน้าปัด", "จำขนาดและตำแหน่งไว้ให้"],
+    notes: ["ปุ่มที่ว่างจะเป็นเครื่องหมายบวก แตะบนแพดเพื่อเลือกคำสั่งให้ปุ่มนั้นได้เลย", "แพดแยกกดค้างกับแตะไม่ได้ ปุ่มกดค้างเพื่อพูดจะกลายเป็นแตะเปิด แตะปิด", "ต้องอนุญาตให้ 7xDash แสดงทับแอปอื่น ครั้งแรกแอปจะถามเอง"] } },
+
 { id: "arrival", spot: "arrival", group: "cards", beta: true, img: "arrival",
   en: { name: "Battery at arrival", what: "Navigating with CarPlay? The Dash panel shows how much battery you'll have when you get there.",
     intro: "CarPlay keeps the route on your phone, so the car can't tell you the battery at arrival. Share the destination from your iPhone and 7xDash works it out from the car's battery and range, then shows it on the Dash panel, e.g. 198 km · 26%.",
@@ -536,7 +550,7 @@ const SPOT = {
   capture: card(1,0), saved: card(1,1), remote: card(1,2), megaphone: card(1,3),
   drive: card(2,0), sticker: card(2,1), mood: card(2,2), shortcuts: card(2,3),
   hud: card(3,0), speaker: card(3,1), announce: card(3,2), dash: card(3,3),
-  arrival: card(4,0), parked: card(4,1),
+  macro: card(4,0), arrival: card(4,1), parked: card(4,2),
   dim: rail("dim"), eq: rail("eq"), airplay: rail("airplay"), settings: rail("settings")
 };
 
@@ -578,7 +592,7 @@ const T = {
     hiddenNote: "Only shown after turning on developer mode.", choices: "Choices", realSettings: "This page in 7xDash",
     settingsWhere: "Settings", open: "How to open it", steps: "How to use it", options: "What you can change", notes: "Good to know",
     prev: "Previous", next: "Next", homeShot: "Where it is on the Home screen", realShot: "The real screen in 7xDash",
-    foot: "7xDash 1.6.12-beta · open source, GPL-3.0 · screenshots from the head unit emulator · if something does not work, Settings → System → Diagnostics makes a report to send."
+    foot: "7xDash 1.7.0 · open source, GPL-3.0 · screenshots from the head unit emulator · if something does not work, Settings → System → Diagnostics makes a report to send."
   },
   th: {
     tag: "สำหรับ ZEEKR 7X", h1: "7xDash ทำอะไรได้บ้าง และใช้ยังไง",
@@ -596,7 +610,7 @@ const T = {
     hiddenNote: "จะเห็นหน้านี้หลังเปิดโหมดนักพัฒนาเท่านั้น", choices: "ตัวเลือก", realSettings: "หน้านี้ใน 7xDash",
     settingsWhere: "การตั้งค่า", open: "เปิดยังไง", steps: "ใช้ยังไง", options: "ปรับอะไรได้บ้าง", notes: "ควรรู้",
     prev: "ก่อนหน้า", next: "ถัดไป", homeShot: "ตำแหน่งบนหน้าหลัก", realShot: "หน้าจอจริงใน 7xDash",
-    foot: "7xDash 1.6.12-beta · โอเพนซอร์ส GPL-3.0 · ภาพหน้าจอจากตัวจำลองจอรถ · ถ้ามีอะไรไม่ทำงาน ไปที่ ตั้งค่า → ระบบ → การวินิจฉัย แล้วส่งรายงานมาได้เลย"
+    foot: "7xDash 1.7.0 · โอเพนซอร์ส GPL-3.0 · ภาพหน้าจอจากตัวจำลองจอรถ · ถ้ามีอะไรไม่ทำงาน ไปที่ ตั้งค่า → ระบบ → การวินิจฉัย แล้วส่งรายงานมาได้เลย"
   }
 };
 

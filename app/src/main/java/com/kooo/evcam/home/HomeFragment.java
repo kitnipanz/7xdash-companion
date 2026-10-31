@@ -276,6 +276,26 @@ public class HomeFragment extends Fragment {
                 R.string.home_card_announce_sub, () -> com.kooo.evcam.announce.AnnouncePicker.toggle(requireContext()),
                 () -> startActivity(new Intent(requireContext(),
                         com.kooo.evcam.announce.AnnouncementsActivity.class)));
+        // Dash panel: speed, gear and four buttons floating over maps or any other app.
+        // Tap opens its settings; the pill is the switch, same as the shortcut
+        addCard(R.drawable.ic_dash_panel, R.string.home_card_dash_panel,
+                R.string.home_card_dash_panel_sub,
+                () -> page(MainActivity.PAGE_SETTINGS_PREFIX + "screen_floating"), null)
+                .pill(() -> getString(config.isDashPanelEnabled() ? R.string.home_state_on : R.string.home_state_off),
+                        () -> config.isDashPanelEnabled(), this::toggleDashPanel);
+        // Macro pad: your own buttons floating over any app. Tap to choose them; the pill is the switch
+        addCard(R.drawable.ic_macro_pad, R.string.macro_pad_title, R.string.home_card_macro_pad_sub,
+                () -> startActivity(new Intent(requireContext(), com.kooo.evcam.input.MacroPadActivity.class)), null)
+                .pill(() -> getString(config.isMacroPadEnabled() ? R.string.home_state_on : R.string.home_state_off),
+                        () -> config.isMacroPadEnabled(), this::toggleMacroPad);
+
+        // Beta: battery at arrival for the place shared from the phone. Tap opens its screen; the
+        // state shows the estimate while there is a destination
+        if (betaShown) {
+            addCard(R.drawable.ic_arrival, R.string.arrival_title, R.string.home_card_arrival_sub,
+                    () -> startActivity(new Intent(requireContext(), com.kooo.evcam.trip.ArrivalActivity.class)), null)
+                    .state(this::arrivalLabel, () -> com.kooo.evcam.trip.Trip.get().status().destination != null);
+        }
 
         // Beta: 停在哪。点卡片当场读一次，长按开扫描窗（手动扫一次、看读到什么）；胶囊开关决定挂 P 时自动读，另一颗决定 3 km/h 以下边开边读柱子上的牌
         if (betaShown) {
@@ -315,7 +335,8 @@ public class HomeFragment extends Fragment {
      * not fit at their minimum height the grid scrolls.
      */
     private void layoutGrid(boolean force) {
-        if (grid == null || gridScroll == null) {
+        // posted from a layout change: the page may have been left (Settings opened) before it runs
+        if (grid == null || gridScroll == null || !isAdded()) {
             return;
         }
         int width = gridScroll.getWidth();
@@ -430,8 +451,12 @@ public class HomeFragment extends Fragment {
 
         Card state(Label label, State on) {
             refreshers.add(() -> {
+                boolean active = on.get();
                 state.setText(label.get());
-                view.setActivated(on.get());
+                view.setActivated(active);
+                // on is the accent; off steps back so the cards that are on stand out
+                state.setTextColor(ContextCompat.getColor(requireContext(),
+                        active ? R.color.energy_text : R.color.text_tertiary));
             });
             return this;
         }
@@ -465,6 +490,31 @@ public class HomeFragment extends Fragment {
         recToggle.setTextColor(ContextCompat.getColor(context, R.color.on_energy));
     }
 
+    private String arrivalLabel() {
+        com.kooo.evcam.trip.Trip.Status s = com.kooo.evcam.trip.Trip.get().status();
+        String line = com.kooo.evcam.trip.ArrivalText.line(requireContext(), s);
+        if (line != null) {
+            return line;
+        }
+        return getString(com.kooo.evcam.trip.Trip.active(requireContext()) ? R.string.home_state_on : R.string.home_state_off);
+    }
+
+    private void toggleMacroPad() {
+        Context context = requireContext();
+        if (!com.kooo.evcam.overlay.OverlayCoordinator.setMacroPadEnabled(context, !config.isMacroPadEnabled())) {
+            com.kooo.evcam.ui.Notice.makeText(context, R.string.dash_panel_need_overlay,
+                    android.widget.Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private void toggleDashPanel() {
+        Context context = requireContext();
+        if (!com.kooo.evcam.overlay.OverlayCoordinator.setDashPanelEnabled(context, !config.isDashPanelEnabled())) {
+            com.kooo.evcam.ui.Notice.makeText(context, R.string.dash_panel_need_overlay,
+                    android.widget.Toast.LENGTH_LONG).show();
+        }
+    }
+
     private boolean recording() {
         Context context = getContext();
         return context != null && RecordingCoordinator.get(context).isRecordingOrResuming();
@@ -487,31 +537,44 @@ public class HomeFragment extends Fragment {
         }
     }
 
-    /** 盲区：关 → 中控 → 抬头显示 → 关。没有抬头显示时跳过那一档。 */
+    /** 盲区：关 → 中控 → 抬头显示 → 两块屏 → 关。没有抬头显示时只有关、中控两档。 */
     private void cycleBlindSpot() {
         Context context = requireContext();
+        boolean hud = HudDisplay.find(context) != null;
         if (!config.isSidePopupEnabled()) {
-            config.setSidePopupOnHud(false);
+            setBlindSpotScreens(true, false);
             if (!OverlayCoordinator.setSidePopupEnabled(context, true)) {
                 com.kooo.evcam.ui.Notice.makeText(context, R.string.msg_need_overlay, Toast.LENGTH_SHORT).show();
             }
             return;
         }
-        if (!config.isSidePopupOnHud() && HudDisplay.find(context) != null) {
-            config.setSidePopupOnHud(true);
-            SideViewPopupService.applyConfig();
-            SideViewPopupService.start(context);
+        boolean screen = config.isSidePopupOnScreen();
+        boolean onHud = config.isSidePopupOnHud();
+        if (hud && screen && !onHud) {
+            setBlindSpotScreens(false, true);
+        } else if (hud && !screen && onHud) {
+            setBlindSpotScreens(true, true);
+        } else {
+            OverlayCoordinator.setSidePopupEnabled(context, false);
             return;
         }
-        config.setSidePopupOnHud(false);
-        OverlayCoordinator.setSidePopupEnabled(context, false);
+        SideViewPopupService.applyConfig();
+        SideViewPopupService.start(context);
+    }
+
+    private void setBlindSpotScreens(boolean screen, boolean hud) {
+        config.setSidePopupOnScreen(screen);
+        config.setSidePopupOnHud(hud);
     }
 
     private String blindSpotText() {
         if (!config.isSidePopupEnabled()) {
             return getString(R.string.home_state_off);
         }
-        return getString(config.isSidePopupOnHud() ? R.string.home_state_hud : R.string.home_state_screen);
+        boolean screen = config.isSidePopupOnScreen();
+        boolean hud = config.isSidePopupOnHud();
+        return getString(screen && hud ? R.string.home_state_screen_hud
+                : hud ? R.string.home_state_hud : R.string.home_state_screen);
     }
 
     /** 闪远光抓拍：打开时把它依赖的「锁定影像」一起打开，不然开关拨了不起作用。 */

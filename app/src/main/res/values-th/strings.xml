@@ -298,6 +298,8 @@
     <string name="set_sticker_summary">ค้นหาสติกเกอร์บลูทูธที่หัวเครื่องยังไม่ได้จับคู่ การกดจะสั่งปุ่มลัดที่บันทึกไว้</string>
     <string name="set_mood_light_title">ไฟบรรยากาศ</string>
     <string name="set_mood_light_summary">ตั้งสีไฟ RGB บลูทูธราคาถูก เช่น รุ่น ELK-BLEDOM หรือ Happy Lighting</string>
+    <string name="set_mood_light_blind_spot_title">กะพริบส้มเมื่อมีรถในจุดบอด</string>
+    <string name="set_mood_light_blind_spot_summary">เมื่อเปิดไฟเลี้ยว แล้วรถเตือนว่ามีรถอยู่ในจุดบอดฝั่งนั้น ไฟบรรยากาศจะกะพริบสีส้ม แล้วกลับเป็นสีเดิมเมื่อหมดเตือน</string>
     <string name="mood_light_subtitle">ปิดแอปมือถือของไฟก่อน ไฟเชื่อมต่อได้ทีละเครื่อง</string>
     <string name="mood_light_pick">สแกน แล้วแตะเชื่อมต่อที่ไฟของคุณ</string>
     <string name="mood_light_none">ยังไม่มีไฟ\n1. เสียบไฟ และปิดแอปมือถือของไฟ\n2. แตะสแกน\n3. แตะเชื่อมต่อที่ไฟของคุณ</string>
@@ -631,9 +633,11 @@
     <string name="msg_rearview_on">เปิดกระจกมองหลังอัจฉริยะแล้ว ลากด้านข้างเพื่อย้าย ปัดตรงกลางขึ้นหรือลงเพื่อจัดเฟรมใหม่</string>
     <string name="msg_rearview_reset">รีเซ็ตหน้าต่างและมุมมองของกระจกมองหลังอัจฉริยะแล้ว</string>
     <string name="set_side_popup_title">ภาพด้านข้างเมื่อเปิดไฟเลี้ยว</string>
-    <string name="set_side_popup_summary">ขณะเปิดไฟเลี้ยว ป๊อปอัปจะแสดงกล้องด้านนั้น: เลี้ยวซ้าย กล้องซ้าย และปิดเมื่อไฟเลี้ยวดับ ภาพของรถเองมาก่อน: ไม่แสดงขณะถอยหรือขณะภาพ 360 หรือภาพด้านข้างของรถแสดงอยู่ ไม่แสดงขณะเปิดกระจกมองหลังอัจฉริยะ</string>
+    <string name="set_side_popup_summary">ขณะเปิดไฟเลี้ยว ป๊อปอัปจะแสดงกล้องด้านนั้น: เลี้ยวซ้าย กล้องซ้าย และปิดเมื่อไฟเลี้ยวดับ ไม่แสดงขณะถอย ไม่แสดงขณะเปิดกระจกมองหลังอัจฉริยะ</string>
+    <string name="set_side_popup_screen_title">บนหน้าจอกลาง</string>
+    <string name="set_side_popup_screen_summary">แสดงกล้องด้านนั้นบนหน้าจอกลาง เปิดคู่กับ "บน HUD ของผู้ขับ" เพื่อให้ขึ้นทั้งสองที่</string>
     <string name="set_side_popup_hud_title">บน HUD ของผู้ขับ</string>
-    <string name="set_side_popup_hud_summary">แสดงกล้องด้านนั้นบนกระจกหน้าแทนหน้าจอกลาง เป็นภาพเล็ก ข้อมูลความเร็วและเลนของรถจึงยังอยู่ ถ้ารถคันนี้ไม่มี HUD จะแสดงที่หน้าจอกลาง</string>
+    <string name="set_side_popup_hud_summary">แสดงกล้องด้านนั้นบนกระจกหน้าเป็นภาพเล็ก ข้อมูลความเร็วและเลนของรถจึงยังอยู่ ถ้ารถคันนี้ไม่มี HUD จะแสดงที่หน้าจอกลางแทน</string>
     <string name="set_side_popup_hud_width_title">ความกว้างบน HUD (%)</string>
     <string name="set_side_popup_hud_width_summary">ความกว้างของภาพบนกระจกหน้า ภาพอยู่ชิดขอบด้านนอก ไม่บังกราฟิกรถ 27 ประมาณ 16:9 บนรถคันนี้</string>
     <string name="set_side_popup_hud_height_title">ความสูงบน HUD (%)</string>
@@ -657,11 +661,37 @@
     <string name="set_side_popup_roll_right_title">หมุนภาพขวา (°)</string>
     <string name="set_side_popup_roll_summary">ค่าบวกหมุนภาพตามเข็มนาฬิกาเพื่อปรับเส้นขอบฟ้าที่เอียง ซ้ายและขวาตั้งแยกกัน ถ้าหมุนผิดทาง ให้ลากไปอีกทาง</string>
     <string name="set_side_popup_close_delay_ms_title">เปิดค้างหลังไฟเลี้ยวดับ (มิลลิวินาที)</string>
-    <string name="set_side_popup_close_delay_ms_summary">1000 มิลลิวินาที = 1 วินาที 0 คือปิดทันทีที่ไฟเลี้ยวดับ ภาพของรถยังปิดป๊อปอัปทันที</string>
+    <string name="set_side_popup_close_delay_ms_summary">1000 มิลลิวินาที = 1 วินาที 0 คือปิดทันทีที่ไฟเลี้ยวดับ เข้าเกียร์ถอยยังปิดป๊อปอัปทันที และภาพของรถก็ปิดทันทีถ้าปิด "แสดงทับภาพของรถ" ไว้</string>
+    <string name="set_side_popup_style_title">รูปแบบป๊อปอัป</string>
+    <string name="set_side_popup_style_summary">บนจอกลาง แบบกว้างเป็นภาพแนวนอนมุมโค้ง ขึ้นที่มุมขวาบนทั้งสองฝั่ง คล้ายกล้องจุดบอดของ Tesla</string>
+    <string name="opt_side_popup_square">สี่เหลี่ยม</string>
+    <string name="opt_side_popup_wide">กว้าง</string>
+    <string name="bsd_finder_title">ค้นหาสัญญาณเตือนจุดบอด</string>
+    <string name="bsd_finder_summary">สอน 7xDash ว่าสัญญาณไหนของรถบอกว่ามีรถอยู่ในจุดบอด จากนั้นภาพด้านข้างจะมีขอบแดง และไฟบรรยากาศจะกะพริบสีส้มขณะเตือน</string>
+    <string name="bsd_finder_intro">ขับหรือจอดโดยมีรถอีกคันอยู่ข้างๆ ในจุดบอด (ไฟเตือนที่กระจกติด) แถวที่สว่างขึ้นและค่าเปลี่ยนคือสัญญาณเตือน แตะซ้ายหรือขวาที่แถวนั้นขณะที่ยังเตือนอยู่ 7xDash จะจำสัญญาณนั้นและค่าที่อ่านได้ตอนเตือน แล้วทำอีกฝั่งแบบเดียวกัน ถ้าไม่มีแถวไหนเปลี่ยน แตะทั้งหมดเพื่อดูการตั้งค่ารถทุกอย่าง</string>
+    <string name="bsd_finder_all">ทั้งหมด</string>
+    <string name="bsd_finder_named">เฉพาะจุดบอด</string>
+    <string name="bsd_finder_forget">ลืม</string>
+    <string name="bsd_finder_scanning">กำลังอ่านการตั้งค่ารถ…</string>
+    <string name="bsd_finder_status">การตั้งค่าเกี่ยวกับจุดบอด %1$d รายการ จากทั้งหมด %2$d</string>
+    <string name="bsd_finder_no_car">อ่านการตั้งค่ารถไม่ได้: %1$s</string>
+    <string name="bsd_finder_none">ยังไม่ได้เรียนรู้</string>
+    <string name="bsd_finder_learned">ซ้าย: %1$s · ขวา: %2$s</string>
+    <string name="bsd_finder_not_learned">ยังไม่ได้เรียนรู้</string>
+    <string name="bsd_finder_value">ตอนนี้: %1$s</string>
+    <string name="bsd_finder_left">ซ้าย</string>
+    <string name="bsd_finder_right">ขวา</string>
+    <string name="bsd_finder_not_number">ค่านี้ไม่ใช่ตัวเลข</string>
+    <string name="set_bsd_sniffer_title">แจ้งสัญญาณจุดบอด (ทดลอง)</string>
+    <string name="set_bsd_sniffer_summary">ขณะหน้าจอเปิด จะเฝ้าดูการตั้งค่ารถทุกอย่างที่ดูเกี่ยวกับจุดบอด ทุกครั้งที่ค่าเปลี่ยนจะบันทึกลงล็อกและกล่องดำ และแสดงบน HUD เป็น \"BSD?\" พร้อมชื่อและค่า ให้รู้ว่ารถส่งสัญญาณอะไรตอนมีรถผ่าน จากนั้นสอนได้ในหน้าค้นหาสัญญาณเตือนจุดบอด</string>
+    <string name="set_side_popup_door_title">แสดงด้านข้างเมื่อเปิดประตู</string>
+    <string name="set_side_popup_door_summary">ขณะรถจอด เมื่อเปิดประตูจะแสดงกล้องฝั่งนั้น เพื่อดูรถหรือจักรยานที่มาจากด้านหลัง และปิดเมื่อประตูปิดหมด</string>
+    <string name="set_side_popup_over_factory_title">แสดงทับภาพของรถ</string>
+    <string name="set_side_popup_over_factory_summary">ขึ้นได้แม้รถกำลังแสดงภาพ 360 ภาพด้านข้างของรถเอง หรือระบบช่วยจอด ยกเว้นตอนเข้าเกียร์ R</string>
     <string name="set_side_popup_instant_title">ป๊อปอัปทันใจ</string>
     <string name="set_side_popup_instant_summary">ในเกียร์ D จะเตรียมภาพด้านข้างไว้เบื้องหลัง ภาพจึงขึ้นทันทีที่เปิดไฟเลี้ยว กล้องเปิดค้างขณะขับ ใช้พลังงานมากขึ้นเล็กน้อย</string>
     <string name="set_side_popup_size_title">ขนาดป๊อปอัป (% ของความสูงจอ)</string>
-    <string name="set_side_popup_size_summary">ได้สูงสุดครึ่งความกว้างจอ: ป๊อปอัปซ้ายและขวาจะชนกันตรงกลาง</string>
+    <string name="set_side_popup_size_summary">ได้สูงสุดครึ่งความกว้างจอ ฝั่งขวาขึ้นชิดขอบขวา ฝั่งซ้ายขึ้นแถวกลางจอ</string>
     <string name="set_side_popup_vertical_title">ความสูงบนจอ (%)</string>
     <string name="set_side_popup_vertical_summary">0 คือด้านบน 100 คือด้านล่าง</string>
     <string name="msg_floating_reset">รีเซ็ตปุ่มลอยแล้ว</string>
@@ -1020,7 +1050,7 @@
     <!-- Interface section · first-launch side question · record unavailable · status bar -->
     <string name="set_section_interface">อินเทอร์เฟซ</string>
     <string name="set_beta_features_title">ฟีเจอร์เบต้า</string>
-    <string name="set_beta_features_summary">แสดงและเปิดใช้ฟีเจอร์ที่ยังทดลองในรถอยู่ ตอนนี้มี: จอดไว้ที่ไหน (การ์ดในหน้าหลัก และอ่านป้ายเมื่อเข้าเกียร์ P) ปุ่มลัดจอดไว้ที่ไหนยังใช้ได้</string>
+    <string name="set_beta_features_summary">แสดงและเปิดใช้ฟีเจอร์ที่ยังทดลองในรถอยู่ ตอนนี้มี: จอดไว้ที่ไหน (การ์ดในหน้าหลัก และอ่านป้ายเมื่อเข้าเกียร์ P) และแบตเมื่อถึงที่หมาย ปุ่มลัดจอดไว้ที่ไหนยังใช้ได้</string>
     <string name="set_usage_stats_title">สถิติการใช้งาน (ไม่ระบุตัวตน)</string>
     <string name="set_usage_stats_summary">ฟีเจอร์ที่ใช้ เช่น การเปิดแอป การ์ดหน้าหลัก หน้าที่เปิด การทำงานที่ใช้และกดจากตรงไหน ปุ่มที่ตั้งค่าไว้ การบันทึก และการควบคุมจาก 7xDash เว็บ ใช้แค่รหัสสุ่มที่สร้างตอนติดตั้งแอป ไม่มีอีเมล ป้ายทะเบียน หรือตำแหน่ง ประมาณ 20–50 KB ต่อวัน</string>
     <string name="usage_consent_title">ช่วยให้ 7xDash ดีขึ้นไหม?</string>
@@ -1413,7 +1443,7 @@
     <string name="home_card_rear">กล้องหลัง</string>
     <string name="home_card_rear_sub">เปิดหรือปิดกระจกมองหลัง</string>
     <string name="home_card_blind">จุดบอด</string>
-    <string name="home_card_blind_sub">เปิดไฟเลี้ยวเพื่อดูด้านข้าง แตะ: ปิด หน้าจอ HUD</string>
+    <string name="home_card_blind_sub">เปิดไฟเลี้ยวเพื่อดูด้านข้าง แตะ: ปิด หน้าจอ HUD ทั้งสอง</string>
     <string name="home_card_capture">จับภาพทันที</string>
     <string name="home_card_capture_sub">บันทึก 10 วินาทีก่อนและหลัง แตะที่นี่ กดปุ่มลัด หรือกะพริบไฟสูง</string>
     <string name="home_card_flash">จับภาพด้วยไฟสูง</string>
@@ -1498,6 +1528,7 @@
     <string name="home_state_off">ปิด</string>
     <string name="home_state_screen">หน้าจอ</string>
     <string name="home_state_hud">HUD</string>
+    <string name="home_state_screen_hud">จอ + HUD</string>
 
     <!-- AirPlay 投屏 -->
     <string name="airplay_title">AirPlay</string>
@@ -1627,4 +1658,65 @@
     <string name="fog_lamp_turned_on">เปิดไฟตัดหมอกหลังแล้ว</string>
     <string name="fog_lamp_turned_off">ปิดไฟตัดหมอกหลังแล้ว</string>
     <string name="fog_lamp_failed">ไฟตัดหมอกหลัง: %1$s</string>
+    <string name="empty_videos_hint">เริ่มบันทึกจากหน้าหลัก วิดีโอจะแสดงที่นี่ทันทีที่บันทึกคลิปรอบคันคลิปแรกเสร็จ</string>
+    <string name="empty_captures_usb_hint">เสียบไดรฟ์ USB ที่ใช้บันทึก คลิปที่บันทึกไว้จะอยู่ในโฟลเดอร์ instant captures</string>
+    <string name="empty_captures_hint">กระพริบไฟสูง แตะ Instant capture ที่หน้าหลัก หรือกดปุ่มลัด แต่ละครั้งจะบันทึกก่อนและหลัง 10 วินาที</string>
+    <string name="set_side_cat_where">แสดงที่ไหน</string>
+    <string name="set_side_cat_when">แสดงเมื่อไร</string>
+    <string name="set_side_cat_picture">ภาพ</string>
+    <string name="set_side_cat_blind_spot">จุดบอด</string>
+    <string name="whats_new_title">มีอะไรใหม่ใน %1$s</string>
+    <string name="set_whats_new_title">มีอะไรใหม่</string>
+    <string name="set_whats_new_summary">สิ่งที่เปลี่ยนในไม่กี่เวอร์ชันล่าสุด</string>
+    <string name="whats_new_none">ไม่มีบันทึกสำหรับเวอร์ชันนี้</string>
+    <string name="home_card_dash_panel">แผงหน้าปัด</string>
+    <string name="home_card_dash_panel_sub">ความเร็ว เกียร์ และปุ่ม ลอยเหนือทุกแอป</string>
+    <string name="set_dash_panel_summary">การ์ดเล็กที่ลอยเหนือแผนที่ เพลง หรือแอปอื่น: ความเร็ว เกียร์ ไฟเลี้ยว นาฬิกา และสถานะการบันทึกของ 7xDash พร้อมปุ่มถ่ายรูปรอบคัน บันทึกคลิปทันที กระจกมองหลัง และเปิด 7xDash ลากเพื่อย้าย บีบเพื่อปรับขนาด ดันไปขอบเพื่อเก็บ</string>
+    <string name="dash_panel_need_overlay">อนุญาตให้ 7xDash แสดงทับแอปอื่นก่อน</string>
+    <string name="shortcut_action_dash_panel">เปิด / ปิดแผงหน้าปัด</string>
+    <!-- Battery at arrival (beta) -->
+    <string name="arrival_title">แบตเมื่อถึงที่หมาย</string>
+    <string name="arrival_beta">BETA</string>
+    <string name="arrival_switch">รับสถานที่จาก iPhone</string>
+    <string name="home_card_arrival_sub">Beta · แชร์สถานที่จาก iPhone</string>
+    <string name="arrival_percent">ถึงแล้วเหลือ %1$d%%</string>
+    <string name="arrival_short">ไม่พออีก %1$d กม.</string>
+    <string name="arrival_detail">อีก %1$s · ระยะวิ่งเหลือ %2$d กม.</string>
+    <string name="arrival_detail_short">อีก %1$s · ต้องแวะชาร์จระหว่างทาง</string>
+    <string name="arrival_waiting">รอ GPS แบตเตอรี่ และระยะวิ่งจากรถ</string>
+    <string name="arrival_waiting_short">รอข้อมูลรถ</string>
+    <string name="arrival_none">ยังไม่มีที่หมาย</string>
+    <string name="arrival_none_hint">ใน Google Maps หรือ Apple Maps บน iPhone: เปิดสถานที่ → แชร์ → Send to 7xDash</string>
+    <string name="arrival_unnamed">สถานที่ที่แชร์มา</string>
+    <string name="arrival_clear">ล้างที่หมาย</string>
+    <string name="arrival_off">เปิดสวิตช์เพื่อรับสถานที่จาก iPhone</string>
+    <string name="arrival_off_setup">เปิดสวิตช์เพื่อแสดงโค้ดตั้งค่า</string>
+    <string name="arrival_need_beta">เปิด การตั้งค่า → อินเทอร์เฟซ → ฟีเจอร์เบต้า ก่อน</string>
+    <string name="arrival_setup_title">ตั้งค่า iPhone</string>
+    <string name="arrival_setup_hint">เชื่อม CarPlay แบบไร้สาย แล้วสแกนด้วยกล้อง iPhone หน้านั้นจะบอกวิธีสร้างคำสั่งลัด Send to 7xDash</string>
+    <string name="arrival_no_network">ยังไม่มี Wi-Fi กับโทรศัพท์ เชื่อม CarPlay แบบไร้สายแล้วกลับมาที่นี่</string>
+    <string name="arrival_port_failed">เปิดพอร์ต %1$d บนจอรถนี้ไม่ได้</string>
+    <string name="arrival_web_paste">วางลิงก์ Google Maps หรือ Apple Maps</string>
+    <string name="arrival_web_send">ส่งไป 7xDash</string>
+    <string name="arrival_web_set">7xDash: ไปที่ %1$s</string>
+    <string name="arrival_web_nothing">7xDash: ไม่มีอะไรส่งมา</string>
+    <string name="arrival_web_no_place">7xDash: หาสถานที่ในลิงก์นี้ไม่เจอ</string>
+    <string name="arrival_web_shortcut_title">สร้างคำสั่งลัด (ครั้งเดียว)</string>
+    <string name="arrival_web_shortcut_address">ที่อยู่สำหรับคำสั่งลัด (แตะค้างเพื่อคัดลอก):</string>
+    <string name="arrival_web_host_hint">iPhone ต้องอยู่บน Wi-Fi ของรถ ซึ่ง CarPlay ไร้สายทำให้อยู่แล้ว ถ้าเสียบสายจะส่งมาไม่ถึง</string>
+    <string name="arrival_step_1">เปิดแอป Shortcuts แตะ + แล้วตั้งชื่อว่า Send to 7xDash</string>
+    <string name="arrival_step_2">แตะปุ่ม ⓘ แล้วเปิด Show in Share Sheet (แสดงในแผ่นแชร์)</string>
+    <string name="arrival_step_3">เพิ่มคำสั่ง Get Contents of URL (รับเนื้อหาของ URL) แล้ววางที่อยู่ด้านบนเป็น URL</string>
+    <string name="arrival_step_4">แตะลูกศรของคำสั่งนั้น: Method เป็น POST, Request Body เป็น Form, เพิ่มช่อง Text ชื่อ link ค่าเป็น Shortcut Input</string>
+    <string name="arrival_step_5">วิธีใช้: ใน Google Maps หรือ Apple Maps เปิดที่หมาย แตะแชร์ แล้วเลือก Send to 7xDash</string>
+    <!-- Macro pad -->
+    <string name="macro_pad_title">มาโครแพด</string>
+    <string name="home_card_macro_pad_sub">ปุ่มของเราเอง ลอยทับทุกแอป แตะเพื่อเลือกปุ่ม</string>
+    <string name="set_macro_pad_summary">แผงปุ่มลอย 6 ปุ่มทับทุกแอป เลือกได้ว่าแต่ละปุ่มทำอะไรที่การ์ดมาโครแพด</string>
+    <string name="macro_pad_switch">แสดงมาโครแพด</string>
+    <string name="macro_pad_hint">แตะปุ่มด้านล่างเพื่อเลือกว่าจะให้ทำอะไร บนแพด: แตะปุ่มเพื่อสั่งงาน ลากเพื่อย้าย ถ่างนิ้วเพื่อขยาย ดันชิดขอบจอเพื่อเก็บ</string>
+    <string name="macro_pad_empty">ว่าง</string>
+    <string name="macro_pad_button">ปุ่ม %1$d</string>
+    <string name="macro_pad_clear">ล้าง</string>
+    <string name="shortcut_action_macro_pad">เปิด / ปิดมาโครแพด</string>
 </resources>

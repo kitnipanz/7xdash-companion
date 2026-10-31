@@ -1,5 +1,7 @@
 package com.kooo.evcam.zeekr;
 
+import com.kooo.evcam.telemetry.VehicleState;
+
 /**
  * 打转向灯弹侧视：此刻该不该弹、弹哪一边。
  *
@@ -8,10 +10,13 @@ package com.kooo.evcam.zeekr;
  * <ul>
  *   <li>左灯只弹左侧那一路，右灯只弹右侧那一路；双闪、不打灯、读不到都不弹。</li>
  *   <li><b>原厂画面优先</b>：挂 R 档、原厂 360 在显示、原厂画面弹着（360 或侧方小窗）、
- *       泊车辅助开着，任何一样成立都不弹；已经弹着的立刻收。</li>
+ *       泊车辅助开着，任何一样成立都不弹；已经弹着的立刻收。设置「盖在原厂画面上」（默认开）
+ *       时只有 R 档拦。</li>
  *   <li>车速低于设定值不弹（默认 30 km/h：再慢原厂自己会弹侧方小窗）；车速读不到不拦。
  *       只在「还没弹」时看车速 —— 弹出来之后减速不收，免得在门槛上来回闪。</li>
  *   <li>灯一灭就收。</li>
+ *   <li><b>开门看后方</b>（设置开着时）：停着（P 档或车速低于 {@link #DOOR_MAX_KMH}）、没打灯，
+ *       哪一侧有门开着就弹那一侧，看后面来的车和自行车；门都关上就收。打灯优先。</li>
  * </ul>
  *
  * <p>纯 Java，不碰 Android，见 {@code SideViewDecisionTest}。</p>
@@ -20,6 +25,10 @@ public final class SideViewDecision {
 
     /** 不弹。 */
     public static final int NONE = -1;
+    /** 开门弹侧视只在停着时：车速低于这个（km/h）或挂 P。 */
+    public static final float DOOR_MAX_KMH = 3f;
+    private static final int LEFT_DOORS = VehicleState.FRONT_LEFT | VehicleState.REAR_LEFT;
+    private static final int RIGHT_DOORS = VehicleState.FRONT_RIGHT | VehicleState.REAR_RIGHT;
 
     private SideViewDecision() {
     }
@@ -36,6 +45,12 @@ public final class SideViewDecision {
         public Float speedKmh;
         /** 设置里的门槛，km/h；0 表示不看车速。 */
         public int minSpeedKmh;
+        /** 原厂画面（360、原厂侧方小窗、泊车辅助）在时也照弹；R 档仍然不弹。 */
+        public boolean overFactoryView;
+        /** 开门弹那一侧（设置）。 */
+        public boolean doorCamera;
+        /** {@link VehicleState#doorsOpen}：开着的门的位；null 读不到。 */
+        public Integer doorsOpen;
         /** 此刻已经弹着的是哪一路（{@link LaneCycle#LEFT} / {@link LaneCycle#RIGHT}），没弹是 {@link #NONE}。 */
         public int showing = NONE;
     }
@@ -47,8 +62,9 @@ public final class SideViewDecision {
         if (factoryViewActive(in)) {
             return NONE;
         }
+        int door = doorLane(in);
         if (Boolean.TRUE.equals(in.hazard) || in.turnSignal == null) {
-            return NONE;
+            return door;
         }
         int lane;
         if (in.turnSignal == 1) {
@@ -56,16 +72,33 @@ public final class SideViewDecision {
         } else if (in.turnSignal == 2) {
             lane = LaneCycle.RIGHT;
         } else {
-            return NONE;
+            return door;
         }
         if (in.showing == lane) {
             // 已经弹着同一边：不再看车速
             return lane;
         }
         if (in.minSpeedKmh > 0 && in.speedKmh != null && in.speedKmh < in.minSpeedKmh) {
-            return NONE;
+            return door;
         }
         return lane;
+    }
+
+    /** 停着、有门开着时该弹哪一侧；不弹是 {@link #NONE}。两侧都开着时留在已经弹着的那一侧，否则左侧。 */
+    static int doorLane(Input in) {
+        if (!in.doorCamera || in.doorsOpen == null || in.doorsOpen == 0) {
+            return NONE;
+        }
+        boolean stopped = "P".equals(in.gear) || (in.speedKmh != null && in.speedKmh < DOOR_MAX_KMH);
+        if (!stopped) {
+            return NONE;
+        }
+        boolean left = (in.doorsOpen & LEFT_DOORS) != 0;
+        boolean right = (in.doorsOpen & RIGHT_DOORS) != 0;
+        if (left && right) {
+            return in.showing == LaneCycle.RIGHT ? LaneCycle.RIGHT : LaneCycle.LEFT;
+        }
+        return left ? LaneCycle.LEFT : right ? LaneCycle.RIGHT : NONE;
     }
 
     /**
@@ -78,10 +111,18 @@ public final class SideViewDecision {
         return "D".equals(in.gear);
     }
 
-    /** 原厂有画面在屏幕上（或马上要有）：倒车、360、原厂弹窗、泊车辅助。 */
+    /**
+     * 原厂有画面在屏幕上（或马上要有）：倒车、360、原厂弹窗、泊车辅助。
+     * 设了 {@link Input#overFactoryView} 时只认 R 档，其余照弹。
+     */
     public static boolean factoryViewActive(Input in) {
-        return "R".equals(in.gear)
-                || Boolean.TRUE.equals(in.stock360Shown)
+        if ("R".equals(in.gear)) {
+            return true;
+        }
+        if (in.overFactoryView) {
+            return false;
+        }
+        return Boolean.TRUE.equals(in.stock360Shown)
                 || Boolean.TRUE.equals(in.stockPopupShown)
                 || Boolean.TRUE.equals(in.parkAssistOn);
     }

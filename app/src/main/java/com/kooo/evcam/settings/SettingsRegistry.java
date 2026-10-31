@@ -94,6 +94,12 @@ public final class SettingsRegistry {
             entry("left", "左侧", R.string.opt_rail_left),
             entry("right", "右侧", R.string.opt_rail_right));
 
+    /** 中控屏上侧视弹窗的样子：方块，或宽幅圆角（像特斯拉的盲区画面）。抬头显示不受影响。 */
+    public static final SettingSpec SIDE_POPUP_STYLE = SettingSpec.of(
+            "side_popup_style", "侧视弹窗样式", "square",
+            entry("square", "方块", R.string.opt_side_popup_square),
+            entry("wide", "宽幅", R.string.opt_side_popup_wide));
+
     /** 全部枚举型设置项，启动自检会逐个走一遍。 */
     public static final List<SettingSpec> ALL = Collections.unmodifiableList(Arrays.asList(
             RECORDING_MODE,
@@ -101,5 +107,6 @@ public final class SettingsRegistry {
             LANGUAGE,
             FISHEYE_PROJECTION,
             ACTION_RAIL_SIDE,
-            MENU_SIDE));
+            MENU_SIDE,
+            SIDE_POPUP_STYLE));
 }

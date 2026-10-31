@@ -8,6 +8,14 @@ package com.kooo.evcam.light;
 interface LightLink {
     void connect(String address);
 
+    /**
+     * Dial again after misses. {@code waitForIt}: let Android wait for the light to show up (it
+     * may power up after the head unit) instead of giving up after a few seconds.
+     */
+    default void redial(String address, boolean waitForIt) {
+        connect(address);
+    }
+
     void power(boolean on);
 
     void color(int rgb, int brightness);

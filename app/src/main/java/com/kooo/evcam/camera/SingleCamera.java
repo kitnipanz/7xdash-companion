@@ -349,6 +349,11 @@ public class SingleCamera {
     /** 声明着的预览、后视镜、录像，每样最多一个（{@link #outputLock}）。 */
     private Declared declaredPreview;
     private Declared declaredMirror;
+    /**
+     * 第二块后视镜画布：侧视同时开在中控和抬头显示时，抬头显示那一块。和 {@link #declaredMirror}
+     * 一样是预览那条共享流上多挂的一个 Surface（Surface Sharing），不多占一条硬件流。
+     */
+    private Declared declaredExtraMirror;
     private Declared declaredRecord;
     /**
      * 我们自己建的 Surface（预览、后视镜的 {@code new Surface(SurfaceTexture)}，或者鱼眼校正管线的入口），按输出记。
@@ -1595,6 +1600,43 @@ public class SingleCamera {
         return changed;
     }
 
+    /** 声明第二块后视镜画布（侧视同时开在两块屏上时，抬头显示那一块）。其余同 {@link #declareMirror}。 */
+    public boolean declareExtraMirror(SurfaceTexture texture) {
+        if (texture == null) {
+            return false;
+        }
+        ChannelRules.Out out = new ChannelRules.Out(ChannelRules.Kind.MIRROR, texture);
+        boolean changed;
+        synchronized (outputLock) {
+            changed = declaredExtraMirror == null || !declaredExtraMirror.out.equals(out);
+            if (changed) {
+                declaredExtraMirror = new Declared(out, null, null, null);
+            }
+        }
+        if (changed) {
+            AppLog.d(TAG, "Camera " + cameraId + " extra mirror declared: " + texture);
+            tidyLater();
+        }
+        return changed;
+    }
+
+    /** 撤回第二块后视镜画布：只撤回 {@code texture} 这一块。 */
+    public boolean withdrawExtraMirror(SurfaceTexture texture) {
+        boolean changed;
+        synchronized (outputLock) {
+            changed = texture != null && declaredExtraMirror != null
+                    && declaredExtraMirror.out.consumer == texture;
+            if (changed) {
+                declaredExtraMirror = null;
+            }
+        }
+        if (changed) {
+            AppLog.d(TAG, "Camera " + cameraId + " extra mirror withdrawn: " + texture);
+            tidyLater();
+        }
+        return changed;
+    }
+
     /**
      * 声明录像输出。
      *
@@ -1654,7 +1696,7 @@ public class SingleCamera {
     public Set<ChannelRules.Out> declaredOutputs() {
         Set<ChannelRules.Out> result = new LinkedHashSet<>();
         synchronized (outputLock) {
-            for (Declared declared : new Declared[]{declaredPreview, declaredMirror, declaredRecord}) {
+            for (Declared declared : new Declared[]{declaredPreview, declaredMirror, declaredExtraMirror, declaredRecord}) {
                 if (declared != null && alive(declared.out.consumer)
                         && (declared.surface == null || declared.surface.isValid())) {
                     result.add(declared.out);
@@ -1838,7 +1880,7 @@ public class SingleCamera {
 
     /** 和这一样输出相同的声明；没有返回 null（{@link #outputLock}）。 */
     private Declared declaredFor(ChannelRules.Out out) {
-        for (Declared declared : new Declared[]{declaredPreview, declaredMirror, declaredRecord}) {
+        for (Declared declared : new Declared[]{declaredPreview, declaredMirror, declaredExtraMirror, declaredRecord}) {
             if (declared != null && declared.out.equals(out)) {
                 return declared;
             }

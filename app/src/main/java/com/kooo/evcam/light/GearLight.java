@@ -6,6 +6,7 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.SystemClock;
 
 import androidx.core.content.ContextCompat;
 
@@ -29,7 +30,8 @@ import java.util.Objects;
  * <p>Drives every light in a group alike ({@link LightGroup}). Holds a group's connections while
  * the gear is known (the car is awake) and its rules are on; lets go when the gear goes unknown.
  * The mood light screen takes every link for itself ({@link #pause}) and hands them back when it
- * closes. Gear is a core signal, read for as long as the process lives; speed is a float sensor,
+ * closes. While the turn signal is on towards a side the blind-spot assist warns about, every
+ * group blinks orange instead ({@link BlindSpotBlink}). Gear is a core signal, read for as long as the process lives; speed is a float sensor,
  * so this registers as a full telemetry user only while a D rule of some group needs it.</p>
  *
  * <p>Main thread only.</p>
@@ -38,8 +40,11 @@ public final class GearLight implements Telemetry.Listener {
 
     private static final String TAG = "GearLight";
     private static final String USER = "gear light";
-    /** Wait this long before dialling again after a light dropped or never answered. */
-    private static final long REDIAL_MS = 15_000L;
+    /**
+     * Wait before dialling again after a light dropped or never answered: quick at first (the light
+     * may just be powering up with the car), then every 15 s. Index by misses in a row.
+     */
+    private static final long[] REDIAL_MS = {2_000L, 2_000L, 5_000L, 10_000L, 15_000L};
     /** Switched off: time for the power-off packet to go out before the link closes. */
     private static final long OFF_THEN_CLOSE_MS = 600L;
 
@@ -62,6 +67,9 @@ public final class GearLight implements Telemetry.Listener {
     private final AppConfig config;
     private final Handler main = new Handler(Looper.getMainLooper());
     private final Runnable redial = this::redial;
+    private final Runnable blinkTick = this::update;
+    /** Background scan for lights that keep missing (after a reboot a dial may need a scan first). */
+    private final LightScan scan;
     private final Map<String, Slot> slots = new HashMap<>();
     /** Last pick per group, kept while its links are down too (hysteresis needs it). */
     private final Map<String, String> picked = new HashMap<>();
@@ -69,10 +77,13 @@ public final class GearLight implements Telemetry.Listener {
     private MoodLightGroups groups;
     private boolean paused;
     private boolean speedHeld;
+    /** When the blind-spot blink started (uptime), -1 while it is not blinking. */
+    private long blinkSinceMs = -1L;
 
     private GearLight(Context app) {
         this.app = app;
         this.config = new AppConfig(app);
+        this.scan = new LightScan(app, this::heard);
         load();
     }
 
@@ -117,6 +128,7 @@ public final class GearLight implements Telemetry.Listener {
             }
             installed.slots.clear();
             installed.main.removeCallbacks(installed.redial);
+            installed.scan.stop();
         }
         reload();
     }
@@ -152,6 +164,7 @@ public final class GearLight implements Telemetry.Listener {
     private void update() {
         VehicleState state = Telemetry.get().latest();
         boolean running = !paused && state.gear != null && config.isMoodLightOn() && canConnect();
+        LightLook blink = blink(running && BlindSpotBlink.active(config.isMoodLightBlindSpotBlink(), state));
         boolean wantsSpeed = false;
         for (MoodLightGroups.Group group : groups.groups) {
             GearLightRules.Pick pick = group.rules.pick(state.gear, state.speedKmh, picked.get(group.id));
@@ -174,7 +187,7 @@ public final class GearLight implements Telemetry.Listener {
                 BlackBox.note("Mood light gear (" + group.name + "): " + before + " -> " + pick.key);
             }
             slot.pickedKey = pick.key;
-            apply(slot, pick.look);
+            apply(slot, blink != null ? blink : pick.look);
         }
         // Groups that were deleted
         Iterator<Map.Entry<String, Slot>> it = slots.entrySet().iterator();
@@ -186,6 +199,22 @@ public final class GearLight implements Telemetry.Listener {
             }
         }
         holdSpeed(wantsSpeed && !paused);
+    }
+
+    /** Start, keep or stop the blind-spot blink; the look to show now, or null when not blinking. */
+    private LightLook blink(boolean on) {
+        long now = SystemClock.uptimeMillis();
+        if (on != (blinkSinceMs >= 0)) {
+            blinkSinceMs = on ? now : -1L;
+            BlackBox.note("Mood light blind-spot blink " + (on ? "on" : "off"));
+        }
+        main.removeCallbacks(blinkTick);
+        if (!on) {
+            return null;
+        }
+        long since = now - blinkSinceMs;
+        main.postDelayed(blinkTick, BlindSpotBlink.HALF_MS - since % BlindSpotBlink.HALF_MS);
+        return BlindSpotBlink.look(since);
     }
 
     private void apply(Slot slot, LightLook look) {
@@ -217,6 +246,7 @@ public final class GearLight implements Telemetry.Listener {
 
     private void disconnectAll() {
         main.removeCallbacks(redial);
+        scan.stop();
         for (Slot slot : slots.values()) {
             slot.link.release();
         }
@@ -224,8 +254,21 @@ public final class GearLight implements Telemetry.Listener {
     }
 
     private void redial() {
+        java.util.List<String> missing = new java.util.ArrayList<>();
         for (Slot slot : slots.values()) {
+            if (slot.link.mostMisses() >= 2) {
+                missing.addAll(slot.link.downLights());
+            }
             slot.link.redialDown();
+        }
+        // Missed twice or more: also listen for them, so the next dial knows their address type
+        scan.look(missing);
+    }
+
+    /** The background scan heard a saved light: dial it now if it is down. */
+    private void heard(String address) {
+        for (Slot slot : slots.values()) {
+            slot.link.heard(address);
         }
     }
 
@@ -241,8 +284,20 @@ public final class GearLight implements Telemetry.Listener {
             update();
         } else if (state == LightGroup.STATE_DOWN) {
             main.removeCallbacks(redial);
-            main.postDelayed(redial, REDIAL_MS);
+            main.postDelayed(redial, redialDelay(slot.link.mostMisses()));
         }
+        boolean anyDown = false;
+        for (Slot s : slots.values()) {
+            anyDown |= !s.link.downLights().isEmpty();
+        }
+        if (!anyDown) {
+            scan.stop();
+        }
+    }
+
+    /** Pure: how long to wait before the next dial after this many misses in a row. */
+    static long redialDelay(int misses) {
+        return REDIAL_MS[Math.max(0, Math.min(misses, REDIAL_MS.length - 1))];
     }
 
     private boolean canConnect() {

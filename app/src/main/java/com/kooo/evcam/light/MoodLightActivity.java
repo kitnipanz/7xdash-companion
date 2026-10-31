@@ -1333,6 +1333,8 @@ public class MoodLightActivity extends AppCompatActivity implements LightGroup.L
         if (device == null) {
             return;
         }
+        // The background dials use what this scan heard (address type included)
+        MoodLight.heard(device);
         String address = device.getAddress();
         Seen row = seen.get(address);
         if (row == null) {

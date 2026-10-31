@@ -1,5 +1,159 @@
 # Changelog
 
+## [1.7.0] - 2026-10-31
+
+Changes since 1.6.0 (includes 1.6.1-beta to 1.6.13-beta).
+
+### Floating tools over any app
+- **Macro pad (new).** A small pad of six buttons that floats over maps, CarPlay or anything else. Choose what each button does on the **Macro pad** card on Home, from the same action tabs as Shortcuts. Tap a button to run it; drag to move, pinch to resize, push to an edge to tuck it away. An empty button shows a plus that opens its picker. Starts with Recording, Photo, Instant capture, Super mirror, Dim display and Announcements.
+- **Dash panel (new).** A mini instrument cluster over any app: speed, gear, turn signals, the clock and whether 7xDash is recording, with buttons for a surround photo, an instant capture, Super mirror and opening 7xDash.
+- Both are off by default. Switch them with the pill on their Home card, in Settings → Floating button, or with the new shortcut actions **Macro pad on / off** and **Dash panel on / off**.
+
+### Battery at arrival (beta)
+- **See your battery at the destination while navigating with CarPlay.** Share the place from Google Maps or Apple Maps on the iPhone (Share → **Send to 7xDash**) and the Dash panel shows km to go and battery when you arrive, for example "198 km · 26%": white when fine, orange below 15%, red with how many km short.
+- Worked out from the car's own battery % and range estimate, with road distance from a free OpenStreetMap route service (a straight-line guess, marked "~", without internet).
+- Needs Settings → Interface → **Beta features** and wireless CarPlay, so the iPhone is on the car's Wi-Fi. The **Battery at arrival** card has a QR code that opens the iPhone setup page. Not tried in the car yet.
+
+### Blind spot and side view
+- **Centre screen and HUD switch on separately**, or both at once. The Blind spot card cycles off, screen, HUD, screen + HUD.
+- **Shows over the car's own view** (on by default): the side view opens even while the car shows its 360 view, its own side view or park assist. Never in R.
+- **Pop-up style: Square or Wide.** Wide is a landscape picture in the top-right corner, like Tesla's blind-spot camera. Square now sits to the right.
+- **Show the side when a door opens** (on by default): while stopped, opening a door shows the camera on that side, to see cars and bikes coming from behind.
+- **Blind-spot warning finder** in Settings → Side mirror: teach 7xDash which car signal is the blind-spot warning, and the side view gets a red edge on that side.
+- The blind-spot assist switch in the info bar now follows the car's own Lane Change Assist switch.
+
+### AirPlay
+- **Smoother, quicker mirroring:** up to 60 fps (was 30), drawn straight to the screen, using the car's hardware decoder in low-latency mode. A still Mac screen no longer shows up late.
+- **The car's Wi-Fi stays awake while mirroring**, so pocket Wi-Fi no longer makes the picture stutter.
+- The AirPlay window opens full width; double-tap switches between small and full width.
+- The AirPlay log shows the mirroring delay every 5 seconds.
+
+### What's new
+- **After an update, 7xDash shows what changed** since the version you last opened, once. **Settings → Check for updates → What's new** shows the last three versions any time.
+
+### Mood light
+- **LED lights reconnect on their own more reliably**, with quicker retries and a short background scan for your saved lights.
+- **Blink orange for a car in the blind spot** while you signal, once the blind-spot warning has been found.
+
+### Look and feel
+- **Home:** card names line up in every row, and "Off" is grey, so the cards that are on stand out.
+- **Videos and Saved captures:** with nothing to show, a message says why and what to do.
+- **Settings:** a switch locked by the one above it stays dimmed orange instead of looking off; long descriptions wrap; Side mirror is split into Where it shows, When it shows, Picture and Blind spot.
+
+### Diagnostics
+- The report says whether this head unit allows split screen and floating windows for normal apps.
+
+### Fixes
+- The app could crash when Settings was opened right as the Home page was laid out.
+
+### Guide
+- A new online guide shows every feature on the real Home screen, with how to use each one, in Thai and English: https://kitnipanz.github.io/7xdash-companion/
+
+## [1.6.13-beta] - 2026-10-31
+
+### Macro pad
+- **Your own floating buttons over any app.** A small pad of six buttons, like the floating buttons, that sits over maps, CarPlay or anything else. Tap a button to run it; drag to move, pinch to resize, push to an edge to tuck it away.
+- **Choose what each button does** on the new **Macro pad** card on Home: tap a button on the big copy of the pad and pick any action from the same tabs as Shortcuts, or Clear it. The pad changes straight away. An empty button shows a plus; tapping it on the pad opens the picker for it.
+- Starts with Recording, Photo, Instant capture, Super mirror, Dim display and Announcements.
+- Switch it on and off with the pill on the card, in Settings → Floating button, or with the new shortcut action **Macro pad on / off**. Off by default.
+
+## [1.6.12-beta] - 2026-10-31
+
+### Battery at arrival (beta)
+- **See how much battery you will have when you get there, while navigating with CarPlay.** In Google Maps or Apple Maps on the iPhone, open the destination → Share → **Send to 7xDash**. The Dash panel's top line then shows km to go and battery at arrival (for example "198 km · 26%"): white when fine, orange below 15%, red with how many km short when the range will not reach.
+- Uses the car's own battery % and range estimate, so driving style and air conditioning are already counted. Road distance comes from a free OpenStreetMap route service and is checked again every few minutes; without internet it guesses from the straight line ("~").
+- **Battery at arrival** card on Home and its own screen: the estimate in big numbers, a Clear destination button, and a QR code that opens the iPhone setup page (how to make the Shortcut once, plus a box to paste a link). The destination clears itself when you arrive.
+- Needs **Settings → Interface → Beta features** on, and wireless CarPlay so the iPhone is on the car's Wi-Fi. Not tried in the car yet.
+
+## [1.6.11-beta] - 2026-10-31
+
+### Dash panel
+- **A small card that floats over any app**, from the new **Dash panel** card on Home or Settings → Floating button: speed, gear, turn signals, the clock and whether 7xDash is recording, with buttons for a surround photo, an instant capture, Super mirror and opening 7xDash. Drag to move, pinch to resize, push to a side to dock. Off by default.
+- **Switch it on and off** with the pill on the Home card, in Settings → Floating button, or from a button or sticker (new shortcut action **Dash panel on / off**).
+
+### Diagnostics
+- The report now says whether this head unit allows **split screen** and **floating windows** for normal apps, to see if 7xDash could sit next to another app.
+
+## [1.6.10-beta] - 2026-10-30
+
+### What's new screen
+- **The first time 7xDash opens after an update, it shows what changed**, like Tesla's release notes: every version since the one you last opened, newest first. It shows once per update and works without a connection.
+- **Settings → Check for updates → What's new** shows the last three versions any time.
+
+## [1.6.9-beta] - 2026-10-30
+
+### Removed
+- **Sentry-lite** is gone again: the car's own Sentry Mode already covers it. The setting disappears; nothing else changes.
+
+## [1.6.8-beta] - 2026-10-30
+
+### Sentry-lite (experimental)
+- **Settings → System → Sentry-lite**, off by default. While parked and still recording, someone moving near the car saves an instant capture (10 seconds before and after, in the instant captures folder) and sends the event with a photo from each surround camera to 7xDash web, which lists the last 10. It starts 1 minute after the screen goes off, or straight away when the car's own Sentry Mode is on. Only works while the head unit is awake.
+- Motion is judged from the surround recording itself, so the thresholds are first guesses: each event writes its motion level to the black box to tune them. Events made without signal are sent when the car reconnects.
+
+### Look and feel
+- **Home:** card names line up in every row, and "Off" is grey instead of orange, so the cards that are on stand out.
+- **Videos and Saved captures:** with nothing to show, a centred message says why and what to do (start recording, insert the USB drive, flash the high beam). Videos no longer shows play controls or a pop-up when there is nothing to play.
+- **Settings:** a setting that is on but locked by the one above it keeps a dimmed orange switch instead of looking off. Long descriptions wrap into short lines instead of one line across the screen. Side mirror is split into Where it shows, When it shows, Picture and Blind spot.
+
+## [1.6.7-beta] - 2026-10-30
+
+### Blind spot
+- **Blind-spot warning finder**, in Settings → Side mirror. With a car in your blind spot, the car setting that changes lights up; tap Left or Right on it and 7xDash remembers it. From then on, while you signal, the side view gets a **red edge** on the warning side (screen and HUD) and the orange mood-light blink from 1.6.6 works.
+- **Report blind-spot signals (experimental)**, off by default: while the screen is on, every change of a blind-spot-looking car setting goes to the log and black box and shows on the HUD as "BSD? name old→new", so you notice what the car sends as a car passes.
+- The blind-spot assist switch in the info bar now reads the car's Lane Change Assist setting (0x20070300), which follows the car's own switch. The old number always read 0.
+
+### Side view
+- **Show the side when a door opens**, on by default: while stopped (P or under 3 km/h), opening a door shows the camera on that side, to see cars and bikes coming from behind. It closes when the doors close. A turn signal still wins.
+
+## [1.6.6-beta] - 2026-10-30
+
+### Blind spot (turn-signal side view)
+- **Centre screen and HUD switch on separately.** Settings → Side mirror has **On the centre screen** and **On the driver HUD**: either one, or both at once. With both, the HUD picture shares the centre screen's camera stream. The home **Blind spot** card cycles off, screen, HUD, screen + HUD. Your current choice carries over.
+- **Shows over the car's own view**, a new setting, on by default: the side view opens even while the car shows its 360 view, its own side view or park assist. Never in R.
+- **Pop-up style: Square or Wide.** Wide is a landscape picture with rounded corners in the top-right corner for both sides, sliding in from the right, like Tesla's blind-spot camera.
+- **Square sits to the right.** The right side opens at the right edge, the left side in the middle of the screen.
+
+### Mood light
+- **Blink orange for a car in the blind spot**, a new setting, on by default: while you signal and the car warns of a car on that side, the mood lights blink orange. It does nothing yet: the car's left/right blind-spot warning signal still has to be found.
+
+### Fixes
+- The app could crash when Settings was opened right as the home page was laid out.
+
+## [1.6.5-beta] - 2026-10-29
+
+### AirPlay
+- **Smoother mirroring, as in the original AirPlay receiver app.** The picture now runs at up to 60 fps (was 30) and goes straight to the screen instead of through 7xDash's busy display thread, so it no longer waits on the cameras and overlays.
+- 7xDash picks the car's hardware H.264 decoder by name (Android's own pick can be a slow software one), and asks Qualcomm decoders to hand out each picture at once at full clock speed.
+- While the picture is hidden (waiting, or while driving) a black card covers it, so the picture comes back at once instead of waiting for the sender's next full frame. The picture's corners may look square.
+
+## [1.6.4-beta] - 2026-10-29
+
+### AirPlay
+- **Car Wi-Fi stays awake while mirroring.** When the car joins a network (pocket Wi-Fi), Android's Wi-Fi power saving lets it doze between beacons and collect packets in bursts, which made the mirrored picture lag and stutter. 7xDash now keeps it fully awake while mirroring and lets it doze again after.
+- **Mirroring delay in the AirPlay log.** Every 5 s a "mirror delay" line shows how late pictures arrive (the sender's encoding plus Wi-Fi), how long decoding takes, the frame rate, and dropped pictures.
+- Tip: with the Mac and the car both on pocket Wi-Fi, every packet crosses Wi-Fi twice. Joining the Mac to the car's hotspot is one hop.
+
+## [1.6.3-beta] - 2026-10-29
+
+### AirPlay
+- **Less delay when mirroring, mostly from a Mac.** Each picture now shows the moment it is decoded. Before, the newest picture waited inside the decoder until the next one arrived, and a Mac sends nothing while its screen is still, so typing or a stopped mouse showed up late (in a test, about half the pictures of a still screen waited about 300 ms).
+- The car's video decoder is asked for low-latency output on older Android too (Qualcomm and Exynos keys), and falls back to the plain way if it refuses.
+- The AirPlay log names the decoder and says whether low latency was asked, and notes when the decoder falls behind and drops pictures.
+
+## [1.6.2-beta] - 2026-10-29
+
+### AirPlay
+- **The AirPlay window opens full width.** Double-tap now switches between small and full width (large was 86% before).
+- Window sizes and places saved before this version are forgotten once, so everyone starts full width. A size you set after that is kept as before.
+
+## [1.6.1-beta] - 2026-10-29
+
+### Mood light
+- **LED lights reconnect on their own more reliably**, without opening the Mood light screen. When a light drops or misses its dial, 7xDash tries again sooner (2 s, 2 s, 5 s, 10 s, then every 15 s), and from the third miss every other try waits up to 60 s for the light to appear, which catches lights that power up after the head unit.
+- **Background light scan.** After two misses, 7xDash looks for your saved lights for 20 s, at most once a minute, and dials one as soon as it hears it. It does not drop Smart sticker links, so with a sticker connected this scan may find nothing on some head units; the quicker retries still apply.
+- The black box notes the first missed dial (then every tenth) with the reason, and "up after N missed dials" when the light comes back.
+
 ## [1.6.0] - 2026-10-28
 
 Changes since 1.5.1 (includes 1.5.2-beta to 1.5.9-beta).

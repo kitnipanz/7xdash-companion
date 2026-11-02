@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg"
+    android:orientation="vertical"
+    android:padding="16dp">
+    <!-- Macro pad: title bar, then the switch and a big copy of the pad; tap a button to choose its action. -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/title_bar_height"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="10dp"
+        android:paddingEnd="16dp">
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/macro_close"
+            style="@style/Widget.Cam.IconButton"
+            android:layout_width="@dimen/icon_button_size"
+            android:layout_height="@dimen/icon_button_size"
+            android:contentDescription="@string/action_back"
+            app:icon="@drawable/ic_back" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="14dp"
+            android:text="@string/macro_pad_title"
+            android:textAppearance="@style/TextAppearance.Cam.Title"
+            android:textColor="@color/text_primary"
+            android:textStyle="bold" />
+    </LinearLayout>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_marginTop="8dp"
+        android:background="@drawable/bg_surface_card"
+        android:orientation="vertical"
+        android:padding="24dp">
+        <com.google.android.material.switchmaterial.SwitchMaterial
+            android:id="@+id/macro_switch"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/macro_pad_switch"
+            android:textAppearance="@style/TextAppearance.Cam.Row"
+            android:textColor="@color/text_primary" />
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:maxWidth="@dimen/pref_summary_max_width"
+            android:text="@string/macro_pad_hint"
+            android:textAppearance="@style/TextAppearance.Cam.Body"
+            android:textColor="@color/text_secondary" />
+        <LinearLayout
+            android:id="@+id/macro_grid"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:layout_marginTop="20dp"
+            android:orientation="vertical" />
+    </LinearLayout>
+</LinearLayout>

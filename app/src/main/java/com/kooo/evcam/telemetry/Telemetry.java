@@ -243,6 +243,22 @@ public final class Telemetry {
         }
     }
 
+    /**
+     * 盲区报警的一侧（{@link BlindSpotWatch} 按学到的号码读出来的）：变了才写进快照、通知监听者。任何线程。
+     */
+    public void setBlindSpotWarning(Integer sides) {
+        boolean changed;
+        synchronized (lock) {
+            changed = !java.util.Objects.equals(state.blindSpotWarning, sides);
+            if (changed) {
+                state = state.edit().blindSpotWarning(sides).build();
+            }
+        }
+        if (changed) {
+            notifyListeners(readings);
+        }
+    }
+
     /** 来源改几项。不是当前来源的（停了、再连时换掉了）写入丢掉 —— 停掉的定位晚到的一次位置也不会写回来。 */
     void edit(Object source, Edit edit) {
         synchronized (lock) {

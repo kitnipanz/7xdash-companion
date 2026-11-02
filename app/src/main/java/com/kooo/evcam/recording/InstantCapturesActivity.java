@@ -81,7 +81,13 @@ public class InstantCapturesActivity extends AppCompatActivity {
         rows.removeAllViews();
         boolean none = clips.isEmpty();
         empty.setVisibility(none ? View.VISIBLE : View.GONE);
-        empty.setText(dir == null ? R.string.instant_captures_no_usb : R.string.instant_captures_empty);
+        if (dir == null) {
+            com.kooo.evcam.ui.EmptyState.show(empty, R.drawable.ic_usb_off,
+                    R.string.instant_captures_no_usb, R.string.empty_captures_usb_hint);
+        } else {
+            com.kooo.evcam.ui.EmptyState.show(empty, R.drawable.ic_flash,
+                    R.string.instant_captures_empty, R.string.empty_captures_hint);
+        }
         body.setVisibility(none ? View.GONE : View.VISIBLE);
         deleteAll.setEnabled(!none);
         if (playing != null && (dir == null || !InstantClips.owned(dir, playing))) {

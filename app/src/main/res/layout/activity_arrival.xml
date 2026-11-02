@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg"
+    android:orientation="vertical"
+    android:padding="16dp">
+    <!-- Battery at arrival (beta): title bar, then the estimate on the left and the iPhone setup on the right. -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/title_bar_height"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="10dp"
+        android:paddingEnd="16dp">
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/arrival_close"
+            style="@style/Widget.Cam.IconButton"
+            android:layout_width="@dimen/icon_button_size"
+            android:layout_height="@dimen/icon_button_size"
+            android:contentDescription="@string/action_back"
+            app:icon="@drawable/ic_back" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="14dp"
+            android:text="@string/arrival_title"
+            android:textAppearance="@style/TextAppearance.Cam.Title"
+            android:textColor="@color/text_primary"
+            android:textStyle="bold" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:background="@drawable/bg_segment"
+            android:paddingStart="10dp"
+            android:paddingTop="2dp"
+            android:paddingEnd="10dp"
+            android:paddingBottom="2dp"
+            android:text="@string/arrival_beta"
+            android:textAppearance="@style/TextAppearance.Cam.Caption"
+            android:textColor="@color/energy_text"
+            android:textStyle="bold" />
+    </LinearLayout>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_marginTop="8dp"
+        android:orientation="horizontal">
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="@drawable/bg_surface_card"
+            android:orientation="vertical"
+            android:padding="28dp">
+            <com.google.android.material.switchmaterial.SwitchMaterial
+                android:id="@+id/arrival_switch"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/arrival_switch"
+                android:textAppearance="@style/TextAppearance.Cam.Row"
+                android:textColor="@color/text_primary" />
+            <TextView
+                android:id="@+id/arrival_place"
+                android:layout_marginTop="40dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="2"
+                android:textAppearance="@style/TextAppearance.Cam.Body"
+                android:textColor="@color/text_secondary" />
+            <TextView
+                android:id="@+id/arrival_percent"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:textAppearance="@style/TextAppearance.Cam.Hero"
+                android:textColor="@color/text_primary"
+                android:textStyle="bold" />
+            <TextView
+                android:id="@+id/arrival_detail"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:textAppearance="@style/TextAppearance.Cam.Row"
+                android:textColor="@color/text_secondary" />
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/arrival_clear"
+                style="@style/Widget.Cam.RailSmall"
+                android:layout_width="wrap_content"
+                android:layout_height="52dp"
+                android:layout_marginTop="20dp"
+                android:text="@string/arrival_clear" />
+        </LinearLayout>
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_marginStart="16dp"
+            android:layout_weight="1"
+            android:background="@drawable/bg_surface_card"
+            android:gravity="center_horizontal"
+            android:orientation="vertical"
+            android:padding="24dp">
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/arrival_setup_title"
+                android:textAppearance="@style/TextAppearance.Cam.Row"
+                android:textColor="@color/text_primary"
+                android:textStyle="bold" />
+            <TextView
+                android:id="@+id/arrival_setup_hint"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="@string/arrival_setup_hint"
+                android:textAppearance="@style/TextAppearance.Cam.Caption"
+                android:textColor="@color/text_secondary" />
+            <ImageView
+                android:id="@+id/arrival_qr"
+                android:layout_width="220dp"
+                android:layout_height="220dp"
+                android:layout_marginTop="16dp"
+                android:contentDescription="@string/arrival_setup_title" />
+            <TextView
+                android:id="@+id/arrival_address"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:gravity="center"
+                android:textAppearance="@style/TextAppearance.Cam.Caption"
+                android:textColor="@color/text_secondary"
+                android:textIsSelectable="true" />
+        </LinearLayout>
+    </LinearLayout>
+</LinearLayout>

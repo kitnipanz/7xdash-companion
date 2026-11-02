@@ -123,6 +123,11 @@ public enum Signal {
     FCW(Group.ASSIST, Kind.FUNCTION, 0x200E0200, 0, R.string.vi_fcw, Trust.CONFIRMED, Format.LEVEL),
     LDW(Group.ASSIST, Kind.FUNCTION, 0x28084100, 0, R.string.vi_ldw, Trust.UNVERIFIED, Format.ON_OFF),
     LKA(Group.ASSIST, Kind.FUNCTION, 0x20070100, 0, R.string.vi_lka, Trust.CONFIRMED, Format.ON_OFF),
+    /**
+     * BLIND_SPOT_ASSIST。dts88/zeekr-shortcut-car 的 Lab 2026-10-16 看到它一直 0、只有可用性随上电变，多半是别的功能。
+     * 盲区报警的开关改读 {@link #LANE_CHANGE_ASSIST}（跟着原车开关 0 / 1 变，他们 2026-10-19 起也这么读）；
+     * 这一项留着给 Lab 看。左右哪一侧在报警见 {@link BlindSpotWatch}。
+     */
     BSD(Group.ASSIST, Kind.FUNCTION, 0x28081600, 0, R.string.vi_bsd, Trust.UNVERIFIED, Format.ON_OFF),
     RCW(Group.ASSIST, Kind.FUNCTION, 0x20071000, 0, R.string.vi_rcw, Trust.CONFIRMED, Format.ON_OFF),
     LANE_CHANGE_ASSIST(Group.ASSIST, Kind.FUNCTION, 0x20070300, 0, R.string.vi_lane_change_assist, Trust.CONFIRMED, Format.ON_OFF),

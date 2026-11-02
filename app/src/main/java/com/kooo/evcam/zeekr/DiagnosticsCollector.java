@@ -82,6 +82,7 @@ public final class DiagnosticsCollector {
         timings.run("multi mapping", () -> appendMultiMapping(sb, context));
         timings.run("displays", () -> appendDisplays(sb, context));
         timings.run("screen", () -> appendScreen(sb));
+        timings.run("multi-window", () -> com.kooo.evcam.screen.MultiWindowProbe.appendTo(sb, context));
         timings.run("black box", () -> appendBlackBox(sb, context));
         timings.run("storage", () -> appendStorage(sb, context));
         timings.run("config", () -> appendConfig(sb, context));

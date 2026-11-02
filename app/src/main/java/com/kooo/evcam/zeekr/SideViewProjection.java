@@ -43,11 +43,20 @@ public final class SideViewProjection {
      */
     public static void sourcePoint(float u, float v, float fovDegrees, float backDegrees, float upDegrees,
                                    float rollDegrees, int lane, float[] out, int offset) {
+        sourcePoint(u, v, fovDegrees, backDegrees, upDegrees, rollDegrees, lane, 1f, out, offset);
+    }
+
+    /**
+     * 同上，输出画面宽高比 {@code aspect}（宽 / 高）不是 1 时：视野仍是左右边缘之间的角度，
+     * 上下按比例收窄，画面不被拉扁。
+     */
+    public static void sourcePoint(float u, float v, float fovDegrees, float backDegrees, float upDegrees,
+                                   float rollDegrees, int lane, float aspect, float[] out, int offset) {
         double fov = Math.toRadians(clamp(fovDegrees, MIN_FOV_DEGREES, MAX_FOV_DEGREES));
         double t = Math.tan(fov / 2.0);
         // 虚拟相机里的射线：x 右、y 下、z 朝前
         double x = (u * 2.0 - 1.0) * t;
-        double y = (v * 2.0 - 1.0) * t;
+        double y = (v * 2.0 - 1.0) * t / (aspect > 0f ? aspect : 1f);
         double z = 1.0;
 
         // 先绕光轴转（滚转）：正数 = 输出画面顺时针（y 朝下时）

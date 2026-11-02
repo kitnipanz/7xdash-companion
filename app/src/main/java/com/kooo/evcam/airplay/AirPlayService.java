@@ -85,7 +85,9 @@ public class AirPlayService extends Service implements RaopCallbackHandler {
         t.start();
         WORK = new Handler(t.getLooper());
     }
-    private static final int FPS = 30;
+
+    /** Frames a second asked of the sender; a Mac mirrors at up to 60, which is much smoother than 30. */
+    private static final int FPS = 60;
 
     private static volatile AirPlayService live;
     /** What the receiver is doing; the page turns it into text in the app's language. */
@@ -106,7 +108,9 @@ public class AirPlayService extends Service implements RaopCallbackHandler {
     private MdnsResponder mdns;
     private final List<NsdManager.RegistrationListener> registrations = new ArrayList<>();
     private WifiManager.MulticastLock multicast;
-    private final MirrorDecoder decoder = new MirrorDecoder();
+    /** Held while mirroring: keeps the car's Wi-Fi out of power save, which holds packets back. */
+    private WifiManager.WifiLock wifiAwake;
+    private final MirrorDecoder decoder = new MirrorDecoder(FPS);
     private CastPlayer cast;
     private NetworkReport net;
     /** The floating window's surface; given to whichever of mirroring and casting is on. */
@@ -477,6 +481,37 @@ public class AirPlayService extends Service implements RaopCallbackHandler {
         if (multicast != null && multicast.isHeld()) {
             multicast.release();
         }
+        holdWifiAwake(false);
+    }
+
+    /**
+     * Wi-Fi power save makes the car's Wi-Fi sleep between beacons and collect packets in bursts,
+     * which adds delay and jerk to the mirrored picture when the car joins a network (pocket Wi-Fi).
+     */
+    @SuppressWarnings("deprecation")
+    private void holdWifiAwake(boolean on) {
+        if (on && wifiAwake == null) {
+            WifiManager wifi = getSystemService(WifiManager.class);
+            if (wifi == null) {
+                return;
+            }
+            int mode = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
+                    ? WifiManager.WIFI_MODE_FULL_LOW_LATENCY : WifiManager.WIFI_MODE_FULL_HIGH_PERF;
+            try {
+                wifiAwake = wifi.createWifiLock(mode, "7xDash:airplay");
+                wifiAwake.setReferenceCounted(false);
+                wifiAwake.acquire();
+                AirPlayLog.i("Wi-Fi kept awake while mirroring");
+            } catch (RuntimeException e) {
+                AirPlayLog.w("Wi-Fi lock refused: " + e);
+                wifiAwake = null;
+            }
+        } else if (!on && wifiAwake != null) {
+            if (wifiAwake.isHeld()) {
+                wifiAwake.release();
+            }
+            wifiAwake = null;
+        }
     }
 
     private void fail(String why) {
@@ -604,6 +639,7 @@ public class AirPlayService extends Service implements RaopCallbackHandler {
         }
         mirroring = true;
         AirPlayLog.i("mirroring started");
+        holdWifiAwake(true);
         if (!OverlayCoordinator.canShowOverlay(this)) {
             AirPlayLog.w("no permission to draw over other apps: no window");
             Notice.makeText(this, R.string.airplay_need_overlay, Toast.LENGTH_LONG).show();
@@ -619,6 +655,7 @@ public class AirPlayService extends Service implements RaopCallbackHandler {
 
     private void mirrorStopped() {
         AirPlayLog.i("mirroring stopped");
+        holdWifiAwake(false);
         net.sessionEnded();
         mirroring = false;
         window.hide();

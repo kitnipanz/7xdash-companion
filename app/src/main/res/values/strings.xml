@@ -300,6 +300,8 @@ Then reopen this app.</string>
     <string name="set_sticker_summary">Finds a Bluetooth sticker the head unit does not pair yet. A press runs a saved shortcut</string>
     <string name="set_mood_light_title">Mood light</string>
     <string name="set_mood_light_summary">Set the color of a cheap Bluetooth RGB light, like ELK-BLEDOM or Happy Lighting ones</string>
+    <string name="set_mood_light_blind_spot_title">Blink orange for a car in the blind spot</string>
+    <string name="set_mood_light_blind_spot_summary">While the turn signal is on and the car warns of a vehicle in the blind spot on that side, the mood lights blink orange, then go back to their usual color</string>
     <string name="mood_light_subtitle">Close the light\'s own phone app first. The light takes one connection at a time</string>
     <string name="mood_light_pick">Scan, then tap Connect on your light.</string>
     <string name="mood_light_none">No light yet.\n1. Plug in the light and close its own phone app.\n2. Tap Scan.\n3. Tap Connect on your light.</string>
@@ -635,9 +637,11 @@ Then reopen this app.</string>
     <string name="msg_rearview_on">Super mirror on. Drag the sides to move it; swipe the middle up or down to reframe.</string>
     <string name="msg_rearview_reset">Super mirror window and view reset</string>
     <string name="set_side_popup_title">Turn-signal side view</string>
-    <string name="set_side_popup_summary">While you signal, a pop-up shows the camera on that side: left signal, left camera. It closes when the signal goes off. The car\'s own views come first: no pop-up in reverse or while the stock 360 or side view is showing. Not shown while the Super mirror is on</string>
+    <string name="set_side_popup_summary">While you signal, a pop-up shows the camera on that side: left signal, left camera. It closes when the signal goes off. No pop-up in reverse. Not shown while the Super mirror is on</string>
+    <string name="set_side_popup_screen_title">On the centre screen</string>
+    <string name="set_side_popup_screen_summary">Shows that side camera on the centre screen. Turn on with On the driver HUD to show it on both</string>
     <string name="set_side_popup_hud_title">On the driver HUD</string>
-    <string name="set_side_popup_hud_summary">Puts that side camera on the windscreen instead of the centre screen. A small picture, so the car\'s own speed and lane graphics stay. If this car has no HUD display, it stays on the centre screen</string>
+    <string name="set_side_popup_hud_summary">Shows that side camera on the windscreen as a small picture, so the car\'s own speed and lane graphics stay. If this car has no HUD display, it shows on the centre screen instead</string>
     <string name="set_side_popup_hud_width_title">HUD width (%)</string>
     <string name="set_side_popup_hud_width_summary">How wide the picture is on the windscreen. It stays on the outer edge, clear of the car graphic. 27 is about 16:9 on this car</string>
     <string name="set_side_popup_hud_height_title">HUD height (%)</string>
@@ -661,11 +665,37 @@ Then reopen this app.</string>
     <string name="set_side_popup_roll_right_title">Rotate right (°)</string>
     <string name="set_side_popup_roll_summary">Positive turns the picture clockwise to level a tilted horizon. Left and right are separate. If it turns the wrong way, drag the other way</string>
     <string name="set_side_popup_close_delay_ms_title">Stay open after the signal (ms)</string>
-    <string name="set_side_popup_close_delay_ms_summary">1000 ms = 1 second. 0 closes it as soon as the signal goes off. A stock view still closes it straight away</string>
+    <string name="set_side_popup_close_delay_ms_summary">1000 ms = 1 second. 0 closes it as soon as the signal goes off. Reversing still closes it straight away, and so does the car\'s own view when Show over the car\'s own view is off</string>
+    <string name="set_side_popup_style_title">Pop-up style</string>
+    <string name="set_side_popup_style_summary">On the centre screen. Wide is a landscape picture with rounded corners in the top-right corner for both sides, like Tesla\'s blind-spot camera</string>
+    <string name="opt_side_popup_square">Square</string>
+    <string name="opt_side_popup_wide">Wide</string>
+    <string name="bsd_finder_title">Blind-spot warning finder</string>
+    <string name="bsd_finder_summary">Teach 7xDash which car signal means a car is in your blind spot. Then the side view gets a red edge and the mood lights blink orange while it warns</string>
+    <string name="bsd_finder_intro">Drive or park with a car right beside you in the blind spot (the mirror warning light is on). The row that lights up and changes is the warning. Tap Left or Right on it while the warning is on: 7xDash remembers that signal and the value it reads while warning. Do the other side the same way. If no row changes, tap All to watch every car setting.</string>
+    <string name="bsd_finder_all">All</string>
+    <string name="bsd_finder_named">Blind-spot only</string>
+    <string name="bsd_finder_forget">Forget</string>
+    <string name="bsd_finder_scanning">Reading the car settings…</string>
+    <string name="bsd_finder_status">%1$d blind-spot settings, %2$d in all</string>
+    <string name="bsd_finder_no_car">Car settings not readable: %1$s</string>
+    <string name="bsd_finder_none">Nothing learned yet</string>
+    <string name="bsd_finder_learned">Left: %1$s · Right: %2$s</string>
+    <string name="bsd_finder_not_learned">not learned</string>
+    <string name="bsd_finder_value">Now: %1$s</string>
+    <string name="bsd_finder_left">Left</string>
+    <string name="bsd_finder_right">Right</string>
+    <string name="bsd_finder_not_number">This one does not read as a number</string>
+    <string name="set_bsd_sniffer_title">Report blind-spot signals (experimental)</string>
+    <string name="set_bsd_sniffer_summary">While the screen is on, watches every car setting that looks blind-spot related. Each change is written to the log and black box and shown on the HUD as \"BSD?\" with its name and value, so you notice when the car sends something as a car passes. Then teach it in the Blind-spot warning finder</string>
+    <string name="set_side_popup_door_title">Show the side when a door opens</string>
+    <string name="set_side_popup_door_summary">While stopped, opening a door shows the camera on that side, so you can see cars and bikes coming from behind. It closes when the doors close</string>
+    <string name="set_side_popup_over_factory_title">Show over the car\'s own view</string>
+    <string name="set_side_popup_over_factory_summary">Opens even while the car shows its 360 view, its own side view or park assist. Never in R</string>
     <string name="set_side_popup_instant_title">Instant pop-up</string>
     <string name="set_side_popup_instant_summary">In D, keeps the side view ready in the background so the picture is there as soon as you signal. The camera stays on while driving, which uses a little more power</string>
     <string name="set_side_popup_size_title">Pop-up size (% of screen height)</string>
-    <string name="set_side_popup_size_summary">Up to half the screen width: the left and right pop-ups meet at the middle</string>
+    <string name="set_side_popup_size_summary">Up to half the screen width. The right side opens at the right edge, the left side near the middle</string>
     <string name="set_side_popup_vertical_title">Height on screen (%)</string>
     <string name="set_side_popup_vertical_summary">0 is the top, 100 the bottom</string>
     <string name="msg_floating_reset">Floating button reset</string>
@@ -1035,7 +1065,7 @@ Then reopen this app.</string>
     <!-- Interface section · first-launch side question · record unavailable · status bar -->
     <string name="set_section_interface">Interface</string>
     <string name="set_beta_features_title">Beta features</string>
-    <string name="set_beta_features_summary">Show features that are still being tried on the car, and let them run. Now: Where I parked (home card, and reading the signs when the car goes into P). The Where I parked shortcut still works.</string>
+    <string name="set_beta_features_summary">Show features that are still being tried on the car, and let them run. Now: Where I parked (home card, and reading the signs when the car goes into P) and Battery at arrival. The Where I parked shortcut still works.</string>
     <string name="set_usage_stats_title">Anonymous usage stats</string>
     <string name="set_usage_stats_summary">Which features get used: app start, home cards, pages, actions and what ran them, buttons you set up, recording, 7xDash web controls. A random install id only: no email, plate or location. About 20–50 KB a day</string>
     <string name="usage_consent_title">Help fix and improve 7xDash?</string>
@@ -1439,7 +1469,7 @@ Then reopen this app.</string>
     <string name="home_card_rear">Rear camera</string>
     <string name="home_card_rear_sub">Rear-view mirror on or off</string>
     <string name="home_card_blind">Blind spot</string>
-    <string name="home_card_blind_sub">Turn signal shows the side. Tap: off, screen, HUD</string>
+    <string name="home_card_blind_sub">Turn signal shows the side. Tap: off, screen, HUD, both</string>
     <string name="home_card_capture">Instant capture</string>
     <string name="home_card_capture_sub">Saves 10 s before and after. Tap here, press a shortcut, or flash the high beam</string>
     <string name="home_card_flash">Flash-to-pass capture</string>
@@ -1524,6 +1554,7 @@ Then reopen this app.</string>
     <string name="home_state_off">Off</string>
     <string name="home_state_screen">Screen</string>
     <string name="home_state_hud">HUD</string>
+    <string name="home_state_screen_hud">Screen + HUD</string>
 
     <!-- AirPlay 投屏 -->
     <string name="airplay_title">AirPlay</string>
@@ -1651,4 +1682,65 @@ Then reopen this app.</string>
     <string name="fog_lamp_turned_on">Rear fog lamp on</string>
     <string name="fog_lamp_turned_off">Rear fog lamp off</string>
     <string name="fog_lamp_failed">Rear fog lamp: %1$s</string>
+    <string name="empty_videos_hint">Start recording from Home. Videos appear here as soon as the first surround clip is saved.</string>
+    <string name="empty_captures_usb_hint">Insert the USB drive used for recording. Captures are saved on it in the instant captures folder.</string>
+    <string name="empty_captures_hint">Flash the high beam, tap Instant capture on Home, or press its shortcut. Each one saves 10 seconds before and after.</string>
+    <string name="set_side_cat_where">Where it shows</string>
+    <string name="set_side_cat_when">When it shows</string>
+    <string name="set_side_cat_picture">Picture</string>
+    <string name="set_side_cat_blind_spot">Blind spot</string>
+    <string name="whats_new_title">What\'s new in %1$s</string>
+    <string name="set_whats_new_title">What\'s new</string>
+    <string name="set_whats_new_summary">What changed in the last few versions</string>
+    <string name="whats_new_none">No notes for this version</string>
+    <string name="home_card_dash_panel">Dash panel</string>
+    <string name="home_card_dash_panel_sub">Speed, gear and buttons over any app</string>
+    <string name="set_dash_panel_summary">A small card that floats over maps, music or any other app: speed, gear, turn signals, the clock and whether 7xDash is recording, with buttons for a surround photo, an instant capture, Super mirror and opening 7xDash. Drag to move, pinch to resize, push to a side to dock</string>
+    <string name="dash_panel_need_overlay">Allow 7xDash to display over other apps first</string>
+    <string name="shortcut_action_dash_panel">Dash panel on / off</string>
+    <!-- Battery at arrival (beta) -->
+    <string name="arrival_title">Battery at arrival</string>
+    <string name="arrival_beta">BETA</string>
+    <string name="arrival_switch">Receive places from iPhone</string>
+    <string name="home_card_arrival_sub">Beta · Share a place from your iPhone</string>
+    <string name="arrival_percent">%1$d%% at arrival</string>
+    <string name="arrival_short">Short by %1$d km</string>
+    <string name="arrival_detail">%1$s to go · %2$d km of range to spare</string>
+    <string name="arrival_detail_short">%1$s to go · charge on the way</string>
+    <string name="arrival_waiting">Waiting for GPS, battery and range from the car</string>
+    <string name="arrival_waiting_short">Waiting for car</string>
+    <string name="arrival_none">No destination yet</string>
+    <string name="arrival_none_hint">In Google Maps or Apple Maps on your iPhone: open the place → Share → Send to 7xDash</string>
+    <string name="arrival_unnamed">Shared place</string>
+    <string name="arrival_clear">Clear destination</string>
+    <string name="arrival_off">Turn on the switch to receive places from your iPhone</string>
+    <string name="arrival_off_setup">Turn the switch on to show the setup code</string>
+    <string name="arrival_need_beta">Turn on Settings → Interface → Beta features first</string>
+    <string name="arrival_setup_title">Set up your iPhone</string>
+    <string name="arrival_setup_hint">Connect CarPlay wirelessly, then scan this with the iPhone camera. The page shows how to make the Send to 7xDash Shortcut.</string>
+    <string name="arrival_no_network">No Wi-Fi with the phone yet. Connect CarPlay wirelessly and come back.</string>
+    <string name="arrival_port_failed">Could not open port %1$d on this head unit</string>
+    <string name="arrival_web_paste">Paste a Google Maps or Apple Maps link</string>
+    <string name="arrival_web_send">Send to 7xDash</string>
+    <string name="arrival_web_set">7xDash: going to %1$s</string>
+    <string name="arrival_web_nothing">7xDash: nothing was sent</string>
+    <string name="arrival_web_no_place">7xDash: could not find a place in that link</string>
+    <string name="arrival_web_shortcut_title">Make the Shortcut (once)</string>
+    <string name="arrival_web_shortcut_address">Address for the Shortcut (tap and hold to copy):</string>
+    <string name="arrival_web_host_hint">The iPhone has to be on the car\'s Wi-Fi, which wireless CarPlay does for you. With a cable it will not reach the car.</string>
+    <string name="arrival_step_1">Open Shortcuts, tap +, and name it Send to 7xDash.</string>
+    <string name="arrival_step_2">Tap the ⓘ button and turn on Show in Share Sheet.</string>
+    <string name="arrival_step_3">Add the action Get Contents of URL and paste the address above as the URL.</string>
+    <string name="arrival_step_4">Tap the arrow on that action: Method POST, Request Body Form, add a Text field named link with the value Shortcut Input.</string>
+    <string name="arrival_step_5">To use it: in Google Maps or Apple Maps open the destination, tap Share, then Send to 7xDash.</string>
+    <!-- Macro pad -->
+    <string name="macro_pad_title">Macro pad</string>
+    <string name="home_card_macro_pad_sub">Your own buttons over any app. Tap to choose them</string>
+    <string name="set_macro_pad_summary">A floating pad of six buttons over any app. Choose what each one does on the Macro pad card</string>
+    <string name="macro_pad_switch">Show the Macro pad</string>
+    <string name="macro_pad_hint">Tap a button below to choose what it does. On the pad: tap a button to run it, drag to move, pinch to resize, push to an edge to tuck it away.</string>
+    <string name="macro_pad_empty">Empty</string>
+    <string name="macro_pad_button">Button %1$d</string>
+    <string name="macro_pad_clear">Clear</string>
+    <string name="shortcut_action_macro_pad">Macro pad on / off</string>
 </resources>

@@ -61,6 +61,11 @@ public final class VehicleState {
     public final Boolean laneKeepingAid;
     public final Boolean blindSpotAssist;
     public final Boolean rearCollisionWarning;
+    /**
+     * 盲区此刻在报警的一侧：{@link #TURN_LEFT} / {@link #TURN_RIGHT} 当位用（左 1、右 2、两侧 3、0 = 没报）。
+     * 不是 {@link #blindSpotAssist} 那个开关。号码还没在车上找到，眼下一直是 null（{@link VehicleStateMapper}）。
+     */
+    public final Integer blindSpotWarning;
     /** 开着的门（位掩码）。 */
     public final Integer doorsOpen;
     /**
@@ -108,6 +113,7 @@ public final class VehicleState {
         this.laneKeepingAid = b.laneKeepingAid;
         this.blindSpotAssist = b.blindSpotAssist;
         this.rearCollisionWarning = b.rearCollisionWarning;
+        this.blindSpotWarning = b.blindSpotWarning;
         this.doorsOpen = b.doorsOpen;
         this.seats = b.seats;
         this.daytimeRunningLights = b.daytimeRunningLights;
@@ -169,6 +175,7 @@ public final class VehicleState {
         private Boolean laneKeepingAid;
         private Boolean blindSpotAssist;
         private Boolean rearCollisionWarning;
+        private Integer blindSpotWarning;
         private Integer doorsOpen;
         private int seats;
         private Boolean daytimeRunningLights;
@@ -206,6 +213,7 @@ public final class VehicleState {
             laneKeepingAid = s.laneKeepingAid;
             blindSpotAssist = s.blindSpotAssist;
             rearCollisionWarning = s.rearCollisionWarning;
+            blindSpotWarning = s.blindSpotWarning;
             doorsOpen = s.doorsOpen;
             seats = s.seats;
             daytimeRunningLights = s.daytimeRunningLights;
@@ -239,6 +247,7 @@ public final class VehicleState {
         public Builder laneKeepingAid(Boolean v) { laneKeepingAid = v; return this; }
         public Builder blindSpotAssist(Boolean v) { blindSpotAssist = v; return this; }
         public Builder rearCollisionWarning(Boolean v) { rearCollisionWarning = v; return this; }
+        public Builder blindSpotWarning(Integer v) { blindSpotWarning = v; return this; }
         public Builder doorsOpen(Integer v) { doorsOpen = v; return this; }
         public Builder daytimeRunningLights(Boolean v) { daytimeRunningLights = v; return this; }
         public Builder lowBeam(Boolean v) { lowBeam = v; return this; }

@@ -125,6 +125,7 @@ public class AppConfig {
     private static final String KEY_INFO_BAR_ITEMS = "info_bar_items";  // 信息条上放哪几项（系统信息里勾的）
     private static final String KEY_INFO_BAR_ALL = "info_bar_all";  // 开发者：连没验证的栏目一起启用
     private static final String KEY_SIDE_POPUP = "side_popup_enabled";  // 打转向灯弹侧视
+    private static final String KEY_SIDE_POPUP_SCREEN = "side_popup_screen";  // 侧视弹在中控；和抬头显示各自开关
     private static final String KEY_SIDE_POPUP_HUD = "side_popup_hud";  // 侧视投到驾驶员抬头显示
     private static final String KEY_SIDE_POPUP_HUD_WIDTH = "side_popup_hud_width";  // 抬头显示上的宽度，屏宽的百分比
     // 新键。2.11.6 的 side_popup_hud_height 默认写过 100，那一版画面更差，不能沿用。
@@ -139,6 +140,14 @@ public class AppConfig {
     public static final int SIDE_POPUP_DEFAULT_MIN_SPEED = 30;
     public static final int SIDE_POPUP_MAX_MIN_SPEED = 80;
     private static final String KEY_SIDE_POPUP_STRAIGHTEN = "side_popup_straighten";  // 侧视拉直鱼眼
+    private static final String KEY_SIDE_POPUP_STYLE = "side_popup_style";
+    private static final String KEY_SIDE_POPUP_DOOR = "side_popup_door";
+    private static final String KEY_BSD_SNIFFER = "bsd_sniffer";
+    private static final String KEY_BSD_LEFT_ID = "bsd_warn_left_id";
+    private static final String KEY_BSD_LEFT_VALUE = "bsd_warn_left_value";
+    private static final String KEY_BSD_RIGHT_ID = "bsd_warn_right_id";
+    private static final String KEY_BSD_RIGHT_VALUE = "bsd_warn_right_value";
+    private static final String KEY_SIDE_POPUP_OVER_FACTORY = "side_popup_over_factory";
     private static final String KEY_SIDE_POPUP_INSTANT = "side_popup_instant";  // D 档时备着相机，打灯即出画面
     private static final String KEY_SIDE_POPUP_CLOSE_DELAY_MS = "side_popup_close_delay_ms";  // 灯灭后再留多少毫秒
     private static final String KEY_SIDE_POPUP_SIZE = "side_popup_size";  // 边长，屏幕高度的百分比
@@ -1860,8 +1869,26 @@ public class AppConfig {
     }
 
     public void setSidePopupOnHud(boolean enabled) {
-        prefs.edit().putBoolean(KEY_SIDE_POPUP_HUD, enabled).apply();
+        SharedPreferences.Editor edit = prefs.edit();
+        if (!prefs.contains(KEY_SIDE_POPUP_SCREEN)) {
+            // 中控那个开关还跟着旧规则走：先把它此刻的值记下，拨抬头显示不再连带它
+            edit.putBoolean(KEY_SIDE_POPUP_SCREEN, isSidePopupOnScreen());
+        }
+        edit.putBoolean(KEY_SIDE_POPUP_HUD, enabled).apply();
         AppLog.i(TAG, "侧视投抬头显示: " + (enabled ? "开" : "关"));
+    }
+
+    /**
+     * 侧视弹在中控屏。和 {@link #isSidePopupOnHud} 各管各的，两个都开就两块屏一起弹。
+     * 以前只有「投抬头显示」一个开关（开 = 只在抬头显示），没设过时照它来：投了抬头显示就不在中控。
+     */
+    public boolean isSidePopupOnScreen() {
+        return prefs.getBoolean(KEY_SIDE_POPUP_SCREEN, !isSidePopupOnHud());
+    }
+
+    public void setSidePopupOnScreen(boolean enabled) {
+        prefs.edit().putBoolean(KEY_SIDE_POPUP_SCREEN, enabled).apply();
+        AppLog.i(TAG, "侧视弹在中控: " + (enabled ? "开" : "关"));
     }
 
     public static final int SIDE_POPUP_HUD_MIN_WIDTH = 10;
@@ -1950,6 +1977,65 @@ public class AppConfig {
 
     public void setSidePopupStraighten(boolean on) {
         prefs.edit().putBoolean(KEY_SIDE_POPUP_STRAIGHTEN, on).apply();
+    }
+
+    /** 试验：亮屏时盯着像盲区的车辆设置，一变就写日志、黑匣子，并在抬头显示上提示。默认关。 */
+    public boolean isBlindSpotSnifferEnabled() {
+        return prefs.getBoolean(KEY_BSD_SNIFFER, false);
+    }
+
+    public void setBlindSpotSnifferEnabled(boolean on) {
+        prefs.edit().putBoolean(KEY_BSD_SNIFFER, on).apply();
+        AppLog.i(TAG, "盲区信号试验: " + (on ? "开" : "关"));
+    }
+
+    /** 盲区报警学到的号码（盲区报警查找页）：每一侧一个车辆设置号码和报警时读到的值；0 = 没学。 */
+    public com.kooo.evcam.telemetry.BlindSpotWatch.Learned getBlindSpotLearned() {
+        return new com.kooo.evcam.telemetry.BlindSpotWatch.Learned(
+                prefs.getInt(KEY_BSD_LEFT_ID, 0), prefs.getInt(KEY_BSD_LEFT_VALUE, 0),
+                prefs.getInt(KEY_BSD_RIGHT_ID, 0), prefs.getInt(KEY_BSD_RIGHT_VALUE, 0));
+    }
+
+    /** 记下一侧：{@code left} 为 true 是左侧。{@code id} 0 = 忘掉这一侧。 */
+    public void setBlindSpotLearned(boolean left, int id, int value) {
+        prefs.edit()
+                .putInt(left ? KEY_BSD_LEFT_ID : KEY_BSD_RIGHT_ID, id)
+                .putInt(left ? KEY_BSD_LEFT_VALUE : KEY_BSD_RIGHT_VALUE, value)
+                .apply();
+        AppLog.i(TAG, "盲区报警学到" + (left ? "左" : "右") + "侧: 0x" + Integer.toHexString(id) + " = " + value);
+    }
+
+    /** 停着开门时弹那一侧的侧视，看后面来车。默认开。 */
+    public boolean isSidePopupOnDoor() {
+        return prefs.getBoolean(KEY_SIDE_POPUP_DOOR, true);
+    }
+
+    public void setSidePopupOnDoor(boolean on) {
+        prefs.edit().putBoolean(KEY_SIDE_POPUP_DOOR, on).apply();
+    }
+
+    /** 中控屏上侧视弹窗的样式，见 {@code SettingsRegistry.SIDE_POPUP_STYLE}。 */
+    public String getSidePopupStyle() {
+        return com.kooo.evcam.settings.SettingsRegistry.SIDE_POPUP_STYLE.sanitize(
+                prefs.getString(KEY_SIDE_POPUP_STYLE, null));
+    }
+
+    public void setSidePopupStyle(String style) {
+        prefs.edit().putString(KEY_SIDE_POPUP_STYLE, style).apply();
+    }
+
+    /** 宽幅圆角的侧视弹窗（像特斯拉的盲区画面）。 */
+    public boolean isSidePopupWide() {
+        return "wide".equals(getSidePopupStyle());
+    }
+
+    /** 原厂画面（360、侧方小窗、泊车辅助）在时侧视照弹；R 档不弹。默认开。 */
+    public boolean isSidePopupOverFactory() {
+        return prefs.getBoolean(KEY_SIDE_POPUP_OVER_FACTORY, true);
+    }
+
+    public void setSidePopupOverFactory(boolean on) {
+        prefs.edit().putBoolean(KEY_SIDE_POPUP_OVER_FACTORY, on).apply();
     }
 
     /** D 档时把侧视窗备着（透明、相机照推），打灯即出画面；代价是开车时相机一直开着。默认开。 */
@@ -2432,6 +2518,124 @@ public class AppConfig {
         AppLog.d(TAG, "录制悬浮按钮时间文字大小设置: " + sizeSp + "sp");
     }
 
+    // ==================== Dash panel ====================
+
+    private static final String KEY_DASH_PANEL = "dash_panel";
+    private static final String KEY_DASH_PANEL_BOUNDS = "dash_panel_bounds";
+
+    /** Floating Dash panel over other apps (overlay.DashPanelService). Off by default. */
+    public boolean isDashPanelEnabled() {
+        return prefs.getBoolean(KEY_DASH_PANEL, false);
+    }
+
+    public void setDashPanelEnabled(boolean on) {
+        prefs.edit().putBoolean(KEY_DASH_PANEL, on).apply();
+    }
+
+    /** x, y, width, height in pixels; width 0 = never moved. */
+    public int[] getDashPanelBounds() {
+        int[] out = new int[4];
+        String[] parts = prefs.getString(KEY_DASH_PANEL_BOUNDS, "").split(",");
+        if (parts.length == 4) {
+            try {
+                for (int i = 0; i < 4; i++) {
+                    out[i] = Integer.parseInt(parts[i].trim());
+                }
+            } catch (NumberFormatException e) {
+                return new int[4];
+            }
+        }
+        return out;
+    }
+
+    public void setDashPanelBounds(int x, int y, int width, int height) {
+        prefs.edit().putString(KEY_DASH_PANEL_BOUNDS, x + "," + y + "," + width + "," + height).apply();
+    }
+
+    // ==================== Macro pad ====================
+
+    private static final String KEY_MACRO_PAD = "macro_pad";
+    private static final String KEY_MACRO_PAD_SLOTS = "macro_pad_slots";
+    private static final String KEY_MACRO_PAD_BOUNDS = "macro_pad_bounds";
+
+    /** Floating Macro pad over other apps (overlay.MacroPadService). Off by default. */
+    public boolean isMacroPadEnabled() {
+        return prefs.getBoolean(KEY_MACRO_PAD, false);
+    }
+
+    public void setMacroPadEnabled(boolean on) {
+        prefs.edit().putBoolean(KEY_MACRO_PAD, on).apply();
+    }
+
+    /** The pad's buttons as stored by {@link com.kooo.evcam.overlay.MacroPadSlots}; null = never set. */
+    public String getMacroPadSlots() {
+        return prefs.getString(KEY_MACRO_PAD_SLOTS, null);
+    }
+
+    public void setMacroPadSlots(String slots) {
+        prefs.edit().putString(KEY_MACRO_PAD_SLOTS, slots).apply();
+    }
+
+    /** x, y, width, height in pixels; width 0 = never moved. */
+    public int[] getMacroPadBounds() {
+        int[] out = new int[4];
+        String[] parts = prefs.getString(KEY_MACRO_PAD_BOUNDS, "").split(",");
+        if (parts.length == 4) {
+            try {
+                for (int i = 0; i < 4; i++) {
+                    out[i] = Integer.parseInt(parts[i].trim());
+                }
+            } catch (NumberFormatException e) {
+                return new int[4];
+            }
+        }
+        return out;
+    }
+
+    public void setMacroPadBounds(int x, int y, int width, int height) {
+        prefs.edit().putString(KEY_MACRO_PAD_BOUNDS, x + "," + y + "," + width + "," + height).apply();
+    }
+
+    // ==================== Battery at arrival (beta) ====================
+
+    private static final String KEY_ARRIVAL = "arrival";
+    private static final String KEY_ARRIVAL_TOKEN = "arrival_token";
+    private static final String KEY_ARRIVAL_DESTINATION = "arrival_destination";
+
+    /** Battery at arrival (trip.Trip): listen for places shared from the phone. Off by default; beta. */
+    public boolean isArrivalEnabled() {
+        return prefs.getBoolean(KEY_ARRIVAL, false);
+    }
+
+    public void setArrivalEnabled(boolean on) {
+        prefs.edit().putBoolean(KEY_ARRIVAL, on).apply();
+    }
+
+    /** The secret part of the phone's address, made once and kept so the iPhone Shortcut keeps working. */
+    public String getArrivalToken() {
+        String token = prefs.getString(KEY_ARRIVAL_TOKEN, "");
+        if (token.isEmpty()) {
+            byte[] bytes = new byte[5];
+            new java.security.SecureRandom().nextBytes(bytes);
+            StringBuilder sb = new StringBuilder();
+            for (byte b : bytes) {
+                sb.append(String.format(java.util.Locale.US, "%02x", b));
+            }
+            token = sb.toString();
+            prefs.edit().putString(KEY_ARRIVAL_TOKEN, token).apply();
+        }
+        return token;
+    }
+
+    /** The current destination as "lat,lng,setAtMillis,name", or "" for none. */
+    public String getArrivalDestination() {
+        return prefs.getString(KEY_ARRIVAL_DESTINATION, "");
+    }
+
+    public void setArrivalDestination(String value) {
+        prefs.edit().putString(KEY_ARRIVAL_DESTINATION, value == null ? "" : value).apply();
+    }
+
     // ==================== 全屏遮罩 ====================
 
     public boolean isDimOverlayEnabled() {
@@ -2604,6 +2808,17 @@ public class AppConfig {
 
     public void setMoodLightOn(boolean on) {
         prefs.edit().putBoolean(KEY_MOOD_LIGHT_ON, on).apply();
+    }
+
+    private static final String KEY_MOOD_LIGHT_BLIND_SPOT_BLINK = "mood_light_blind_spot_blink";
+
+    /** Blink the mood lights orange while signalling towards a car in the blind spot ({@code light.BlindSpotBlink}). On by default. */
+    public boolean isMoodLightBlindSpotBlink() {
+        return prefs.getBoolean(KEY_MOOD_LIGHT_BLIND_SPOT_BLINK, true);
+    }
+
+    public void setMoodLightBlindSpotBlink(boolean on) {
+        prefs.edit().putBoolean(KEY_MOOD_LIGHT_BLIND_SPOT_BLINK, on).apply();
     }
     private static final String KEY_MOOD_LIGHT_GROUP_SHOWN = "mood_light_group_shown";
 

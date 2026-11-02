@@ -192,6 +192,16 @@
             android:name=".overlay.DimOverlayService"
             android:exported="false" />
 
+        <!-- Macro pad: floating grid of the driver's own buttons over other apps -->
+        <service
+            android:name=".overlay.MacroPadService"
+            android:exported="false" />
+
+        <!-- Dash panel: floating speed / gear / buttons card over other apps -->
+        <service
+            android:name=".overlay.DashPanelService"
+            android:exported="false" />
+
         <!-- 连续时间轴回放（实验性）：把分段拼成一条时间轴，可跨文件拖动 -->
         <!-- 视频回看。用 Theme.Cam 而不是全屏主题：全屏会把窗口铺到
              状态栏底下，顶部的标题和列表被车机状态栏压住。
@@ -261,12 +271,25 @@
             android:exported="false" />
 
         <activity
+            android:name=".zeekr.BlindSpotFinderActivity"
+            android:label="@string/bsd_finder_title"
+            android:theme="@style/Theme.Cam"
+            android:screenOrientation="landscape"
+            android:exported="false" />
+
+        <activity
             android:name=".input.ButtonLabActivity"
             android:label="@string/button_lab_title"
             android:theme="@style/Theme.Cam"
             android:screenOrientation="landscape"
             android:exported="false" />
 
+        <activity
+            android:name=".trip.ArrivalActivity"
+            android:label="@string/arrival_title"
+            android:theme="@style/Theme.Cam"
+            android:screenOrientation="landscape"
+            android:exported="false" />
         <activity
             android:name=".input.BleSignalActivity"
             android:label="@string/ble_signal_title"
@@ -288,6 +311,12 @@
             android:screenOrientation="landscape"
             android:exported="false" />
 
+        <activity
+            android:name=".input.MacroPadActivity"
+            android:label="@string/macro_pad_title"
+            android:theme="@style/Theme.Cam"
+            android:screenOrientation="landscape"
+            android:exported="false" />
         <activity
             android:name=".input.ShortcutCaptureActivity"
             android:label="@string/shortcut_add"

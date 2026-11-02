@@ -82,7 +82,8 @@ public final class VehicleStateMapper {
         b.forwardCollisionWarning(r.bool(Signal.FCW));
         b.laneDepartureWarning(r.bool(Signal.LDW));
         b.laneKeepingAid(r.bool(Signal.LKA));
-        b.blindSpotAssist(r.bool(Signal.BSD));
+        // 盲区报警的开关是原车「变道辅助」（见 Signal.BSD 的说明）
+        b.blindSpotAssist(r.bool(Signal.LANE_CHANGE_ASSIST));
         b.rearCollisionWarning(r.bool(Signal.RCW));
 
         int driverBit = driverOnRight ? VehicleState.FRONT_RIGHT : VehicleState.FRONT_LEFT;

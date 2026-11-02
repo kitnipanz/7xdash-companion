@@ -1,0 +1,762 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Every 7xDash feature and setting for the Zeekr 7X head unit, with real screenshots and how to use them. Thai and English.">
+<title>7xDash Features</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bai+Jamjuree:wght@500;600;700&family=Anuphan:wght@400;500;600&display=swap">
+<style>
+/* Layout: the real Home screen is the map; each feature opens its own page with the real screen it lives on. */
+:root {
+  --bg: #0d0e10; --surface: #17181b; --line: #2a2c31; --fg: #ececee; --dim: #9fa1a8; --mark: #ff7a1a; --beta: #9db8ea;
+  --head: "Bai Jamjuree", "Anuphan", system-ui, sans-serif;
+  --text: "Anuphan", system-ui, -apple-system, "Thonburi", sans-serif;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) {
+  --bg: #f2f1ee; --surface: #ffffff; --line: #dedcd6; --fg: #18191c; --dim: #5f6168; --mark: #d9580a; --beta: #3a5fa8; color-scheme: light; } }
+:root[data-theme="light"] {
+  --bg: #f2f1ee; --surface: #ffffff; --line: #dedcd6; --fg: #18191c; --dim: #5f6168; --mark: #d9580a; --beta: #3a5fa8; color-scheme: light; }
+
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.65 var(--text); }
+.page { max-width: 1320px; margin: 0 auto; padding-block: 20px 48px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+a { color: inherit; }
+button:focus-visible, a:focus-visible { outline: 2px solid var(--mark); outline-offset: 2px; }
+
+.top { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-bottom: 18px; border-bottom: 1px solid var(--line); }
+.word { font: 700 20px var(--head); letter-spacing: .02em; text-decoration: none; }
+.word small { font: 500 13px var(--text); color: var(--dim); margin-left: 10px; letter-spacing: 0; }
+.lang { display: flex; gap: 2px; font: 500 14px var(--text); }
+.lang button { background: none; border: 0; color: var(--dim); padding: 6px 10px; cursor: pointer; border-bottom: 2px solid transparent; font: inherit; }
+.lang button[aria-pressed="true"] { color: var(--fg); border-bottom-color: var(--mark); }
+
+/* overview */
+.intro { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 32px; padding-block: 28px; align-items: end; }
+.intro h1 { font: 600 clamp(30px, 4.4vw, 46px)/1.15 var(--head); margin: 0; text-wrap: balance; }
+.intro p { margin: 0; color: var(--dim); max-width: 60ch; }
+.intro .note { font-size: 14px; margin-top: 10px; }
+.split { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr); gap: 32px; align-items: start; }
+.screen { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 16px); }
+.shot { position: relative; border-radius: 12px; overflow: hidden; border: 1px solid var(--line); background: #111; }
+.shot img { display: block; width: 100%; height: auto; }
+.spot { position: absolute; border: 3px solid var(--mark); border-radius: 10px; box-shadow: 0 0 0 9999px rgba(0,0,0,.45); pointer-events: none; transition: all .25s ease; }
+.hit { position: absolute; background: transparent; border: 0; cursor: pointer; padding: 0; }
+.caption { margin-top: 12px; color: var(--dim); font-size: 14px; }
+.index { display: grid; gap: 28px; min-width: 0; }
+.group h2 { font: 600 14px var(--text); color: var(--dim); margin: 0 0 4px; }
+.item { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: center; text-decoration: none; border-top: 1px solid var(--line); padding: 12px 0; }
+.item .name { font: 600 18px/1.3 var(--head); display: flex; gap: 8px; align-items: baseline; }
+.item .what { color: var(--dim); margin-top: 2px; }
+.item .go { color: var(--dim); font-size: 20px; transition: transform .15s; }
+.item:hover .name, .item:focus-visible .name { color: var(--mark); }
+.item:hover .go { transform: translateX(3px); color: var(--mark); }
+.beta { font: 500 12px var(--text); color: var(--beta); }
+.start { margin-top: 40px; border-top: 1px solid var(--line); padding-top: 20px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
+.start h3 { font: 600 17px var(--head); margin: 0 0 4px; }
+.start p { margin: 0; color: var(--dim); font-size: 15px; }
+
+/* detail */
+.crumb { display: inline-flex; gap: 8px; align-items: center; margin-top: 22px; color: var(--dim); text-decoration: none; font-size: 15px; }
+.crumb:hover { color: var(--fg); }
+.dhead { padding-block: 12px 24px; display: grid; gap: 8px; max-width: 70ch; }
+.dhead .where { font-size: 14px; color: var(--dim); }
+.dhead h1 { font: 600 clamp(30px, 4.6vw, 48px)/1.12 var(--head); margin: 0; display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; }
+.dhead h1 .beta { font-size: 15px; }
+.dhead p { margin: 0; font-size: 18px; color: var(--fg); }
+.dshot { border-radius: 12px; overflow: hidden; border: 1px solid var(--line); background: #111; position: relative; margin: 0; }
+.dshot img { display: block; width: 100%; height: auto; }
+.dshot figcaption { position: absolute; left: 12px; bottom: 12px; background: rgba(13,14,16,.82); color: #ececee; font-size: 13px; padding: 4px 10px; border-radius: 6px; }
+.dbody { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 40px; padding-top: 28px; }
+.dbody h2 { font: 600 20px var(--head); margin: 0 0 8px; }
+.dbody section + section { margin-top: 26px; }
+.dbody p { margin: 0; }
+.dbody ol, .dbody ul { margin: 0; padding-left: 22px; display: grid; gap: 6px; }
+.dbody ol li::marker { color: var(--mark); font-weight: 600; font-family: var(--head); }
+.dbody ul li::marker { color: var(--dim); }
+.open { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; }
+.notes li { color: var(--dim); }
+.pager { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+.pager a { text-decoration: none; display: grid; gap: 2px; padding: 8px 0; }
+.pager a:last-child { text-align: right; }
+.pager small { color: var(--dim); font-size: 13px; }
+.pager b { font: 600 18px var(--head); }
+.pager a:hover b { color: var(--mark); }
+footer { margin-top: 32px; color: var(--dim); font-size: 13px; }
+
+/* sections */
+.tabs { display: flex; gap: 4px; margin-right: auto; margin-left: 24px; font: 500 15px var(--text); }
+.tabs a { text-decoration: none; color: var(--dim); padding: 6px 12px; border-radius: 8px; }
+.tabs a[aria-current="page"] { color: var(--fg); background: var(--surface); }
+.tabs a:hover { color: var(--fg); }
+
+/* settings */
+.screens { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 40px; }
+.screens a { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: center; text-decoration: none; border-top: 1px solid var(--line); padding: 14px 0; }
+.screens .name { font: 600 19px/1.3 var(--head); }
+.screens .what { color: var(--dim); margin-top: 2px; }
+.screens .count { color: var(--dim); font-size: 13px; white-space: nowrap; }
+.screens a:hover .name { color: var(--mark); }
+.pref-group { margin-top: 30px; }
+.pref-group h2 { font: 600 14px var(--text); color: var(--dim); margin: 0 0 6px; }
+.pref { display: grid; grid-template-columns: minmax(0, 15em) minmax(0, 1fr); gap: 6px 28px; border-top: 1px solid var(--line); padding: 14px 0; }
+.pref .pname { font: 600 17px/1.35 var(--head); }
+.pref .kind { display: inline-block; margin-top: 6px; font: 500 12px var(--text); color: var(--dim); border: 1px solid var(--line); border-radius: 999px; padding: 0 9px; }
+.pref .kind.switch { color: var(--mark); border-color: color-mix(in srgb, var(--mark) 45%, transparent); }
+.pref p { margin: 0; }
+.pref .choices { margin: 8px 0 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 6px; }
+.pref .choices li { font-size: 13px; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 1px 8px; }
+.hidden-note { margin-top: 12px; color: var(--dim); font-size: 14px; }
+@media (max-width: 920px) {
+  .screens { grid-template-columns: minmax(0, 1fr); }
+  .pref { grid-template-columns: minmax(0, 1fr); }
+  .tabs { margin-left: 8px; }
+  .word small { display: none; }
+}
+
+@media (max-width: 920px) {
+  .intro, .split, .dbody { grid-template-columns: minmax(0, 1fr); }
+  .screen { top: env(safe-area-inset-top, 0px); background: var(--bg); padding-block: 8px; z-index: 2; }
+  .caption { display: none; }
+  .start { grid-template-columns: minmax(0, 1fr); }
+  .dbody { gap: 0; }
+  .dbody > div + div { margin-top: 26px; }
+}
+@media (prefers-reduced-motion: reduce) { .spot, .item .go { transition: none; } }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="top">
+    <a class="word" href="#top">7xDash <small id="tag"></small></a>
+    <nav class="tabs" aria-label="Sections"><a id="tab-features" href="#top"></a><a id="tab-settings" href="#settings"></a></nav>
+    <div class="lang" role="group" aria-label="Language / ภาษา">
+      <button type="button" id="lang-th" data-lang="th" aria-pressed="false">ไทย</button>
+      <button type="button" id="lang-en" data-lang="en" aria-pressed="true">English</button>
+    </div>
+  </div>
+  <main id="view"></main>
+  <footer id="foot"></footer>
+</div>
+
+<script>
+// 7xDash features: what each one does and how to use it, in English and Thai.
+// img: the screenshot in img/<lang>/<img>.jpg; "home" shows the Home screen with the card outlined.
+window.FEATURES = [
+{ id: "recorder", spot: "recorder", group: "cards", img: "recorder",
+  en: { name: "Drive recorder", what: "Records the surround and cabin cameras together, with speed and gear on the clip.",
+    intro: "The dashcam part of 7xDash. It records the four surround cameras as one picture plus the cabin camera, and stamps a driving info bar on the video: speed, gear, time, and your plate number if you want it. Clips go to the USB drive.",
+    open: "Record on the left rail, the record button on the floating buttons, or Open camera view under the Drive recorder panel on Home.",
+    steps: ["Plug in a USB drive first. Without one there is nowhere to save.", "Tap Record on the rail. The panel on Home turns to Recording and shows the time.", "Tap Record again to stop. Clips are cut into short files so a crash never loses much.", "Watch them later in Videos."],
+    options: ["Settings → Recording: quality, record as soon as 7xDash opens, plate number stamp, the info bar.", "Settings → Storage: which drive, and how much space clips may use before old ones are deleted.", "Settings → System: keep recording after the screen goes off."],
+    notes: ["It does not replace the car's own dashcam. Keep that on too.", "Hold the Drive recorder panel on Home to jump to its settings."] },
+  th: { name: "กล้องติดรถ", what: "อัดกล้องรอบคันกับกล้องในห้องโดยสารพร้อมกัน ในคลิปมีความเร็วกับเกียร์ติดมาด้วย",
+    intro: "ส่วนกล้องหน้ารถของ 7xDash อัดภาพจากกล้องรอบคันทั้ง 4 ตัวรวมเป็นภาพเดียว พร้อมกล้องในห้องโดยสาร และมีแถบข้อมูลขับขี่ติดในคลิป เช่น ความเร็ว เกียร์ เวลา และทะเบียนรถถ้าเปิดไว้ คลิปจะเก็บลงแฟลชไดรฟ์",
+    open: "กด บันทึก ที่แถบซ้าย ปุ่มอัดบนปุ่มลอย หรือ เปิดหน้าจอกล้อง ใต้ช่องกล้องติดรถในหน้าหลัก",
+    steps: ["เสียบแฟลชไดรฟ์ก่อน ถ้าไม่เสียบจะไม่มีที่เก็บคลิป", "กด บันทึก ที่แถบซ้าย ช่องกล้องติดรถในหน้าหลักจะขึ้นว่ากำลังบันทึกพร้อมเวลา", "กด บันทึก อีกครั้งเพื่อหยุด คลิปจะถูกตัดเป็นไฟล์สั้นๆ ถ้าเกิดอะไรขึ้นก็ไม่หายเยอะ", "ดูย้อนหลังได้ในเมนู วิดีโอ"],
+    options: ["ตั้งค่า → การบันทึก: ความชัด เริ่มอัดทันทีที่เปิดแอป ใส่ทะเบียนรถ และแถบข้อมูลขับขี่", "ตั้งค่า → ที่เก็บข้อมูล: เลือกไดรฟ์ และกำหนดพื้นที่ ถ้าเต็มจะลบคลิปเก่าให้เอง", "ตั้งค่า → ระบบ: ให้อัดต่อแม้จอดับ"],
+    notes: ["ใช้แทนกล้องติดรถของรถเองไม่ได้ ควรเปิดของรถไว้ด้วย", "กดค้างที่ช่องกล้องติดรถในหน้าหลัก เพื่อเข้าไปตั้งค่าได้เลย"] } },
+
+{ id: "photo", spot: "photo", group: "cards", img: "photo",
+  en: { name: "Photo", what: "One photo from every camera at once.",
+    intro: "Takes a still from each camera at the same moment, handy for a parking spot, a scratch on another car, or a nice view.",
+    open: "The Photo card on Home, or a shortcut button.",
+    steps: ["Tap the Photo card. You'll see a short notice when it's saved.", "Hold the card to open your photos.", "Pick a photo from the list to see it big."],
+    options: ["Photos are saved to the USB drive with your clips."],
+    notes: ["You can send a photo to your phone with the QR code in the photo viewer."] },
+  th: { name: "ภาพถ่าย", what: "ถ่ายรูปจากทุกกล้องในทีเดียว",
+    intro: "ถ่ายภาพนิ่งจากทุกกล้องพร้อมกัน เอาไว้จำที่จอด เก็บรอยขีดข่วน หรือถ่ายวิวสวยๆ ระหว่างทาง",
+    open: "การ์ด ภาพถ่าย ในหน้าหลัก หรือตั้งเป็นปุ่มลัด",
+    steps: ["แตะการ์ด ภาพถ่าย จะมีข้อความขึ้นสั้นๆ ว่าบันทึกแล้ว", "กดค้างที่การ์ดเพื่อเปิดดูรูป", "เลือกรูปจากรายการเพื่อดูภาพใหญ่"],
+    options: ["รูปจะเก็บลงแฟลชไดรฟ์ที่เดียวกับคลิป"],
+    notes: ["ส่งรูปเข้ามือถือได้ด้วย QR ในหน้าดูรูป"] } },
+
+{ id: "videos", spot: "videos", group: "cards", img: "videos",
+  en: { name: "Videos", what: "Your recordings on a timeline.",
+    intro: "Plays your surround and cabin recordings on one timeline, so you can drag straight to the moment you want instead of opening files one by one.",
+    open: "The Videos card on Home.",
+    steps: ["Tap the Videos card.", "Drag the timeline at the bottom to the time you want.", "Switch between cameras while it plays.", "Send a clip to your phone with the QR code if you need it there."],
+    options: ["Shows whatever is on the USB drive."],
+    notes: ["With nothing recorded yet it says No surround recordings."] },
+  th: { name: "วิดีโอ", what: "ดูคลิปที่อัดไว้ เลื่อนดูตามเวลา",
+    intro: "เปิดคลิปรอบคันและในห้องโดยสารบนไทม์ไลน์เดียว ลากไปช่วงเวลาที่อยากดูได้เลย ไม่ต้องไล่เปิดทีละไฟล์",
+    open: "การ์ด วิดีโอ ในหน้าหลัก",
+    steps: ["แตะการ์ด วิดีโอ", "ลากแถบเวลาด้านล่างไปช่วงที่ต้องการ", "สลับดูกล้องแต่ละตัวได้ระหว่างเล่น", "ถ้าอยากเก็บในมือถือ ส่งคลิปผ่าน QR ได้"],
+    options: ["แสดงทุกคลิปที่อยู่ในแฟลชไดรฟ์"],
+    notes: ["ถ้ายังไม่เคยอัดเลยจะขึ้นว่า ไม่มีไฟล์บันทึกรอบคัน"] } },
+
+{ id: "rear", spot: "rear", group: "cards", img: "rear",
+  en: { name: "Rear camera (Super mirror)", what: "A floating window with any camera. The rear view is flipped, like looking in a mirror.",
+    intro: "A small window that floats over everything, maps included, showing the rear camera or any other surround camera. The rear picture is flipped left to right so it reads like your interior mirror.",
+    open: "Rear on the left rail, the Rear camera card, or a shortcut button.",
+    steps: ["Tap Rear. The window appears in the corner.", "Drag its sides to move it, pinch to resize.", "Push it against a screen edge to tuck it away; tap the strip to bring it back.", "In the middle: swipe up or down to adjust the framing, left or right to change camera.", "Tap Rear again to close it."],
+    options: ["Settings → Super mirror: fisheye correction, field of view, front and rear only, window size.", "Button mode: tap the top, bottom, left or right of the window to pick front, rear, left or right.", "Reset window and view puts everything back to default."],
+    notes: ["It is not a certified reversing camera. Use the car's own when reversing."] },
+  th: { name: "กล้องหลัง (กระจกมองหลังอัจฉริยะ)", what: "หน้าต่างลอยโชว์ภาพกล้องตัวไหนก็ได้ ภาพด้านหลังกลับซ้ายขวาให้เหมือนมองกระจก",
+    intro: "หน้าต่างเล็กลอยทับทุกอย่าง รวมถึงแผนที่ โชว์ภาพกล้องหลังหรือกล้องรอบคันตัวไหนก็ได้ ภาพด้านหลังกลับซ้ายขวาให้ดูเหมือนกระจกมองหลังในรถ",
+    open: "กด กล้องหลัง ที่แถบซ้าย การ์ด กล้องหลัง หรือตั้งเป็นปุ่มลัด",
+    steps: ["กด กล้องหลัง หน้าต่างจะขึ้นที่มุมจอ", "ลากขอบหน้าต่างเพื่อย้าย ถ่างนิ้วเพื่อขยาย", "ดันไปชิดขอบจอเพื่อเก็บ แตะแถบที่เหลือเพื่อดึงกลับมา", "ตรงกลางหน้าต่าง ปัดขึ้นลงเพื่อปรับมุมภาพ ปัดซ้ายขวาเพื่อสลับกล้อง", "กด กล้องหลัง อีกครั้งเพื่อปิด"],
+    options: ["ตั้งค่า → กระจกมองหลังอัจฉริยะ: แก้ภาพโค้งจากเลนส์ตาปลา มุมกว้าง ให้สลับแค่หน้ากับหลัง และขนาดหน้าต่าง", "โหมดปุ่ม: แตะขอบบน ล่าง ซ้าย ขวาของหน้าต่าง เพื่อเลือกกล้องหน้า หลัง ซ้าย ขวา", "รีเซ็ตหน้าต่างและมุมมอง เพื่อกลับไปค่าเริ่มต้น"],
+    notes: ["ไม่ใช่กล้องถอยหลังที่ผ่านการรับรอง ตอนถอยให้ใช้กล้องของรถ"] } },
+
+{ id: "blind", spot: "blind", group: "cards", img: "blind",
+  en: { name: "Blind spot", what: "Turn on the indicator and that side's camera pops up. It closes when the indicator stops.",
+    intro: "Like Tesla's side camera on signal: when you indicate left or right, the camera on that side opens on the screen or the HUD, and closes again when the indicator turns off.",
+    open: "The Blind spot card on Home. Its settings are in Settings → Side mirror.",
+    steps: ["Tap the Blind spot card to pick where it shows: off, centre screen, HUD, or both.", "Indicate. The side view pops up.", "It closes a moment after the indicator stops."],
+    options: ["Only show above a set speed, so it stays quiet in car parks.", "Straighten the picture, set its size and position on the screen and on the HUD.", "How long it stays open after the indicator, and instant pop-up in D."],
+    notes: ["It does not replace the car's blind-spot warning lights. Always check your mirrors."] },
+  th: { name: "จุดบอด", what: "เปิดไฟเลี้ยวเมื่อไหร่ ภาพกล้องฝั่งนั้นเด้งขึ้นมาเอง ไฟเลี้ยวดับก็หายไปเอง",
+    intro: "คล้ายของ Tesla พอเปิดไฟเลี้ยวซ้ายหรือขวา ภาพกล้องฝั่งนั้นจะขึ้นบนจอหรือบน HUD และหายไปเองเมื่อไฟเลี้ยวดับ",
+    open: "การ์ด จุดบอด ในหน้าหลัก ส่วนการตั้งค่าอยู่ที่ ตั้งค่า → กระจกข้าง",
+    steps: ["แตะการ์ด จุดบอด เพื่อเลือกที่แสดง: ปิด กลางจอ HUD หรือทั้งสองที่", "เปิดไฟเลี้ยว ภาพด้านข้างจะเด้งขึ้นมา", "ไฟเลี้ยวดับไม่นานภาพก็ปิดเอง"],
+    options: ["ให้แสดงเฉพาะตอนขับเร็วกว่าที่ตั้งไว้ จะได้ไม่เด้งตอนวนหาที่จอด", "ปรับภาพให้ตรง ตั้งขนาดและตำแหน่งบนจอและบน HUD", "ตั้งเวลาค้างหลังไฟเลี้ยวดับ และให้เด้งทันทีตอนอยู่เกียร์ D"],
+    notes: ["ใช้แทนไฟเตือนจุดบอดของรถไม่ได้ ดูกระจกทุกครั้ง"] } },
+
+{ id: "capture", spot: "capture", group: "cards", img: "home",
+  en: { name: "Instant capture", what: "Saves the 10 seconds before and after, so you keep what just happened.",
+    intro: "Something happened on the road? One press keeps the 10 seconds before and the 10 seconds after as a separate clip, so it is never overwritten with the rest of your recordings.",
+    open: "The Instant capture card, a shortcut button, or flashing the high beam.",
+    steps: ["While recording, tap the Instant capture card.", "Or press a steering wheel button you set up in Shortcuts.", "Or switch on Flash-to-pass on the card, then flash the high beam.", "Find the clips in Saved captures."],
+    options: ["Flash-to-pass on or off, right on the card.", "Captures can be uploaded to Google Drive."],
+    notes: ["It only works while the Drive recorder is recording."] },
+  th: { name: "จับภาพทันที", what: "เจอเหตุการณ์อะไร กดทีเดียวได้คลิปย้อนหลัง 10 วินาที และต่อไปอีก 10 วินาที",
+    intro: "เจออะไรบนถนน กดครั้งเดียวได้คลิปย้อนหลัง 10 วินาทีและต่อไปอีก 10 วินาที แยกเก็บไว้ต่างหาก ไม่โดนลบทับไปกับคลิปปกติ",
+    open: "การ์ด จับภาพทันที ปุ่มลัด หรือกะพริบไฟสูง",
+    steps: ["ระหว่างที่กำลังอัด แตะการ์ด จับภาพทันที", "หรือกดปุ่มบนพวงมาลัยที่ตั้งไว้ในเมนูปุ่มลัด", "หรือเปิด กะพริบไฟสูง บนการ์ด แล้วกะพริบไฟสูง", "คลิปที่ได้อยู่ใน ภาพที่จับไว้"],
+    options: ["เปิดหรือปิด กะพริบไฟสูง ได้ที่การ์ดเลย", "ส่งคลิปขึ้น Google Drive ได้"],
+    notes: ["ใช้ได้เฉพาะตอนที่กล้องติดรถกำลังอัดอยู่"] } },
+
+{ id: "saved", spot: "saved", group: "cards", img: "saved",
+  en: { name: "Saved captures", what: "All your instant captures in one place.",
+    intro: "The list of clips made with Instant capture, newest first.",
+    open: "The Saved captures card on Home.",
+    steps: ["Tap the card.", "Pick a capture to watch it.", "Delete the ones you don't need."],
+    options: ["Captures live in their own folder on the USB drive."],
+    notes: ["Without a USB drive it says No USB stick."] },
+  th: { name: "ภาพที่จับไว้", what: "คลิปจากจับภาพทันทีทั้งหมดรวมอยู่ที่นี่",
+    intro: "รายการคลิปที่ได้จาก จับภาพทันที เรียงจากใหม่ไปเก่า",
+    open: "การ์ด ภาพที่จับไว้ ในหน้าหลัก",
+    steps: ["แตะการ์ด", "เลือกคลิปเพื่อดู", "ลบอันที่ไม่ต้องการ"],
+    options: ["คลิปพวกนี้เก็บแยกโฟลเดอร์ในแฟลชไดรฟ์"],
+    notes: ["ถ้าไม่ได้เสียบแฟลชไดรฟ์ จะขึ้นว่า ไม่มี USB"] } },
+
+{ id: "remote", spot: "remote", group: "cards", img: "remote",
+  en: { name: "Remote view", what: "Watch the cameras live and control a few things from your phone.",
+    intro: "Opens 7xDash web on your phone: live view of each camera, the outside speaker on or off, speaker and megaphone volumes, and your parking spot from Where I parked.",
+    open: "The Remote view card on Home.",
+    steps: ["Tap the card. A QR code appears.", "Scan it with your phone's camera.", "The page on your phone shows the cameras. Video is sent only while someone is watching."],
+    options: ["Refresh code makes a new link and stops the old one."],
+    notes: ["The QR code is a key to your car's cameras. Don't share a photo of it."] },
+  th: { name: "ดูจากระยะไกล", what: "ดูกล้องสดและสั่งงานบางอย่างจากมือถือ",
+    intro: "เปิดหน้าเว็บ 7xDash บนมือถือ ดูกล้องสดแต่ละตัว เปิดปิดลำโพงนอกรถ ปรับเสียงลำโพงกับโทรโข่ง และดูที่จอดจาก จอดรถไว้ที่ไหน",
+    open: "การ์ด ดูจากระยะไกล ในหน้าหลัก",
+    steps: ["แตะการ์ด จะมี QR ขึ้นมา", "สแกนด้วยกล้องมือถือ", "หน้าเว็บในมือถือจะโชว์ภาพกล้อง วิดีโอจะส่งเฉพาะตอนที่มีคนดูอยู่"],
+    options: ["กด รีเฟรชรหัส เพื่อสร้างลิงก์ใหม่ ลิงก์เก่าจะใช้ไม่ได้"],
+    notes: ["QR นี้เหมือนกุญแจเข้ากล้องรถ อย่าถ่ายรูปไปแชร์"] } },
+
+{ id: "megaphone", spot: "megaphone", group: "cards", img: "megaphone",
+  en: { name: "Megaphone", what: "Talk to people outside through the outside speaker.",
+    intro: "Uses the cabin microphone and the car's outside speaker, so you can talk to someone outside without opening the window.",
+    open: "The Megaphone card, Megaphone on the rail, or a shortcut button.",
+    steps: ["Tap Megaphone and speak.", "Tap again to stop.", "Or set a steering wheel button: hold to talk, or press once and talk for a few seconds."],
+    options: ["Settings → Megaphone: how the button opens the mic, and the volume.", "Speakers: tick every speaker that should play. The megaphone and the outside speaker use the same ticks."],
+    notes: ["Be polite: it is loud outside."] },
+  th: { name: "โทรโข่ง", what: "พูดผ่านไมค์ในรถ ให้เสียงออกลำโพงนอกรถ",
+    intro: "ใช้ไมค์ในห้องโดยสารกับลำโพงนอกรถ คุยกับคนข้างนอกได้โดยไม่ต้องลดกระจก",
+    open: "การ์ด โทรโข่ง ปุ่ม โทรโข่ง ที่แถบซ้าย หรือปุ่มลัด",
+    steps: ["กด โทรโข่ง แล้วพูดได้เลย", "กดอีกครั้งเพื่อหยุด", "หรือตั้งปุ่มบนพวงมาลัย ให้กดค้างแล้วพูด หรือกดทีเดียวแล้วพูดได้สักพัก"],
+    options: ["ตั้งค่า → โทรโข่ง: เลือกวิธีเปิดไมค์จากปุ่ม และระดับเสียง", "ลำโพง: ติ๊กลำโพงที่จะให้ดัง โทรโข่งกับลำโพงนอกรถใช้ชุดเดียวกัน"],
+    notes: ["เสียงข้างนอกดังพอสมควร พูดสุภาพหน่อย"] } },
+
+{ id: "drive", spot: "drive", group: "cards", img: "drive",
+  en: { name: "Google Drive", what: "Uploads your captures and clips to Google Drive.",
+    intro: "Sends instant captures and clips to your own Google Drive, so they are safe even if the USB drive is lost or full.",
+    open: "The Google Drive card on Home.",
+    steps: ["Open the card and tap Sign in to Google Drive.", "Sign in on your phone with the code shown on the car screen.", "Uploads start when there is internet."],
+    options: ["Sign out removes the link to your account."],
+    notes: ["Clips are big. Uploading on the car's mobile data uses a lot of it."] },
+  th: { name: "Google Drive", what: "ส่งคลิปและภาพที่จับไว้ขึ้น Google Drive",
+    intro: "ส่งคลิปจากจับภาพทันทีและคลิปอื่นๆ ขึ้น Google Drive ของเราเอง แฟลชไดรฟ์หายหรือเต็มก็ยังมีเก็บไว้",
+    open: "การ์ด Google Drive ในหน้าหลัก",
+    steps: ["เปิดการ์ด แล้วกด ลงชื่อเข้า Google Drive", "ล็อกอินในมือถือด้วยรหัสที่ขึ้นบนจอรถ", "พอมีเน็ต แอปจะเริ่มอัปโหลดเอง"],
+    options: ["กด ออกจากระบบ เพื่อเลิกเชื่อมกับบัญชี"],
+    notes: ["คลิปไฟล์ใหญ่ ถ้าใช้เน็ตรถอาจเปลืองเน็ตเยอะ"] } },
+
+{ id: "sticker", spot: "sticker", group: "cards", img: "sticker",
+  en: { name: "Smart sticker", what: "Stick-on Bluetooth buttons (ZEEKR_button) for anywhere in the cabin.",
+    intro: "Small Bluetooth buttons you can stick on the dash or the steering wheel. Each press can do any 7xDash action: record, photo, capture, mirror, megaphone.",
+    open: "The Smart sticker card on Home.",
+    steps: ["Hold the sticker until it wakes up.", "In the card, scan, then press the sticker.", "Choose what a press does. It is saved straight away."],
+    options: ["Pick a different action for a single press, a hold or a double press.", "Use as shortcut: press the sticker and it shows up as a shortcut."],
+    notes: ["Still experimental: some stickers go to sleep and need a hold to wake."] },
+  th: { name: "สติกเกอร์อัจฉริยะ", what: "ปุ่มบลูทูธแบบแปะ (ZEEKR_button) จะติดตรงไหนในรถก็ได้",
+    intro: "ปุ่มบลูทูธตัวเล็ก แปะที่คอนโซลหรือพวงมาลัยก็ได้ กดแล้วให้ทำงานอะไรของ 7xDash ก็ได้ เช่น อัดคลิป ถ่ายรูป จับภาพ เปิดกระจก โทรโข่ง",
+    open: "การ์ด สติกเกอร์อัจฉริยะ ในหน้าหลัก",
+    steps: ["กดสติกเกอร์ค้างจนติด", "ในการ์ด กดสแกน แล้วกดสติกเกอร์", "เลือกว่าให้ทำอะไร แอปจะบันทึกให้ทันที"],
+    options: ["ตั้งงานแยกกันได้ ทั้งกดครั้งเดียว กดค้าง และกดสองที", "ใช้เป็นปุ่มลัด: กดสติกเกอร์แล้วจะไปขึ้นในรายการปุ่มลัด"],
+    notes: ["ยังเป็นช่วงทดลอง บางตัวหลับไปเอง ต้องกดค้างปลุกก่อน"] } },
+
+{ id: "mood", spot: "mood", group: "cards", beta: true, img: "mood",
+  en: { name: "Mood light", what: "Controls a Bluetooth RGB light strip: colours, effects, or a colour for each gear.",
+    intro: "Drives cheap Bluetooth RGB strips (ELK-BLEDOM and Triones types) from the head unit. Group several lights, pick a colour or an effect, or let the colour follow the gear and speed.",
+    open: "The Mood light card on Home (with Beta features on).",
+    steps: ["Close the light's own phone app first, or it keeps the connection.", "Open the card, scan, and tap Connect next to your light.", "Pick a colour or an effect, or open Gear & speed."],
+    options: ["Groups: put several lights together and control them as one.", "Colour, Gear & speed, and Try for a quick preview.", "Brightness and effect speed."],
+    notes: ["Beta: some light models may not answer every command."] },
+  th: { name: "ไฟบรรยากาศ", what: "คุมไฟเส้น RGB บลูทูธ เปลี่ยนสี ใส่เอฟเฟกต์ หรือตั้งสีตามเกียร์",
+    intro: "คุมไฟเส้น RGB บลูทูธราคาไม่แพง (แบบ ELK-BLEDOM และ Triones) จากจอรถ รวมไฟหลายเส้นเป็นกลุ่ม เลือกสีหรือเอฟเฟกต์ หรือให้สีเปลี่ยนตามเกียร์และความเร็ว",
+    open: "การ์ด ไฟบรรยากาศ ในหน้าหลัก (ต้องเปิดฟีเจอร์เบต้าก่อน)",
+    steps: ["ปิดแอปไฟในมือถือก่อน ไม่งั้นแอปนั้นจะแย่งการเชื่อมต่อไป", "เปิดการ์ด กดสแกน แล้วกด เชื่อมต่อ ข้างชื่อไฟ", "เลือกสีหรือเอฟเฟกต์ หรือเปิดแท็บ เกียร์และความเร็ว"],
+    options: ["กลุ่ม: รวมไฟหลายเส้นแล้วคุมพร้อมกัน", "สี เกียร์และความเร็ว และ ลองดู สำหรับดูตัวอย่าง", "ความสว่างและความเร็วเอฟเฟกต์"],
+    notes: ["ยังเป็นเบต้า ไฟบางรุ่นอาจไม่รับทุกคำสั่ง"] } },
+
+{ id: "shortcuts", spot: "shortcuts", group: "cards", img: "shortcuts",
+  en: { name: "Shortcuts", what: "Make steering wheel keys or a game controller do what you want: record, photo, dim and more.",
+    intro: "Turns the car's own buttons, Bluetooth stickers and game controllers into 7xDash buttons. One button can do different things on a press, a hold and a double press.",
+    open: "The Shortcuts card on Home. Controllers are in Settings → Controller.",
+    steps: ["Tap the card, then Add shortcut.", "Press the button you want to use.", "Choose single press, hold or double press.", "Pick the action. Each saved shortcut has Edit and Delete."],
+    options: ["Actions: record, photo, instant capture, Super mirror, dim, megaphone, AirPlay, EQ, outside speaker, announcements, Dash panel, quit and more.", "Work on every screen (experimental): catches the button even when 7xDash is in the background."],
+    notes: ["A button pressed within 3 seconds of touching the screen is skipped, so tapping the screen doesn't trigger it."] },
+  th: { name: "ปุ่มลัด", what: "ตั้งให้ปุ่มบนพวงมาลัยหรือจอยเกมทำสิ่งที่เราต้องการ เช่น อัดคลิป ถ่ายรูป หรี่จอ",
+    intro: "เปลี่ยนปุ่มของรถ สติกเกอร์บลูทูธ และจอยเกม ให้เป็นปุ่มของ 7xDash ปุ่มเดียวทำได้หลายอย่าง แยกตามกดครั้งเดียว กดค้าง และกดสองที",
+    open: "การ์ด ปุ่มลัด ในหน้าหลัก ส่วนจอยเกมอยู่ที่ ตั้งค่า → คอนโทรลเลอร์",
+    steps: ["แตะการ์ด แล้วกด เพิ่มปุ่มลัด", "กดปุ่มที่อยากใช้", "เลือกว่ากดครั้งเดียว กดค้าง หรือกดสองที", "เลือกคำสั่ง ปุ่มลัดที่บันทึกไว้แก้ไขหรือลบได้ตลอด"],
+    options: ["คำสั่งที่มี: อัดคลิป ถ่ายรูป จับภาพทันที กระจกมองหลัง หรี่จอ โทรโข่ง AirPlay อีคิว ลำโพงนอกรถ ประกาศ แผงหน้าปัด ปิดแอป และอื่นๆ", "ใช้ได้ทุกหน้าจอ (ทดลอง): รับปุ่มได้แม้ 7xDash อยู่เบื้องหลัง"],
+    notes: ["ถ้ากดปุ่มภายใน 3 วินาทีหลังแตะจอ แอปจะข้ามไป กันกดโดนตอนกำลังแตะจอ"] } },
+
+{ id: "hud", spot: "hud", group: "cards", img: "hud",
+  en: { name: "HUD notifications", what: "Shows 7xDash messages on the head-up display.",
+    intro: "Puts 7xDash's short messages, like a saved capture or a new parking floor, on the HUD in front of you so you don't look away from the road.",
+    open: "The HUD notifications card on Home. Position is in Settings → Super mirror → HUD notifications.",
+    steps: ["Tap the card to switch it on.", "Messages appear on the HUD for a few seconds."],
+    options: ["Move the card left or right on the HUD."],
+    notes: ["The car's own HUD content stays; 7xDash adds a small card next to it."] },
+  th: { name: "การแจ้งเตือนบน HUD", what: "ให้ข้อความจาก 7xDash ขึ้นบน HUD หน้าคนขับ",
+    intro: "ข้อความสั้นๆ จาก 7xDash เช่น จับภาพเสร็จแล้ว หรือเจอชั้นจอดใหม่ จะขึ้นบน HUD ตรงหน้า ไม่ต้องละสายตาจากถนน",
+    open: "การ์ด การแจ้งเตือนบน HUD ส่วนตำแหน่งอยู่ที่ ตั้งค่า → กระจกมองหลังอัจฉริยะ → การแจ้งเตือนบน HUD",
+    steps: ["แตะการ์ดเพื่อเปิด", "ข้อความจะขึ้นบน HUD สักครู่แล้วหายไป"],
+    options: ["เลื่อนการ์ดบน HUD ไปซ้ายหรือขวาได้"],
+    notes: ["ข้อมูลเดิมของรถบน HUD ยังอยู่ครบ 7xDash แค่เพิ่มการ์ดเล็กๆ ข้างๆ"] } },
+
+{ id: "speaker", spot: "speaker", group: "cards", img: "speaker",
+  en: { name: "Outside speaker", what: "Music or video you AirPlay to 7xDash also plays outside the car.",
+    intro: "Whatever you send to 7xDash over AirPlay (music, screen mirroring, cast videos) also plays on the car's outside speakers. Good for camping or a picnic.",
+    open: "The Outside speaker card on Home, or a shortcut.",
+    steps: ["Start AirPlay from your iPhone to 7xDash.", "Tap the Outside speaker card.", "Hold the card to set its volume."],
+    options: ["Volume, separate from the cabin.", "Which speakers play, shared with the Megaphone."],
+    notes: ["CarPlay, Spotify on the head unit and the radio can't be sent outside: the car doesn't let apps copy their sound. Play from your phone over AirPlay instead."] },
+  th: { name: "ลำโพงนอกรถ", what: "เพลงหรือคลิปที่ส่งผ่าน AirPlay ดังออกลำโพงนอกรถด้วย",
+    intro: "อะไรที่ส่งเข้า 7xDash ผ่าน AirPlay ไม่ว่าเพลง จอสะท้อน หรือคลิป จะดังออกลำโพงนอกรถด้วย เหมาะกับไปแคมป์หรือปิกนิก",
+    open: "การ์ด ลำโพงนอกรถ ในหน้าหลัก หรือปุ่มลัด",
+    steps: ["ส่ง AirPlay จากไอโฟนมาที่ 7xDash", "แตะการ์ด ลำโพงนอกรถ", "กดค้างที่การ์ดเพื่อปรับเสียง"],
+    options: ["ระดับเสียง แยกจากในห้องโดยสาร", "เลือกลำโพงที่จะให้ดัง ใช้ชุดเดียวกับโทรโข่ง"],
+    notes: ["CarPlay, Spotify บนจอรถ และวิทยุ ส่งออกนอกรถไม่ได้ เพราะรถไม่ให้แอปอื่นดึงเสียงไป ให้เล่นจากมือถือผ่าน AirPlay แทน"] } },
+
+{ id: "announce", spot: "announce", group: "cards", img: "announce",
+  en: { name: "Announcements", what: "Plays a sound or phrase outside: horn, siren, chime, or your own recorded voice.",
+    intro: "Ready-made sounds and phrases for the outside speakers: a chime, double beep, siren, horn, ding-dong, alarm, reversing beeps, plus phrases like Please step back from the car.",
+    open: "The Announcements card (a floating picker), or a shortcut.",
+    steps: ["Tap the card. A small picker floats over any screen.", "Tap a sound or phrase to play it.", "Hold the card to edit the list."],
+    options: ["Add your own phrases and record them in your own voice.", "Pick one to play when Sentry Mode arms (at most once a minute).", "A shortcut can play one chosen announcement straight away."],
+    notes: ["Thai phrases play only if you record them. English can use 7xDash's offline voice (a 22 MB download)."] },
+  th: { name: "ประกาศ", what: "เปิดเสียงหรือประโยคออกลำโพงนอกรถ มีเสียงแตร ไซเรน เสียงกริ่ง หรือจะอัดเสียงตัวเองก็ได้",
+    intro: "เสียงและประโยคสำเร็จรูปสำหรับลำโพงนอกรถ มีเสียงกริ่ง บี๊บสองที ไซเรน แตร ออด สัญญาณเตือน เสียงถอยรถ และประโยคอย่าง กรุณาถอยห่างจากรถ",
+    open: "การ์ด ประกาศ (จะมีตัวเลือกแบบลอยขึ้นมา) หรือปุ่มลัด",
+    steps: ["แตะการ์ด ตัวเลือกเล็กๆ จะลอยขึ้นบนหน้าจอ", "แตะเสียงหรือประโยคที่ต้องการเพื่อเล่น", "กดค้างที่การ์ดเพื่อแก้รายการ"],
+    options: ["เพิ่มประโยคเอง และอัดด้วยเสียงตัวเอง", "เลือกเสียงที่จะเล่นตอนเปิดโหมด Sentry (ไม่เกินนาทีละครั้ง)", "ตั้งปุ่มลัดให้เล่นประโยคที่เลือกไว้ได้ทันที"],
+    notes: ["ประโยคภาษาไทยต้องอัดเสียงเอง ภาษาอังกฤษใช้เสียงออฟไลน์ของ 7xDash ได้ (ดาวน์โหลด 22 MB)"] } },
+
+{ id: "dash", spot: "dash", group: "cards", img: "dash",
+  en: { name: "Dash panel", what: "A small card over any app with speed, gear, indicators and four buttons.",
+    intro: "A mini instrument cluster that floats over maps, music or CarPlay: clock, recording status, speed, gear, turn signals, and buttons for a surround photo, instant capture, Super mirror and opening 7xDash.",
+    open: "The switch on the Dash panel card, Settings → Floating button, or the Dash panel on / off shortcut.",
+    steps: ["Tap the switch on the card. The panel appears.", "Drag to move it, pinch to resize, push it to a side to dock it.", "Tap a button at the bottom to use it."],
+    options: ["Size and position are remembered.", "With Battery at arrival on, the top line shows km to go and battery when you arrive."],
+    notes: ["7xDash needs permission to show over other apps. It asks the first time."] },
+  th: { name: "แผงหน้าปัด", what: "การ์ดเล็กลอยทับแอปอื่น โชว์ความเร็ว เกียร์ ไฟเลี้ยว และมีปุ่มลัด 4 ปุ่ม",
+    intro: "หน้าปัดเล็กๆ ลอยทับแผนที่ เพลง หรือ CarPlay มีนาฬิกา สถานะการอัด ความเร็ว เกียร์ ไฟเลี้ยว และปุ่มถ่ายภาพรอบคัน จับภาพทันที กระจกมองหลัง และเปิด 7xDash",
+    open: "สวิตช์บนการ์ด แผงหน้าปัด, ตั้งค่า → ปุ่มลอย หรือปุ่มลัด เปิด/ปิดแผงหน้าปัด",
+    steps: ["แตะสวิตช์บนการ์ด แผงจะขึ้นมา", "ลากเพื่อย้าย ถ่างนิ้วเพื่อขยาย ดันชิดขอบจอเพื่อเก็บ", "แตะปุ่มด้านล่างเพื่อใช้งาน"],
+    options: ["จำขนาดและตำแหน่งไว้ให้", "ถ้าเปิด แบตเมื่อถึงที่หมาย ไว้ บรรทัดบนจะบอกระยะที่เหลือและแบตตอนถึง"],
+    notes: ["ต้องอนุญาตให้ 7xDash แสดงทับแอปอื่น ครั้งแรกแอปจะถามเอง"] } },
+
+{ id: "macro", spot: "macro", group: "cards", img: "macro",
+  en: { name: "Macro pad", what: "Your own six buttons, floating over any app.",
+    intro: "A small pad of six buttons that floats over maps, CarPlay or anything else, like the floating buttons. You choose what each button does: record, photo, capture, Super mirror, dim, megaphone, announcements, volume, lights and more.",
+    open: "The switch on the Macro pad card, Settings → Floating button, or the Macro pad on / off shortcut.",
+    steps: ["Tap the switch on the Macro pad card. The pad appears at the bottom right.", "Tap the card itself to set it up: it shows a big copy of the pad.", "Tap a button there and pick its action from the same tabs as Shortcuts, or tap Clear to empty it. The pad changes straight away.", "On the pad: tap a button to run it. Drag to move, pinch to resize, push it to an edge to tuck it away."],
+    options: ["Six buttons, three across and two down. It starts with Recording, Photo, Instant capture, Super mirror, Dim display and Announcements.", "Any action from Shortcuts, including Play an announcement (pick which one) and Dash panel on / off.", "Size and position are remembered."],
+    notes: ["An empty button shows a plus; tapping it on the pad opens the picker for that button.", "The pad can't tell a hold from a tap, so Hold to speak works as tap on, tap off.", "7xDash needs permission to show over other apps. It asks the first time."] },
+  th: { name: "มาโครแพด", what: "ปุ่ม 6 ปุ่มของเราเอง ลอยทับทุกแอป",
+    intro: "แผงปุ่มเล็กๆ 6 ปุ่ม ลอยทับแผนที่ CarPlay หรือแอปอื่นได้ เหมือนปุ่มลอย เลือกเองได้ว่าแต่ละปุ่มทำอะไร เช่น อัดคลิป ถ่ายรูป จับภาพ กระจกมองหลัง หรี่จอ โทรโข่ง ประกาศ เพิ่มเสียง หรือเปิดไฟ",
+    open: "สวิตช์บนการ์ด มาโครแพด, ตั้งค่า → ปุ่มลอย หรือปุ่มลัด เปิด / ปิดมาโครแพด",
+    steps: ["แตะสวิตช์บนการ์ด มาโครแพด แพดจะขึ้นที่มุมขวาล่าง", "แตะตัวการ์ดเพื่อตั้งปุ่ม จะเห็นแพดแบบใหญ่", "แตะปุ่มที่อยากเปลี่ยน แล้วเลือกคำสั่งจากแท็บเดียวกับเมนูปุ่มลัด หรือกด ล้าง เพื่อเว้นว่าง แพดจะเปลี่ยนตามทันที", "บนแพด แตะปุ่มเพื่อสั่งงาน ลากเพื่อย้าย ถ่างนิ้วเพื่อขยาย ดันชิดขอบจอเพื่อเก็บ"],
+    options: ["6 ปุ่ม แถวละ 3 สองแถว เริ่มต้นเป็น อัดคลิป ถ่ายรูป จับภาพทันที กระจกมองหลัง หรี่จอ และประกาศ", "ใช้คำสั่งไหนก็ได้ที่มีในปุ่มลัด รวมถึงเล่นเสียงประกาศที่เลือกไว้ และเปิด/ปิดแผงหน้าปัด", "จำขนาดและตำแหน่งไว้ให้"],
+    notes: ["ปุ่มที่ว่างจะเป็นเครื่องหมายบวก แตะบนแพดเพื่อเลือกคำสั่งให้ปุ่มนั้นได้เลย", "แพดแยกกดค้างกับแตะไม่ได้ ปุ่มกดค้างเพื่อพูดจะกลายเป็นแตะเปิด แตะปิด", "ต้องอนุญาตให้ 7xDash แสดงทับแอปอื่น ครั้งแรกแอปจะถามเอง"] } },
+
+{ id: "arrival", spot: "arrival", group: "cards", beta: true, img: "arrival",
+  en: { name: "Battery at arrival", what: "Navigating with CarPlay? The Dash panel shows how much battery you'll have when you get there.",
+    intro: "CarPlay keeps the route on your phone, so the car can't tell you the battery at arrival. Share the destination from your iPhone and 7xDash works it out from the car's battery and range, then shows it on the Dash panel, e.g. 198 km · 26%.",
+    open: "The Battery at arrival card on Home (with Beta features on).",
+    steps: ["Connect CarPlay wirelessly, so the iPhone is on the car's Wi-Fi.", "Open the card and switch on Receive places from iPhone.", "Scan the QR code with the iPhone camera and follow the page to make the Send to 7xDash Shortcut. You only do this once.", "Each trip: in Google Maps or Apple Maps open the place, tap Share, then Send to 7xDash."],
+    options: ["Clear destination ends the trip. It also clears itself when you arrive.", "No Shortcut? Paste a Maps link into the box on the QR page."],
+    notes: ["White means fine, orange is under 15% on arrival, red means you need to charge on the way.", "Beta: not yet tried in the car. A cable CarPlay connection can't reach 7xDash."] },
+  th: { name: "แบตเมื่อถึงที่หมาย", what: "ขับไปตาม CarPlay อยู่ ก็รู้ได้ว่าถึงแล้วแบตจะเหลือกี่เปอร์เซ็นต์ โชว์บนแผงหน้าปัด",
+    intro: "CarPlay เก็บเส้นทางไว้ในมือถือ รถเลยบอกไม่ได้ว่าถึงแล้วแบตเหลือเท่าไร แค่แชร์ที่หมายจากไอโฟนมา 7xDash จะคำนวณจากแบตและระยะวิ่งของรถ แล้วโชว์บนแผงหน้าปัด เช่น 198 km · 26%",
+    open: "การ์ด แบตเมื่อถึงที่หมาย ในหน้าหลัก (ต้องเปิดฟีเจอร์เบต้าก่อน)",
+    steps: ["ต่อ CarPlay แบบไร้สาย ไอโฟนจะได้อยู่ใน Wi-Fi ของรถ", "เปิดการ์ด แล้วเปิด รับสถานที่จาก iPhone", "เอากล้องไอโฟนสแกน QR แล้วทำตามหน้าเว็บเพื่อสร้างคำสั่งลัด Send to 7xDash ทำแค่ครั้งเดียว", "เวลาจะไปไหน ใน Google Maps หรือ Apple Maps เปิดสถานที่ กด แชร์ แล้วเลือก Send to 7xDash"],
+    options: ["กด ล้างที่หมาย เพื่อจบทริป ถึงที่หมายแล้วจะล้างเองด้วย", "ยังไม่ได้ทำคำสั่งลัด? วางลิงก์แผนที่ในช่องบนหน้า QR ได้"],
+    notes: ["สีขาวคือพอ สีส้มคือถึงแล้วเหลือไม่ถึง 15% สีแดงคือต้องแวะชาร์จระหว่างทาง", "ยังเป็นเบต้า ยังไม่ได้ลองในรถจริง ถ้าต่อ CarPlay แบบเสียบสายจะส่งมาไม่ถึง"] } },
+
+{ id: "parked", spot: "parked", group: "cards", beta: true, img: "parked",
+  en: { name: "Where I parked", what: "When you shift into P, it reads the floor and bay signs from the cameras. No internet needed.",
+    intro: "In a big car park, 7xDash reads the floor and bay signs with the cameras when you park, and shows them with a photo in the notifications and on 7xDash web.",
+    open: "The Where I parked card on Home (with Beta features on).",
+    steps: ["Tap the card to read the signs now.", "Switch on Auto on P to read every time you park.", "Switch on Pillar scan to keep reading column signs while you creep under 3 km/h.", "Hold the card to scan by hand and see exactly what it read."],
+    options: ["Auto on P and Pillar scan, right on the card.", "New floors show on the HUD while you drive around."],
+    notes: ["Works offline. Dark or dirty signs may not be read."] },
+  th: { name: "จอดรถไว้ที่ไหน", what: "พอเข้าเกียร์ P แอปจะอ่านป้ายชั้นกับช่องจอดจากกล้องให้เอง ไม่ต้องใช้เน็ต",
+    intro: "จอดในห้างหรือที่จอดรถใหญ่ๆ 7xDash จะใช้กล้องอ่านป้ายชั้นกับเลขช่องจอดตอนจอด แล้วโชว์พร้อมรูปในแถบแจ้งเตือนและบนเว็บ 7xDash",
+    open: "การ์ด จอดรถไว้ที่ไหน ในหน้าหลัก (ต้องเปิดฟีเจอร์เบต้าก่อน)",
+    steps: ["แตะการ์ดเพื่ออ่านป้ายตอนนี้", "เปิด อัตโนมัติเมื่อเข้า P ให้อ่านทุกครั้งที่จอด", "เปิด สแกนเสา ให้อ่านป้ายที่เสาไปเรื่อยๆ ตอนขับช้ากว่า 3 กม./ชม.", "กดค้างที่การ์ดเพื่อสแกนเอง และดูว่าอ่านได้อะไรบ้าง"],
+    options: ["อัตโนมัติเมื่อเข้า P กับ สแกนเสา เปิดปิดได้ที่การ์ด", "เจอชั้นใหม่ระหว่างวนหาที่จอด จะขึ้นบน HUD"],
+    notes: ["ทำงานแบบออฟไลน์ ป้ายที่มืดหรือสกปรกอาจอ่านไม่ออก"] } },
+
+{ id: "dim", spot: "dim", group: "rail", img: "dim",
+  en: { name: "Dim", what: "Darkens the whole screen at night. You can still touch everything underneath.",
+    intro: "A dark veil over the whole screen, darker than the car's lowest brightness, so maps don't glare at night. Touches still go through to the app underneath.",
+    open: "Dim on the left rail, or the moon on the floating buttons.",
+    steps: ["Tap Dim. The screen darkens.", "Drag on the moon button to make it darker or lighter.", "Tap Dim again to turn it off."],
+    options: ["Settings → Dim overlay: opacity, brightness, warmth, pass touches through.", "Auto dim between set times."],
+    notes: ["Too dark to see? Tap the moon, it always stays visible."] },
+  th: { name: "หรี่จอ", what: "ลดความสว่างทั้งจอตอนกลางคืน แต่ยังแตะใช้งานข้างใต้ได้ปกติ",
+    intro: "ม่านมืดคลุมทั้งจอ มืดกว่าความสว่างต่ำสุดของรถ ตอนกลางคืนแผนที่จะได้ไม่แยงตา และยังแตะแอปข้างใต้ได้ตามปกติ",
+    open: "กด หรี่จอ ที่แถบซ้าย หรือรูปพระจันทร์ที่ปุ่มลอย",
+    steps: ["กด หรี่จอ จอจะมืดลง", "ลากบนปุ่มพระจันทร์เพื่อปรับให้มืดหรือสว่างขึ้น", "กด หรี่จอ อีกครั้งเพื่อปิด"],
+    options: ["ตั้งค่า → หรี่หน้าจอ: ความทึบ ความสว่าง โทนอุ่น และให้แตะทะลุได้", "หรี่อัตโนมัติตามช่วงเวลาที่ตั้งไว้"],
+    notes: ["มืดจนมองไม่เห็น? แตะพระจันทร์ได้เลย ปุ่มนี้จะมองเห็นเสมอ"] } },
+
+{ id: "eq", spot: "eq", group: "rail", img: "eq",
+  en: { name: "EQ", what: "An equalizer for the cabin, on top of the car's own sound settings.",
+    intro: "A 15-band equalizer with presets (Flat, Rock, Jazz, Hip-hop, Pop, K-Pop) and five slots of your own.",
+    open: "EQ on the left rail.",
+    steps: ["Set the car's own equalizer to Flat first.", "Tap EQ and play some music.", "Pick a preset, or move the sliders.", "Moving a slider on a built-in preset saves it to My presets."],
+    options: ["Five My presets slots."],
+    notes: ["If it sounds off, check the car's own EQ is still on Flat."] },
+  th: { name: "อีคิว", what: "ปรับเสียงเพิ่มจากเครื่องเสียงรถอีกชั้น",
+    intro: "อีควอไลเซอร์ 15 ช่อง มีพรีเซ็ตให้เลือก (Flat, Rock, Jazz, Hip-hop, Pop, K-Pop) และช่องเก็บของเราเองอีก 5 ช่อง",
+    open: "กด อีคิว ที่แถบซ้าย",
+    steps: ["ตั้ง EQ ของรถเป็น Flat ก่อน", "กด อีคิว แล้วเปิดเพลง", "เลือกพรีเซ็ต หรือเลื่อนปรับเอง", "ถ้าปรับจากพรีเซ็ตที่มีมา จะบันทึกลง พรีเซ็ตของฉัน ให้เอง"],
+    options: ["พรีเซ็ตของฉัน 5 ช่อง"],
+    notes: ["ถ้าเสียงแปลกๆ ลองเช็กว่า EQ ของรถยังเป็น Flat อยู่"] } },
+
+{ id: "airplay", spot: "airplay", group: "rail", img: "airplay",
+  en: { name: "AirPlay", what: "Mirror your iPhone, or send a YouTube video to the car screen.",
+    intro: "Makes the head unit an AirPlay receiver. Mirror the iPhone screen, or cast a video from apps like YouTube and the car downloads it itself, which is smoother.",
+    open: "AirPlay on the left rail.",
+    steps: ["Tap AirPlay to turn the receiver on.", "Put the iPhone on the same Wi-Fi as the car.", "On the iPhone, open Control Center → Screen Mirroring and pick 7xDash.", "The picture opens in a floating window: drag, pinch, dock, double-tap for small or large, × to stop."],
+    options: ["Video casting: let the car download cast videos itself.", "Show the picture while driving: off by default."],
+    notes: ["For passengers. Watching video while you drive is dangerous and illegal in many places."] },
+  th: { name: "AirPlay", what: "สะท้อนจอไอโฟน หรือส่งคลิป YouTube มาเปิดบนจอรถ",
+    intro: "ทำให้จอรถรับ AirPlay ได้ สะท้อนจอไอโฟน หรือส่งคลิปจากแอปอย่าง YouTube แล้วรถจะโหลดคลิปเอง ภาพลื่นกว่า",
+    open: "กด AirPlay ที่แถบซ้าย",
+    steps: ["กด AirPlay เพื่อเปิดตัวรับ", "ให้ไอโฟนอยู่ใน Wi-Fi เดียวกับรถ", "ในไอโฟน เปิดศูนย์ควบคุม → การสะท้อนหน้าจอ แล้วเลือก 7xDash", "ภาพจะขึ้นเป็นหน้าต่างลอย ลาก ถ่างนิ้ว ดันชิดขอบ แตะสองทีเพื่อสลับเล็ก/ใหญ่ กด × เพื่อหยุด"],
+    options: ["การส่งวิดีโอ: ให้รถโหลดคลิปที่ส่งมาเอง", "แสดงภาพขณะขับ: ปิดไว้เป็นค่าเริ่มต้น"],
+    notes: ["สำหรับผู้โดยสาร ดูวิดีโอขณะขับอันตรายและผิดกฎหมายในหลายที่"] } },
+
+{ id: "floating", spot: "floating", group: "more", img: "home",
+  en: { name: "Floating button", what: "Small buttons on top of every app: record, dim and close 7xDash.",
+    intro: "Three round buttons that stay on top of every app: record (with the elapsed time while recording), the dim moon, and quit.",
+    open: "Always there while 7xDash runs. Settings → Floating button to change it.",
+    steps: ["Tap the record button to start or stop recording.", "Tap the moon to dim the screen, drag on it to adjust.", "To quit, tap the power button once (it turns red) and again within 3 seconds."],
+    options: ["What a tap and a long press do.", "Opacity, lock position, show recording time."],
+    notes: ["The two-tap quit stops you closing the app by accident."] },
+  th: { name: "ปุ่มลอย", what: "ปุ่มเล็กๆ ลอยอยู่ทุกหน้า ใช้อัดคลิป หรี่จอ และปิดแอป",
+    intro: "ปุ่มกลมสามปุ่มลอยอยู่บนทุกแอป: ปุ่มอัด (โชว์เวลาตอนกำลังอัด) ปุ่มพระจันทร์สำหรับหรี่จอ และปุ่มปิดแอป",
+    open: "ขึ้นอยู่ตลอดตอนเปิด 7xDash ปรับได้ที่ ตั้งค่า → ปุ่มลอย",
+    steps: ["แตะปุ่มอัดเพื่อเริ่มหรือหยุดอัด", "แตะพระจันทร์เพื่อหรี่จอ ลากเพื่อปรับ", "จะปิดแอป แตะปุ่มปิดหนึ่งที (จะเป็นสีแดง) แล้วแตะอีกทีภายใน 3 วินาที"],
+    options: ["ตั้งว่าแตะกับกดค้างให้ทำอะไร", "ความโปร่งใส ล็อกตำแหน่ง และโชว์เวลาอัด"],
+    notes: ["ต้องแตะปิดสองครั้ง กันกดโดนเองโดยไม่ตั้งใจ"] } },
+
+{ id: "cabin", spot: "settings", group: "more", img: "home",
+  en: { name: "Cabin passenger", what: "A floating window with the rear cabin camera, to keep an eye on the kids.",
+    intro: "Shows the rear cabin camera in a floating window, so you can check on the kids in the back without turning around.",
+    open: "A shortcut button (set it up in Shortcuts).",
+    steps: ["Add a shortcut for Cabin passenger.", "Press it to open the window.", "Move, pinch and dock it like the Super mirror."],
+    options: ["Settings → System → Cabin passenger: window width and height."],
+    notes: ["Only on cars with the rear cabin camera."] },
+  th: { name: "ภาพห้องโดยสาร", what: "หน้าต่างลอยดูกล้องห้องโดยสารด้านหลัง ไว้ดูเด็กๆ หรือคนนั่งหลัง",
+    intro: "โชว์กล้องห้องโดยสารด้านหลังเป็นหน้าต่างลอย ดูเด็กๆ ที่นั่งหลังได้โดยไม่ต้องหันไป",
+    open: "ปุ่มลัด (ตั้งในเมนูปุ่มลัด)",
+    steps: ["เพิ่มปุ่มลัดสำหรับ ภาพห้องโดยสาร", "กดเพื่อเปิดหน้าต่าง", "ย้าย ถ่างนิ้ว และเก็บชิดขอบได้เหมือนกระจกมองหลัง"],
+    options: ["ตั้งค่า → ระบบ → ภาพห้องโดยสาร: ความกว้างและความสูงของหน้าต่าง"],
+    notes: ["ใช้ได้เฉพาะรถที่มีกล้องห้องโดยสารด้านหลัง"] } },
+
+{ id: "backup", spot: "settings", group: "more", img: "settings",
+  en: { name: "Settings backup", what: "Your settings are copied to the USB drive whenever they change, and come back by themselves after a reinstall.",
+    intro: "Switches, shortcuts, stickers, lights, speakers, EQ, profiles and announcements are copied to 7xDash/settings/ on the USB drive a few seconds after any change.",
+    open: "Automatic. Manual buttons are in Settings → System.",
+    steps: ["Keep the USB drive plugged in.", "After a reinstall or Clear data, settings come back on their own.", "To copy now, tap Back up settings to USB; to bring them back, Restore settings from USB."],
+    options: ["Back up settings to USB.", "Restore settings from USB (restarts 7xDash)."],
+    notes: ["Moving to another car? Take the USB drive with you."] },
+  th: { name: "สำรองการตั้งค่า", what: "การตั้งค่าทั้งหมดถูกก๊อปลงแฟลชไดรฟ์ทุกครั้งที่เปลี่ยน ลงแอปใหม่ก็กลับมาครบเอง",
+    intro: "สวิตช์ ปุ่มลัด สติกเกอร์ ไฟ ลำโพง อีคิว โปรไฟล์ และเสียงประกาศ จะถูกก๊อปไปไว้ที่ 7xDash/settings/ ในแฟลชไดรฟ์ ไม่กี่วินาทีหลังมีการเปลี่ยน",
+    open: "ทำให้อัตโนมัติ ปุ่มสั่งเองอยู่ที่ ตั้งค่า → ระบบ",
+    steps: ["เสียบแฟลชไดรฟ์ทิ้งไว้", "ลงแอปใหม่หรือล้างข้อมูล การตั้งค่าจะกลับมาเอง", "อยากสำรองตอนนี้ กด สำรองการตั้งค่าลง USB อยากกู้คืน กด กู้คืนการตั้งค่าจาก USB"],
+    options: ["สำรองการตั้งค่าลง USB", "กู้คืนการตั้งค่าจาก USB (แอปจะรีสตาร์ต)"],
+    notes: ["ย้ายไปรถคันอื่น? เอาแฟลชไดรฟ์ไปด้วย"] } },
+
+{ id: "updates", spot: "settings", group: "more", img: "home",
+  en: { name: "Updates and What's new", what: "7xDash checks for new versions and tells you what changed after each update.",
+    intro: "Checks GitHub for a newer 7xDash, downloads and installs it. The first time it opens after an update it shows what's new since the version you last used.",
+    open: "Settings → Check for updates.",
+    steps: ["Open Settings → Check for updates.", "If there is a newer version, tap to download and install.", "After the update, read What's new. It shows once."],
+    options: ["Include beta releases.", "What's new shows the last three versions any time."],
+    notes: ["Works without internet only for What's new; checking needs a connection."] },
+  th: { name: "อัปเดตและมีอะไรใหม่", what: "แอปเช็กเวอร์ชันใหม่ให้ และอัปเดตเสร็จจะบอกว่ามีอะไรเปลี่ยนบ้าง",
+    intro: "เช็กเวอร์ชันใหม่จาก GitHub โหลดและติดตั้งให้ เปิดแอปครั้งแรกหลังอัปเดตจะโชว์ว่ามีอะไรใหม่บ้างตั้งแต่เวอร์ชันที่ใช้ล่าสุด",
+    open: "ตั้งค่า → ตรวจสอบอัปเดต",
+    steps: ["เปิด ตั้งค่า → ตรวจสอบอัปเดต", "ถ้ามีเวอร์ชันใหม่ กดเพื่อโหลดและติดตั้ง", "อัปเดตเสร็จ อ่าน มีอะไรใหม่ ได้เลย ขึ้นแค่ครั้งเดียว"],
+    options: ["รวมรุ่นเบต้า", "มีอะไรใหม่ เปิดดูสามเวอร์ชันล่าสุดได้ตลอด"],
+    notes: ["ต้องมีเน็ตถึงจะเช็กอัปเดตได้ แต่หน้า มีอะไรใหม่ เปิดได้แม้ไม่มีเน็ต"] } },
+
+{ id: "diagnostics", spot: "settings", group: "more", img: "home",
+  en: { name: "Diagnostics", what: "Makes a report to send when something isn't working.",
+    intro: "Collects what the developer needs to fix a problem: the head unit, cameras, network, split-screen support and recent logs, in one file.",
+    open: "Settings → System → Diagnostics.",
+    steps: ["Open Settings → System → Diagnostics.", "Wait a few seconds while it collects.", "Scan the QR code to send the report to your phone, then pass it on."],
+    options: ["Crash reports and usage stats can be switched on or off in Settings."],
+    notes: ["No photos or videos are in the report."] },
+  th: { name: "การวินิจฉัย", what: "สร้างรายงานไว้ส่งให้คนทำแอป เวลามีอะไรไม่ทำงาน",
+    intro: "รวบรวมข้อมูลที่ผู้พัฒนาต้องใช้แก้ปัญหา เช่น ข้อมูลจอรถ กล้อง เครือข่าย การรองรับแบ่งจอ และ log ล่าสุด ไว้ในไฟล์เดียว",
+    open: "ตั้งค่า → ระบบ → การวินิจฉัย",
+    steps: ["เปิด ตั้งค่า → ระบบ → การวินิจฉัย", "รอสักครู่ให้แอปเก็บข้อมูล", "สแกน QR เพื่อส่งรายงานเข้ามือถือ แล้วส่งต่อให้ผู้พัฒนา"],
+    options: ["รายงานแครชและสถิติการใช้งาน เปิดปิดได้ในหน้าตั้งค่า"],
+    notes: ["ในรายงานไม่มีรูปหรือวิดีโอ"] } }
+];
+</script>
+<script>
+const C = [23.2, 42.25, 61.4, 80.45], R = [1.1, 20.9, 40.8, 60.6, 80.35];
+const card = (r, c) => [C[c], R[r], 18.5, 18.7];
+const RAIL = { dim: 22.9, eq: 67.0, airplay: 78.1, settings: 89.1 };
+const rail = k => [0.7, RAIL[k], 4.95, 9.95];
+const SPOT = {
+  recorder: [6.3, 18.9, 15.8, 80.5], floating: [81.9, 1.2, 12.7, 6.1],
+  photo: card(0,0), videos: card(0,1), rear: card(0,2), blind: card(0,3),
+  capture: card(1,0), saved: card(1,1), remote: card(1,2), megaphone: card(1,3),
+  drive: card(2,0), sticker: card(2,1), mood: card(2,2), shortcuts: card(2,3),
+  hud: card(3,0), speaker: card(3,1), announce: card(3,2), dash: card(3,3),
+  macro: card(4,0), arrival: card(4,1), parked: card(4,2),
+  dim: rail("dim"), eq: rail("eq"), airplay: rail("airplay"), settings: rail("settings")
+};
+
+window.SETTINGS = [{"key": "screen_shortcuts", "title": {"en": "Shortcuts", "th": "ปุ่มลัด"}, "summary": null, "groups": [{"title": null, "items": [{"type": "Preference", "key": "pref_shortcuts", "title": {"en": "Shortcuts", "th": "ปุ่มลัด"}, "summary": {"en": "Press a button, then pick what it does", "th": "กดปุ่ม แล้วเลือกว่าจะให้ทำอะไร"}}]}], "img": "shortcuts", "hidden": false}, {"key": "screen_sticker", "title": {"en": "Smart sticker", "th": "สติกเกอร์อัจฉริยะ"}, "summary": null, "groups": [{"title": null, "items": [{"type": "Preference", "key": "pref_sticker", "title": {"en": "Smart sticker (experimental)", "th": "สติกเกอร์อัจฉริยะ (ทดลอง)"}, "summary": {"en": "Finds a Bluetooth sticker the head unit does not pair yet. A press runs a saved shortcut", "th": "ค้นหาสติกเกอร์บลูทูธที่หัวเครื่องยังไม่ได้จับคู่ การกดจะสั่งปุ่มลัดที่บันทึกไว้"}}, {"type": "Preference", "key": "pref_ble_signal", "title": {"en": "BLE signals", "th": "สัญญาณ BLE"}, "summary": {"en": "Every Bluetooth LE advert the radio hears, with signal strength", "th": "ทุกสัญญาณโฆษณา Bluetooth LE ที่วิทยุได้ยิน พร้อมความแรงสัญญาณ"}}]}], "img": "sticker", "hidden": false}, {"key": "screen_mood_light", "title": {"en": "Mood light", "th": "ไฟบรรยากาศ"}, "summary": null, "groups": [{"title": null, "items": [{"type": "Preference", "key": "pref_mood_light", "title": {"en": "Mood light", "th": "ไฟบรรยากาศ"}, "summary": {"en": "Set the color of a cheap Bluetooth RGB light, like ELK-BLEDOM or Happy Lighting ones", "th": "ตั้งสีไฟ RGB บลูทูธราคาถูก เช่น รุ่น ELK-BLEDOM หรือ Happy Lighting"}}, {"type": "SwitchPreferenceCompat", "key": "pref_mood_light_blind_spot_blink", "title": {"en": "Blink orange for a car in the blind spot", "th": "กะพริบส้มเมื่อมีรถในจุดบอด"}, "summary": {"en": "While the turn signal is on and the car warns of a vehicle in the blind spot on that side, the mood lights blink orange, then go back to their usual color", "th": "เมื่อเปิดไฟเลี้ยว แล้วรถเตือนว่ามีรถอยู่ในจุดบอดฝั่งนั้น ไฟบรรยากาศจะกะพริบสีส้ม แล้วกลับเป็นสีเดิมเมื่อหมดเตือน"}}, {"type": "Preference", "key": "pref_car_ambient", "title": {"en": "Car lights (experimental)", "th": "ไฟของรถ (ทดลอง)"}, "summary": {"en": "Find out which car lights 7xDash can set: ambient, rear cabin, foot and hazard", "th": "ทดสอบว่า 7xDash ตั้งไฟของรถได้ดวงไหนบ้าง: ไฟบรรยากาศ ไฟห้องโดยสารด้านหลัง ไฟส่องเท้า และไฟฉุกเฉิน"}}, {"type": "Preference", "key": "pref_volume_lab", "title": {"en": "Car volume (experimental)", "th": "เสียงของรถ (ทดลอง)"}, "summary": {"en": "Find out whether 7xDash can turn the car's main volume up and down", "th": "ทดสอบว่า 7xDash เพิ่ม/ลดเสียงหลักของรถได้ไหม"}}, {"type": "Preference", "key": "pref_button_lab", "title": {"en": "Car buttons (experimental)", "th": "ปุ่มของรถ (ทดลอง)"}, "summary": {"en": "Press the car's buttons and see what each one sends, then try sending it from 7xDash", "th": "กดปุ่มของรถแล้วดูว่าแต่ละปุ่มส่งอะไร แล้วลองให้ 7xDash ส่งแบบเดียวกัน"}}]}], "img": "mood_light", "hidden": false}, {"key": "screen_controller", "title": {"en": "Controller", "th": "คอนโทรลเลอร์"}, "summary": null, "groups": [{"title": null, "items": [{"type": "Preference", "key": "pref_controller", "title": {"en": "Controller (experimental)", "th": "คอนโทรลเลอร์ (ทดลอง)"}, "summary": {"en": "Logs keys and sticks from a Bluetooth controller or button, for shortcuts later", "th": "บันทึกปุ่มและก้านจากคอนโทรลเลอร์หรือปุ่มบลูทูธ เพื่อใช้ทำปุ่มลัดภายหลัง"}}]}], "img": "controller", "hidden": false}, {"key": "screen_megaphone", "title": {"en": "Megaphone", "th": "โทรโข่ง"}, "summary": null, "groups": [{"title": null, "items": [{"type": "Preference", "key": "tap_speak_button", "title": {"en": "Button", "th": "ปุ่ม"}, "summary": {"en": "The steering wheel key or sticker that opens the megaphone. Tap Press the button to set, then press it.", "th": "ปุ่มบนพวงมาลัยหรือสติกเกอร์ที่ใช้เปิดโทรโข่ง แตะ กดปุ่มเพื่อตั้งค่า แล้วกดปุ่มที่ต้องการ"}}, {"type": "ListPreference", "key": "tap_speak_mode", "title": {"en": "How the button opens the microphone", "th": "วิธีที่ปุ่มเปิดไมโครโฟน"}, "summary": {"en": "Press and hold: talk while you hold the button. Press once: one press opens the mic for a set number of seconds; press again to stop early.", "th": "กดค้าง: พูดได้ตอนกดค้างไว้ กดครั้งเดียว: กดทีเดียวไมค์เปิดตามจำนวนวินาทีที่ตั้งไว้ กดอีกทีเพื่อหยุดก่อน"}, "entries": {"en": ["Press and hold", "Press once"], "th": ["กดค้าง", "กดครั้งเดียว"]}}, {"type": "SeekBarPreference", "key": "tap_speak_volume", "title": {"en": "Volume", "th": "ระดับเสียง"}, "summary": {"en": "How loud the megaphone is outside.", "th": "เสียงโทรโข่งข้างนอกดังแค่ไหน"}}, {"type": "Preference", "key": "tap_speak_speaker", "title": {"en": "Speakers", "th": "ลำโพง"}, "summary": {"en": "Tap to add or remove. The megaphone and the outside speaker play on every ticked speaker at the same time.", "th": "แตะเพื่อเพิ่มหรือเอาออก โทรโข่งและลำโพงนอกรถจะเล่นพร้อมกันทุกตัวที่เลือก"}}, {"type": "Preference", "key": "announce_open", "title": {"en": "Announcements", "th": "ประกาศ"}, "summary": {"en": "Phrases and sounds for the speakers: add your own, record your voice, pick one for when Sentry Mode arms.", "th": "ข้อความและเสียงสำหรับลำโพง เพิ่มเอง อัดเสียงตัวเอง หรือเลือกเสียงตอนเปิดโหมด Sentry"}}, {"type": "SwitchPreferenceCompat", "key": "outside_speaker", "title": {"en": "Outside speaker", "th": "ลำโพงนอกรถ"}, "summary": {"en": "What you AirPlay to 7xDash also plays on the outside speaker, at its own volume. CarPlay, Spotify and radio can't be copied: the car doesn't let apps capture them.", "th": "สิ่งที่ AirPlay มายัง 7xDash จะเล่นที่ลำโพงนอกรถด้วย ปรับระดับเสียงแยกได้ CarPlay, Spotify และวิทยุคัดลอกไม่ได้ เพราะรถไม่อนุญาตให้แอปดักเสียง"}}, {"type": "SeekBarPreference", "key": "outside_speaker_volume", "title": {"en": "Outside speaker volume", "th": "ระดับเสียงลำโพงนอกรถ"}, "summary": {"en": "How loud the outside speaker plays AirPlay sound.", "th": "ลำโพงนอกรถเล่นเสียงจาก AirPlay ดังแค่ไหน"}}]}], "img": "megaphone", "hidden": false}, {"key": "screen_recording", "title": {"en": "Recording", "th": "การบันทึก"}, "summary": null, "groups": [{"title": null, "items": [{"type": "ListPreference", "key": "pref_car_model", "title": {"en": "Stream profile", "th": "โปรไฟล์สตรีม"}, "summary": {"en": "%s", "th": "%s"}}, {"type": "Preference", "key": "pref_profile_editor", "title": {"en": "Edit stream profile", "th": "แก้ไขโปรไฟล์สตรีม"}, "summary": {"en": "Recording quality, per-camera settings and main-screen layout", "th": "คุณภาพการบันทึก การตั้งค่าแต่ละกล้อง และเลย์เอาต์หน้าจอหลัก"}}, {"type": "SwitchPreferenceCompat", "key": "pref_auto_record", "title": {"en": "Record on launch", "th": "บันทึกเมื่อเปิดแอป"}, "summary": {"en": "Starts recording when the app opens and resumes a recording stopped by screen-off when the screen turns on; never restarts one you stopped", "th": "เริ่มบันทึกเมื่อเปิดแอป และบันทึกต่อเมื่อจอเปิดหากหยุดไปเพราะจอดับ จะไม่เริ่มใหม่ถ้าคุณหยุดเอง"}}, {"type": "SwitchPreferenceCompat", "key": "pref_photo_via_jpeg", "title": {"en": "Use JPEG output for photos", "th": "ใช้เอาต์พุต JPEG สำหรับภาพถ่าย"}, "summary": {"en": "Takes photos from the camera's JPEG output at the largest size. When off, photos are captured from the preview at preview resolution. Takes effect after restarting the app.", "th": "ถ่ายภาพจากเอาต์พุต JPEG ของกล้องที่ขนาดใหญ่สุด เมื่อปิด จะจับภาพจากพรีวิวที่ความละเอียดของพรีวิว มีผลหลังรีสตาร์ทแอป"}}, {"type": "SwitchPreferenceCompat", "key": "pref_watermark_brand", "title": {"en": "App stamp", "th": "ตราแอป"}, "summary": {"en": "Shows this app's name and version", "th": "แสดงชื่อและเวอร์ชันของแอปนี้"}}, {"type": "SwitchPreferenceCompat", "key": "pref_license_plate_enabled", "title": {"en": "Plate number stamp", "th": "ตราป้ายทะเบียน"}, "summary": {"en": "Shows the plate number", "th": "แสดงหมายเลขทะเบียนรถ"}}, {"type": "EditTextPreference", "key": "pref_license_plate", "title": {"en": "Plate number", "th": "ป้ายทะเบียน"}, "summary": {"en": "Your plate number. It is stamped on the video when Plate number stamp is on.", "th": "เลขทะเบียนรถ จะประทับลงในคลิปเมื่อเปิด ประทับป้ายทะเบียน"}}, {"type": "SwitchPreferenceCompat", "key": "pref_watermark", "title": {"en": "Timestamp", "th": "ประทับเวลา"}, "summary": {"en": "Stamps the date and time on the video.", "th": "ประทับวันที่และเวลาลงในคลิป"}}, {"type": "SwitchPreferenceCompat", "key": "pref_watermark_spec", "title": {"en": "Include recording specs", "th": "ใส่สเปกการบันทึก"}, "summary": {"en": "Adds resolution, measured frame rate, codec and live bitrate to the video stamp", "th": "ใส่ความละเอียด อัตราเฟรมที่วัดได้ โคเดก และบิตเรตปัจจุบันลงในตราวิดีโอ"}}, {"type": "SwitchPreferenceCompat", "key": "pref_info_bar", "title": {"en": "Driving info bar", "th": "แถบข้อมูลการขับขี่"}, "summary": {"en": "Adds a strip of vehicle signals below the surround view video. Choose what it shows in Settings → System → System info. Experimental.", "th": "เพิ่มแถบสัญญาณรถใต้วิดีโอรอบคัน เลือกสิ่งที่แสดงได้ที่ การตั้งค่า → ระบบ → ข้อมูลระบบ (ทดลอง)"}}]}], "img": "recording", "hidden": false}, {"key": "screen_storage", "title": {"en": "Storage", "th": "ที่เก็บข้อมูล"}, "summary": null, "groups": [{"title": null, "items": [{"type": "ListPreference", "key": "pref_storage_location", "title": {"en": "Storage location", "th": "ตำแหน่งจัดเก็บ"}, "summary": {"en": "%s", "th": "%s"}}, {"type": "Preference", "key": "pref_storage_sentry_note", "title": {"en": "pref_storage_sentry_note", "th": "pref_storage_sentry_note"}, "summary": {"en": "With Sentry Mode on, only the USB-A port (where Sentry Mode saves its recordings) stays powered after you leave the car, so recording can continue. If the storage location is a drive on the Type-C port, that port loses power and recording switches to the drive on the USB-A port.", "th": "เมื่อเปิดโหมดเฝ้ารถ หลังคุณออกจากรถจะมีไฟเลี้ยงเฉพาะพอร์ต USB-A (ที่โหมดเฝ้ารถบันทึกไฟล์) การบันทึกจึงทำต่อได้ ถ้าตำแหน่งจัดเก็บเป็นไดรฟ์บนพอร์ต Type-C พอร์ตนั้นจะไม่มีไฟและการบันทึกจะย้ายไปที่ไดรฟ์บนพอร์ต USB-A"}}, {"type": "SwitchPreferenceCompat", "key": "pref_relay_write", "title": {"en": "Relay write", "th": "เขียนผ่านพื้นที่พัก"}, "summary": {"en": "Writes to internal storage first, then moves each finished clip to the USB drive, reducing dropped frames on a slow drive. When on, recording doesn't switch to another USB drive if this one disconnects.", "th": "เขียนลงหน่วยความจำภายในก่อน แล้วย้ายคลิปที่เสร็จแล้วไปยังไดรฟ์ USB ช่วยลดเฟรมตกบนไดรฟ์ที่ช้า เมื่อเปิด การบันทึกจะไม่ย้ายไปไดรฟ์ USB อื่นถ้าไดรฟ์นี้หลุด"}}, {"type": "EditTextPreference", "key": "pref_video_limit", "title": {"en": "Video storage cap", "th": "เพดานพื้นที่วิดีโอ"}, "summary": {"en": "How much of the USB drive videos may use, in GB. When it is full, the oldest clips are deleted first.", "th": "พื้นที่ในแฟลชไดรฟ์ที่ให้วิดีโอใช้ได้ (GB) ถ้าเต็มจะลบคลิปเก่าสุดก่อน"}}, {"type": "EditTextPreference", "key": "pref_photo_limit", "title": {"en": "Photo storage cap", "th": "เพดานพื้นที่ภาพถ่าย"}, "summary": {"en": "How much of the USB drive photos may use, in GB. When it is full, the oldest photos are deleted first.", "th": "พื้นที่ในแฟลชไดรฟ์ที่ให้รูปใช้ได้ (GB) ถ้าเต็มจะลบรูปเก่าสุดก่อน"}}, {"type": "SwitchPreferenceCompat", "key": "pref_footage_lock", "title": {"en": "Lock footage", "th": "ล็อกไฟล์บันทึก"}, "summary": {"en": "Lock videos and photos in playback. Locked files are never removed by automatic cleanup and can't be deleted until unlocked; if locked files fill the space, recording stops", "th": "ล็อกวิดีโอและภาพถ่ายในหน้าเล่นซ้ำ ไฟล์ที่ล็อกจะไม่ถูกลบโดยการล้างอัตโนมัติ และลบไม่ได้จนกว่าจะปลดล็อก ถ้าไฟล์ที่ล็อกเต็มพื้นที่ การบันทึกจะหยุด"}}, {"type": "SwitchPreferenceCompat", "key": "pref_footage_lock_flash", "title": {"en": "Flash-to-pass triggers Instant capture", "th": "กะพริบไฟสูงเพื่อจับภาพทันที"}, "summary": {"en": "While recording, flashing the high beam does the same as Instant capture: the surround view from 10 seconds before to 10 seconds after is saved to Saved captures, and those clips are locked on every camera. If locked footage fills the space, recording stops.", "th": "ขณะบันทึก การกะพริบไฟสูงทำงานเหมือนการจับภาพทันที: บันทึกภาพรอบคันตั้งแต่ 10 วินาทีก่อนถึง 10 วินาทีหลังไว้ในภาพที่จับไว้ และล็อกคลิปช่วงนั้นของทุกกล้อง ถ้าไฟล์ที่ล็อกเต็มพื้นที่ การบันทึกจะหยุด"}}, {"type": "Preference", "key": "pref_instant_captures", "title": {"en": "Saved captures", "th": "ภาพที่จับไว้"}, "summary": {"en": "Watch or delete the clips saved by Instant capture (from a tap, a shortcut or flash-to-pass)", "th": "ดูหรือลบคลิปที่บันทึกด้วยการจับภาพทันที (จากการแตะ ปุ่มลัด หรือการกะพริบไฟสูง)"}}, {"type": "SwitchPreferenceCompat", "key": "pref_footage_lock_horn", "title": {"en": "Lock footage on horn", "th": "ล็อกไฟล์เมื่อบีบแตร"}, "summary": {"en": "The head unit can't read the horn signal yet, so this is unavailable", "th": "หัวเครื่องยังอ่านสัญญาณแตรไม่ได้ จึงยังใช้ไม่ได้"}}, {"type": "Preference", "key": "pref_footage_locked", "title": {"en": "Locked", "th": "ล็อกอยู่"}, "summary": {"en": "How much space locked clips use (instant captures and saved moments). Locked clips are never deleted to make room.", "th": "พื้นที่ที่คลิปล็อกไว้ใช้อยู่ (จับภาพทันทีและช่วงเวลาที่บันทึก) คลิปพวกนี้จะไม่ถูกลบเพื่อเคลียร์ที่"}}, {"type": "Preference", "key": "pref_storage_usage", "title": {"en": "Video folder", "th": "โฟลเดอร์วิดีโอ"}, "summary": {"en": "Where videos are saved, and how much space they use now.", "th": "ที่เก็บวิดีโอ และพื้นที่ที่ใช้อยู่ตอนนี้"}}]}], "img": "storage", "hidden": false}, {"key": "screen_rearview", "title": {"en": "Super mirror", "th": "กระจกมองหลังอัจฉริยะ"}, "summary": null, "groups": [{"title": null, "items": [{"type": "Preference", "key": "pref_rearview_guide", "title": {"en": "How to use", "th": "วิธีใช้"}, "summary": {"en": "Gesture zones, switching cameras, framing, docking and resizing", "th": "โซนท่าทาง การสลับกล้อง การจัดเฟรม การเก็บเข้าขอบ และการปรับขนาด"}}, {"type": "SwitchPreferenceCompat", "key": "pref_rearview", "title": {"en": "Super mirror", "th": "กระจกมองหลังอัจฉริยะ"}, "summary": {"en": "Shows any surround camera in a floating window; the rear view is mirrored left to right, like the interior mirror", "th": "แสดงกล้องรอบคันตัวใดก็ได้ในหน้าต่างลอย ภาพด้านหลังกลับซ้ายขวาเหมือนกระจกมองหลังในรถ"}}, {"type": "SwitchPreferenceCompat", "key": "pref_rearview_front_rear", "title": {"en": "Front and rear only", "th": "หน้าและหลังเท่านั้น"}, "summary": {"en": "Switches between the front and rear views only", "th": "สลับระหว่างมุมหน้าและมุมหลังเท่านั้น"}}, {"type": "SwitchPreferenceCompat", "key": "pref_rearview_fisheye", "title": {"en": "Fisheye correction", "th": "แก้ภาพตาปลา"}, "summary": {"en": "Corrects fisheye barrel distortion in the Super mirror only; recordings are unchanged.", "th": "แก้ความโค้งของเลนส์ตาปลาเฉพาะในกระจกมองหลังอัจฉริยะ ไฟล์บันทึกไม่เปลี่ยน"}}, {"type": "SeekBarPreference", "key": "pref_rearview_fov", "title": {"en": "Field of view", "th": "มุมมองภาพ"}, "summary": {"en": "Wider shows more and looks sharper, with more distortion at the edges", "th": "กว้างขึ้นเห็นได้มากขึ้นและดูคมขึ้น แต่ขอบภาพบิดเบี้ยวมากขึ้น"}}, {"type": "SeekBarPreference", "key": "pref_rearview_width", "title": {"en": "Window width", "th": "ความกว้างหน้าต่าง"}, "summary": {"en": "Width of the Super mirror window.", "th": "ความกว้างของหน้าต่างกระจกมองหลัง"}}, {"type": "SeekBarPreference", "key": "pref_rearview_height", "title": {"en": "Window height", "th": "ความสูงหน้าต่าง"}, "summary": {"en": "Each can go up to full screen; the picture keeps its proportions and the window shape only sets how much is visible", "th": "แต่ละค่าขยายได้ถึงเต็มจอ ภาพคงสัดส่วนเดิม รูปทรงหน้าต่างกำหนดแค่ว่าเห็นได้มากแค่ไหน"}}, {"type": "SwitchPreferenceCompat", "key": "pref_rearview_button_mode", "title": {"en": "Button mode", "th": "โหมดปุ่ม"}, "summary": {"en": "Switches to the front, rear, left or right view when the top, bottom, left or right area is tapped", "th": "สลับไปมุมหน้า หลัง ซ้าย หรือขวา เมื่อแตะบริเวณบน ล่าง ซ้าย หรือขวา"}}, {"type": "Preference", "key": "pref_rearview_reset", "title": {"en": "Reset window and view", "th": "รีเซ็ตหน้าต่างและมุมมอง"}, "summary": {"en": "Restores the default window position and size, framing, field of view, fisheye correction and Front and rear only, and switches back to the rear view", "th": "คืนค่าตำแหน่งและขนาดหน้าต่าง การจัดเฟรม มุมมองภาพ การแก้ภาพตาปลา และหน้าและหลังเท่านั้น เป็นค่าเริ่มต้น แล้วกลับไปมุมหลัง"}}]}, {"title": {"en": "HUD notifications", "th": "การแจ้งเตือนบน HUD"}, "items": [{"type": "SwitchPreferenceCompat", "key": "pref_hud_notice", "title": {"en": "HUD notifications", "th": "การแจ้งเตือนบน HUD"}, "summary": {"en": "Show 7xDash messages on the HUD.", "th": "แสดงข้อความของ 7xDash บน HUD"}}, {"type": "SeekBarPreference", "key": "pref_hud_notice_left", "title": {"en": "Left position", "th": "ตำแหน่งด้านซ้าย"}, "summary": {"en": "Move the card right until it is fully visible on the HUD. A test card shows each time you change it.", "th": "เลื่อนการ์ดไปทางขวาจนเห็นครบบน HUD ทุกครั้งที่ปรับจะแสดงการ์ดทดสอบ"}}, {"type": "SeekBarPreference", "key": "pref_hud_notice_right", "title": {"en": "Right position", "th": "ตำแหน่งด้านขวา"}, "summary": {"en": "Move the card's right edge in until long notices stay fully visible on the HUD. A test card shows each time you change it.", "th": "เลื่อนขอบขวาของการ์ดเข้ามาจนข้อความยาวๆ เห็นครบบน HUD ทุกครั้งที่ปรับจะแสดงการ์ดทดสอบ"}}]}], "img": "rearview", "hidden": false}, {"key": "screen_side_mirror", "title": {"en": "Side mirror", "th": "กระจกข้าง"}, "summary": null, "groups": [{"title": null, "items": [{"type": "SwitchPreferenceCompat", "key": "pref_side_popup", "title": {"en": "Turn-signal side view", "th": "ภาพด้านข้างเมื่อเปิดไฟเลี้ยว"}, "summary": {"en": "While you signal, a pop-up shows the camera on that side: left signal, left camera. It closes when the signal goes off. No pop-up in reverse. Not shown while the Super mirror is on", "th": "ขณะเปิดไฟเลี้ยว ป๊อปอัปจะแสดงกล้องด้านนั้น: เลี้ยวซ้าย กล้องซ้าย และปิดเมื่อไฟเลี้ยวดับ ไม่แสดงขณะถอย ไม่แสดงขณะเปิดกระจกมองหลังอัจฉริยะ"}}]}, {"title": {"en": "Where it shows", "th": "แสดงที่ไหน"}, "items": [{"type": "SwitchPreferenceCompat", "key": "pref_side_popup_screen", "title": {"en": "On the centre screen", "th": "บนหน้าจอกลาง"}, "summary": {"en": "Shows that side camera on the centre screen. Turn on with On the driver HUD to show it on both", "th": "แสดงกล้องด้านนั้นบนหน้าจอกลาง เปิดคู่กับ \"บน HUD ของผู้ขับ\" เพื่อให้ขึ้นทั้งสองที่"}}, {"type": "SwitchPreferenceCompat", "key": "pref_side_popup_hud", "title": {"en": "On the driver HUD", "th": "บน HUD ของผู้ขับ"}, "summary": {"en": "Shows that side camera on the windscreen as a small picture, so the car's own speed and lane graphics stay. If this car has no HUD display, it shows on the centre screen instead", "th": "แสดงกล้องด้านนั้นบนกระจกหน้าเป็นภาพเล็ก ข้อมูลความเร็วและเลนของรถจึงยังอยู่ ถ้ารถคันนี้ไม่มี HUD จะแสดงที่หน้าจอกลางแทน"}}, {"type": "SegmentedPreference", "key": "pref_side_popup_style", "title": {"en": "Pop-up style", "th": "รูปแบบป๊อปอัป"}, "summary": {"en": "On the centre screen. Wide is a landscape picture with rounded corners in the top-right corner for both sides, like Tesla's blind-spot camera", "th": "บนจอกลาง แบบกว้างเป็นภาพแนวนอนมุมโค้ง ขึ้นที่มุมขวาบนทั้งสองฝั่ง คล้ายกล้องจุดบอดของ Tesla"}}, {"type": "SeekBarPreference", "key": "pref_side_popup_size", "title": {"en": "Pop-up size (% of screen height)", "th": "ขนาดป๊อปอัป (% ของความสูงจอ)"}, "summary": {"en": "Up to half the screen width. The right side opens at the right edge, the left side near the middle", "th": "ได้สูงสุดครึ่งความกว้างจอ ฝั่งขวาขึ้นชิดขอบขวา ฝั่งซ้ายขึ้นแถวกลางจอ"}}, {"type": "SeekBarPreference", "key": "pref_side_popup_vertical", "title": {"en": "Height on screen (%)", "th": "ความสูงบนจอ (%)"}, "summary": {"en": "0 is the top, 100 the bottom", "th": "0 คือด้านบน 100 คือด้านล่าง"}}, {"type": "SeekBarPreference", "key": "pref_side_popup_hud_width", "title": {"en": "HUD width (%)", "th": "ความกว้างบน HUD (%)"}, "summary": {"en": "How wide the picture is on the windscreen. It stays on the outer edge, clear of the car graphic. 27 is about 16:9 on this car", "th": "ความกว้างของภาพบนกระจกหน้า ภาพอยู่ชิดขอบด้านนอก ไม่บังกราฟิกรถ 27 ประมาณ 16:9 บนรถคันนี้"}}, {"type": "SeekBarPreference", "key": "pref_side_popup_hud_height", "title": {"en": "HUD height (%)", "th": "ความสูงบน HUD (%)"}, "summary": {"en": "How tall the picture is on the windscreen. 45 matches the last build. 100 fills the strip", "th": "ความสูงของภาพบนกระจกหน้า 45 เท่ากับรุ่นก่อน 100 เต็มแถบ"}}, {"type": "SwitchPreferenceCompat", "key": "pref_side_popup_hud_left", "title": {"en": "Both cameras on the left", "th": "กล้องทั้งสองอยู่ด้านซ้าย"}, "summary": {"en": "Left and right turn signals both put their picture on the left edge. Off keeps each camera on its own side", "th": "ไฟเลี้ยวซ้ายและขวาแสดงภาพที่ขอบซ้ายทั้งคู่ เมื่อปิด แต่ละกล้องอยู่ด้านของตัวเอง"}}, {"type": "SwitchPreferenceCompat", "key": "pref_both_mirrors_hud", "title": {"en": "Both side mirrors on the HUD", "th": "กระจกข้างทั้งสองบน HUD"}, "summary": {"en": "The both-mirrors shortcut puts the left picture on the left edge and the right picture on the right edge. Off keeps both on the centre screen", "th": "ปุ่มลัดกระจกข้างทั้งสองจะวางภาพซ้ายที่ขอบซ้ายและภาพขวาที่ขอบขวา เมื่อปิด ทั้งสองอยู่ที่หน้าจอกลาง"}}]}, {"title": {"en": "When it shows", "th": "แสดงเมื่อไร"}, "items": [{"type": "SeekBarPreference", "key": "pref_side_popup_min_speed", "title": {"en": "Show from speed (km/h)", "th": "แสดงตั้งแต่ความเร็ว (กม./ชม.)"}, "summary": {"en": "Below this speed the car shows its own side view. 0 shows it at any speed", "th": "ต่ำกว่าความเร็วนี้ รถจะแสดงภาพด้านข้างของตัวเอง 0 คือแสดงทุกความเร็ว"}}, {"type": "SwitchPreferenceCompat", "key": "pref_side_popup_door", "title": {"en": "Show the side when a door opens", "th": "แสดงด้านข้างเมื่อเปิดประตู"}, "summary": {"en": "While stopped, opening a door shows the camera on that side, so you can see cars and bikes coming from behind. It closes when the doors close", "th": "ขณะรถจอด เมื่อเปิดประตูจะแสดงกล้องฝั่งนั้น เพื่อดูรถหรือจักรยานที่มาจากด้านหลัง และปิดเมื่อประตูปิดหมด"}}, {"type": "SwitchPreferenceCompat", "key": "pref_side_popup_over_factory", "title": {"en": "Show over the car's own view", "th": "แสดงทับภาพของรถ"}, "summary": {"en": "Opens even while the car shows its 360 view, its own side view or park assist. Never in R", "th": "ขึ้นได้แม้รถกำลังแสดงภาพ 360 ภาพด้านข้างของรถเอง หรือระบบช่วยจอด ยกเว้นตอนเข้าเกียร์ R"}}, {"type": "SwitchPreferenceCompat", "key": "pref_side_popup_instant", "title": {"en": "Instant pop-up", "th": "ป๊อปอัปทันใจ"}, "summary": {"en": "In D, keeps the side view ready in the background so the picture is there as soon as you signal. The camera stays on while driving, which uses a little more power", "th": "ในเกียร์ D จะเตรียมภาพด้านข้างไว้เบื้องหลัง ภาพจึงขึ้นทันทีที่เปิดไฟเลี้ยว กล้องเปิดค้างขณะขับ ใช้พลังงานมากขึ้นเล็กน้อย"}}, {"type": "SeekBarPreference", "key": "pref_side_popup_close_delay_ms", "title": {"en": "Stay open after the signal (ms)", "th": "เปิดค้างหลังไฟเลี้ยวดับ (มิลลิวินาที)"}, "summary": {"en": "1000 ms = 1 second. 0 closes it as soon as the signal goes off. Reversing still closes it straight away, and so does the car's own view when Show over the car's own view is off", "th": "1000 มิลลิวินาที = 1 วินาที 0 คือปิดทันทีที่ไฟเลี้ยวดับ เข้าเกียร์ถอยยังปิดป๊อปอัปทันที และภาพของรถก็ปิดทันทีถ้าปิด \"แสดงทับภาพของรถ\" ไว้"}}]}, {"title": {"en": "Picture", "th": "ภาพ"}, "items": [{"type": "SwitchPreferenceCompat", "key": "pref_side_popup_straighten", "title": {"en": "Straighten picture", "th": "ปรับภาพให้ตรง"}, "summary": {"en": "Corrects the fisheye curve before showing it; the three settings below set how wide it looks and where it points. Only changes the pop-up; recordings are not affected", "th": "แก้ความโค้งของเลนส์ตาปลาก่อนแสดง สามค่าด้านล่างกำหนดความกว้างและทิศทางของภาพ เปลี่ยนเฉพาะป๊อปอัป ไม่มีผลกับไฟล์บันทึก"}}, {"type": "SeekBarPreference", "key": "pref_side_popup_fov", "title": {"en": "View width (°)", "th": "ความกว้างภาพ (°)"}, "summary": {"en": "Smaller zooms in. Only applies with Straighten picture on", "th": "ค่าน้อยลงคือซูมเข้า ใช้ได้เฉพาะเมื่อเปิดปรับภาพให้ตรง"}}, {"type": "SeekBarPreference", "key": "pref_side_popup_yaw", "title": {"en": "Aim back (°)", "th": "หันไปด้านหลัง (°)"}, "summary": {"en": "Positive turns the view towards the rear (the blind spot), negative towards the front. The direction is a guess: if it turns the wrong way, drag the other way", "th": "ค่าบวกหันภาพไปทางด้านหลัง (จุดบอด) ค่าลบหันไปด้านหน้า ทิศทางเป็นการคาดเดา ถ้าหันผิดทาง ให้ลากไปอีกทาง"}}, {"type": "SeekBarPreference", "key": "pref_side_popup_pitch", "title": {"en": "Aim up (°)", "th": "เงยขึ้น (°)"}, "summary": {"en": "Positive turns the view out towards the road further away, negative down at the car and the ground. The direction is a guess: if it turns the wrong way, drag the other way", "th": "ค่าบวกเงยภาพออกไปทางถนนที่ไกลขึ้น ค่าลบก้มลงหาตัวรถและพื้น ทิศทางเป็นการคาดเดา ถ้าหันผิดทาง ให้ลากไปอีกทาง"}}, {"type": "SeekBarPreference", "key": "pref_side_popup_roll_left", "title": {"en": "Rotate left (°)", "th": "หมุนภาพซ้าย (°)"}, "summary": {"en": "Positive turns the picture clockwise to level a tilted horizon. Left and right are separate. If it turns the wrong way, drag the other way", "th": "ค่าบวกหมุนภาพตามเข็มนาฬิกาเพื่อปรับเส้นขอบฟ้าที่เอียง ซ้ายและขวาตั้งแยกกัน ถ้าหมุนผิดทาง ให้ลากไปอีกทาง"}}, {"type": "SeekBarPreference", "key": "pref_side_popup_roll_right", "title": {"en": "Rotate right (°)", "th": "หมุนภาพขวา (°)"}, "summary": {"en": "Positive turns the picture clockwise to level a tilted horizon. Left and right are separate. If it turns the wrong way, drag the other way", "th": "ค่าบวกหมุนภาพตามเข็มนาฬิกาเพื่อปรับเส้นขอบฟ้าที่เอียง ซ้ายและขวาตั้งแยกกัน ถ้าหมุนผิดทาง ให้ลากไปอีกทาง"}}]}, {"title": {"en": "Blind spot", "th": "จุดบอด"}, "items": [{"type": "Preference", "key": "pref_side_popup_bsd_finder", "title": {"en": "Blind-spot warning finder", "th": "ค้นหาสัญญาณเตือนจุดบอด"}, "summary": {"en": "Teach 7xDash which car signal means a car is in your blind spot. Then the side view gets a red edge and the mood lights blink orange while it warns", "th": "สอน 7xDash ว่าสัญญาณไหนของรถบอกว่ามีรถอยู่ในจุดบอด จากนั้นภาพด้านข้างจะมีขอบแดง และไฟบรรยากาศจะกะพริบสีส้มขณะเตือน"}}, {"type": "SwitchPreferenceCompat", "key": "pref_side_popup_bsd_sniffer", "title": {"en": "Report blind-spot signals (experimental)", "th": "แจ้งสัญญาณจุดบอด (ทดลอง)"}, "summary": {"en": "While the screen is on, watches every car setting that looks blind-spot related. Each change is written to the log and black box and shown on the HUD as \"BSD?\" with its name and value, so you notice when the car sends something as a car passes. Then teach it in the Blind-spot warning finder", "th": "ขณะหน้าจอเปิด จะเฝ้าดูการตั้งค่ารถทุกอย่างที่ดูเกี่ยวกับจุดบอด ทุกครั้งที่ค่าเปลี่ยนจะบันทึกลงล็อกและกล่องดำ และแสดงบน HUD เป็น \"BSD?\" พร้อมชื่อและค่า ให้รู้ว่ารถส่งสัญญาณอะไรตอนมีรถผ่าน จากนั้นสอนได้ในหน้าค้นหาสัญญาณเตือนจุดบอด"}}]}], "img": "side_mirror", "hidden": false}, {"key": "screen_floating", "title": {"en": "Floating button", "th": "ปุ่มลอย"}, "summary": null, "groups": [{"title": null, "items": [{"type": "SwitchPreferenceCompat", "key": "pref_recording_floating", "title": {"en": "Floating button", "th": "ปุ่มลอย"}, "summary": {"en": "Shows recording status in a floating button; set tap and long-press actions below", "th": "แสดงสถานะการบันทึกในปุ่มลอย ตั้งค่าการแตะและการกดค้างได้ด้านล่าง"}}, {"type": "SwitchPreferenceCompat", "key": "pref_dash_panel", "title": {"en": "Dash panel", "th": "แผงหน้าปัด"}, "summary": {"en": "A small card that floats over maps, music or any other app: speed, gear, turn signals, the clock and whether 7xDash is recording, with buttons for a surround photo, an instant capture, Super mirror and opening 7xDash. Drag to move, pinch to resize, push to a side to dock", "th": "การ์ดเล็กที่ลอยเหนือแผนที่ เพลง หรือแอปอื่น: ความเร็ว เกียร์ ไฟเลี้ยว นาฬิกา และสถานะการบันทึกของ 7xDash พร้อมปุ่มถ่ายรูปรอบคัน บันทึกคลิปทันที กระจกมองหลัง และเปิด 7xDash ลากเพื่อย้าย บีบเพื่อปรับขนาด ดันไปขอบเพื่อเก็บ"}}, {"type": "SwitchPreferenceCompat", "key": "pref_macro_pad", "title": {"en": "Macro pad", "th": "มาโครแพด"}, "summary": {"en": "A floating pad of six buttons over any app. Choose what each one does on the Macro pad card", "th": "แผงปุ่มลอย 6 ปุ่มทับทุกแอป เลือกได้ว่าแต่ละปุ่มทำอะไรที่การ์ดมาโครแพด"}}, {"type": "ListPreference", "key": "pref_floating_tap", "title": {"en": "Tap", "th": "แตะ"}, "summary": {"en": "What a tap on the floating button does.", "th": "แตะปุ่มลอยแล้วให้ทำอะไร"}}, {"type": "ListPreference", "key": "pref_floating_long_press", "title": {"en": "Long press", "th": "กดค้าง"}, "summary": {"en": "What a long press on the floating button does.", "th": "กดค้างที่ปุ่มลอยแล้วให้ทำอะไร"}}, {"type": "SeekBarPreference", "key": "pref_button_size", "title": {"en": "Button size", "th": "ขนาดปุ่ม"}, "summary": {"en": "Size of the floating buttons.", "th": "ขนาดของปุ่มลอย"}}, {"type": "SeekBarPreference", "key": "pref_floating_alpha", "title": {"en": "Button opacity", "th": "ความทึบของปุ่ม"}, "summary": {"en": "How see-through the floating buttons are.", "th": "ความโปร่งใสของปุ่มลอย"}}, {"type": "SwitchPreferenceCompat", "key": "pref_floating_lock", "title": {"en": "Lock position", "th": "ล็อกตำแหน่ง"}, "summary": {"en": "Locks the button in its current position; tap and long press still work", "th": "ล็อกปุ่มไว้ที่ตำแหน่งปัจจุบัน การแตะและกดค้างยังใช้ได้"}}, {"type": "SwitchPreferenceCompat", "key": "pref_floating_duration", "title": {"en": "Show recording time", "th": "แสดงเวลาบันทึก"}, "summary": {"en": "Shows elapsed time next to the button while recording", "th": "แสดงเวลาที่ผ่านไปข้างปุ่มขณะบันทึก"}}, {"type": "SeekBarPreference", "key": "pref_button_text_size", "title": {"en": "Time text size", "th": "ขนาดตัวอักษรเวลา"}, "summary": {"en": "Size of the recording time on the record button.", "th": "ขนาดตัวเลขเวลาอัดบนปุ่มอัด"}}, {"type": "Preference", "key": "pref_reset_floating", "title": {"en": "Reset floating button", "th": "รีเซ็ตปุ่มลอย"}, "summary": {"en": "Restores the default position, button size and time text size", "th": "คืนค่าตำแหน่ง ขนาดปุ่ม และขนาดตัวอักษรเวลาเป็นค่าเริ่มต้น"}}]}], "img": "floating", "hidden": false}, {"key": "screen_dim", "title": {"en": "Dim overlay", "th": "หรี่หน้าจอ"}, "summary": null, "groups": [{"title": null, "items": [{"type": "SwitchPreferenceCompat", "key": "pref_dim", "title": {"en": "Dim overlay", "th": "หรี่หน้าจอ"}, "summary": {"en": "Covers the whole screen so maps is less bright. Default opacity 90%. Touches still reach the app underneath", "th": "คลุมทั้งหน้าจอเพื่อให้แผนที่สว่างน้อยลง ความทึบเริ่มต้น 90% การแตะยังส่งถึงแอปด้านล่าง"}}, {"type": "SeekBarPreference", "key": "pref_dim_opacity", "title": {"en": "Opacity", "th": "ความทึบ"}, "summary": {"en": "How dark the dim veil is.", "th": "ความมืดของม่านหรี่จอ"}}, {"type": "SeekBarPreference", "key": "pref_dim_brightness", "title": {"en": "Brightness", "th": "ความสว่าง"}, "summary": {"en": "0 is pure black. Higher is a lighter veil", "th": "0 คือดำสนิท ค่าสูงขึ้นคือม่านที่จางลง"}}, {"type": "SeekBarPreference", "key": "pref_dim_warmth", "title": {"en": "Warmth", "th": "ความอุ่นของสี"}, "summary": {"en": "Higher shifts the veil toward amber", "th": "ค่าสูงขึ้นทำให้ม่านออกโทนสีเหลืองอำพัน"}}, {"type": "SwitchPreferenceCompat", "key": "pref_dim_passthrough", "title": {"en": "Pass touches through", "th": "ให้การแตะทะลุผ่าน"}, "summary": {"en": "On: maps still receives taps. Off: the veil blocks them", "th": "เปิด: แผนที่ยังรับการแตะได้ ปิด: ม่านจะกั้นการแตะไว้"}}, {"type": "Preference", "key": "pref_dim_reset", "title": {"en": "Reset", "th": "รีเซ็ต"}, "summary": {"en": "Opacity 90%, brightness 0, warmth 0, touches pass through", "th": "ความทึบ 90%, ความสว่าง 0, ความอุ่น 0, การแตะทะลุผ่าน"}}, {"type": "SwitchPreferenceCompat", "key": "pref_auto_dim", "title": {"en": "Auto dim by time (experimental)", "th": "หรี่อัตโนมัติตามเวลา (ทดลอง)"}, "summary": {"en": "Turns dim on and off by the clock. Probes system brightness once into diagnostics; most head units cannot read it", "th": "เปิดและปิดการหรี่ตามนาฬิกา ตรวจความสว่างของระบบหนึ่งครั้งเก็บไว้ในข้อมูลวินิจฉัย หัวเครื่องส่วนใหญ่อ่านค่านี้ไม่ได้"}}, {"type": "SeekBarPreference", "key": "pref_auto_dim_start", "title": {"en": "Dim from", "th": "หรี่ตั้งแต่"}, "summary": {"en": "Hour when dim turns on", "th": "ชั่วโมงที่เริ่มหรี่"}}, {"type": "SeekBarPreference", "key": "pref_auto_dim_end", "title": {"en": "Dim until", "th": "หรี่จนถึง"}, "summary": {"en": "Hour when dim turns off", "th": "ชั่วโมงที่เลิกหรี่"}}]}], "img": "dim", "hidden": false}, {"key": "screen_interface", "title": {"en": "Interface", "th": "อินเทอร์เฟซ"}, "summary": null, "groups": [{"title": null, "items": [{"type": "ListPreference", "key": "pref_language", "title": {"en": "Language", "th": "ภาษา"}, "summary": {"en": "%s", "th": "%s"}}, {"type": "SegmentedPreference", "key": "pref_menu_side", "title": {"en": "Side menu", "th": "เมนูด้านข้าง"}, "summary": {"en": "Where the home control bar, the slide-out menu and the settings list sit", "th": "ตำแหน่งของแถบควบคุมหน้าหลัก เมนูเลื่อน และรายการการตั้งค่า"}}, {"type": "SegmentedPreference", "key": "pref_rail_side", "title": {"en": "Action button side", "th": "ด้านของปุ่มการทำงาน"}, "summary": {"en": "Put them on the driver's side", "th": "วางไว้ฝั่งผู้ขับ"}}, {"type": "SwitchPreferenceCompat", "key": "pref_beta_features", "title": {"en": "Beta features", "th": "ฟีเจอร์เบต้า"}, "summary": {"en": "Show features that are still being tried on the car, and let them run. Now: Where I parked (home card, and reading the signs when the car goes into P) and Battery at arrival. The Where I parked shortcut still works.", "th": "แสดงและเปิดใช้ฟีเจอร์ที่ยังทดลองในรถอยู่ ตอนนี้มี: จอดไว้ที่ไหน (การ์ดในหน้าหลัก และอ่านป้ายเมื่อเข้าเกียร์ P) และแบตเมื่อถึงที่หมาย ปุ่มลัดจอดไว้ที่ไหนยังใช้ได้"}}, {"type": "SwitchPreferenceCompat", "key": "pref_crash_reports", "title": {"en": "Anonymous crash reports", "th": "รายงานข้อผิดพลาด (ไม่ระบุตัวตน)"}, "summary": {"en": "When 7xDash crashes, the next start sends the kind of error and where in 7xDash's code it happened. Never the error's message, files or anything on screen", "th": "ถ้าแอปหยุดทำงานกะทันหัน ครั้งหน้าที่เปิดแอปจะส่งประเภทของข้อผิดพลาดและจุดที่เกิดในโค้ด ไม่ส่งรายละเอียดข้อความ ไฟล์ หรือสิ่งที่อยู่บนหน้าจอ"}}, {"type": "SwitchPreferenceCompat", "key": "pref_usage_stats", "title": {"en": "Anonymous usage stats", "th": "สถิติการใช้งาน (ไม่ระบุตัวตน)"}, "summary": {"en": "Which features get used: app start, home cards, pages, actions and what ran them, buttons you set up, recording, 7xDash web controls. A random install id only: no email, plate or location. About 20–50 KB a day", "th": "ฟีเจอร์ที่ใช้ เช่น การเปิดแอป การ์ดหน้าหลัก หน้าที่เปิด การทำงานที่ใช้และกดจากตรงไหน ปุ่มที่ตั้งค่าไว้ การบันทึก และการควบคุมจาก 7xDash เว็บ ใช้แค่รหัสสุ่มที่สร้างตอนติดตั้งแอป ไม่มีอีเมล ป้ายทะเบียน หรือตำแหน่ง ประมาณ 20–50 KB ต่อวัน"}}, {"type": "SwitchPreferenceCompat", "key": "pref_recording_stats", "title": {"en": "Recording status readout", "th": "แสดงสถานะการบันทึก"}, "summary": {"en": "Shows the elapsed time and current clip number in a corner while recording", "th": "แสดงเวลาที่ผ่านไปและหมายเลขคลิปปัจจุบันที่มุมจอขณะบันทึก"}}, {"type": "SwitchPreferenceCompat", "key": "pref_reduce_motion", "title": {"en": "Less motion while recording", "th": "ลดแอนิเมชันขณะบันทึก"}, "summary": {"en": "Turns off transitions and other decorative animation while recording, leaving the GPU to the encoder. The record button and progress ring still animate.", "th": "ปิดทรานสิชันและแอนิเมชันตกแต่งขณะบันทึก เพื่อให้ GPU ทำงานให้ตัวเข้ารหัส ปุ่มบันทึกและวงความคืบหน้ายังเคลื่อนไหวอยู่"}}, {"type": "SwitchPreferenceCompat", "key": "pref_vehicle_status", "title": {"en": "Vehicle status (experimental)", "th": "สถานะรถ (ทดลอง)"}, "summary": {"en": "Shows horn, flash-to-pass and hazard lights below Straighten on the main screen, using the Driving info bar icons; the horn signal can't be read yet", "th": "แสดงแตร การกะพริบไฟสูง และไฟฉุกเฉินใต้ ปรับให้ตรง บนหน้าจอหลัก โดยใช้ไอคอนแถบข้อมูลการขับขี่ ยังอ่านสัญญาณแตรไม่ได้"}}, {"type": "ListPreference", "key": "pref_fisheye_projection", "title": {"en": "Fisheye projection", "th": "การฉายภาพตาปลา"}, "summary": {"en": "How fisheye pictures are flattened when fisheye correction is on.", "th": "วิธีแก้ภาพโค้งจากเลนส์ตาปลา ตอนเปิดแก้ภาพตาปลา"}}, {"type": "SeekBarPreference", "key": "pref_fisheye_fov", "title": {"en": "Corrected field of view", "th": "มุมมองหลังแก้ภาพ"}, "summary": {"en": "A wider angle keeps more of the picture. Up to 140° for Straight lines, 180° for Wide and Full circle.", "th": "มุมกว้างขึ้นเก็บภาพได้มากขึ้น สูงสุด 140° สำหรับเส้นตรง 180° สำหรับกว้างและวงกลมเต็ม"}}]}], "img": "interface", "hidden": false}, {"key": "screen_system", "title": {"en": "System", "th": "ระบบ"}, "summary": null, "groups": [{"title": null, "items": [{"type": "SwitchPreferenceCompat", "key": "pref_auto_start", "title": {"en": "Start on boot", "th": "เริ่มเมื่อเปิดเครื่อง"}, "summary": {"en": "Keeps the app running in the background. After the head unit restarts or the system closes the app, restarts it and restores Super mirror, the floating button and auto-recording if they were on. When off, it isn't restarted.", "th": "ให้แอปทำงานอยู่เบื้องหลัง หลังหัวเครื่องรีสตาร์ทหรือระบบปิดแอป จะเปิดแอปใหม่และคืนค่ากระจกมองหลังอัจฉริยะ ปุ่มลอย และการบันทึกอัตโนมัติถ้าเคยเปิดไว้ เมื่อปิด จะไม่เปิดแอปใหม่"}, "default": "true"}, {"type": "SwitchPreferenceCompat", "key": "pref_screen_off_keep_recording", "title": {"en": "Keep recording when the screen goes off", "th": "บันทึกต่อเมื่อจอดับ"}, "summary": {"en": "Records only the surround view with the screen off; front and rear cabin recording resumes when the screen turns on. Without Sentry Mode, recording pauses while the head unit sleeps and resumes on wake. When off, recording stops once the screen turns off.", "th": "ขณะจอดับจะบันทึกเฉพาะภาพรอบคัน กล้องห้องโดยสารหน้าและหลังจะบันทึกต่อเมื่อจอเปิด ถ้าไม่มีโหมดเฝ้ารถ การบันทึกจะหยุดชั่วคราวขณะหัวเครื่องหลับและทำต่อเมื่อตื่น เมื่อปิด การบันทึกจะหยุดเมื่อจอดับ"}, "default": "true"}, {"type": "Preference", "key": "pref_usb_backup", "title": {"en": "Back up settings to USB", "th": "สำรองการตั้งค่าลง USB"}, "summary": {"en": "Settings, shortcuts, stickers, lights, speakers and announcements are copied to the USB stick a few seconds after any change, and come back by themselves after a reinstall. Tap to copy now.", "th": "การตั้งค่า ปุ่มลัด สติกเกอร์ ไฟ ลำโพง และประกาศ จะถูกคัดลอกลง USB ไม่กี่วินาทีหลังเปลี่ยน และกลับมาเองหลังติดตั้งใหม่ แตะเพื่อคัดลอกตอนนี้"}}, {"type": "Preference", "key": "pref_usb_restore", "title": {"en": "Restore settings from USB", "th": "กู้คืนการตั้งค่าจาก USB"}, "summary": {"en": "Put back the copy on the USB stick and restart 7xDash", "th": "นำสำเนาใน USB กลับมาใช้ แล้วเริ่ม 7xDash ใหม่"}}, {"type": "Preference", "key": "pref_diagnostics", "title": {"en": "Diagnostics", "th": "การวินิจฉัย"}, "summary": {"en": "View and export camera, display and storage details and recent logs", "th": "ดูและส่งออกรายละเอียดกล้อง หน้าจอ ที่เก็บข้อมูล และบันทึกล่าสุด"}}, {"type": "Preference", "key": "pref_vehicle_info", "title": {"en": "System info (experimental)", "th": "ข้อมูลระบบ (ทดลอง)"}, "summary": {"en": "Vehicle signals the head unit exposes and their current state; ticked items appear on the Driving info bar", "th": "สัญญาณรถที่หัวเครื่องเปิดให้อ่านและสถานะปัจจุบัน รายการที่ติ๊กจะแสดงบนแถบข้อมูลการขับขี่"}}, {"type": "Preference", "key": "pref_screen_probe", "title": {"en": "Screen (experimental)", "th": "หน้าจอ (ทดลอง)"}, "summary": {"en": "Lists every screen this app can open. Tap one and that screen shows text", "th": "แสดงทุกหน้าจอที่แอปนี้เปิดได้ แตะหนึ่งรายการแล้วหน้าจอนั้นจะแสดงข้อความ"}}, {"type": "SwitchPreferenceCompat", "key": "pref_save_moment_usb", "title": {"en": "Save moment to USB", "th": "บันทึกช่วงเวลาลง USB"}, "summary": {"en": "On by default. Copies finished clips into the moments folder on the USB stick", "th": "เปิดเป็นค่าเริ่มต้น คัดลอกคลิปที่เสร็จแล้วไปยังโฟลเดอร์ช่วงเวลาบน USB"}}, {"type": "SwitchPreferenceCompat", "key": "pref_save_moment_drive", "title": {"en": "Upload moment to Google Drive", "th": "อัปโหลดช่วงเวลาไปยัง Google Drive"}, "summary": {"en": "Also upload those clips when Drive is signed in. Off until you turn it on", "th": "อัปโหลดคลิปเหล่านั้นด้วยเมื่อลงชื่อเข้า Drive แล้ว ปิดไว้จนกว่าคุณจะเปิด"}}]}, {"title": {"en": "Cabin passenger", "th": "ภาพห้องโดยสาร"}, "items": [{"type": "SeekBarPreference", "key": "pref_cabin_width", "title": {"en": "Window width", "th": "ความกว้างหน้าต่าง"}, "summary": {"en": "Width of the Cabin passenger window.", "th": "ความกว้างของหน้าต่างภาพห้องโดยสาร"}}, {"type": "SeekBarPreference", "key": "pref_cabin_height", "title": {"en": "Window height", "th": "ความสูงหน้าต่าง"}, "summary": {"en": "The picture keeps its shape. A wider or taller window shows more of the front cabin.", "th": "ภาพคงรูปทรงเดิม หน้าต่างที่กว้างหรือสูงขึ้นจะเห็นห้องโดยสารหน้าได้มากขึ้น"}}]}], "img": "system", "hidden": false}, {"key": "screen_developer", "title": {"en": "Developer options", "th": "ตัวเลือกนักพัฒนา"}, "summary": null, "groups": [{"title": null, "items": [{"type": "SwitchPreferenceCompat", "key": "pref_force_h264", "title": {"en": "Force H.264", "th": "บังคับ H.264"}, "summary": {"en": "Uses H.264 for every camera, overriding the codec set for each camera in Edit stream profile", "th": "ใช้ H.264 กับทุกกล้อง แทนโคเดกที่ตั้งไว้ของแต่ละกล้องในแก้ไขโปรไฟล์สตรีม"}}, {"type": "SwitchPreferenceCompat", "key": "pref_screen_off_recording", "title": {"en": "Screen-off recording (keep awake)", "th": "บันทึกขณะจอดับ (กันเครื่องหลับ)"}, "summary": {"en": "If recording when the screen turns off, keep recording the surround view and keep the head unit awake for up to the time set below", "th": "ถ้ากำลังบันทึกตอนจอดับ จะบันทึกภาพรอบคันต่อและกันหัวเครื่องไม่ให้หลับได้นานสุดตามเวลาที่ตั้งด้านล่าง"}}, {"type": "EditTextPreference", "key": "pref_screen_off_wake_hours", "title": {"en": "Keep awake for up to (hours)", "th": "กันเครื่องหลับได้นานสุด (ชั่วโมง)"}, "summary": {"en": "The longest 7xDash keeps the head unit awake after the screen goes off.", "th": "นานสุดที่ 7xDash จะกันไม่ให้จอรถหลับหลังจอดับ"}}, {"type": "Preference", "key": "pref_image_adjust", "title": {"en": "Image adjustment", "th": "ปรับภาพ"}, "summary": {"en": "Opens a window to adjust exposure, white balance, noise reduction and more, live", "th": "เปิดหน้าต่างปรับค่าแสง สมดุลแสงขาว การลดสัญญาณรบกวน และอื่นๆ แบบสด"}}, {"type": "Preference", "key": "pref_image_adjust_reset", "title": {"en": "Reset image adjustment", "th": "รีเซ็ตการปรับภาพ"}, "summary": {"en": "Puts brightness, contrast and colour back to default.", "th": "คืนค่าความสว่าง คอนทราสต์ และสี กลับเป็นค่าเริ่มต้น"}}, {"type": "Preference", "key": "pref_camera_mapping", "title": {"en": "Camera mapping", "th": "การจับคู่กล้อง"}, "summary": {"en": "Choose which camera feeds the surround, front cabin and rear cabin views (troubleshooting)", "th": "เลือกกล้องที่ป้อนภาพรอบคัน ห้องโดยสารหน้า และห้องโดยสารหลัง (สำหรับแก้ปัญหา)"}}, {"type": "Preference", "key": "pref_permissions", "title": {"en": "Permissions", "th": "สิทธิ์"}, "summary": {"en": "Manage the permissions the app needs", "th": "จัดการสิทธิ์ที่แอปต้องใช้"}}, {"type": "Preference", "key": "pref_speaker_probe", "title": {"en": "Speaker probe", "th": "ตรวจลำโพง"}, "summary": {"en": "Lists every output this process can address. Tap a row to play a short tone. This page does not label cabin or outside.", "th": "แสดงทุกเอาต์พุตที่โปรเซสนี้ส่งเสียงได้ แตะแถวเพื่อเล่นเสียงสั้นๆ หน้านี้ไม่ได้ระบุว่าเป็นในรถหรือนอกรถ"}}, {"type": "SwitchPreferenceCompat", "key": "pref_raw_frame_dump", "title": {"en": "Also save the raw frame", "th": "บันทึกเฟรมดิบด้วย"}, "summary": {"en": "Saves the frame as captured (not split, rearranged or stamped) to photos/raw with a geometry note, for measuring the composite stream layout and fisheye parameters", "th": "บันทึกเฟรมตามที่จับได้ (ไม่แบ่ง ไม่จัดเรียง ไม่ใส่ตรา) ไปที่ photos/raw พร้อมบันทึกเรขาคณิต สำหรับวัดเลย์เอาต์สตรีมภาพรวมและค่าเลนส์ตาปลา"}}, {"type": "SwitchPreferenceCompat", "key": "pref_gpu_fisheye_preview", "title": {"en": "Preview: per-pixel fisheye correction on the GPU", "th": "พรีวิว: แก้ภาพตาปลาทีละพิกเซลบน GPU"}, "summary": {"en": "Corrects the live surround view pixel by pixel on the GPU, rendered through the app GL pipeline, as straight as photo playback instead of in patches. Picks the method only; the Straighten button still turns correction on and off. Takes effect after restarting the app.", "th": "แก้ภาพรอบคันแบบสดทีละพิกเซลบน GPU ผ่านไปป์ไลน์ GL ของแอป ตรงเท่ากับการเล่นภาพถ่าย แทนการแก้เป็นแผ่น เลือกเฉพาะวิธี ปุ่ม ปรับให้ตรง ยังเป็นตัวเปิดปิดการแก้ มีผลหลังรีสตาร์ทแอป"}}, {"type": "SwitchPreferenceCompat", "key": "pref_gpu_fisheye_video", "title": {"en": "Video playback: per-pixel fisheye correction on the GPU", "th": "เล่นวิดีโอ: แก้ภาพตาปลาทีละพิกเซลบน GPU"}, "summary": {"en": "Corrects the surround view in video playback pixel by pixel on the GPU. Picks the method only; the Straighten button still turns correction on and off. Takes effect the next time video playback opens.", "th": "แก้ภาพรอบคันในการเล่นวิดีโอทีละพิกเซลบน GPU เลือกเฉพาะวิธี ปุ่ม ปรับให้ตรง ยังเป็นตัวเปิดปิดการแก้ มีผลเมื่อเปิดการเล่นวิดีโอครั้งถัดไป"}}, {"type": "SwitchPreferenceCompat", "key": "pref_camera_holder_suspects", "title": {"en": "Log apps that may be using a camera", "th": "บันทึกแอปที่อาจกำลังใช้กล้อง"}, "summary": {"en": "Records which other apps started or stopped a foreground service or moved to the foreground or background from 10 seconds before to 3 seconds after another app takes or releases a camera, for reference only. Requires usage access; other apps' package names are written to the diagnostics report.", "th": "บันทึกว่าแอปอื่นใดเริ่มหรือหยุดบริการเบื้องหน้า หรือย้ายไปเบื้องหน้าหรือเบื้องหลัง ตั้งแต่ 10 วินาทีก่อนถึง 3 วินาทีหลังจากแอปอื่นยึดหรือปล่อยกล้อง ใช้เป็นข้อมูลอ้างอิงเท่านั้น ต้องมีสิทธิ์เข้าถึงการใช้งาน ชื่อแพ็กเกจของแอปอื่นจะถูกเขียนลงรายงานวินิจฉัย"}}, {"type": "Preference", "key": "pref_repair_mp4", "title": {"en": "Repair unindexed recordings", "th": "ซ่อมไฟล์บันทึกที่ไม่มีดัชนี"}, "summary": {"en": "A clip cut off unexpectedly, for example by power loss, has no index and will not play. Rebuilds the index from a healthy clip of the same camera, keeping the file name.", "th": "คลิปที่ถูกตัดกลางคัน เช่น ไฟดับ จะไม่มีดัชนีและเล่นไม่ได้ จะสร้างดัชนีใหม่จากคลิปที่สมบูรณ์ของกล้องเดียวกัน โดยใช้ชื่อไฟล์เดิม"}}, {"type": "Preference", "key": "pref_archive", "title": {"en": "Archive to another drive", "th": "เก็บถาวรไปยังไดรฟ์อื่น"}, "summary": {"en": "Moves videos, photos and diagnostics reports from the storage location's USB drive to another USB drive and copies the app log; not available while recording", "th": "ย้ายวิดีโอ ภาพถ่าย และรายงานวินิจฉัยจากไดรฟ์ USB ของตำแหน่งจัดเก็บไปยังไดรฟ์ USB อื่น และคัดลอกบันทึกของแอป ใช้ไม่ได้ขณะบันทึก"}}, {"type": "Preference", "key": "pref_developer_note", "title": {"en": "pref_developer_note", "th": "pref_developer_note"}, "summary": {"en": "Tap Safety notice in Settings → About & credits to turn off developer options and hide this section", "th": "แตะ ข้อควรระวังด้านความปลอดภัย ใน การตั้งค่า → เกี่ยวกับและเครดิต เพื่อปิดตัวเลือกนักพัฒนาและซ่อนส่วนนี้"}}]}], "img": null, "hidden": true}, {"key": "screen_drive", "title": {"en": "Google Drive", "th": "Google Drive"}, "summary": null, "groups": [{"title": null, "items": [{"type": "Preference", "key": "pref_drive_help", "title": {"en": "pref_drive_help", "th": "pref_drive_help"}, "summary": {"en": "In Google Cloud, create an OAuth client of type TVs and Limited Input devices and enable the Drive API. Paste the client ID and secret below. Sign-in happens on the phone. Files land in a Drive folder named 7xDash.", "th": "ใน Google Cloud ให้สร้าง OAuth client ประเภท TVs and Limited Input devices และเปิด Drive API วาง client ID และ secret ด้านล่าง การลงชื่อเข้าใช้ทำบนโทรศัพท์ ไฟล์จะไปอยู่ในโฟลเดอร์ Drive ชื่อ 7xDash"}}, {"type": "EditTextPreference", "key": "pref_drive_client_id", "title": {"en": "Client ID", "th": "Client ID"}, "summary": {"en": "Only for your own Google Cloud app. Leave it empty to use the one built into 7xDash.", "th": "ใช้เฉพาะถ้ามีแอป Google Cloud ของตัวเอง ปล่อยว่างไว้เพื่อใช้ของที่มากับ 7xDash"}}, {"type": "EditTextPreference", "key": "pref_drive_client_secret", "title": {"en": "Client secret", "th": "Client secret"}, "summary": {"en": "Goes with your own Client ID. Leave it empty to use the built-in one.", "th": "ใช้คู่กับ Client ID ของตัวเอง ปล่อยว่างไว้เพื่อใช้ของที่มากับ 7xDash"}}, {"type": "Preference", "key": "pref_drive_sign_in", "title": {"en": "Sign in to Google Drive", "th": "ลงชื่อเข้า Google Drive"}, "summary": {"en": "Shows a code; sign in with it on your phone.", "th": "แสดงรหัส แล้วใช้รหัสนั้นล็อกอินในมือถือ"}}, {"type": "Preference", "key": "pref_drive_sign_out", "title": {"en": "Sign out", "th": "ออกจากระบบ"}, "summary": {"en": "Unlinks your Google account. Nothing more is uploaded.", "th": "เลิกเชื่อมบัญชี Google จะไม่อัปโหลดอะไรอีก"}}]}], "img": "drive", "hidden": false}, {"key": "screen_update", "title": {"en": "Check for updates", "th": "ตรวจสอบอัปเดต"}, "summary": null, "groups": [{"title": null, "items": [{"type": "Preference", "key": "pref_check_update", "title": {"en": "Check for updates", "th": "ตรวจสอบอัปเดต"}, "summary": {"en": "Looks for a newer 7xDash on GitHub and installs it.", "th": "หาเวอร์ชันใหม่ของ 7xDash บน GitHub แล้วติดตั้ง"}}, {"type": "Preference", "key": "pref_whats_new", "title": {"en": "What's new", "th": "มีอะไรใหม่"}, "summary": {"en": "What changed in the last few versions", "th": "สิ่งที่เปลี่ยนในไม่กี่เวอร์ชันล่าสุด"}}, {"type": "SwitchPreferenceCompat", "key": "pref_update_beta", "title": {"en": "Include beta releases", "th": "รวมรุ่นเบต้า"}, "summary": {"en": "When off, checks stable releases only", "th": "เมื่อปิด จะตรวจเฉพาะรุ่นเสถียร"}}]}], "img": "update", "hidden": false}];
+
+const SCREEN_INTRO = {
+  screen_shortcuts: ["Buttons on the steering wheel and remotes, and whether they work on every screen.", "ปุ่มบนพวงมาลัยและรีโมต และให้ใช้ได้ทุกหน้าจอหรือไม่"],
+  screen_sticker: ["Bluetooth sticker buttons: pairing and what they do.", "ปุ่มสติกเกอร์บลูทูธ การจับคู่ และการทำงาน"],
+  screen_mood_light: ["Bluetooth LED lights and their gear, speed and blind-spot effects.", "ไฟ LED บลูทูธ และเอฟเฟกต์ตามเกียร์ ความเร็ว และจุดบอด"],
+  screen_controller: ["Game controllers as buttons for 7xDash.", "ใช้จอยเกมเป็นปุ่มของ 7xDash"],
+  screen_megaphone: ["The megaphone button, volume, speakers, announcements and the outside speaker.", "ปุ่มโทรโข่ง ระดับเสียง ลำโพง เสียงประกาศ และลำโพงนอกรถ"],
+  screen_recording: ["What the drive recorder records and what goes on the picture.", "กล้องติดรถอัดอะไร และอะไรติดอยู่บนภาพ"],
+  screen_storage: ["Where clips and photos go, and how much space they may use.", "คลิปและรูปเก็บที่ไหน และใช้พื้นที่ได้เท่าไร"],
+  screen_rearview: ["The Super mirror window, its picture, and HUD notifications.", "หน้าต่างกระจกมองหลัง ภาพ และการแจ้งเตือนบน HUD"],
+  screen_side_mirror: ["The blind-spot side view: where, when, how it looks, and the blind-spot warning.", "ภาพด้านข้างตอนเปิดไฟเลี้ยว: ขึ้นที่ไหน เมื่อไหร่ หน้าตาแบบไหน และการเตือนจุดบอด"],
+  screen_floating: ["Floating buttons, the Dash panel and the Macro pad.", "ปุ่มลอย แผงหน้าปัด และมาโครแพด"],
+  screen_dim: ["The dim veil over the screen and when it comes on by itself.", "ม่านหรี่จอ และให้เปิดเองตามเวลา"],
+  screen_interface: ["Language, theme, camera picture and beta features.", "ภาษา ธีม ภาพจากกล้อง และฟีเจอร์เบต้า"],
+  screen_system: ["Start-up, screen off, settings backup, diagnostics and the cabin window.", "การเปิดเครื่อง ตอนจอดับ สำรองการตั้งค่า การวินิจฉัย และหน้าต่างห้องโดยสาร"],
+  screen_developer: ["Tools for testing and troubleshooting.", "เครื่องมือสำหรับทดสอบและหาสาเหตุปัญหา"],
+  screen_drive: ["Sign in to Google Drive for uploads.", "ล็อกอิน Google Drive สำหรับอัปโหลด"],
+  screen_update: ["Updates, beta releases and What's new.", "อัปเดต รุ่นเบต้า และมีอะไรใหม่"]
+};
+
+const T = {
+  en: {
+    tag: "for the Zeekr 7X", h1: "What 7xDash does, and how to use it",
+    lede: "Everything starts on this Home screen. Point at a feature to see where it is, then open it for the full how-to.",
+    note: "7xDash is made by owners, not by Zeekr, and it is still being tested. It does not replace the car's own cameras or safety systems. Set things up while parked.",
+    groups: { cards: "Home cards", rail: "Left rail", more: "Floating and in Settings" },
+    beta: "beta", hint: "Tap a card on the screen, or pick a feature from the list.",
+    start: [["Before you start", "Install the newest APK from GitHub Releases and plug in a USB drive. Clips, photos and your settings backup all go on it."],
+            ["Tap or hold", "Tap a card to use it. Hold a card to open its settings. The rail on the left is there on every page."],
+            ["Beta features", "Battery at arrival, Where I parked and Mood light only show after Settings → Interface → Beta features."]],
+    all: "All features", tabFeatures: "Features", tabSettings: "Settings",
+    setH1: "Every setting, explained", setLede: "Each page of Settings in 7xDash, with every switch, slider and choice and what it does. Open one to see it with its real screen.",
+    allSettings: "All settings", settingsCount: n => n + " settings",
+    kinds: { switch: "Switch", slider: "Slider", choice: "Choice", text: "Text field", button: "Opens / does" },
+    hiddenNote: "Only shown after turning on developer mode.", choices: "Choices", realSettings: "This page in 7xDash",
+    settingsWhere: "Settings", open: "How to open it", steps: "How to use it", options: "What you can change", notes: "Good to know",
+    prev: "Previous", next: "Next", homeShot: "Where it is on the Home screen", realShot: "The real screen in 7xDash",
+    foot: "7xDash 1.7.0 · open source, GPL-3.0 · screenshots from the head unit emulator · if something does not work, Settings → System → Diagnostics makes a report to send."
+  },
+  th: {
+    tag: "สำหรับ ZEEKR 7X", h1: "7xDash ทำอะไรได้บ้าง และใช้ยังไง",
+    lede: "ทุกอย่างเริ่มจากหน้าหลักนี้ ชี้ที่ฟีเจอร์เพื่อดูว่าอยู่ตรงไหน แล้วกดเข้าไปดูวิธีใช้แบบละเอียด",
+    note: "7xDash เป็นแอปที่เจ้าของรถทำกันเอง ไม่ใช่ของ ZEEKR และยังอยู่ระหว่างทดสอบ ใช้แทนกล้องหรือระบบความปลอดภัยของรถไม่ได้ ควรตั้งค่าตอนจอดรถ",
+    groups: { cards: "การ์ดบนหน้าหลัก", rail: "แถบด้านซ้าย", more: "ปุ่มลอย และในหน้าตั้งค่า" },
+    beta: "เบต้า", hint: "แตะการ์ดบนรูปจอ หรือเลือกฟีเจอร์จากรายการ",
+    start: [["ก่อนเริ่ม", "ลง APK ตัวล่าสุดจาก GitHub แล้วเสียบแฟลชไดรฟ์ทิ้งไว้ คลิป รูป และไฟล์สำรองการตั้งค่าจะเก็บลงแฟลชไดรฟ์ทั้งหมด"],
+            ["แตะ กับ กดค้าง", "แตะการ์ดเพื่อใช้งาน กดค้างเพื่อเข้าไปตั้งค่าฟีเจอร์นั้น แถบซ้ายมีให้กดได้ทุกหน้า"],
+            ["ฟีเจอร์เบต้า", "แบตเมื่อถึงที่หมาย จอดรถไว้ที่ไหน และไฟบรรยากาศ จะโผล่มาหลังเปิด ตั้งค่า → อินเทอร์เฟซ → ฟีเจอร์เบต้า"]],
+    all: "ฟีเจอร์ทั้งหมด", tabFeatures: "ฟีเจอร์", tabSettings: "การตั้งค่า",
+    setH1: "การตั้งค่าทุกข้อ อธิบายครบ", setLede: "ทุกหน้าในการตั้งค่าของ 7xDash พร้อมสวิตช์ แถบเลื่อน และตัวเลือกทุกตัว ว่าแต่ละอันทำอะไร กดเข้าไปเพื่อดูพร้อมหน้าจอจริง",
+    allSettings: "การตั้งค่าทั้งหมด", settingsCount: n => n + " รายการ",
+    kinds: { switch: "สวิตช์", slider: "แถบเลื่อน", choice: "ตัวเลือก", text: "ช่องกรอก", button: "กดเพื่อเปิด/สั่งงาน" },
+    hiddenNote: "จะเห็นหน้านี้หลังเปิดโหมดนักพัฒนาเท่านั้น", choices: "ตัวเลือก", realSettings: "หน้านี้ใน 7xDash",
+    settingsWhere: "การตั้งค่า", open: "เปิดยังไง", steps: "ใช้ยังไง", options: "ปรับอะไรได้บ้าง", notes: "ควรรู้",
+    prev: "ก่อนหน้า", next: "ถัดไป", homeShot: "ตำแหน่งบนหน้าหลัก", realShot: "หน้าจอจริงใน 7xDash",
+    foot: "7xDash 1.7.0 · โอเพนซอร์ส GPL-3.0 · ภาพหน้าจอจากตัวจำลองจอรถ · ถ้ามีอะไรไม่ทำงาน ไปที่ ตั้งค่า → ระบบ → การวินิจฉัย แล้วส่งรายงานมาได้เลย"
+  }
+};
+
+const F = window.FEATURES;
+const byId = Object.fromEntries(F.map((f, i) => [f.id, i]));
+let lang = "en";
+try {
+  const s = localStorage.getItem("7xdash-lang");
+  if (s === "en" || s === "th") lang = s; else if (/^th/i.test(navigator.language || "")) lang = "th";
+} catch (e) { if (/^th/i.test(navigator.language || "")) lang = "th"; }
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
+const img = name => `img/${lang}/${name}.jpg`;
+const box = ([l, t, w, h]) => `left:${l}%;top:${t}%;width:${w}%;height:${h}%`;
+
+function overview() {
+  const t = T[lang];
+  let list = "";
+  for (const g of ["cards", "rail", "more"]) {
+    list += `<section class="group"><h2>${t.groups[g]}</h2>`;
+    for (const f of F.filter(x => x.group === g)) {
+      const d = f[lang];
+      list += `<a class="item" href="#${f.id}" data-id="${f.id}"><div><div class="name">${esc(d.name)}${f.beta ? `<span class="beta">${t.beta}</span>` : ""}</div>
+        <div class="what">${esc(d.what)}</div></div><span class="go" aria-hidden="true">→</span></a>`;
+    }
+    list += `</section>`;
+  }
+  const seen = new Set();
+  const hits = F.filter(f => !seen.has(f.spot) && seen.add(f.spot))
+    .map(f => `<a class="hit" href="#${f.id}" style="${box(SPOT[f.spot])}" aria-label="${esc(f[lang].name)}" data-id="${f.id}"></a>`).join("");
+  $("view").innerHTML = `
+    <section class="intro"><h1>${t.h1}</h1><div><p>${t.lede}</p><p class="note">${t.note}</p></div></section>
+    <div class="split">
+      <div class="screen"><div class="shot" id="shot"><img src="${img("home")}" alt="" width="1600" height="925">
+        <div class="spot" id="spot" style="${box(SPOT.recorder)}"></div>${hits}</div>
+        <div class="caption" id="cap">${t.hint}</div></div>
+      <div class="index">${list}</div>
+    </div>
+    <section class="start">${t.start.map(([h, p]) => `<div><h3>${esc(h)}</h3><p>${esc(p)}</p></div>`).join("")}</section>`;
+  const show = e => {
+    const a = e.target.closest("[data-id]"); if (!a) return;
+    const f = F[byId[a.dataset.id]];
+    $("spot").setAttribute("style", box(SPOT[f.spot]));
+    $("cap").textContent = f[lang].name + " · " + f[lang].what;
+  };
+  $("view").onmouseover = show;
+  $("view").onfocusin = show;
+}
+
+function detail(i) {
+  const t = T[lang], f = F[i], d = f[lang];
+  const prev = F[(i - 1 + F.length) % F.length], next = F[(i + 1) % F.length];
+  const pic = f.img === "home"
+    ? `<figure class="dshot"><img src="${img("home")}" alt="${esc(d.name)}" width="1600" height="925"><div class="spot" style="${box(SPOT[f.spot])}"></div><figcaption>${t.homeShot}</figcaption></figure>`
+    : `<figure class="dshot"><img src="${img(f.img)}" alt="${esc(d.name)}" width="1280" height="740"><figcaption>${t.realShot}</figcaption></figure>`;
+  const li = a => a.map(x => `<li>${esc(x)}</li>`).join("");
+  $("view").onmouseover = null;
+  $("view").onfocusin = null;
+  $("view").innerHTML = `
+    <a class="crumb" href="#top">← ${t.all}</a>
+    <header class="dhead"><div class="where">${t.groups[f.group]}</div>
+      <h1>${esc(d.name)}${f.beta ? `<span class="beta">${t.beta}</span>` : ""}</h1><p>${esc(d.intro)}</p></header>
+    ${pic}
+    <div class="dbody">
+      <div>
+        <section><h2>${t.open}</h2><p class="open">${esc(d.open)}</p></section>
+        <section><h2>${t.steps}</h2><ol>${li(d.steps)}</ol></section>
+      </div>
+      <div>
+        <section><h2>${t.options}</h2><ul>${li(d.options)}</ul></section>
+        <section><h2>${t.notes}</h2><ul class="notes">${li(d.notes)}</ul></section>
+      </div>
+    </div>
+    <nav class="pager" aria-label="${t.prev} / ${t.next}">
+      <a href="#${prev.id}"><small>← ${t.prev}</small><b>${esc(prev[lang].name)}</b></a>
+      <a href="#${next.id}"><small>${t.next} →</small><b>${esc(next[lang].name)}</b></a>
+    </nav>`;
+}
+
+const SET = window.SETTINGS;
+const setByKey = Object.fromEntries(SET.map((s, i) => [s.key, i]));
+const kindOf = type => /Switch/.test(type) ? "switch" : /SeekBar/.test(type) ? "slider"
+  : /List|Segmented/.test(type) ? "choice" : /EditText/.test(type) ? "text" : "button";
+const L2 = o => o ? (o[lang] || o.en || "") : "";
+const intro = key => (SCREEN_INTRO[key] || ["", ""])[lang === "en" ? 0 : 1];
+const countOf = s => s.groups.reduce((n, g) => n + g.items.length, 0);
+
+function settingsIndex() {
+  const t = T[lang];
+  $("view").innerHTML = `
+    <section class="intro"><h1>${t.setH1}</h1><div><p>${t.setLede}</p></div></section>
+    <div class="screens">${SET.map(s => `<a href="#set-${s.key.replace("screen_", "")}"><div>
+      <div class="name">${esc(L2(s.title))}</div><div class="what">${esc(intro(s.key))}${s.hidden ? " " + t.hiddenNote : ""}</div></div>
+      <span class="count">${t.settingsCount(countOf(s))} →</span></a>`).join("")}</div>`;
+}
+
+function settingsScreen(i) {
+  const t = T[lang], s = SET[i];
+  const prev = SET[(i - 1 + SET.length) % SET.length], next = SET[(i + 1) % SET.length];
+  const pic = s.img ? `<figure class="dshot"><img src="img/${lang}/set-${s.img}.jpg" alt="${esc(L2(s.title))}" width="1280" height="740"><figcaption>${t.realSettings}</figcaption></figure>` : "";
+  const groups = s.groups.map(g => `<section class="pref-group">${g.title ? `<h2>${esc(L2(g.title))}</h2>` : ""}
+    ${g.items.map(it => {
+      const k = kindOf(it.type);
+      const choices = it.entries ? `<ul class="choices" aria-label="${t.choices}">${L2(it.entries).map(c => `<li>${esc(c)}</li>`).join("")}</ul>` : "";
+      return `<div class="pref"><div><div class="pname">${esc(L2(it.title))}</div><span class="kind ${k}">${t.kinds[k]}</span></div>
+        <div><p>${esc(L2(it.summary))}</p>${choices}</div></div>`;
+    }).join("")}</section>`).join("");
+  $("view").innerHTML = `
+    <a class="crumb" href="#settings">← ${t.allSettings}</a>
+    <header class="dhead"><div class="where">${t.settingsWhere}</div><h1>${esc(L2(s.title))}</h1><p>${esc(intro(s.key))}</p>
+      ${s.hidden ? `<div class="hidden-note">${t.hiddenNote}</div>` : ""}</header>
+    ${pic}${groups}
+    <nav class="pager" aria-label="${t.prev} / ${t.next}">
+      <a href="#set-${prev.key.replace("screen_", "")}"><small>← ${t.prev}</small><b>${esc(L2(prev.title))}</b></a>
+      <a href="#set-${next.key.replace("screen_", "")}"><small>${t.next} →</small><b>${esc(L2(next.title))}</b></a>
+    </nav>`;
+}
+
+function render() {
+  const t = T[lang];
+  document.documentElement.lang = lang;
+  $("tag").textContent = t.tag;
+  $("foot").textContent = t.foot;
+  document.querySelectorAll(".lang button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.lang === lang)));
+  const id = location.hash.slice(1);
+  const inSettings = id === "settings" || id.startsWith("set-");
+  $("tab-features").textContent = t.tabFeatures;
+  $("tab-settings").textContent = t.tabSettings;
+  $("tab-features").toggleAttribute("aria-current", !inSettings);
+  $("tab-settings").toggleAttribute("aria-current", inSettings);
+  if (inSettings) { $("tab-settings").setAttribute("aria-current", "page"); } else { $("tab-features").setAttribute("aria-current", "page"); }
+  const setKey = "screen_" + id.slice(4);
+  if (id.startsWith("set-") && setKey in setByKey) { settingsScreen(setByKey[setKey]); document.title = L2(SET[setByKey[setKey]].title) + " · 7xDash"; }
+  else if (inSettings) { settingsIndex(); document.title = t.tabSettings + " · 7xDash"; }
+  else if (id in byId) { detail(byId[id]); document.title = F[byId[id]][lang].name + " · 7xDash"; }
+  else { overview(); document.title = "7xDash Features"; }
+}
+
+window.addEventListener("hashchange", () => { render(); window.scrollTo(0, 0); });
+document.querySelector(".lang").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  lang = b.dataset.lang; try { localStorage.setItem("7xdash-lang", lang); } catch (err) {}
+  render();
+});
+render();
+</script>
+</body>
+</html>

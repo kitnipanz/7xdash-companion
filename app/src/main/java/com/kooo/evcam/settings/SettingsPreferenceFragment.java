@@ -734,6 +734,10 @@ public class SettingsPreferenceFragment extends PreferenceFragmentCompat {
                         toast(getString(R.string.msg_side_popup_on));
                     }
                 });
+        bindSwitch("pref_side_popup_screen", appConfig.isSidePopupOnScreen(), value -> {
+            appConfig.setSidePopupOnScreen(value);
+            com.kooo.evcam.zeekr.SideViewPopupService.applyConfig();
+        });
         bindSwitch("pref_side_popup_hud", appConfig.isSidePopupOnHud(), value -> {
             appConfig.setSidePopupOnHud(value);
             com.kooo.evcam.zeekr.SideViewPopupService.applyConfig();
@@ -797,6 +801,19 @@ public class SettingsPreferenceFragment extends PreferenceFragmentCompat {
                     appConfig.setSidePopupRollRight(value);
                     com.kooo.evcam.zeekr.SideViewPopupService.applyConfig();
                 });
+        bindSegmented("pref_side_popup_style", SettingsRegistry.SIDE_POPUP_STYLE,
+                appConfig.getSidePopupStyle(), value -> {
+                    appConfig.setSidePopupStyle(value);
+                    com.kooo.evcam.zeekr.SideViewPopupService.applyConfig();
+                });
+        bindSwitch("pref_side_popup_door", appConfig.isSidePopupOnDoor(), value -> {
+            appConfig.setSidePopupOnDoor(value);
+            com.kooo.evcam.zeekr.SideViewPopupService.applyConfig();
+        });
+        bindSwitch("pref_side_popup_over_factory", appConfig.isSidePopupOverFactory(), value -> {
+            appConfig.setSidePopupOverFactory(value);
+            com.kooo.evcam.zeekr.SideViewPopupService.applyConfig();
+        });
         bindSwitch("pref_side_popup_instant", appConfig.isSidePopupInstant(), value -> {
             appConfig.setSidePopupInstant(value);
             com.kooo.evcam.zeekr.SideViewPopupService.applyConfig();
@@ -932,6 +949,10 @@ public class SettingsPreferenceFragment extends PreferenceFragmentCompat {
         // 按钮显示出来时自己问协调器在不在录，这里不用再推状态
         bindOverlaySwitch("pref_recording_floating", appConfig.isRecordingFloatingEnabled(),
                 OverlayCoordinator::setRecordButtonEnabled, null);
+        bindOverlaySwitch("pref_dash_panel", appConfig.isDashPanelEnabled(),
+                OverlayCoordinator::setDashPanelEnabled, null);
+        bindOverlaySwitch("pref_macro_pad", appConfig.isMacroPadEnabled(),
+                OverlayCoordinator::setMacroPadEnabled, null);
 
         // 整档上移 50%（原来 32–100）：最小的也要比原来的最小大一半
         bindSlider("pref_button_size", 48, 150,
@@ -1184,6 +1205,7 @@ public class SettingsPreferenceFragment extends PreferenceFragmentCompat {
             appConfig.setBetaFeaturesEnabled(value);
             com.kooo.evcam.parking.WhereParked.get().settingsChanged(requireContext());
             com.kooo.evcam.light.GearLight.reload();
+            com.kooo.evcam.trip.Trip.get().apply(requireContext());
             if (getParentFragment() instanceof SettingsShellFragment) {
                 ((SettingsShellFragment) getParentFragment()).betaChanged();
             }
@@ -1272,10 +1294,20 @@ public class SettingsPreferenceFragment extends PreferenceFragmentCompat {
                 startActivity(new Intent(getContext(), ControllerProbeActivity.class)));
         onClick("pref_mood_light", pref ->
                 startActivity(new Intent(getContext(), com.kooo.evcam.light.MoodLightActivity.class)));
+        bindSwitch("pref_mood_light_blind_spot_blink", appConfig.isMoodLightBlindSpotBlink(), value -> {
+            appConfig.setMoodLightBlindSpotBlink(value);
+            com.kooo.evcam.light.GearLight.reload();
+        });
         onClick("pref_car_ambient", pref ->
                 startActivity(new Intent(getContext(), com.kooo.evcam.light.CarAmbientLabActivity.class)));
         onClick("pref_volume_lab", pref ->
                 startActivity(new Intent(getContext(), com.kooo.evcam.audio.VolumeLabActivity.class)));
+        bindSwitch("pref_side_popup_bsd_sniffer", appConfig.isBlindSpotSnifferEnabled(), value -> {
+            appConfig.setBlindSpotSnifferEnabled(value);
+            com.kooo.evcam.telemetry.BlindSpotSniffer.applyConfig();
+        });
+        onClick("pref_side_popup_bsd_finder", pref ->
+                startActivity(new Intent(getContext(), com.kooo.evcam.zeekr.BlindSpotFinderActivity.class)));
         onClick("pref_button_lab", pref ->
                 startActivity(new Intent(getContext(), com.kooo.evcam.input.ButtonLabActivity.class)));
         onClick("pref_ble_signal", pref ->
@@ -1554,6 +1586,8 @@ public class SettingsPreferenceFragment extends PreferenceFragmentCompat {
         }
         onClick("pref_check_update",
                 pref -> com.kooo.evcam.update.UpdateFlow.start(getActivity()));
+        onClick("pref_whats_new",
+                pref -> com.kooo.evcam.update.WhatsNewDialog.showLatest(requireActivity()));
         bindSwitch("pref_update_beta", appConfig.isUpdateBetaEnabled(),
                 value -> appConfig.setUpdateBetaEnabled(value));
     }

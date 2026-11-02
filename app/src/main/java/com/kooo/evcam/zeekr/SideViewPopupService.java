@@ -54,8 +54,10 @@ import com.kooo.evcam.telemetry.VehicleState;
  *
  * <h3>抬头显示</h3>
  *
- * <p>设置开着、并且找得到驾驶员抬头显示时，同一个窗口挂到那块屏上，只占一小块
- * （{@link HudFrame}）。相机只有一个悬浮槽，所以中控上不再弹。找不到这块屏就仍在中控。</p>
+ * <p>中控和抬头显示各有一个开关。只开抬头显示、并且找得到那块屏时，窗口挂到那块屏上，只占一小块
+ * （{@link HudFrame}）；找不到就仍在中控。两个都开时中控一个窗口、抬头显示再一个（{@link #hudCopy}），
+ * 后者用相机的第二块后视镜画布（{@code SingleCamera.declareExtraMirror}）—— 和第一块挂在同一条共享流上，
+ * 不多占硬件流。</p>
  */
 public class SideViewPopupService extends Service {
 
@@ -72,6 +74,11 @@ public class SideViewPopupService extends Service {
     private final Handler handler = new Handler(Looper.getMainLooper());
     private AppConfig appConfig;
     private SideViewPopupView popup;
+    /** 中控、抬头显示两个都开时，抬头显示上那一块。主窗口 {@link #popup} 这时在中控。 */
+    private SideViewPopupView hudCopy;
+    private SingleCamera copyCamera;
+    private SurfaceTexture copyTexture;
+    private int copyRetries;
     private SingleCamera boundCamera;
     /** 交给相机的是哪一个 SurfaceTexture：放手时确认槽位还是自己的。 */
     private SurfaceTexture boundTexture;
@@ -112,10 +119,18 @@ public class SideViewPopupService extends Service {
     public static void applyConfig() {
         SideViewPopupService svc = instance;
         if (svc != null) {
-            if (svc.popup != null && svc.popup.onHud() != (svc.hudDisplay() != null)) {
+            Display hud = svc.hudDisplay();
+            boolean moved = svc.popup != null && (svc.popup.onHud() != svc.primaryOnHud(hud)
+                    || (svc.hudCopy != null) != svc.wantsCopy(hud));
+            if (moved) {
                 svc.detachPopup();
-            } else if (svc.popup != null) {
-                svc.popup.applyConfig();
+            } else {
+                if (svc.popup != null) {
+                    svc.popup.applyConfig();
+                }
+                if (svc.hudCopy != null) {
+                    svc.hudCopy.applyConfig();
+                }
             }
             svc.evaluate();
         }
@@ -235,19 +250,27 @@ public class SideViewPopupService extends Service {
         in.parkAssistOn = r.bool(Signal.PARK_ASSIST);
         in.speedKmh = s.speedKmh;
         in.minSpeedKmh = appConfig.getSidePopupMinSpeed();
+        in.overFactoryView = appConfig.isSidePopupOverFactory();
+        in.doorCamera = appConfig.isSidePopupOnDoor();
+        in.doorsOpen = s.doorsOpen;
         in.showing = popup != null && popup.isShowing() ? popup.lane() : SideViewDecision.NONE;
 
         boolean blocked = ScreenState.dark() || RearViewMirrorService.isRunning()
-                || BothMirrorsService.isRunning();
+                || BothMirrorsService.isRunning()
+                || (!appConfig.isSidePopupOnScreen() && !appConfig.isSidePopupOnHud());
         int want = blocked ? SideViewDecision.NONE : SideViewDecision.decide(in);
+        showWarning(s.blindSpotWarning);
         lastReady = !blocked && appConfig.isSidePopupInstant() && SideViewDecision.shouldStayReady(in);
 
         if (want != SideViewDecision.NONE) {
             cancelDelayedClose();
             handler.removeCallbacks(readyExpired);
             if (want != in.showing) {
-                AppLog.i(TAG, "转向灯：弹出「" + LaneCycle.labelOf(want) + "」路");
+                boolean byDoor = want == SideViewDecision.doorLane(in)
+                        && (in.turnSignal == null || in.turnSignal == 0 || Boolean.TRUE.equals(in.hazard));
+                AppLog.i(TAG, (byDoor ? "开门：弹出「" : "转向灯：弹出「") + LaneCycle.labelOf(want) + "」路");
                 showPopup(want);
+                showWarning(s.blindSpotWarning);
             }
             return;
         }
@@ -278,6 +301,16 @@ public class SideViewPopupService extends Service {
         }
     }
 
+    /** 盲区报警的那一侧正好是弹着的那一路：红边。中控、抬头显示两块一起。 */
+    private void showWarning(Integer sides) {
+        for (SideViewPopupView view : new SideViewPopupView[]{popup, hudCopy}) {
+            if (view != null) {
+                int bit = view.lane() == LaneCycle.LEFT ? VehicleState.TURN_LEFT : VehicleState.TURN_RIGHT;
+                view.setWarning(sides != null && (sides & bit) != 0);
+            }
+        }
+    }
+
     // ================================================================= 窗口
 
     private void showPopup(int lane) {
@@ -296,6 +329,9 @@ public class SideViewPopupService extends Service {
         noteIfNoFrame();
         if (lastReady) {
             popup.conceal();
+            if (hudCopy != null) {
+                hudCopy.conceal();
+            }
         } else {
             detachPopup();
         }
@@ -308,7 +344,17 @@ public class SideViewPopupService extends Service {
         }
     }
 
-    /** 该投到抬头显示时返回那块屏，否则 null（窗口留在中控）。 */
+    /** 主窗口挂在抬头显示上：只开了抬头显示，而且找得到那块屏。 */
+    boolean primaryOnHud(Display hud) {
+        return hud != null && !appConfig.isSidePopupOnScreen();
+    }
+
+    /** 中控之外再在抬头显示上弹一块：两个都开，而且找得到那块屏。 */
+    boolean wantsCopy(Display hud) {
+        return hud != null && appConfig.isSidePopupOnScreen();
+    }
+
+    /** 抬头显示开着且找得到那块屏时返回它，否则 null。 */
     private Display hudDisplay() {
         if (!appConfig.isSidePopupOnHud() || Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
             return null;
@@ -330,7 +376,8 @@ public class SideViewPopupService extends Service {
 
     private void attachPopup(int lane, boolean show) {
         Display hud = hudDisplay();
-        if (popup != null && popup.isAttached() && popup.onHud() != (hud != null)) {
+        Display target = primaryOnHud(hud) ? hud : null;
+        if (popup != null && popup.isAttached() && popup.onHud() != (target != null)) {
             detachPopup();
         }
         if (popup != null && popup.isAttached()) {
@@ -339,13 +386,14 @@ public class SideViewPopupService extends Service {
             } else {
                 popup.attachHidden(lane);
             }
+            syncCopy(lane, show, hud);
             return;
         }
-        Context host = popupContext(hud);
-        boolean onHud = hud != null && host != this;
+        Context host = popupContext(target);
+        boolean onHud = target != null && host != this;
         popup = new SideViewPopupView(host, appConfig);
         if (onHud) {
-            Point size = HudDisplay.sizeOf(hud);
+            Point size = HudDisplay.sizeOf(target);
             popup.setHudSize(size.x, size.y);
             AppLog.i(TAG, "侧视弹窗：投到抬头显示 " + size.x + "×" + size.y);
         }
@@ -376,6 +424,70 @@ public class SideViewPopupService extends Service {
         } else {
             popup.attachHidden(lane);
         }
+        syncCopy(lane, show, hud);
+    }
+
+    /** 两块屏都开时，抬头显示上那一块跟着主窗口：同一边、同样显示或备着。不该有就拿掉。 */
+    private void syncCopy(int lane, boolean show, Display hud) {
+        if (!wantsCopy(hud) || popup == null || !popup.isAttached()) {
+            detachCopy();
+            return;
+        }
+        if (hudCopy != null && hudCopy.isAttached()) {
+            if (show) {
+                hudCopy.show(lane);
+            } else {
+                hudCopy.attachHidden(lane);
+            }
+            return;
+        }
+        Context host = popupContext(hud);
+        if (host == this) {
+            return;
+        }
+        hudCopy = new SideViewPopupView(host, appConfig);
+        Point size = HudDisplay.sizeOf(hud);
+        hudCopy.setHudSize(size.x, size.y);
+        AppLog.i(TAG, "侧视弹窗：中控之外也投到抬头显示 " + size.x + "×" + size.y);
+        hudCopy.getTextureView().setSurfaceTextureListener(new TextureView.SurfaceTextureListener() {
+            @Override
+            public void onSurfaceTextureAvailable(SurfaceTexture st, int w, int h) {
+                copyRetries = 0;
+                bindCopy(st);
+            }
+
+            @Override
+            public void onSurfaceTextureSizeChanged(SurfaceTexture st, int w, int h) {
+                restoreBufferSize(copyCamera, st);
+            }
+
+            @Override
+            public boolean onSurfaceTextureDestroyed(SurfaceTexture st) {
+                unbindCopy();
+                return true;
+            }
+
+            @Override
+            public void onSurfaceTextureUpdated(SurfaceTexture st) {
+                SideViewPopupView view = hudCopy;
+                if (view != null && !view.hasGeometry() && copyCamera != null) {
+                    view.setSourceSize(copyCamera.getPreviewSize());
+                }
+            }
+        });
+        if (show) {
+            hudCopy.show(lane);
+        } else {
+            hudCopy.attachHidden(lane);
+        }
+    }
+
+    private void detachCopy() {
+        unbindCopy();
+        if (hudCopy != null) {
+            hudCopy.detach();
+            hudCopy = null;
+        }
     }
 
     private void detachPopup() {
@@ -385,6 +497,7 @@ public class SideViewPopupService extends Service {
         if (popup != null && popup.isShowing()) {
             noteIfNoFrame();
         }
+        detachCopy();
         unbindCamera();
         if (popup != null) {
             popup.detach();
@@ -465,10 +578,14 @@ public class SideViewPopupService extends Service {
 
     /** 窗口尺寸一变 TextureView 会改缓冲区尺寸，拨回会话用的那个（同后视镜）。 */
     private void restoreBufferSize(SurfaceTexture surfaceTexture) {
-        if (surfaceTexture == null || boundCamera == null) {
+        restoreBufferSize(boundCamera, surfaceTexture);
+    }
+
+    private static void restoreBufferSize(SingleCamera camera, SurfaceTexture surfaceTexture) {
+        if (surfaceTexture == null || camera == null) {
             return;
         }
-        Size buffer = boundCamera.getPreviewBufferSize();
+        Size buffer = camera.getPreviewBufferSize();
         if (buffer != null && buffer.getWidth() > 0 && buffer.getHeight() > 0) {
             surfaceTexture.setDefaultBufferSize(buffer.getWidth(), buffer.getHeight());
         }
@@ -487,6 +604,43 @@ public class SideViewPopupService extends Service {
         withdrawOutput();
         boundCamera = null;
         boundTexture = null;
+    }
+
+    /** 抬头显示上那一块接相机：第二块后视镜画布，挂在主窗口同一条共享流上。占用登记由主窗口管。 */
+    private void bindCopy(SurfaceTexture surfaceTexture) {
+        if (hudCopy == null || !hudCopy.isAttached() || surfaceTexture == null || ScreenState.dark()) {
+            return;
+        }
+        MultiCameraManager manager = CameraManagerHolder.getInstance().getCameraManager();
+        SingleCamera camera = manager != null ? manager.getCamera("front") : null;
+        if (camera == null) {
+            if (copyRetries++ < MAX_RETRY) {
+                handler.postDelayed(() -> bindCopy(surfaceTexture), RETRY_DELAY_MS);
+            }
+            return;
+        }
+        Size previewSize = camera.getPreviewSize();
+        if (previewSize != null) {
+            hudCopy.setSourceSize(previewSize);
+        }
+        if (camera != copyCamera || surfaceTexture != copyTexture) {
+            unbindCopy();
+            copyCamera = camera;
+            copyTexture = surfaceTexture;
+            restoreBufferSize(camera, surfaceTexture);
+        }
+        if (camera.declareExtraMirror(surfaceTexture)) {
+            manager.channelScheduler().wake();
+        }
+        BlackBox.note("侧视弹窗：抬头显示那一块接相机，「" + LaneCycle.labelOf(hudCopy.lane()) + "」路");
+    }
+
+    private void unbindCopy() {
+        if (copyCamera != null && copyTexture != null) {
+            copyCamera.withdrawExtraMirror(copyTexture);
+        }
+        copyCamera = null;
+        copyTexture = null;
     }
 
     private void scheduleRetry(SurfaceTexture surfaceTexture) {

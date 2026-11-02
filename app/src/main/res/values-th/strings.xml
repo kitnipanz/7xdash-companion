@@ -298,8 +298,8 @@
     <string name="set_sticker_summary">ค้นหาสติกเกอร์บลูทูธที่หัวเครื่องยังไม่ได้จับคู่ การกดจะสั่งปุ่มลัดที่บันทึกไว้</string>
     <string name="set_mood_light_title">ไฟบรรยากาศ</string>
     <string name="set_mood_light_summary">ตั้งสีไฟ RGB บลูทูธราคาถูก เช่น รุ่น ELK-BLEDOM หรือ Happy Lighting</string>
-    <string name="set_mood_light_blind_spot_title">กะพริบส้มเมื่อมีรถในจุดบอด</string>
-    <string name="set_mood_light_blind_spot_summary">เมื่อเปิดไฟเลี้ยว แล้วรถเตือนว่ามีรถอยู่ในจุดบอดฝั่งนั้น ไฟบรรยากาศจะกะพริบสีส้ม แล้วกลับเป็นสีเดิมเมื่อหมดเตือน</string>
+    <string name="set_mood_light_blind_spot_title">ไฟเป็นสีแดงเมื่อมีรถในจุดบอด</string>
+    <string name="set_mood_light_blind_spot_summary">แบบ Tesla: เมื่อรถเตือนว่ามีรถอยู่ในจุดบอด ไฟบรรยากาศจะเป็นสีแดง และกะพริบสีแดงเมื่อเปิดไฟเลี้ยวไปทางนั้น แล้วกลับเป็นสีเดิมเมื่อหมดเตือน ใส่ ไฟบรรยากาศในรถ ไว้ในกลุ่มเพื่อให้ไฟในรถเปลี่ยนด้วย</string>
     <string name="mood_light_subtitle">ปิดแอปมือถือของไฟก่อน ไฟเชื่อมต่อได้ทีละเครื่อง</string>
     <string name="mood_light_pick">สแกน แล้วแตะเชื่อมต่อที่ไฟของคุณ</string>
     <string name="mood_light_none">ยังไม่มีไฟ\n1. เสียบไฟ และปิดแอปมือถือของไฟ\n2. แตะสแกน\n3. แตะเชื่อมต่อที่ไฟของคุณ</string>
@@ -667,7 +667,7 @@
     <string name="opt_side_popup_square">สี่เหลี่ยม</string>
     <string name="opt_side_popup_wide">กว้าง</string>
     <string name="bsd_finder_title">ค้นหาสัญญาณเตือนจุดบอด</string>
-    <string name="bsd_finder_summary">สอน 7xDash ว่าสัญญาณไหนของรถบอกว่ามีรถอยู่ในจุดบอด จากนั้นภาพด้านข้างจะมีขอบแดง และไฟบรรยากาศจะกะพริบสีส้มขณะเตือน</string>
+    <string name="bsd_finder_summary">สอน 7xDash ว่าสัญญาณไหนของรถบอกว่ามีรถอยู่ในจุดบอด จากนั้นภาพด้านข้างจะมีขอบแดง และไฟบรรยากาศจะเป็นสีแดงขณะเตือน</string>
     <string name="bsd_finder_intro">ขับหรือจอดโดยมีรถอีกคันอยู่ข้างๆ ในจุดบอด (ไฟเตือนที่กระจกติด) แถวที่สว่างขึ้นและค่าเปลี่ยนคือสัญญาณเตือน แตะซ้ายหรือขวาที่แถวนั้นขณะที่ยังเตือนอยู่ 7xDash จะจำสัญญาณนั้นและค่าที่อ่านได้ตอนเตือน แล้วทำอีกฝั่งแบบเดียวกัน ถ้าไม่มีแถวไหนเปลี่ยน แตะทั้งหมดเพื่อดูการตั้งค่ารถทุกอย่าง</string>
     <string name="bsd_finder_all">ทั้งหมด</string>
     <string name="bsd_finder_named">เฉพาะจุดบอด</string>
@@ -683,7 +683,7 @@
     <string name="bsd_finder_right">ขวา</string>
     <string name="bsd_finder_not_number">ค่านี้ไม่ใช่ตัวเลข</string>
     <string name="set_bsd_sniffer_title">แจ้งสัญญาณจุดบอด (ทดลอง)</string>
-    <string name="set_bsd_sniffer_summary">ขณะหน้าจอเปิด จะเฝ้าดูการตั้งค่ารถทุกอย่างที่ดูเกี่ยวกับจุดบอด ทุกครั้งที่ค่าเปลี่ยนจะบันทึกลงล็อกและกล่องดำ และแสดงบน HUD เป็น \"BSD?\" พร้อมชื่อและค่า ให้รู้ว่ารถส่งสัญญาณอะไรตอนมีรถผ่าน จากนั้นสอนได้ในหน้าค้นหาสัญญาณเตือนจุดบอด</string>
+    <string name="set_bsd_sniffer_summary">ขณะหน้าจอเปิด จะเฝ้าดูการตั้งค่ารถทุกอย่างที่ดูเกี่ยวกับจุดบอด ทุกครั้งที่ค่าเปลี่ยนจะบันทึกลงล็อกและกล่องดำ และแสดงบน HUD เป็น \"BSD?\" พร้อมชื่อและค่า ให้รู้ว่ารถส่งสัญญาณอะไรตอนมีรถผ่าน ทุกครั้งยังเขียนไฟล์ล็อกด้วย: ตอนเริ่มจดการตั้งค่ารถทุกอย่างพร้อมค่า แล้วจดทุกครั้งที่ค่าเปลี่ยนพร้อมเวลา เกียร์ ความเร็ว และไฟเลี้ยว จากนั้นสอนได้ในหน้าค้นหาสัญญาณเตือนจุดบอด</string>
     <string name="set_side_popup_door_title">แสดงด้านข้างเมื่อเปิดประตู</string>
     <string name="set_side_popup_door_summary">ขณะรถจอด เมื่อเปิดประตูจะแสดงกล้องฝั่งนั้น เพื่อดูรถหรือจักรยานที่มาจากด้านหลัง และปิดเมื่อประตูปิดหมด</string>
     <string name="set_side_popup_over_factory_title">แสดงทับภาพของรถ</string>
@@ -1719,4 +1719,23 @@
     <string name="macro_pad_button">ปุ่ม %1$d</string>
     <string name="macro_pad_clear">ล้าง</string>
     <string name="shortcut_action_macro_pad">เปิด / ปิดมาโครแพด</string>
+    <!-- Blind spot red screen edge -->
+    <string name="set_bsd_edge_title">ขอบจอสีแดงเตือนจุดบอด</string>
+    <string name="set_bsd_edge_summary">เมื่อรถเตือนว่ามีรถอยู่ด้านไหน ขอบจอด้านนั้นจะกะพริบสีแดงทับทุกแอป แบบ Tesla ใช้สัญญาณเตือนรถตัดผ่านด้านซ้ายและขวา (RCTA) ของรถ หรือสัญญาณที่สอนไว้ในหน้าค้นหาด้านล่าง ทำงานในเกียร์ D, R และ N</string>
+    <string name="set_bsd_edge_test_title">ลองกะพริบดู</string>
+    <string name="set_bsd_edge_test_summary">ขอบจอทั้งสองด้านจะกะพริบสีแดง 3 วินาที ให้ดูว่าหน้าตาเป็นยังไง</string>
+    <string name="set_bsd_log_send_title">ส่งล็อกจุดบอดเข้ามือถือ</string>
+    <string name="set_bsd_log_send_summary">ส่งไฟล์ล็อกล่าสุดจาก แจ้งสัญญาณจุดบอด เป็นไฟล์ข้อความผ่าน Wi-Fi ด้วย QR เปิดการแจ้งไว้ ขับให้มีรถผ่านทั้งสองฝั่ง แล้วค่อยส่ง</string>
+    <string name="set_side_popup_warning_title">แสดงภาพด้านข้างเมื่อรถเตือน</string>
+    <string name="set_side_popup_warning_summary">เมื่อรถเตือนว่ามีรถอยู่ด้านไหน (จุดบอดหรือรถตัดผ่าน) ภาพกล้องด้านนั้นจะขึ้นพร้อมขอบแดงกะพริบ แม้ไม่ได้เปิดไฟเลี้ยว ถ้าเปิดไฟเลี้ยวจะยึดตามไฟเลี้ยว ไม่ทำงานในเกียร์ R</string>
+    <string name="set_signal_recorder_title">บันทึกสัญญาณรถทั้งหมดลง USB (ทดลอง)</string>
+    <string name="set_signal_recorder_summary">ขณะหน้าจอเปิดและเสียบแฟลชไดรฟ์อยู่ จะเขียนทุกสัญญาณที่รถให้มาลงโฟลเดอร์ 7xDash/signals ในแฟลชไดรฟ์ ตอนเริ่มจดทุกสัญญาณพร้อมค่า แล้วจดทุกครั้งที่ค่าเปลี่ยนพร้อมเวลา เกียร์ ความเร็ว และไฟเลี้ยว เปิดจอแต่ละครั้งได้ไฟล์ใหม่ ใช้เสร็จแล้วปิดด้วย เพราะทำให้ระบบรถทำงานหนักขึ้น</string>
+    <string name="set_signal_snapshot_title">บันทึกสัญญาณรถทั้งหมดลง USB ตอนนี้</string>
+    <string name="set_signal_snapshot_summary">ได้ไฟล์เดียวที่มีทุกสัญญาณที่รถให้ได้ตอนนี้พร้อมค่า ไม่ต้องขับ จอดอยู่ก็ใช้ได้ เก็บไว้ที่ 7xDash/signals ในแฟลชไดรฟ์</string>
+    <string name="signal_snapshot_saving">กำลังอ่านสัญญาณรถทั้งหมด…</string>
+    <string name="signal_snapshot_failed">บันทึกไม่ได้: %1$s</string>
+    <string name="signal_snapshot_saved_detail">บันทึกแล้ว %1$s อ่านได้ %2$d จาก %3$d สัญญาณ</string>
+    <string name="signal_snapshot_no_usb">เสียบแฟลชไดรฟ์ก่อน</string>
+    <string name="signal_snapshot_no_car">จอรถนี้อ่านสัญญาณรถไม่ได้</string>
+    <string name="signal_snapshot_no_write">เขียนลงแฟลชไดรฟ์ไม่ได้</string>
 </resources>

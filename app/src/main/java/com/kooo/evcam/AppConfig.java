@@ -142,7 +142,10 @@ public class AppConfig {
     private static final String KEY_SIDE_POPUP_STRAIGHTEN = "side_popup_straighten";  // 侧视拉直鱼眼
     private static final String KEY_SIDE_POPUP_STYLE = "side_popup_style";
     private static final String KEY_SIDE_POPUP_DOOR = "side_popup_door";
+    private static final String KEY_SIDE_POPUP_WARNING = "side_popup_warning";
     private static final String KEY_BSD_SNIFFER = "bsd_sniffer";
+    private static final String KEY_BSD_EDGE = "bsd_edge";
+    private static final String KEY_SIGNAL_RECORDER = "signal_recorder";
     private static final String KEY_BSD_LEFT_ID = "bsd_warn_left_id";
     private static final String KEY_BSD_LEFT_VALUE = "bsd_warn_left_value";
     private static final String KEY_BSD_RIGHT_ID = "bsd_warn_right_id";
@@ -1989,6 +1992,27 @@ public class AppConfig {
         AppLog.i(TAG, "盲区信号试验: " + (on ? "开" : "关"));
     }
 
+    /** Experimental: write every car signal to the USB drive (telemetry.SignalRecorder). Off by default. */
+    public boolean isSignalRecorderEnabled() {
+        return prefs.getBoolean(KEY_SIGNAL_RECORDER, false);
+    }
+
+    public void setSignalRecorderEnabled(boolean on) {
+        prefs.edit().putBoolean(KEY_SIGNAL_RECORDER, on).apply();
+    }
+
+    /**
+     * Red screen edge for a car in the blind spot (overlay.BlindSpotEdge): the side the car warns about
+     * blinks red over any app, like Tesla. On by default.
+     */
+    public boolean isBlindSpotEdgeEnabled() {
+        return prefs.getBoolean(KEY_BSD_EDGE, true);
+    }
+
+    public void setBlindSpotEdgeEnabled(boolean on) {
+        prefs.edit().putBoolean(KEY_BSD_EDGE, on).apply();
+    }
+
     /** 盲区报警学到的号码（盲区报警查找页）：每一侧一个车辆设置号码和报警时读到的值；0 = 没学。 */
     public com.kooo.evcam.telemetry.BlindSpotWatch.Learned getBlindSpotLearned() {
         return new com.kooo.evcam.telemetry.BlindSpotWatch.Learned(
@@ -2006,6 +2030,15 @@ public class AppConfig {
     }
 
     /** 停着开门时弹那一侧的侧视，看后面来车。默认开。 */
+    /** Show the side the car warns about (blind spot / RCTA), even without a turn signal. On by default. */
+    public boolean isSidePopupOnWarning() {
+        return prefs.getBoolean(KEY_SIDE_POPUP_WARNING, true);
+    }
+
+    public void setSidePopupOnWarning(boolean on) {
+        prefs.edit().putBoolean(KEY_SIDE_POPUP_WARNING, on).apply();
+    }
+
     public boolean isSidePopupOnDoor() {
         return prefs.getBoolean(KEY_SIDE_POPUP_DOOR, true);
     }

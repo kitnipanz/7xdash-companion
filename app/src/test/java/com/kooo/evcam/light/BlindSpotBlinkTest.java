@@ -42,11 +42,21 @@ public class BlindSpotBlinkTest {
     }
 
     @Test
-    public void startsOrangeThenAlternates() {
-        assertSame(BlindSpotBlink.ORANGE, BlindSpotBlink.look(0));
-        assertSame(BlindSpotBlink.ORANGE, BlindSpotBlink.look(BlindSpotBlink.HALF_MS - 1));
+    public void startsRedThenAlternates() {
+        assertSame(BlindSpotBlink.RED, BlindSpotBlink.look(0));
+        assertSame(BlindSpotBlink.RED, BlindSpotBlink.look(BlindSpotBlink.HALF_MS - 1));
         assertSame(BlindSpotBlink.DARK, BlindSpotBlink.look(BlindSpotBlink.HALF_MS));
-        assertSame(BlindSpotBlink.ORANGE, BlindSpotBlink.look(2 * BlindSpotBlink.HALF_MS));
-        assertSame(BlindSpotBlink.ORANGE, BlindSpotBlink.look(-5));
+        assertSame(BlindSpotBlink.RED, BlindSpotBlink.look(2 * BlindSpotBlink.HALF_MS));
+        assertSame(BlindSpotBlink.RED, BlindSpotBlink.look(-5));
+    }
+
+    @Test
+    public void aCarOnEitherSideIsSteadyRed() {
+        assertTrue(BlindSpotBlink.steady(true, false, TURN_LEFT));
+        assertTrue(BlindSpotBlink.steady(true, null, BOTH));
+        assertFalse(BlindSpotBlink.steady(true, false, 0));
+        assertFalse(BlindSpotBlink.steady(true, false, null));
+        assertFalse(BlindSpotBlink.steady(true, true, TURN_RIGHT));
+        assertFalse(BlindSpotBlink.steady(false, false, TURN_RIGHT));
     }
 }

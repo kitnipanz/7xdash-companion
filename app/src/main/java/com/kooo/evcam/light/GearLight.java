@@ -31,7 +31,7 @@ import java.util.Objects;
  * the gear is known (the car is awake) and its rules are on; lets go when the gear goes unknown.
  * The mood light screen takes every link for itself ({@link #pause}) and hands them back when it
  * closes. While the turn signal is on towards a side the blind-spot assist warns about, every
- * group blinks orange instead ({@link BlindSpotBlink}). Gear is a core signal, read for as long as the process lives; speed is a float sensor,
+ * group goes red instead ({@link BlindSpotBlink}). Gear is a core signal, read for as long as the process lives; speed is a float sensor,
  * so this registers as a full telemetry user only while a D rule of some group needs it.</p>
  *
  * <p>Main thread only.</p>
@@ -164,7 +164,11 @@ public final class GearLight implements Telemetry.Listener {
     private void update() {
         VehicleState state = Telemetry.get().latest();
         boolean running = !paused && state.gear != null && config.isMoodLightOn() && canConnect();
-        LightLook blink = blink(running && BlindSpotBlink.active(config.isMoodLightBlindSpotBlink(), state));
+        boolean warn = config.isMoodLightBlindSpotBlink();
+        LightLook blink = blink(running && BlindSpotBlink.active(warn, state));
+        if (blink == null && running && BlindSpotBlink.steady(warn, state)) {
+            blink = BlindSpotBlink.RED;
+        }
         boolean wantsSpeed = false;
         for (MoodLightGroups.Group group : groups.groups) {
             GearLightRules.Pick pick = group.rules.pick(state.gear, state.speedKmh, picked.get(group.id));

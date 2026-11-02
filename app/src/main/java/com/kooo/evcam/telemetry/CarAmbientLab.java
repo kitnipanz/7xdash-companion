@@ -490,6 +490,56 @@ public final class CarAmbientLab {
         return new ArrayList<>(out.values());
     }
 
+    /**
+     * Reads one id three ways: as a car function ({@code getFunctionValue}), as a sensor event
+     * ({@code getSensorEvent}) and as a sensor value ({@code getSensorLatestValue}). For the
+     * all-signals recorder, which does not know which kind each id is. Blocking.
+     */
+    public static final class Reader {
+        public static final int FUNCTION = 0;
+        public static final int SENSOR_EVENT = 1;
+        public static final int SENSOR_VALUE = 2;
+        static final String[] NAMES = {"function", "sensor-event", "sensor-value"};
+
+        private final Object function;
+        private final Object sensor;
+        private final Method getFunction;
+        private final Method getEvent;
+        private final Method getLatest;
+
+        private Reader(Object function, Object sensor) {
+            this.function = function;
+            this.sensor = sensor;
+            getFunction = function == null ? null : EcarxSource.findMethod(function, "getFunctionValue", int.class);
+            getEvent = sensor == null ? null : EcarxSource.findMethod(sensor, "getSensorEvent", int.class);
+            getLatest = sensor == null ? null : EcarxSource.findMethod(sensor, "getSensorLatestValue", int.class);
+        }
+
+        /** Null when the car interface is not there. */
+        public static Reader open(Context context) {
+            Object car = EcarxSource.carForLab(context);
+            if (car == null) {
+                return null;
+            }
+            Reader r = new Reader(invoke(car, "getICarFunction"), invoke(car, "getSensorManager"));
+            return r.getFunction == null && r.getEvent == null && r.getLatest == null ? null : r;
+        }
+
+        public static String name(int way) {
+            return way >= 0 && way < NAMES.length ? NAMES[way] : "?";
+        }
+
+        /** The value read {@code way}, as text ("error ..." when the call failed); null when this head unit has no such call. */
+        public String read(int way, int id) {
+            Method m = way == FUNCTION ? getFunction : way == SENSOR_EVENT ? getEvent : getLatest;
+            Object target = way == FUNCTION ? function : sensor;
+            if (m == null) {
+                return null;
+            }
+            return safe(() -> m.invoke(target, id));
+        }
+    }
+
     private interface Call {
         Object run() throws Exception;
     }

@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.7.1-beta] - 2026-11-03
+
+### Blind spot
+- **The car's cross traffic flags tell left from right.** 7xDash now reads PAS_FUNC_RCTA_LEFT_WARNING and PAS_FUNC_RCTA_RIGHT_WARNING (found with the blind-spot finder) as the built-in warning; a signal you taught in the finder still wins for its side. 0 is quiet, 255 is no reading, anything between counts as a warning. Every change of them goes to the black box, to check what the car really sends.
+- **Red screen edge, like Tesla.** While the car warns of a car on one side, that edge of the screen blinks red over any app; touches go through. Settings → Side mirror → **Red screen edge for the blind spot** (on), with **Show a test blink**.
+- **Show the side when the car warns** (new, on): that side's camera opens even without the turn signal. The turn signal still wins; never in R.
+- The red border on the side view now **blinks** instead of staying on.
+- **Mood lights go red** instead of orange: steady red while a car is in the blind spot, blinking red when you signal towards it. Add Car ambient light to a group to use the car's own ambient light, as in Tesla's 2026.14 update.
+
+### Car signal logs (experimental)
+- **Save all car signals to USB now** (Settings → System): one file with every signal the car offers right now and its value, read as a car setting, a sensor event and a sensor value, plus whether the car supports it. Works parked.
+- **Record all car signals to USB:** while the screen is on and a USB drive is in, writes all signals and then every change, with the time, gear, speed and turn signal. Off by default; turn it off when done.
+- Both write tab-separated text to 7xDash/signals on the USB drive.
+- **Report blind-spot signals** also writes a log file (all car settings at the start, then each change of the blind-spot ones), with **Send blind-spot log to phone** in Settings → Side mirror.
+
 ## [1.7.0] - 2026-10-31
 
 Changes since 1.6.0 (includes 1.6.1-beta to 1.6.13-beta).

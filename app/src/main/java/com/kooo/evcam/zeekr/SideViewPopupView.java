@@ -105,12 +105,36 @@ public class SideViewPopupView extends ViewGroup {
         readConfig();
     }
 
-    /** 盲区报警时画一圈红边；不报了就去掉。 */
+    /** 盲区报警时画一圈红边，像 Tesla 一样闪；不报了就去掉。 */
     public void setWarning(boolean on) {
         if (warning != on) {
             warning = on;
+            warnLit = true;
+            removeCallbacks(warnBlink);
+            if (on) {
+                postDelayed(warnBlink, WARN_BLINK_MS);
+            }
             invalidate();
         }
+    }
+
+    private boolean warnLit = true;
+    private final Runnable warnBlink = new Runnable() {
+        @Override
+        public void run() {
+            if (!warning) {
+                return;
+            }
+            warnLit = !warnLit;
+            invalidate();
+            postDelayed(this, WARN_BLINK_MS);
+        }
+    };
+
+    @Override
+    protected void onDetachedFromWindow() {
+        removeCallbacks(warnBlink);
+        super.onDetachedFromWindow();
     }
 
     public AutoFitTextureView getTextureView() {
@@ -326,6 +350,8 @@ public class SideViewPopupView extends ViewGroup {
 
     private static final float CORNER_DP = 22f;
     private static final float WARN_DP = 6f;
+    /** Half a blink of the red border. */
+    private static final long WARN_BLINK_MS = 350L;
     private static final int WARN_COLOR = 0xFFE53935;
     private static final float SLIDE_DP = 56f;
     private static final long SLIDE_MS = 220L;
@@ -497,7 +523,7 @@ public class SideViewPopupView extends ViewGroup {
     }
 
     private void drawWarning(Canvas canvas, boolean hudFrame, int width, int height) {
-        if (!warning) {
+        if (!warning || !warnLit) {
             return;
         }
         float stroke = WARN_DP * density();

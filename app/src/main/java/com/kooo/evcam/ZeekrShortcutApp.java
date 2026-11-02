@@ -52,8 +52,6 @@ public class ZeekrShortcutApp extends Application {
         // Mood light follows the gear when its rules are on; gear is core telemetry too
         com.kooo.evcam.light.GearLight.install(this);
         com.kooo.evcam.telemetry.BlindSpotWatch.install(this);
-        // Red screen edge on the side the car warns about, like Tesla
-        com.kooo.evcam.overlay.BlindSpotEdge.install(this);
         com.kooo.evcam.telemetry.BlindSpotSniffer.install(this);
         // Experimental: every car signal to the USB drive, when switched on
         com.kooo.evcam.telemetry.SignalRecorder.install(this);

@@ -1719,15 +1719,10 @@
     <string name="macro_pad_button">ปุ่ม %1$d</string>
     <string name="macro_pad_clear">ล้าง</string>
     <string name="shortcut_action_macro_pad">เปิด / ปิดมาโครแพด</string>
-    <!-- Blind spot red screen edge -->
-    <string name="set_bsd_edge_title">ขอบจอสีแดงเตือนจุดบอด</string>
-    <string name="set_bsd_edge_summary">เมื่อรถเตือนว่ามีรถอยู่ด้านไหน ขอบจอด้านนั้นจะกะพริบสีแดงทับทุกแอป แบบ Tesla ใช้สัญญาณเตือนรถตัดผ่านด้านซ้ายและขวา (RCTA) ของรถ หรือสัญญาณที่สอนไว้ในหน้าค้นหาด้านล่าง ทำงานในเกียร์ D, R และ N</string>
-    <string name="set_bsd_edge_test_title">ลองกะพริบดู</string>
-    <string name="set_bsd_edge_test_summary">ขอบจอทั้งสองด้านจะกะพริบสีแดง 3 วินาที ให้ดูว่าหน้าตาเป็นยังไง</string>
     <string name="set_bsd_log_send_title">ส่งล็อกจุดบอดเข้ามือถือ</string>
     <string name="set_bsd_log_send_summary">ส่งไฟล์ล็อกล่าสุดจาก แจ้งสัญญาณจุดบอด เป็นไฟล์ข้อความผ่าน Wi-Fi ด้วย QR เปิดการแจ้งไว้ ขับให้มีรถผ่านทั้งสองฝั่ง แล้วค่อยส่ง</string>
     <string name="set_side_popup_warning_title">แสดงภาพด้านข้างเมื่อรถเตือน</string>
-    <string name="set_side_popup_warning_summary">เมื่อรถเตือนว่ามีรถอยู่ด้านไหน (จุดบอดหรือรถตัดผ่าน) ภาพกล้องด้านนั้นจะขึ้นพร้อมขอบแดงกะพริบ แม้ไม่ได้เปิดไฟเลี้ยว ถ้าเปิดไฟเลี้ยวจะยึดตามไฟเลี้ยว ไม่ทำงานในเกียร์ R</string>
+    <string name="set_side_popup_warning_summary">เมื่อไฟเตือนที่กระจกมองข้างติด (หรือมีเตือนรถตัดผ่าน) ภาพกล้องด้านนั้นจะขึ้นเอง และขอบภาพฝั่งนั้นจะกะพริบสีแดงแบบ Tesla แม้ไม่ได้เปิดไฟเลี้ยว ถ้าเปิดไฟเลี้ยวจะยึดตามไฟเลี้ยว ไม่ทำงานในเกียร์ R</string>
     <string name="set_signal_recorder_title">บันทึกสัญญาณรถทั้งหมดลง USB (ทดลอง)</string>
     <string name="set_signal_recorder_summary">ขณะหน้าจอเปิดและเสียบแฟลชไดรฟ์อยู่ จะเขียนทุกสัญญาณที่รถให้มาลงโฟลเดอร์ 7xDash/signals ในแฟลชไดรฟ์ ตอนเริ่มจดทุกสัญญาณพร้อมค่า แล้วจดทุกครั้งที่ค่าเปลี่ยนพร้อมเวลา เกียร์ ความเร็ว และไฟเลี้ยว เปิดจอแต่ละครั้งได้ไฟล์ใหม่ ใช้เสร็จแล้วปิดด้วย เพราะทำให้ระบบรถทำงานหนักขึ้น</string>
     <string name="set_signal_snapshot_title">บันทึกสัญญาณรถทั้งหมดลง USB ตอนนี้</string>
@@ -1738,4 +1733,6 @@
     <string name="signal_snapshot_no_usb">เสียบแฟลชไดรฟ์ก่อน</string>
     <string name="signal_snapshot_no_car">จอรถนี้อ่านสัญญาณรถไม่ได้</string>
     <string name="signal_snapshot_no_write">เขียนลงแฟลชไดรฟ์ไม่ได้</string>
+    <string name="set_bsd_test_title">ลองแสดงการเตือน</string>
+    <string name="set_bsd_test_summary">จำลองว่ารถเตือนว่ามีรถอยู่ด้านซ้าย 4 วินาที ภาพด้านซ้ายจะขึ้นและขอบซ้ายจะกะพริบสีแดง ใช้ได้ตอนจอด</string>
 </resources>

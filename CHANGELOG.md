@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.7.2-beta] - 2026-11-03
+
+### Blind spot, Tesla style
+- **The mirror warning lamps tell left from right.** 7xDash now reads BCM_DOOR_OPEN_WARN_LEFT_INDCN and RIGHT_INDCN (the warning lamps in the mirrors, found in the all-signals recording) as the built-in warning, with the RCTA flags as a second source: either one warning counts. Every change of them goes to the black box.
+- **Red blink on the warning side of the video.** While the car warns, the side view's edge on that side (left edge for the left camera, right edge for the right) glows red and blinks, like Tesla, instead of a red frame all round. It shows at once, even before the first picture arrives.
+- **The camera opens on the warning** (Show the side when the car warns, on by default), without the turn signal; the turn signal still wins, never in R.
+- **Show a test warning** in Settings → Side mirror → Blind spot: pretends the car warns on the left for 4 seconds, to see it parked.
+- **Removed: the full-screen red edge** from 1.7.1-beta, with its setting and test button.
+- A side taught in the blind-spot finder no longer counts when it was taught 255 (the car's "no reading"); the built-in signals take over for that side.
+
 ## [1.7.1-beta] - 2026-11-03
 
 ### Blind spot

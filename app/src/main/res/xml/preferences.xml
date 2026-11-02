@@ -481,16 +481,11 @@
             android:key="cat_side_blind_spot"
             android:title="@string/set_side_cat_blind_spot">
 
-            <SwitchPreferenceCompat
-                android:key="pref_side_popup_bsd_edge"
-                android:title="@string/set_bsd_edge_title"
-                android:summary="@string/set_bsd_edge_summary" />
-
             <Preference
-                android:key="pref_side_popup_bsd_edge_test"
-                android:dependency="pref_side_popup_bsd_edge"
-                android:title="@string/set_bsd_edge_test_title"
-                android:summary="@string/set_bsd_edge_test_summary" />
+                android:key="pref_side_popup_bsd_test"
+                android:dependency="pref_side_popup"
+                android:title="@string/set_bsd_test_title"
+                android:summary="@string/set_bsd_test_summary" />
 
             <Preference
                 android:key="pref_side_popup_bsd_finder"

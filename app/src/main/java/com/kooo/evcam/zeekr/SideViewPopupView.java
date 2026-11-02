@@ -80,6 +80,8 @@ public class SideViewPopupView extends ViewGroup {
     /** 盲区在报警：画面四周一圈红边，像特斯拉那样。 */
     private boolean warning;
     private final android.graphics.Paint warnPaint = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+    private final android.graphics.Paint warnGlow = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+    private final android.graphics.Path warnClip = new android.graphics.Path();
     private final FisheyeMesh.SourceMap turnedMap = (u, v, out) ->
             SideViewProjection.sourcePoint(u, v, viewFov, yaw, pitch, roll, lane, aspect, out, 0);
 
@@ -100,12 +102,12 @@ public class SideViewPopupView extends ViewGroup {
                 }
             }
         });
-        warnPaint.setStyle(android.graphics.Paint.Style.STROKE);
+        warnPaint.setStyle(android.graphics.Paint.Style.FILL);
         warnPaint.setColor(WARN_COLOR);
         readConfig();
     }
 
-    /** 盲区报警时画一圈红边，像 Tesla 一样闪；不报了就去掉。 */
+    /** 盲区报警时在车来的那一侧画红光，像 Tesla 一样闪；不报了就去掉。 */
     public void setWarning(boolean on) {
         if (warning != on) {
             warning = on;
@@ -350,6 +352,10 @@ public class SideViewPopupView extends ViewGroup {
 
     private static final float CORNER_DP = 22f;
     private static final float WARN_DP = 6f;
+    /** How far the red glow reaches into the picture, as a share of its width. */
+    private static final float WARN_BAND = 0.28f;
+    /** The glow at the edge: the warning red, mostly opaque. */
+    private static final int WARN_GLOW = 0xD9E53935;
     /** Half a blink of the red border. */
     private static final long WARN_BLINK_MS = 350L;
     private static final int WARN_COLOR = 0xFFE53935;
@@ -472,6 +478,8 @@ public class SideViewPopupView extends ViewGroup {
                 super.dispatchDraw(canvas);
                 canvas.drawColor(0xFF000000);
             }
+            // the warning shows even before the first picture arrives
+            drawWarning(canvas, hudFrame, width, height);
             return;
         }
         int save = canvas.save();
@@ -522,18 +530,32 @@ public class SideViewPopupView extends ViewGroup {
         drawWarning(canvas, hudFrame, width, height);
     }
 
+    /**
+     * Tesla style: a red glow on the side of the picture where the car is (the outer edge: left for
+     * the left camera, right for the right one), strongest at the edge and fading inward, blinking
+     * with {@link #warnBlink}.
+     */
     private void drawWarning(Canvas canvas, boolean hudFrame, int width, int height) {
         if (!warning || !warnLit) {
             return;
         }
-        float stroke = WARN_DP * density();
-        warnPaint.setStrokeWidth(stroke);
         float x = hudFrame ? frameX : 0f;
         float y = hudFrame ? frameY : 0f;
-        float half = stroke / 2f;
         float radius = wide && !onHud() ? CORNER_DP * density() : 0f;
-        canvas.drawRoundRect(x + half, y + half, x + width - half, y + height - half,
-                Math.max(0f, radius - half), Math.max(0f, radius - half), warnPaint);
+        boolean leftSide = lane() == LaneCycle.LEFT;
+        float band = width * WARN_BAND;
+        float edge = leftSide ? x : x + width;
+        float inner = leftSide ? x + band : x + width - band;
+        warnGlow.setShader(new android.graphics.LinearGradient(edge, 0, inner, 0,
+                WARN_GLOW, WARN_COLOR & 0x00FFFFFF, android.graphics.Shader.TileMode.CLAMP));
+        int save = canvas.save();
+        warnClip.reset();
+        warnClip.addRoundRect(x, y, x + width, y + height, radius, radius, android.graphics.Path.Direction.CW);
+        canvas.clipPath(warnClip);
+        canvas.drawRect(leftSide ? x : inner, y, leftSide ? inner : x + width, y + height, warnGlow);
+        float line = WARN_DP * density();
+        canvas.drawRect(leftSide ? x : x + width - line, y, leftSide ? x + line : x + width, y + height, warnPaint);
+        canvas.restoreToCount(save);
     }
 
     private void drawTextureOnce(Canvas canvas) {

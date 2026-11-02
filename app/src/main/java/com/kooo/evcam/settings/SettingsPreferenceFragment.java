@@ -1321,20 +1321,9 @@ public class SettingsPreferenceFragment extends PreferenceFragmentCompat {
             appConfig.setBlindSpotSnifferEnabled(value);
             com.kooo.evcam.telemetry.BlindSpotSniffer.applyConfig();
         });
-        bindSwitch("pref_side_popup_bsd_edge", appConfig.isBlindSpotEdgeEnabled(), value -> {
-            appConfig.setBlindSpotEdgeEnabled(value);
-            com.kooo.evcam.overlay.BlindSpotEdge.refresh();
-        });
-        onClick("pref_side_popup_bsd_edge_test", pref -> {
-            if (!com.kooo.evcam.overlay.OverlayCoordinator.canShowOverlay(requireContext())) {
-                com.kooo.evcam.ui.Notice.makeText(requireContext(), R.string.dash_panel_need_overlay,
-                        android.widget.Toast.LENGTH_LONG).show();
-            } else {
-                com.kooo.evcam.overlay.BlindSpotEdge.test(requireContext());
-            }
-        });
         onClick("pref_side_popup_bsd_log_send", pref -> com.kooo.evcam.share.PhoneShare.show(requireActivity(),
                 com.kooo.evcam.telemetry.BlindSpotLog.latest(requireContext())));
+        onClick("pref_side_popup_bsd_test", pref -> com.kooo.evcam.telemetry.BlindSpotWatch.test());
         onClick("pref_side_popup_bsd_finder", pref ->
                 startActivity(new Intent(getContext(), com.kooo.evcam.zeekr.BlindSpotFinderActivity.class)));
         onClick("pref_button_lab", pref ->

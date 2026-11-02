@@ -144,7 +144,6 @@ public class AppConfig {
     private static final String KEY_SIDE_POPUP_DOOR = "side_popup_door";
     private static final String KEY_SIDE_POPUP_WARNING = "side_popup_warning";
     private static final String KEY_BSD_SNIFFER = "bsd_sniffer";
-    private static final String KEY_BSD_EDGE = "bsd_edge";
     private static final String KEY_SIGNAL_RECORDER = "signal_recorder";
     private static final String KEY_BSD_LEFT_ID = "bsd_warn_left_id";
     private static final String KEY_BSD_LEFT_VALUE = "bsd_warn_left_value";
@@ -1999,18 +1998,6 @@ public class AppConfig {
 
     public void setSignalRecorderEnabled(boolean on) {
         prefs.edit().putBoolean(KEY_SIGNAL_RECORDER, on).apply();
-    }
-
-    /**
-     * Red screen edge for a car in the blind spot (overlay.BlindSpotEdge): the side the car warns about
-     * blinks red over any app, like Tesla. On by default.
-     */
-    public boolean isBlindSpotEdgeEnabled() {
-        return prefs.getBoolean(KEY_BSD_EDGE, true);
-    }
-
-    public void setBlindSpotEdgeEnabled(boolean on) {
-        prefs.edit().putBoolean(KEY_BSD_EDGE, on).apply();
     }
 
     /** 盲区报警学到的号码（盲区报警查找页）：每一侧一个车辆设置号码和报警时读到的值；0 = 没学。 */

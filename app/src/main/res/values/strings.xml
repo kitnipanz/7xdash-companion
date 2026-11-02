@@ -1743,15 +1743,10 @@ Then reopen this app.</string>
     <string name="macro_pad_button">Button %1$d</string>
     <string name="macro_pad_clear">Clear</string>
     <string name="shortcut_action_macro_pad">Macro pad on / off</string>
-    <!-- Blind spot red screen edge -->
-    <string name="set_bsd_edge_title">Red screen edge for the blind spot</string>
-    <string name="set_bsd_edge_summary">When the car warns of a car on one side, that edge of the screen blinks red over any app, like Tesla. Uses the car\'s left and right cross traffic warnings (RCTA), or the signal you taught in the finder below. Works in D, R and N.</string>
-    <string name="set_bsd_edge_test_title">Show a test blink</string>
-    <string name="set_bsd_edge_test_summary">Both edges blink red for 3 seconds, to see how it looks.</string>
     <string name="set_bsd_log_send_title">Send blind-spot log to phone</string>
     <string name="set_bsd_log_send_summary">The newest log from Report blind-spot signals, as a text file over Wi-Fi with a QR code. Turn the report on, drive with cars passing on both sides, then send it.</string>
     <string name="set_side_popup_warning_title">Show the side when the car warns</string>
-    <string name="set_side_popup_warning_summary">When the car warns of a car on one side (blind spot or cross traffic), that side\'s camera opens with a blinking red border, even without the turn signal. The turn signal still wins. Never in R.</string>
+    <string name="set_side_popup_warning_summary">When the car lights the warning lamp in a mirror (or warns of cross traffic), that side\'s camera opens and the edge of the picture on that side blinks red, like Tesla, even without the turn signal. The turn signal still wins. Never in R.</string>
     <string name="set_signal_recorder_title">Record all car signals to USB (experimental)</string>
     <string name="set_signal_recorder_summary">While the screen is on and a USB drive is in, writes every signal the car offers to 7xDash/signals on the drive: first all of them with their values, then every change with the time, gear, speed and turn signal. One file each time the screen comes on. Turn it off when done: it keeps the car interface busy.</string>
     <string name="set_signal_snapshot_title">Save all car signals to USB now</string>
@@ -1762,4 +1757,6 @@ Then reopen this app.</string>
     <string name="signal_snapshot_no_usb">insert the USB drive first</string>
     <string name="signal_snapshot_no_car">the car interface is not available on this head unit</string>
     <string name="signal_snapshot_no_write">cannot write to the USB drive</string>
+    <string name="set_bsd_test_title">Show a test warning</string>
+    <string name="set_bsd_test_summary">Pretends the car warns of a car on the left for 4 seconds: the left side view opens and its left edge blinks red. Works parked.</string>
 </resources>

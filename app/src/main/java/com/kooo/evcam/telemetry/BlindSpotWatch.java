@@ -8,19 +8,24 @@ import com.kooo.evcam.AppConfig;
 import com.kooo.evcam.blackbox.BlackBox;
 
 /**
- * Which side the car is warning about. Built in: the car's rear cross traffic alert flags,
- * {@code PAS_FUNC_RCTA_LEFT_WARNING} and {@code PAS_FUNC_RCTA_RIGHT_WARNING} (found with the
- * Blind-spot warning finder on the 7X, 2026-11-02). A side the driver taught in the finder
- * ({@link AppConfig#getBlindSpotLearned}) wins over the built-in one.
+ * Which side the car is warning about. Built in: the warning lamps in the mirrors,
+ * {@code BCM_DOOR_OPEN_WARN_LEFT_INDCN} / {@code RIGHT_INDCN} (all-signals recording, 2026-11-02),
+ * and the rear cross traffic alert flags {@code PAS_FUNC_RCTA_LEFT_WARNING} / {@code RIGHT_WARNING};
+ * either one warning counts. A side the driver taught in the finder
+ * ({@link AppConfig#getBlindSpotLearned}) wins, unless it was taught 255 ("no reading").
  *
  * <p>Read while a turn signal is on (the side view and the mood light use it then), and in D, R
- * or N while the red screen edge is on ({@code overlay.BlindSpotEdge}). In P and with both off it
+ * or N while Show the side when the car warns is on (the side view opens for it). In P and with both off it
  * stays quiet. Readings go into {@link VehicleState#blindSpotWarning} through
  * {@link Telemetry#setBlindSpotWarning}.</p>
  */
 public final class BlindSpotWatch implements Telemetry.Listener {
 
     static final long POLL_MS = 200L;
+    /** BCM_DOOR_OPEN_WARN_LEFT_INDCN / RIGHT_INDCN (IDoor): the warning lamps in the mirrors. Read 0 at rest (2026-11-02 recording). */
+    public static final int MIRROR_LEFT = 0xA0005002;
+    public static final int MIRROR_RIGHT = 0xA0005003;
+    static final int NO_READING = 255;
     /** PAS_FUNC_RCTA_LEFT_WARNING / PAS_FUNC_RCTA_RIGHT_WARNING (IPAS). */
     public static final int RCTA_LEFT = 0x23050200;
     public static final int RCTA_RIGHT = 0x23050300;
@@ -33,9 +38,8 @@ public final class BlindSpotWatch implements Telemetry.Listener {
     private final Handler work;
     private boolean polling;
     private Integer lastNoted;
-    /** Raw RCTA values last written to the black box, so the warning values can be checked from a drive. */
-    private Integer lastRawLeft;
-    private Integer lastRawRight;
+    /** Built-in signal values last written to the black box, so the warning values can be checked from a drive. */
+    private final java.util.Map<Integer, Integer> lastRaw = new java.util.HashMap<>();
 
     private final Runnable poll = new Runnable() {
         @Override
@@ -75,7 +79,7 @@ public final class BlindSpotWatch implements Telemetry.Listener {
         VehicleState s = Telemetry.get().latest();
         boolean signalling = s.turnSignal != null && s.turnSignal != 0 && !Boolean.TRUE.equals(s.hazard);
         boolean driving = "D".equals(s.gear) || "R".equals(s.gear) || "N".equals(s.gear);
-        boolean want = signalling || (driving && (config.isBlindSpotEdgeEnabled() || config.isSidePopupOnWarning()));
+        boolean want = signalling || (driving && config.isSidePopupOnWarning());
         if (want == polling) {
             return;
         }
@@ -85,54 +89,86 @@ public final class BlindSpotWatch implements Telemetry.Listener {
             work.post(poll);
         } else {
             lastNoted = null;
-            lastRawLeft = null;
-            lastRawRight = null;
+            lastRaw.clear();
             work.post(() -> Telemetry.get().setBlindSpotWarning(null));
         }
+    }
+
+    /** How long Show a test warning pretends the car warns. */
+    static final long TEST_MS = 4_000L;
+
+    /**
+     * Settings → Show a test warning: pretends the car warns of a car on the left for
+     * {@link #TEST_MS}, so the side view opens with its red edge. Only while not polling (parked):
+     * a real reading would replace it at once.
+     */
+    public static void test() {
+        BlindSpotWatch w = installed;
+        if (w == null || w.polling) {
+            return;
+        }
+        w.work.post(() -> Telemetry.get().setBlindSpotWarning(VehicleState.TURN_LEFT));
+        w.work.postDelayed(() -> {
+            if (!w.polling) {
+                Telemetry.get().setBlindSpotWarning(null);
+            }
+        }, TEST_MS);
     }
 
     /** Bits {@link VehicleState#TURN_LEFT} / {@link VehicleState#TURN_RIGHT}; null when nothing is readable. */
     private Integer read() {
         Learned l = config.getBlindSpotLearned();
-        Integer left = CarAmbientLab.value(app, l.leftId != 0 ? l.leftId : RCTA_LEFT);
-        Integer right = CarAmbientLab.value(app, l.rightId != 0 ? l.rightId : RCTA_RIGHT);
-        noteRaw(l, left, right);
-        if (left == null && right == null) {
+        boolean taughtLeft = taught(l.leftId, l.leftValue);
+        boolean taughtRight = taught(l.rightId, l.rightValue);
+        Integer learnedLeft = taughtLeft ? CarAmbientLab.value(app, l.leftId) : null;
+        Integer learnedRight = taughtRight ? CarAmbientLab.value(app, l.rightId) : null;
+        Integer mirrorLeft = taughtLeft ? null : raw("mirror left", MIRROR_LEFT);
+        Integer mirrorRight = taughtRight ? null : raw("mirror right", MIRROR_RIGHT);
+        Integer rctaLeft = taughtLeft ? null : raw("RCTA left", RCTA_LEFT);
+        Integer rctaRight = taughtRight ? null : raw("RCTA right", RCTA_RIGHT);
+        if (learnedLeft == null && learnedRight == null && mirrorLeft == null && mirrorRight == null
+                && rctaLeft == null && rctaRight == null) {
             return null;
         }
-        return sides(l, left, right);
-    }
-
-    /** Every change of the built-in RCTA values goes to the black box: what the car really sends is still being checked. */
-    private void noteRaw(Learned l, Integer left, Integer right) {
-        if (l.leftId == 0 && !java.util.Objects.equals(left, lastRawLeft)) {
-            BlackBox.note("RCTA 左: " + lastRawLeft + " → " + left);
-            lastRawLeft = left;
-        }
-        if (l.rightId == 0 && !java.util.Objects.equals(right, lastRawRight)) {
-            BlackBox.note("RCTA 右: " + lastRawRight + " → " + right);
-            lastRawRight = right;
-        }
-    }
-
-    /** An RCTA flag that is warning: 0 is quiet and 255 is "no reading", anything between is a warning. Pure, see the test. */
-    public static boolean rctaWarning(Integer value) {
-        return value != null && value > 0 && value < 255;
-    }
-
-    /**
-     * Which sides warn. A learned side warns when it reads the learned value; a side not learned
-     * reads the built-in RCTA flag ({@link #rctaWarning}). Pure, see the test.
-     */
-    public static int sides(Learned l, Integer leftValue, Integer rightValue) {
         int out = 0;
-        if (l.leftId != 0 ? leftValue != null && leftValue == l.leftValue : rctaWarning(leftValue)) {
+        if (side(taughtLeft, l.leftValue, learnedLeft, mirrorLeft, rctaLeft)) {
             out |= VehicleState.TURN_LEFT;
         }
-        if (l.rightId != 0 ? rightValue != null && rightValue == l.rightValue : rctaWarning(rightValue)) {
+        if (side(taughtRight, l.rightValue, learnedRight, mirrorRight, rctaRight)) {
             out |= VehicleState.TURN_RIGHT;
         }
         return out;
+    }
+
+    /** Reads a built-in signal; every change goes to the black box, since what the car really sends is still being checked. */
+    private Integer raw(String label, int id) {
+        Integer now = CarAmbientLab.value(app, id);
+        if (!java.util.Objects.equals(now, lastRaw.get(id)) || !lastRaw.containsKey(id)) {
+            BlackBox.note("Blind-spot signal " + label + ": " + lastRaw.get(id) + " → " + now);
+            lastRaw.put(id, now);
+        }
+        return now;
+    }
+
+    /** A taught side counts only when it was taught a real value: 255 is what the car reads with nothing to report. */
+    public static boolean taught(int id, int value) {
+        return id != 0 && value != NO_READING;
+    }
+
+    /** A built-in warning signal that is on: 0 is quiet and 255 is "no reading", anything between is a warning. */
+    public static boolean builtInWarning(Integer value) {
+        return value != null && value > 0 && value < NO_READING;
+    }
+
+    /**
+     * Does one side warn? A taught side warns when it reads its taught value; otherwise the mirror
+     * warning lamp or the RCTA flag, whichever warns. Pure, see the test.
+     */
+    public static boolean side(boolean taught, int taughtValue, Integer learnedNow, Integer mirrorNow, Integer rctaNow) {
+        if (taught) {
+            return learnedNow != null && learnedNow == taughtValue;
+        }
+        return builtInWarning(mirrorNow) || builtInWarning(rctaNow);
     }
 
     /** What the finder learned: for each side, a car setting and the value it reads while warning. 0 = not learned. */

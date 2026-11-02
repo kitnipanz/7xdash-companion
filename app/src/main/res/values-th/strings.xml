@@ -299,7 +299,7 @@
     <string name="set_mood_light_title">ไฟบรรยากาศ</string>
     <string name="set_mood_light_summary">ตั้งสีไฟ RGB บลูทูธราคาถูก เช่น รุ่น ELK-BLEDOM หรือ Happy Lighting</string>
     <string name="set_mood_light_blind_spot_title">ไฟเป็นสีแดงเมื่อมีรถในจุดบอด</string>
-    <string name="set_mood_light_blind_spot_summary">แบบ Tesla: เมื่อรถเตือนว่ามีรถอยู่ในจุดบอด ไฟบรรยากาศจะเป็นสีแดง และกะพริบสีแดงเมื่อเปิดไฟเลี้ยวไปทางนั้น แล้วกลับเป็นสีเดิมเมื่อหมดเตือน ใส่ ไฟบรรยากาศในรถ ไว้ในกลุ่มเพื่อให้ไฟในรถเปลี่ยนด้วย</string>
+    <string name="set_mood_light_blind_spot_summary">แบบ Tesla: เมื่อรถเตือนว่ามีรถอยู่ในจุดบอด ไฟบรรยากาศจะเป็นสีแดง เมื่อเปิดไฟเลี้ยวไปทางนั้นจะกะพริบสลับระหว่างสีแดงกับสีเดิมของไฟ แล้วกลับเป็นสีเดิมเมื่อหมดเตือน ใส่ ไฟบรรยากาศในรถ ไว้ในกลุ่มเพื่อให้ไฟในรถเปลี่ยนด้วย</string>
     <string name="mood_light_subtitle">ปิดแอปมือถือของไฟก่อน ไฟเชื่อมต่อได้ทีละเครื่อง</string>
     <string name="mood_light_pick">สแกน แล้วแตะเชื่อมต่อที่ไฟของคุณ</string>
     <string name="mood_light_none">ยังไม่มีไฟ\n1. เสียบไฟ และปิดแอปมือถือของไฟ\n2. แตะสแกน\n3. แตะเชื่อมต่อที่ไฟของคุณ</string>

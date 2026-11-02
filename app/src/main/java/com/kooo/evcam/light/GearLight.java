@@ -165,10 +165,9 @@ public final class GearLight implements Telemetry.Listener {
         VehicleState state = Telemetry.get().latest();
         boolean running = !paused && state.gear != null && config.isMoodLightOn() && canConnect();
         boolean warn = config.isMoodLightBlindSpotBlink();
-        LightLook blink = blink(running && BlindSpotBlink.active(warn, state));
-        if (blink == null && running && BlindSpotBlink.steady(warn, state)) {
-            blink = BlindSpotBlink.RED;
-        }
+        // null: no blink; else whether this is the red half (the other half is each group's usual colour)
+        Boolean redHalf = blink(running && BlindSpotBlink.active(warn, state));
+        boolean steadyRed = redHalf == null && running && BlindSpotBlink.steady(warn, state);
         boolean wantsSpeed = false;
         for (MoodLightGroups.Group group : groups.groups) {
             GearLightRules.Pick pick = group.rules.pick(state.gear, state.speedKmh, picked.get(group.id));
@@ -191,7 +190,11 @@ public final class GearLight implements Telemetry.Listener {
                 BlackBox.note("Mood light gear (" + group.name + "): " + before + " -> " + pick.key);
             }
             slot.pickedKey = pick.key;
-            apply(slot, blink != null ? blink : pick.look);
+            LightLook look = pick.look;
+            if (steadyRed || Boolean.TRUE.equals(redHalf)) {
+                look = BlindSpotBlink.red(pick.look);
+            }
+            apply(slot, look);
         }
         // Groups that were deleted
         Iterator<Map.Entry<String, Slot>> it = slots.entrySet().iterator();
@@ -205,8 +208,8 @@ public final class GearLight implements Telemetry.Listener {
         holdSpeed(wantsSpeed && !paused);
     }
 
-    /** Start, keep or stop the blind-spot blink; the look to show now, or null when not blinking. */
-    private LightLook blink(boolean on) {
+    /** Start, keep or stop the blind-spot blink; whether it is the red half now, or null when not blinking. */
+    private Boolean blink(boolean on) {
         long now = SystemClock.uptimeMillis();
         if (on != (blinkSinceMs >= 0)) {
             blinkSinceMs = on ? now : -1L;
@@ -218,7 +221,7 @@ public final class GearLight implements Telemetry.Listener {
         }
         long since = now - blinkSinceMs;
         main.postDelayed(blinkTick, BlindSpotBlink.HALF_MS - since % BlindSpotBlink.HALF_MS);
-        return BlindSpotBlink.look(since);
+        return BlindSpotBlink.redHalf(since);
     }
 
     private void apply(Slot slot, LightLook look) {

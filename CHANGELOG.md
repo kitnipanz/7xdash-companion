@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.7.3-beta] - 2026-11-03
+
+### Mood light
+- **The blind-spot blink keeps your colour.** While the turn signal is on towards a car in the blind spot, the mood lights now blink between red and the colour their gear rules show right now (for example blue in D), instead of red and off. Each group, the car's own ambient light included, follows its own colour.
+- The red uses the lights' current brightness, so the warning matches the cabin; full brightness when the lights are off. Steady red with no turn signal also keeps the brightness.
+
 ## [1.7.2-beta] - 2026-11-03
 
 ### Blind spot, Tesla style

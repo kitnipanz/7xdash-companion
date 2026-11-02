@@ -5,23 +5,18 @@ import com.kooo.evcam.telemetry.VehicleState;
 /**
  * The mood lights (and the car's own ambient light, when it is in a group) go red for a car in the
  * blind spot, like Tesla ({@link GearLight}): steady red while the car warns of a car on either
- * side, blinking red while the turn signal is on towards a warned side. Hazards on, or the warning
+ * side, and while the turn signal is on towards a warned side they blink between red and their
+ * usual colour. Hazards on, or the warning
  * gone: the lights go back to what their gear rules show.
  *
  * <p>Pure, tested in {@code BlindSpotBlinkTest}.</p>
  */
 final class BlindSpotBlink {
 
-    /** Half a blink: orange this long, dark this long. */
+    /** Half a blink: red this long, the usual colour this long. */
     static final long HALF_MS = 400L;
 
-    static final LightLook RED = new LightLook(0xFF0000, 100, LightProtocol.Effect.STATIC, 50);
-    /**
-     * The dark half is black, not power off: the lights stay on, so no power packet each blink
-     * (some clones answer power-on by bringing back their last colour). The car's own light reads
-     * brightness 0 as off.
-     */
-    static final LightLook DARK = new LightLook(0x000000, 0, LightProtocol.Effect.STATIC, 50);
+    static final int RED_RGB = 0xFF0000;
 
     private BlindSpotBlink() {
     }
@@ -55,8 +50,22 @@ final class BlindSpotBlink {
         return steady(enabled, s.hazard, s.blindSpotWarning);
     }
 
-    /** What to show {@code sinceMs} after the blink started: red first, then dark, and so on. */
-    static LightLook look(long sinceMs) {
-        return (Math.max(0L, sinceMs) / HALF_MS) % 2 == 0 ? RED : DARK;
+    /** Red in the brightness the lights have now (full when they are off), so the warning matches the cabin. */
+    static LightLook red(LightLook usual) {
+        int brightness = usual == null || usual.brightness <= 0 ? 100 : usual.brightness;
+        return new LightLook(RED_RGB, brightness, LightProtocol.Effect.STATIC, 50);
+    }
+
+    /** Red half or usual half, {@code sinceMs} after the blink started: red first. */
+    static boolean redHalf(long sinceMs) {
+        return (Math.max(0L, sinceMs) / HALF_MS) % 2 == 0;
+    }
+
+    /**
+     * What to show {@code sinceMs} after the blink started: red, then the colour the gear rules
+     * show now ({@code usual}), and so on. The lights never go dark in between.
+     */
+    static LightLook look(long sinceMs, LightLook usual) {
+        return redHalf(sinceMs) ? red(usual) : usual;
     }
 }

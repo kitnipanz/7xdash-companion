@@ -176,10 +176,11 @@ public final class Trip implements Telemetry.Listener {
     }
 
     /**
-     * A place shared from the phone, as the server got it. Blocking (may follow a short link): call
-     * off the main thread. Returns the place set, or null when nothing in it looked like a place.
+     * A place shared from the phone, as the server got it, or sent from 7xDash web. Blocking (may
+     * follow a short link or look a name up): call off the main thread. Returns the place set, or
+     * null when nothing in it looked like a place.
      */
-    DestinationLink.Place receive(String shared) {
+    public DestinationLink.Place receive(String shared) {
         DestinationLink.Place p = DestinationLink.parse(shared);
         if (p == null) {
             String url = DestinationLink.firstUrl(shared);

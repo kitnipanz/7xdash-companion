@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.7.6-beta] - 2026-11-03
+
+### Navigation (beta)
+- **Turn-by-turn on a Google map.** Search a place, take the one sent from the iPhone, or hold on the map; see the route with traffic, its time, distance, arrival time and battery at arrival; Start for the next-turn banner, the map following the car, a new route when you leave it, spoken turns and the next turn on the HUD. Guiding goes on when the screen closes. Needs Google Play services for the map.
+- **Battery at arrival is part of Navigation now.** Its own screen and Home card are gone. The trip, "4.4 km · 23%" (km left · battery at arrival), shows on the Dash panel, the Home card, the floating map and the HUD card; orange when low, red when the range runs out first. A place from the iPhone still gets its battery estimate without a route from Google.
+- **Floating map.** The map in a window over any app: drag its bar to move it or push it to a side to dock it, drag the corner to change the width and height, double-tap the bar for small / large. The bar shows the next turn and the trip, with a battery-at-arrival chip on the map; Start, Full screen and × on the bar. A new shortcut action turns it on and off.
+- **Map like a phone's navigation.** While guiding the car sits centred and low, heading up; the zoom follows the speed (close in when slow so side streets show, further out when fast, close again before a turn), easing instead of jumping. Live traffic shows on the route preview and goes while guiding, so the only coloured line is your route.
+- **Day and night.** The map follows the head unit's day / night as it switches, or stays light or dark (Map: follow the screen / light / dark).
+- **HUD.** The turn card adds the arrival time and battery at arrival. A live map can go on the HUD too (Map on the HUD). Place on the HUD shows the HUD small with the card and the map on it: drag to move, drag the corner to resize, and the HUD follows as you go. A HUD preview over the map shows what the HUD shows (a sample when nothing is guided).
+- **Sending places from the iPhone.** Set up iPhone (in Navigation) shows the QR code. The page it opens takes a pasted Google Maps or Apple Maps link or just a typed place name, so no Shortcut is needed; Add to Home Screen keeps it one tap away. A place sent while guiding switches to it; with Navigation closed, the floating map opens with its route.
+
 ## [1.7.5-beta] - 2026-11-03
 
 ### Battery at arrival

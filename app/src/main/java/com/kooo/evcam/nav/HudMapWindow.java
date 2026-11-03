@@ -111,6 +111,9 @@ final class HudMapWindow implements Navigator.Listener {
 
     void hide() {
         Navigator.get().removeListener(this);
+        if (painter != null) {
+            painter.release();
+        }
         if (mapView != null) {
             try {
                 mapView.onPause();

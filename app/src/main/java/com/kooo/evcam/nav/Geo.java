@@ -29,6 +29,17 @@ public final class Geo {
         return (Math.toDegrees(Math.atan2(y, x)) + 360) % 360;
     }
 
+    /** The point {@code metres} from (lat, lng) towards {@code bearing} (degrees clockwise from north): {lat, lng}. */
+    public static double[] offset(double lat, double lng, double bearing, double metres) {
+        double d = metres / EARTH_M;
+        double b = Math.toRadians(bearing);
+        double p1 = Math.toRadians(lat);
+        double l1 = Math.toRadians(lng);
+        double p2 = Math.asin(Math.sin(p1) * Math.cos(d) + Math.cos(p1) * Math.sin(d) * Math.cos(b));
+        double l2 = l1 + Math.atan2(Math.sin(b) * Math.sin(d) * Math.cos(p1), Math.cos(d) - Math.sin(p1) * Math.sin(p2));
+        return new double[] {Math.toDegrees(p2), (Math.toDegrees(l2) + 540) % 360 - 180};
+    }
+
     /**
      * Where the point (lat, lng) falls on the segment a→b: {@code [t, metres off]}, t from 0 (at a)
      * to 1 (at b). Flat-earth around the point, which is exact enough for road segments.

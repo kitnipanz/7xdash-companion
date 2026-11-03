@@ -205,70 +205,16 @@
             android:id="@+id/nav_options"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="10dp"
             android:orientation="vertical">
-            <com.google.android.material.switchmaterial.SwitchMaterial
-                android:id="@+id/nav_voice_switch"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/nav_voice_switch"
-                android:textAppearance="@style/TextAppearance.Cam.Row"
-                android:textColor="@color/text_primary" />
-            <com.google.android.material.switchmaterial.SwitchMaterial
-                android:id="@+id/nav_hud_switch"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/nav_hud_switch"
-                android:textAppearance="@style/TextAppearance.Cam.Row"
-                android:textColor="@color/text_primary" />
-            <com.google.android.material.switchmaterial.SwitchMaterial
-                android:id="@+id/nav_hud_map_switch"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/nav_hud_map_switch"
-                android:textAppearance="@style/TextAppearance.Cam.Row"
-                android:textColor="@color/text_primary" />
-            <com.google.android.material.switchmaterial.SwitchMaterial
-                android:id="@+id/nav_hud_preview_switch"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/nav_hud_preview_switch"
-                android:textAppearance="@style/TextAppearance.Cam.Row"
-                android:textColor="@color/text_primary" />
-            <com.google.android.material.switchmaterial.SwitchMaterial
-                android:id="@+id/nav_share_switch"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/nav_share_switch"
-                android:textAppearance="@style/TextAppearance.Cam.Row"
-                android:textColor="@color/text_primary" />
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/nav_share_hint"
-                android:textAppearance="@style/TextAppearance.Cam.Caption"
-                android:textColor="@color/text_secondary" />
+            <!-- everything else (voice, HUD, map and car colours, iPhone) is in the settings dialog -->
             <com.google.android.material.button.MaterialButton
-                android:id="@+id/nav_phone_setup"
-                style="@style/Widget.Cam.RailSmall"
+                android:id="@+id/nav_settings"
+                style="@style/Widget.Material3.Button.TonalButton"
                 android:layout_width="wrap_content"
-                android:layout_height="52dp"
-                android:layout_marginTop="6dp"
-                android:text="@string/arrival_setup_title" />
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/nav_hud_adjust"
-                style="@style/Widget.Cam.RailSmall"
-                android:layout_width="wrap_content"
-                android:layout_height="52dp"
-                android:layout_marginTop="6dp"
-                android:text="@string/nav_hud_adjust" />
-            <!-- map colours: following the head unit's day / night, light, or dark; a tap moves on -->
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/nav_map_scheme"
-                style="@style/Widget.Cam.RailSmall"
-                android:layout_width="wrap_content"
-                android:layout_height="52dp"
-                android:layout_marginTop="6dp" />
+                android:layout_height="56dp"
+                android:text="@string/nav_settings_button"
+                app:icon="@drawable/ic_settings" />
         </LinearLayout>
         <LinearLayout
             android:layout_width="match_parent"
@@ -303,23 +249,26 @@
         <com.google.android.material.button.MaterialButton
             android:id="@+id/nav_float"
             style="@style/Widget.Cam.IconButton"
-            android:layout_width="72dp"
-            android:layout_height="72dp"
+            android:layout_width="88dp"
+            android:layout_height="88dp"
             android:layout_marginBottom="12dp"
             android:contentDescription="@string/nav_float"
-            app:icon="@drawable/ic_float_window" />
+            app:icon="@drawable/ic_float_window"
+            app:iconSize="36dp" />
         <com.google.android.material.button.MaterialButton
             android:id="@+id/nav_mute"
             style="@style/Widget.Cam.IconButton"
-            android:layout_width="72dp"
-            android:layout_height="72dp"
+            android:layout_width="88dp"
+            android:layout_height="88dp"
             android:contentDescription="@string/nav_mute"
-            app:icon="@drawable/ic_voice_on" />
+            app:icon="@drawable/ic_voice_on"
+            app:iconSize="36dp" />
         <com.google.android.material.button.MaterialButton
             android:id="@+id/nav_recenter"
             style="@style/Widget.Cam.IconButton"
-            android:layout_width="72dp"
-            android:layout_height="72dp"
+            android:layout_width="88dp"
+            android:layout_height="88dp"
+            app:iconSize="36dp"
             android:layout_marginTop="12dp"
             android:contentDescription="@string/nav_recenter"
             android:visibility="gone"

@@ -144,7 +144,9 @@ public final class NavFloatWindow implements Navigator.Listener {
             }
         });
         recenter.setVisibility(View.GONE);
-        int b = Math.round(48 * density);
+        int b = Math.round(68 * density);
+        int rp = Math.round(16 * density);
+        recenter.setPadding(rp, rp, rp, rp);
         FrameLayout.LayoutParams at = new FrameLayout.LayoutParams(b, b, Gravity.BOTTOM | Gravity.START);
         at.setMargins(Math.round(10 * density), 0, 0, Math.round(10 * density));
         root.addView(recenter, at);
@@ -160,7 +162,7 @@ public final class NavFloatWindow implements Navigator.Listener {
         batteryAt.setMargins(Math.round(10 * density), bar + Math.round(8 * density), 0, 0);
         root.addView(battery, batteryAt);
 
-        int g = Math.round(44 * density);
+        int g = Math.round(64 * density);
         View grip = new Grip(context);
         grip.setContentDescription(context.getString(R.string.nav_float_resize));
         grip.setOnTouchListener(new ResizeTouch());
@@ -205,6 +207,9 @@ public final class NavFloatWindow implements Navigator.Listener {
         context.getApplicationContext().unregisterComponentCallbacks(dayNight);
         if (gestures != null) {
             gestures.cancel();
+        }
+        if (painter != null) {
+            painter.release();
         }
         if (mapView != null) {
             mapView.onPause();
@@ -560,6 +565,12 @@ public final class NavFloatWindow implements Navigator.Listener {
                 }
 
                 @Override
+                public boolean keepShape() {
+                    // any width, any height: the map is not a picture with a shape to keep
+                    return false;
+                }
+
+                @Override
                 public void apply() {
                     update();
                 }
@@ -629,22 +640,26 @@ public final class NavFloatWindow implements Navigator.Listener {
     /** Three short diagonal lines in the corner: grab here to resize. */
     private static final class Grip extends View {
         private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        private final Paint back = new Paint(Paint.ANTI_ALIAS_FLAG);
 
         Grip(Context context) {
             super(context);
             float d = context.getResources().getDisplayMetrics().density;
-            paint.setColor(0xCC5A5C61);
-            paint.setStrokeWidth(2.5f * d);
+            paint.setColor(0xFFF0622D);
+            paint.setStrokeWidth(3.5f * d);
             paint.setStrokeCap(Paint.Cap.ROUND);
+            back.setColor(0xB3101114);
         }
 
         @Override
         protected void onDraw(Canvas c) {
             float w = getWidth();
             float h = getHeight();
-            float m = w * 0.22f;
+            // a dark quarter-circle in the corner, so the lines show on any map
+            c.drawCircle(w, h, w * 0.85f, back);
+            float m = w * 0.18f;
             for (int i = 1; i <= 3; i++) {
-                float t = i * (w - m) / 4f;
+                float t = i * (w - m) / 4.5f;
                 c.drawLine(w - m - t, h - m, w - m, h - m - t, paint);
             }
         }

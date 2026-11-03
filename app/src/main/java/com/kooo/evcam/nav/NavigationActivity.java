@@ -62,7 +62,6 @@ public class NavigationActivity extends AppCompatActivity implements Navigator.L
     private MaterialButton end;
     private MaterialButton mute;
     private View recenter;
-    private MaterialButton scheme;
     private View hudPreview;
     private TextView hudPreviewLabel;
     private HudTurnCard hudCard;
@@ -93,7 +92,6 @@ public class NavigationActivity extends AppCompatActivity implements Navigator.L
         end = findViewById(R.id.nav_end);
         mute = findViewById(R.id.nav_mute);
         recenter = findViewById(R.id.nav_recenter);
-        scheme = findViewById(R.id.nav_map_scheme);
         hudPreview = findViewById(R.id.nav_hud_preview);
         hudPreviewLabel = findViewById(R.id.nav_hud_preview_label);
         hudCard = new HudTurnCard(this, Math.round(84 * getResources().getDisplayMetrics().density));
@@ -136,47 +134,7 @@ public class NavigationActivity extends AppCompatActivity implements Navigator.L
             }
         });
         findViewById(R.id.nav_float).setOnClickListener(v -> openFloating());
-        findViewById(R.id.nav_hud_adjust).setOnClickListener(v -> openHudPlacer());
-        findViewById(R.id.nav_phone_setup).setOnClickListener(v -> openPhoneSetup());
-        showScheme();
-        scheme.setOnClickListener(v -> {
-            int next = (config.getNavMapScheme() + 1) % 3;
-            config.setNavMapScheme(next);
-            showScheme();
-            if (painter != null) {
-                painter.applyScheme(next);
-            }
-            NavFloatWindow.get().applyScheme(next);
-        });
-        SwitchMaterial voice = findViewById(R.id.nav_voice_switch);
-        voice.setChecked(config.isNavVoiceEnabled());
-        voice.setOnCheckedChangeListener((b, on) -> config.setNavVoiceEnabled(on));
-        SwitchMaterial preview = findViewById(R.id.nav_hud_preview_switch);
-        preview.setChecked(config.isNavHudPreviewEnabled());
-        preview.setOnCheckedChangeListener((b, on) -> {
-            config.setNavHudPreviewEnabled(on);
-            showHudPreview(Navigator.get().snapshot());
-            NavFloatWindow.get().refresh();
-        });
-        SwitchMaterial hudMap = findViewById(R.id.nav_hud_map_switch);
-        hudMap.setChecked(config.isNavHudMapEnabled());
-        hudMap.setOnCheckedChangeListener((b, on) -> {
-            config.setNavHudMapEnabled(on);
-            Navigator.get().relayoutHud();
-        });
-        SwitchMaterial share = findViewById(R.id.nav_share_switch);
-        share.setChecked(config.isNavShareEnabled());
-        share.setOnCheckedChangeListener((b, on) -> {
-            config.setNavShareEnabled(on);
-            // the receiver runs for Navigation too: start or stop it
-            Trip.get().apply(this);
-        });
-        SwitchMaterial hud = findViewById(R.id.nav_hud_switch);
-        hud.setChecked(config.isNavHudEnabled());
-        hud.setOnCheckedChangeListener((b, on) -> {
-            config.setNavHudEnabled(on);
-            showHudPreview(Navigator.get().snapshot());
-        });
+        findViewById(R.id.nav_settings).setOnClickListener(v -> openSettings());
 
         setUpMap();
     }
@@ -217,13 +175,6 @@ public class NavigationActivity extends AppCompatActivity implements Navigator.L
             }
         });
         onNavChanged(Navigator.get().snapshot());
-    }
-
-    /** Map colours: following the head unit, light or dark. */
-    private void showScheme() {
-        int s = config.getNavMapScheme();
-        scheme.setText(s == AppConfig.NAV_MAP_LIGHT ? R.string.nav_map_light
-                : s == AppConfig.NAV_MAP_DARK ? R.string.nav_map_dark : R.string.nav_map_auto);
     }
 
     /**
@@ -338,6 +289,117 @@ public class NavigationActivity extends AppCompatActivity implements Navigator.L
                 .show();
     }
 
+    /** Navigation settings, in three groups: voice and HUD, the map (colours, car colour), the iPhone. */
+    private void openSettings() {
+        View box = getLayoutInflater().inflate(R.layout.dialog_nav_settings, null);
+        SwitchMaterial voice = box.findViewById(R.id.nav_voice_switch);
+        voice.setChecked(config.isNavVoiceEnabled());
+        voice.setOnCheckedChangeListener((b, on) -> config.setNavVoiceEnabled(on));
+        SwitchMaterial hud = box.findViewById(R.id.nav_hud_switch);
+        hud.setChecked(config.isNavHudEnabled());
+        hud.setOnCheckedChangeListener((b, on) -> {
+            config.setNavHudEnabled(on);
+            Navigator.get().relayoutHud();
+            showHudPreview(Navigator.get().snapshot());
+        });
+        SwitchMaterial hudMap = box.findViewById(R.id.nav_hud_map_switch);
+        hudMap.setChecked(config.isNavHudMapEnabled());
+        hudMap.setOnCheckedChangeListener((b, on) -> {
+            config.setNavHudMapEnabled(on);
+            Navigator.get().relayoutHud();
+        });
+        box.findViewById(R.id.nav_hud_adjust).setOnClickListener(v -> openHudPlacer());
+
+        com.google.android.material.button.MaterialButtonToggleGroup scheme = box.findViewById(R.id.nav_scheme_group);
+        int[] schemeIds = {R.id.nav_scheme_auto, R.id.nav_scheme_light, R.id.nav_scheme_dark};
+        scheme.check(schemeIds[config.getNavMapScheme()]);
+        scheme.addOnButtonCheckedListener((group, id, checked) -> {
+            if (!checked) {
+                return;
+            }
+            int chosen = id == R.id.nav_scheme_light ? AppConfig.NAV_MAP_LIGHT
+                    : id == R.id.nav_scheme_dark ? AppConfig.NAV_MAP_DARK : AppConfig.NAV_MAP_AUTO;
+            config.setNavMapScheme(chosen);
+            if (painter != null) {
+                painter.applyScheme(chosen);
+            }
+            NavFloatWindow.get().applyScheme(chosen);
+        });
+        buildSwatches(box.findViewById(R.id.nav_car_swatches));
+
+        SwitchMaterial preview = box.findViewById(R.id.nav_hud_preview_switch);
+        preview.setChecked(config.isNavHudPreviewEnabled());
+        preview.setOnCheckedChangeListener((b, on) -> {
+            config.setNavHudPreviewEnabled(on);
+            showHudPreview(Navigator.get().snapshot());
+        });
+        SwitchMaterial share = box.findViewById(R.id.nav_share_switch);
+        share.setChecked(config.isNavShareEnabled());
+        share.setOnCheckedChangeListener((b, on) -> {
+            config.setNavShareEnabled(on);
+            // the receiver runs for Navigation too: start or stop it
+            Trip.get().apply(this);
+        });
+        box.findViewById(R.id.nav_phone_setup).setOnClickListener(v -> openPhoneSetup());
+
+        androidx.appcompat.app.AlertDialog dialog = new androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle(R.string.nav_settings_title)
+                .setView(box)
+                .setPositiveButton(R.string.nav_hud_adjust_done, null)
+                .show();
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setLayout(Math.round(560 * getResources().getDisplayMetrics().density),
+                    WindowManager.LayoutParams.WRAP_CONTENT);
+        }
+    }
+
+    /** The car colour as four round swatches with their names; the chosen one has an orange ring. */
+    private void buildSwatches(LinearLayout row) {
+        int[] names = {R.string.nav_car_forest_green, R.string.nav_car_silver, R.string.nav_car_black,
+                R.string.nav_car_white};
+        float d = getResources().getDisplayMetrics().density;
+        row.removeAllViews();
+        for (int i = 0; i < names.length; i++) {
+            int index = i;
+            CarIcon.Color color = CarIcon.Color.of(i);
+            LinearLayout cell = new LinearLayout(this);
+            cell.setOrientation(LinearLayout.VERTICAL);
+            cell.setGravity(Gravity.CENTER_HORIZONTAL);
+            int pad = Math.round(6 * d);
+            cell.setPadding(pad, pad, pad, pad);
+            View dot = new View(this);
+            android.graphics.drawable.GradientDrawable fill = new android.graphics.drawable.GradientDrawable();
+            fill.setShape(android.graphics.drawable.GradientDrawable.OVAL);
+            fill.setColors(new int[] {color.light, color.edge});
+            fill.setGradientType(android.graphics.drawable.GradientDrawable.RADIAL_GRADIENT);
+            fill.setGradientRadius(28 * d);
+            boolean chosen = config.getNavCarColor() == i;
+            fill.setStroke(Math.round((chosen ? 4 : 1) * d), chosen ? ContextCompat.getColor(this, R.color.energy)
+                    : ContextCompat.getColor(this, R.color.line));
+            dot.setBackground(fill);
+            int size = Math.round(48 * d);
+            cell.addView(dot, new LinearLayout.LayoutParams(size, size));
+            TextView name = new TextView(this);
+            name.setText(names[i]);
+            name.setTextAppearance(R.style.TextAppearance_Cam_Caption);
+            name.setTextColor(ContextCompat.getColor(this, chosen ? R.color.text_primary : R.color.text_secondary));
+            name.setGravity(Gravity.CENTER);
+            name.setPadding(0, Math.round(4 * d), 0, 0);
+            cell.addView(name);
+            android.util.TypedValue ripple = new android.util.TypedValue();
+            getTheme().resolveAttribute(android.R.attr.selectableItemBackgroundBorderless, ripple, true);
+            cell.setBackgroundResource(ripple.resourceId);
+            cell.setContentDescription(getString(names[i]));
+            cell.setOnClickListener(v -> {
+                config.setNavCarColor(index);
+                buildSwatches(row);
+                onNavChanged(Navigator.get().snapshot());
+                NavFloatWindow.get().refresh();
+            });
+            row.addView(cell, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1));
+        }
+    }
+
     /** The map in a floating window over other apps; this screen closes. */
     private void openFloating() {
         if (!OverlayCoordinator.canShowOverlay(this)) {
@@ -358,6 +420,14 @@ public class NavigationActivity extends AppCompatActivity implements Navigator.L
         NavFloatWindow.get().hide();
         Navigator.get().attach(this);
         Navigator.get().addListener(this);
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (painter != null) {
+            painter.release();
+        }
+        super.onDestroy();
     }
 
     @Override
@@ -404,11 +474,13 @@ public class NavigationActivity extends AppCompatActivity implements Navigator.L
     }
 
     /**
-     * The HUD preview over the map: the card the HUD shows now while guiding, else a sample, so how
-     * it looks on the HUD can be seen any time. Hidden when its switch is off.
+     * The HUD preview over the map before guiding: a sample card, so how it looks on the HUD can be
+     * seen. Hidden while guiding (the banner shows the turn) and when its switch is off.
      */
     private void showHudPreview(Navigator.Snapshot s) {
-        if (!config.isNavHudPreviewEnabled()) {
+        // while guiding the orange banner already shows the turn: no second copy over the map
+        boolean guiding = s.phase == Navigator.Phase.GUIDING || s.phase == Navigator.Phase.ARRIVED;
+        if (!config.isNavHudPreviewEnabled() || guiding) {
             hudPreview.setVisibility(View.GONE);
             return;
         }

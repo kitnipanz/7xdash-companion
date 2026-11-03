@@ -3127,4 +3127,16 @@ public class AppConfig {
     public void setNavHudMapPlace(String place) {
         prefs.edit().putString(KEY_NAV_HUD_MAP_PLACE, place == null ? "" : place).apply();
     }
+
+    private static final String KEY_NAV_CAR_COLOR = "nav_car_color";
+
+    /** Navigation: the car's colour on the map, 0 forest green, 1 silver, 2 black, 3 white. */
+    public int getNavCarColor() {
+        int v = prefs.getInt(KEY_NAV_CAR_COLOR, 0);
+        return v >= 0 && v <= 3 ? v : 0;
+    }
+
+    public void setNavCarColor(int color) {
+        prefs.edit().putInt(KEY_NAV_CAR_COLOR, color).apply();
+    }
 }

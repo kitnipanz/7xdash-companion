@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Navigation settings, in three groups: Voice and HUD, Map, iPhone. Opened from the trip sheet's Settings button. -->
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingStart="24dp"
+        android:paddingTop="8dp"
+        android:paddingEnd="24dp"
+        android:paddingBottom="8dp">
+
+        <!-- Voice and HUD -->
+        <TextView
+            style="@style/NavSettingsHeader"
+            android:text="@string/nav_section_voice_hud" />
+        <com.google.android.material.switchmaterial.SwitchMaterial
+            android:id="@+id/nav_voice_switch"
+            style="@style/NavSettingsSwitch"
+            android:text="@string/nav_voice_switch" />
+        <com.google.android.material.switchmaterial.SwitchMaterial
+            android:id="@+id/nav_hud_switch"
+            style="@style/NavSettingsSwitch"
+            android:text="@string/nav_hud_switch" />
+        <com.google.android.material.switchmaterial.SwitchMaterial
+            android:id="@+id/nav_hud_map_switch"
+            style="@style/NavSettingsSwitch"
+            android:text="@string/nav_hud_map_switch" />
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/nav_hud_adjust"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginTop="4dp"
+            android:text="@string/nav_hud_adjust" />
+
+        <!-- Map -->
+        <TextView
+            style="@style/NavSettingsHeader"
+            android:text="@string/nav_section_map" />
+        <TextView
+            style="@style/NavSettingsLabel"
+            android:text="@string/nav_map_colours" />
+        <com.google.android.material.button.MaterialButtonToggleGroup
+            android:id="@+id/nav_scheme_group"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            app:selectionRequired="true"
+            app:singleSelection="true">
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/nav_scheme_auto"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="56dp"
+                android:layout_weight="1"
+                android:text="@string/nav_scheme_auto" />
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/nav_scheme_light"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="56dp"
+                android:layout_weight="1"
+                android:text="@string/nav_scheme_light" />
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/nav_scheme_dark"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="56dp"
+                android:layout_weight="1"
+                android:text="@string/nav_scheme_dark" />
+        </com.google.android.material.button.MaterialButtonToggleGroup>
+        <TextView
+            style="@style/NavSettingsLabel"
+            android:layout_marginTop="14dp"
+            android:text="@string/nav_car_colour" />
+        <!-- four colour swatches, filled in by NavigationActivity -->
+        <LinearLayout
+            android:id="@+id/nav_car_swatches"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:orientation="horizontal" />
+        <com.google.android.material.switchmaterial.SwitchMaterial
+            android:id="@+id/nav_hud_preview_switch"
+            style="@style/NavSettingsSwitch"
+            android:layout_marginTop="8dp"
+            android:text="@string/nav_hud_preview_switch" />
+
+        <!-- iPhone -->
+        <TextView
+            style="@style/NavSettingsHeader"
+            android:text="@string/nav_section_iphone" />
+        <com.google.android.material.switchmaterial.SwitchMaterial
+            android:id="@+id/nav_share_switch"
+            style="@style/NavSettingsSwitch"
+            android:text="@string/nav_share_switch" />
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/nav_share_hint"
+            android:textAppearance="@style/TextAppearance.Cam.Caption"
+            android:textColor="@color/text_secondary" />
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/nav_phone_setup"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginTop="8dp"
+            android:text="@string/arrival_setup_title" />
+    </LinearLayout>
+</ScrollView>

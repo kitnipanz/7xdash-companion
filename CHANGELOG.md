@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.7.8-beta] - 2026-11-03
+
+### Navigation (beta)
+- **The car sits at the bottom centre.** While guiding, the map faces the way you drive with the car near the bottom and the road ahead filling the screen. The camera now aims ahead of the car instead of using map padding, which head units' MapLibre-based Play services ignore (the car sat in the middle there), and checks where the car landed to correct itself.
+- **A Zeekr 7X instead of the arrow,** drawn from Zeekr's top view: short bonnet, the dark glass roof with its bright trim, the light bar at the front and the red bar at the back. Pick its colour in Settings: forest green, silver, black or white. It always points the way the car goes (the arrow pointed sideways on head units).
+- **Closer, smoother zoom.** The camera now glides every frame instead of jumping once a second. The map stays at its closest up to 25 km/h (side streets and alleys show), eases out as the speed goes up, comes in again before a turn, and comes in quicker when slowing down than it goes out when speeding up. Past the closest Google's map goes, the map is drawn bigger, since the big head unit screen still shows a lot at that.
+- **Settings in one place.** The trip panel keeps a single Settings button; the settings open in three groups: Voice and HUD (spoken turns, the HUD turn card, the HUD map, Place on the HUD), Map (map colours as Follow screen / Light / Dark, the car colour as four swatches, the HUD card on the map), and iPhone (places from the iPhone, Set up iPhone).
+- **Floating map:** resize it freely, by the corner grip (bigger and easier to see now) or by pinching the bar, which sets the width and height separately instead of keeping the shape. The re-centre button is bigger.
+- The three buttons at the bottom right of the full screen are the same size, and the HUD preview no longer repeats the turn banner while guiding.
+
 ## [1.7.7-beta] - 2026-11-03
 
 ### Navigation (beta)

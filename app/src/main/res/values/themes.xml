@@ -206,4 +206,28 @@
     <style name="MaterialAlertDialog.Cam.Body" parent="MaterialAlertDialog.Material3.Body.Text">
         <item name="android:textSize">@dimen/text_row</item>
     </style>
+    <!-- Navigation settings dialog: group headers, small labels over a control, and the switches -->
+    <style name="NavSettingsHeader">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">20dp</item>
+        <item name="android:layout_marginBottom">4dp</item>
+        <item name="android:textAppearance">@style/TextAppearance.Cam.Caption</item>
+        <item name="android:textColor">@color/energy_text</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textAllCaps">true</item>
+    </style>
+    <style name="NavSettingsLabel">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textAppearance">@style/TextAppearance.Cam.Body</item>
+        <item name="android:textColor">@color/text_secondary</item>
+    </style>
+    <style name="NavSettingsSwitch">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:minHeight">56dp</item>
+        <item name="android:textAppearance">@style/TextAppearance.Cam.Row</item>
+        <item name="android:textColor">@color/text_primary</item>
+    </style>
 </resources>

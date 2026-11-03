@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.5-beta] - 2026-11-03
+
+### Battery at arrival
+- **Google Maps places work.** Sharing a place from Google Maps said "could not find a place in that link" while Apple Maps worked. Google sends its pages without a length, and 7xDash's link reader gave up on them; it now reads them.
+- **Places shared by name only are found.** The iPhone's Google Maps links often end at a link with the place's name but no coordinates (`?q=Name, Address&ftid=...` or `/maps/place/Name/data=...`). 7xDash now looks that name up in Google's map search and takes the first place found.
+- The small map picture on Google's page is no longer taken for the place: its centre is only the area shown, often where the reader is.
+
 ## [1.7.4-beta] - 2026-11-03
 
 Same as 1.7.4-alpha, now as a beta so the car's update check offers it.

@@ -77,4 +77,19 @@ public class DestinationLinkTest {
         at(RouteLookup.fromPage("<a href=\"https://www.google.com/maps/place/X/data=!3d14.1!4d100.6\">"), 14.1, 100.6);
         assertNull(RouteLookup.fromPage("<html>nothing</html>"));
     }
+
+    @Test
+    public void googleLinksWithOnlyANameAreSearchedByThatName() {
+        assertEquals("Siam Paragon, 991 Rama I Rd, Bangkok", DestinationLink.googleQuery(
+                "https://maps.google.com/?q=Siam+Paragon,+991+Rama+I+Rd,+Bangkok&ftid=0x30e29ecfc2f455e1:0xc4ad0280d8906604&entry=gps"));
+        assertEquals("Siam Paragon", DestinationLink.googleQuery(
+                "https://www.google.com/maps/place/Siam+Paragon/data=!4m2!3m1!1s0x30e29ecfc2f455e1:0xc4ad0280d8906604"));
+        // nothing to search: coordinates, or not Google
+        assertNull(DestinationLink.googleQuery("https://maps.google.com/?q=13.7461,100.5348"));
+        assertNull(DestinationLink.googleQuery("https://maps.apple.com/?q=Siam+Paragon"));
+        assertNull(DestinationLink.googleQuery("https://evil.example/?q=google.com"));
+        assertNull(DestinationLink.googleQuery(null));
+        // and such a link has no place of its own
+        assertNull(DestinationLink.parse("https://maps.google.com/?q=Siam+Paragon&ftid=0x1:0x2"));
+    }
 }

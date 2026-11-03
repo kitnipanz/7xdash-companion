@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.7.4-beta] - 2026-11-03
+
+Same as 1.7.4-alpha, now as a beta so the car's update check offers it.
+
+### Signal recorder
+- **Listens for blind-spot signals the car pushes.** Two drives showed no blind-spot reading changing when asked every few seconds: the mirror lamps (BCM_DOOR_OPEN_WARN_*) stayed 0, RCTA and the blind-spot warnings stayed 255. Some car values are only ever pushed, so the USB recorder now also asks the car to push every change of 58 candidates (blind spot, RCTA, cross traffic, door open warning, lane change, rear collision, turn signal) and writes each push at once with its zone, read as "callback zone N". Other callbacks for them are written as "(callback)".
+- The first line under Changes says whether the car took the request ("watching 58 as one list").
+- The blind-spot warning itself is unchanged; the mirror lamps are likely the door open warning (parked), not the driving blind-spot warning.
+
 ## [1.7.4-alpha] - 2026-11-03
 
 ### Signal recorder (test build)

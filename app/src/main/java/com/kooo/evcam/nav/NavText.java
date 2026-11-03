@@ -15,6 +15,17 @@ public final class NavText {
     }
 
     /** "350 m", "1.2 km", "12 km". */
+    /** "64% battery at arrival", "Short by 40 km: charge on the way", or waiting for the car. */
+    public static String battery(Context c, com.kooo.evcam.trip.Arrival.Estimate e) {
+        if (e == null) {
+            return c.getString(R.string.nav_battery_unknown);
+        }
+        if (e.level == com.kooo.evcam.trip.Arrival.Level.SHORT) {
+            return c.getString(R.string.nav_battery_short, (int) Math.ceil(-e.spareKm));
+        }
+        return c.getString(R.string.nav_battery, Math.round(e.percent));
+    }
+
     public static String distance(Context c, double meters) {
         if (meters < 1_000) {
             int m = meters < 100 ? (int) (Math.round(meters / 10) * 10) : (int) (Math.round(meters / 50) * 50);

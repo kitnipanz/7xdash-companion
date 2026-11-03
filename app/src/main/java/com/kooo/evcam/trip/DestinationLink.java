@@ -109,6 +109,15 @@ public final class DestinationLink {
         return null;
     }
 
+    /** A short line that could be a place's name, typed instead of a link ("Siam Paragon"). */
+    public static boolean looksLikeName(String text) {
+        if (text == null) {
+            return false;
+        }
+        String t = text.trim();
+        return t.length() >= 2 && t.length() <= 120 && t.indexOf('\n') < 0 && firstUrl(t) == null;
+    }
+
     /** The first http(s) link in the text, or null. */
     public static String firstUrl(String text) {
         if (text == null) {

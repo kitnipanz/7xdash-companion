@@ -1,52 +1,41 @@
 package com.kooo.evcam.nav;
 
 import android.content.Context;
-import android.graphics.Color;
 import android.graphics.PixelFormat;
 import android.graphics.Point;
-import android.graphics.Typeface;
-import android.graphics.drawable.GradientDrawable;
 import android.os.Build;
-import android.text.TextUtils;
-import android.util.TypedValue;
 import android.view.Display;
 import android.view.Gravity;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
-import android.widget.LinearLayout;
-import android.widget.TextView;
 
 import com.kooo.evcam.AppConfig;
 import com.kooo.evcam.AppLog;
-import com.kooo.evcam.hud.HudNotice;
 import com.kooo.evcam.overlay.OverlayCoordinator;
 import com.kooo.evcam.zeekr.HudDisplay;
 
 /**
  * The next turn on the HUD while guiding: arrow, distance, and the road. Stays up and changes in
- * place (unlike {@link com.kooo.evcam.hud.HudNoticeWindow}'s cards, which come and go). Placed in
- * the part of the HUD the notice cards use, so Settings' left and right edges apply. Main thread.
+ * place (unlike {@link com.kooo.evcam.hud.HudNoticeWindow}'s cards, which come and go). Placed where
+ * it was set in the Navigation screen ({@link HudTurnPlace}); until then in the part of the HUD the
+ * notice cards use, so Settings' left and right edges apply. The card
+ * itself is {@link HudTurnCard}, which the Navigation screen also shows as a preview. Main thread.
  */
 final class HudTurnWindow {
 
     private static final String TAG = "HudTurnWindow";
-    private static final int ENERGY = 0xFFF0622D;
 
     private WindowManager wm;
     private FrameLayout root;
-    private ManeuverIcon.ArrowView arrow;
-    private TextView distance;
-    private TextView road;
+    private HudTurnCard card;
     private boolean failed;
 
     /** Shows (or updates) the card. Does nothing on a car without a HUD. */
-    void show(Context context, Maneuver m, String toNext, String instruction) {
+    void show(Context context, Navigator.HudLine line) {
         if (root == null && !open(context)) {
             return;
         }
-        arrow.set(m, Color.WHITE);
-        distance.setText(toNext);
-        road.setText(instruction);
+        card.set(line);
     }
 
     void hide() {
@@ -59,6 +48,7 @@ final class HudTurnWindow {
         }
         wm = null;
         root = null;
+        card = null;
         failed = false;
     }
 
@@ -77,46 +67,20 @@ final class HudTurnWindow {
             WindowManager manager = window.getSystemService(WindowManager.class);
             Point size = HudDisplay.sizeOf(hud);
             AppConfig config = new AppConfig(context);
-            int[] box = HudNotice.place(size.x, size.y,
+            int[] box = HudTurnPlace.place(size.x, size.y, HudTurnPlace.restore(config.getNavHudPlace()),
                     config.getHudNoticeLeftPercent(), config.getHudNoticeRightPercent());
             int height = box[3];
 
-            LinearLayout card = new LinearLayout(window);
-            card.setOrientation(LinearLayout.HORIZONTAL);
-            card.setGravity(Gravity.CENTER_VERTICAL);
-            int pad = Math.max(4, height / 20);
-            card.setPadding(pad * 2, pad, pad * 2, pad);
-            GradientDrawable bg = new GradientDrawable();
-            bg.setColor(0xD9101114);
-            bg.setCornerRadius(height / 12f);
-            bg.setStroke(Math.max(2, height / 60), ENERGY);
-            card.setBackground(bg);
-
-            arrow = new ManeuverIcon.ArrowView(window);
-            int icon = Math.round(height * 0.7f);
-            card.addView(arrow, new LinearLayout.LayoutParams(icon, icon));
-
-            LinearLayout texts = new LinearLayout(window);
-            texts.setOrientation(LinearLayout.VERTICAL);
-            distance = text(window, height * 0.3f, Color.WHITE, true);
-            road = text(window, height * 0.15f, 0xFFD0D2D6, false);
-            road.setMaxLines(2);
-            road.setEllipsize(TextUtils.TruncateAt.END);
-            texts.addView(distance);
-            texts.addView(road);
-            LinearLayout.LayoutParams textsAt = new LinearLayout.LayoutParams(0,
-                    LinearLayout.LayoutParams.WRAP_CONTENT, 1);
-            textsAt.leftMargin = pad * 2;
-            card.addView(texts, textsAt);
+            card = new HudTurnCard(window, height);
 
             FrameLayout frame = new FrameLayout(window);
-            FrameLayout.LayoutParams at = new FrameLayout.LayoutParams(box[2], FrameLayout.LayoutParams.WRAP_CONTENT);
+            FrameLayout.LayoutParams at = new FrameLayout.LayoutParams(box[2], box[3]);
             at.gravity = Gravity.TOP | Gravity.START;
             at.leftMargin = box[0];
             at.topMargin = box[1];
-            frame.addView(card, at);
+            frame.addView(card.view, at);
             WindowManager.LayoutParams lp = new WindowManager.LayoutParams(
-                    box[0] + box[2], WindowManager.LayoutParams.WRAP_CONTENT,
+                    box[0] + box[2], box[1] + box[3],
                     WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
                     WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE,
                     PixelFormat.TRANSLUCENT);
@@ -130,16 +94,5 @@ final class HudTurnWindow {
             AppLog.w(TAG, "no turn card on the HUD: " + e.getMessage());
             return false;
         }
-    }
-
-    private static TextView text(Context context, float px, int color, boolean bold) {
-        TextView view = new TextView(context);
-        view.setTextSize(TypedValue.COMPLEX_UNIT_PX, px);
-        view.setTextColor(color);
-        view.setSingleLine(bold);
-        if (bold) {
-            view.setTypeface(Typeface.DEFAULT_BOLD);
-        }
-        return view;
     }
 }

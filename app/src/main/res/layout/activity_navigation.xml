@@ -139,6 +139,34 @@
         </LinearLayout>
     </LinearLayout>
 
+    <!-- the HUD preview over the map: the card the HUD shows now, or a sample when nothing is guided -->
+    <LinearLayout
+        android:id="@+id/nav_hud_preview"
+        android:layout_width="440dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|end"
+        android:layout_marginTop="100dp"
+        android:layout_marginEnd="16dp"
+        android:orientation="vertical"
+        android:visibility="gone">
+        <TextView
+            android:id="@+id/nav_hud_preview_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_segment"
+            android:paddingStart="10dp"
+            android:paddingTop="2dp"
+            android:paddingEnd="10dp"
+            android:paddingBottom="2dp"
+            android:textAppearance="@style/TextAppearance.Cam.Caption"
+            android:textColor="@color/text_primary" />
+        <FrameLayout
+            android:id="@+id/nav_hud_preview_card"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp" />
+    </LinearLayout>
+
     <!-- the trip: where to, how long, battery at arrival, Start / End -->
     <LinearLayout
         android:id="@+id/nav_sheet"
@@ -193,6 +221,54 @@
                 android:text="@string/nav_hud_switch"
                 android:textAppearance="@style/TextAppearance.Cam.Row"
                 android:textColor="@color/text_primary" />
+            <com.google.android.material.switchmaterial.SwitchMaterial
+                android:id="@+id/nav_hud_map_switch"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/nav_hud_map_switch"
+                android:textAppearance="@style/TextAppearance.Cam.Row"
+                android:textColor="@color/text_primary" />
+            <com.google.android.material.switchmaterial.SwitchMaterial
+                android:id="@+id/nav_hud_preview_switch"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/nav_hud_preview_switch"
+                android:textAppearance="@style/TextAppearance.Cam.Row"
+                android:textColor="@color/text_primary" />
+            <com.google.android.material.switchmaterial.SwitchMaterial
+                android:id="@+id/nav_share_switch"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/nav_share_switch"
+                android:textAppearance="@style/TextAppearance.Cam.Row"
+                android:textColor="@color/text_primary" />
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/nav_share_hint"
+                android:textAppearance="@style/TextAppearance.Cam.Caption"
+                android:textColor="@color/text_secondary" />
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/nav_phone_setup"
+                style="@style/Widget.Cam.RailSmall"
+                android:layout_width="wrap_content"
+                android:layout_height="52dp"
+                android:layout_marginTop="6dp"
+                android:text="@string/arrival_setup_title" />
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/nav_hud_adjust"
+                style="@style/Widget.Cam.RailSmall"
+                android:layout_width="wrap_content"
+                android:layout_height="52dp"
+                android:layout_marginTop="6dp"
+                android:text="@string/nav_hud_adjust" />
+            <!-- map colours: following the head unit's day / night, light, or dark; a tap moves on -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/nav_map_scheme"
+                style="@style/Widget.Cam.RailSmall"
+                android:layout_width="wrap_content"
+                android:layout_height="52dp"
+                android:layout_marginTop="6dp" />
         </LinearLayout>
         <LinearLayout
             android:layout_width="match_parent"
@@ -224,6 +300,14 @@
         android:layout_gravity="bottom|end"
         android:layout_margin="16dp"
         android:orientation="vertical">
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/nav_float"
+            style="@style/Widget.Cam.IconButton"
+            android:layout_width="72dp"
+            android:layout_height="72dp"
+            android:layout_marginBottom="12dp"
+            android:contentDescription="@string/nav_float"
+            app:icon="@drawable/ic_float_window" />
         <com.google.android.material.button.MaterialButton
             android:id="@+id/nav_mute"
             style="@style/Widget.Cam.IconButton"

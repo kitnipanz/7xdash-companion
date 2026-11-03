@@ -19,7 +19,7 @@ import fi.iki.elonen.NanoHTTPD;
  * once keeps working:
  *
  * <ul>
- *   <li>{@code /t/<token>}: a page for the phone (the QR code in {@link ArrivalActivity} opens it)
+ *   <li>{@code /t/<token>}: a page for the phone (the QR code on the Navigation screen opens it)
  *   with a box to paste a link and the steps to make the Shortcut.</li>
  *   <li>{@code /t/<token>/go}: takes {@code link} (form, query or the plain body) and answers in one
  *   line the Shortcut can show.</li>
@@ -118,6 +118,9 @@ final class DestinationServer extends NanoHTTPD {
         }
         return "<!doctype html><html><head><meta charset=\"utf-8\">"
                 + "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">"
+                // Add to Home Screen opens it like an app, one tap from the phone's home screen
+                + "<meta name=\"apple-mobile-web-app-capable\" content=\"yes\">"
+                + "<meta name=\"apple-mobile-web-app-title\" content=\"7xDash\">"
                 + "<title>7xDash</title><style>"
                 + "body{margin:0;padding:20px 16px;background:#141518;color:#fff;"
                 + "font-family:system-ui,-apple-system,sans-serif;line-height:1.5}"
@@ -132,13 +135,14 @@ final class DestinationServer extends NanoHTTPD {
                 + "word-break:break-all;user-select:all;-webkit-user-select:all;font-size:14px}"
                 + ".hint{color:#8e9096;font-size:13px}"
                 + "</style></head><body>"
-                + "<h1>" + escape(context.getString(R.string.arrival_title)) + "</h1>"
+                + "<h1>" + escape(context.getString(R.string.nav_web_title)) + "</h1>"
                 + "<div class=\"beta\">BETA</div>"
                 + (message == null ? "" : "<div class=\"msg\">" + escape(message) + "</div>")
                 + "<form method=\"post\" action=\"" + send + "\"><input type=\"hidden\" name=\"from\" value=\"page\">"
                 + "<textarea name=\"link\" placeholder=\"" + escape(context.getString(R.string.arrival_web_paste))
                 + "\"></textarea><button type=\"submit\">" + escape(context.getString(R.string.arrival_web_send))
                 + "</button></form>"
+                + "<div class=\"hint\" style=\"margin-top:10px\">" + escape(context.getString(R.string.nav_web_home_hint)) + "</div>"
                 + "<h2>" + escape(context.getString(R.string.arrival_web_shortcut_title)) + "</h2>"
                 + "<div class=\"hint\">" + escape(context.getString(R.string.arrival_web_shortcut_address)) + "</div>"
                 + "<code id=\"u\"></code>"

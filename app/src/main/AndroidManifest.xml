@@ -290,12 +290,6 @@
             android:exported="false" />
 
         <activity
-            android:name=".trip.ArrivalActivity"
-            android:label="@string/arrival_title"
-            android:theme="@style/Theme.Cam"
-            android:screenOrientation="landscape"
-            android:exported="false" />
-        <activity
             android:name=".nav.NavigationActivity"
             android:label="@string/nav_title"
             android:theme="@style/Theme.Cam"

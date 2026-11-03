@@ -189,8 +189,9 @@ public class DashPanelService extends Service implements Telemetry.Listener {
         if (view == null) {
             return;
         }
-        com.kooo.evcam.trip.Trip.Status trip = com.kooo.evcam.trip.Trip.get().status();
-        view.arrival(com.kooo.evcam.trip.ArrivalText.line(this, trip), com.kooo.evcam.trip.ArrivalText.color(trip,
+        // the trip from Navigation, or from the place shared from the iPhone
+        com.kooo.evcam.nav.TripLine trip = com.kooo.evcam.nav.TripLine.now(this);
+        view.arrival(trip == null ? null : trip.text, trip == null ? 0xFFFFFFFF : trip.color(
                 0xFFFFFFFF, androidx.core.content.ContextCompat.getColor(this, com.kooo.evcam.R.color.energy),
                 androidx.core.content.ContextCompat.getColor(this, com.kooo.evcam.R.color.recording)));
         view.show(Telemetry.get().latest(),

@@ -7,12 +7,14 @@ import android.os.Looper;
 import com.kooo.evcam.AppConfig;
 import com.kooo.evcam.AppLog;
 import com.kooo.evcam.R;
+import com.kooo.evcam.overlay.OverlayCoordinator;
 import com.kooo.evcam.telemetry.Readings;
 import com.kooo.evcam.telemetry.Signal;
 import com.kooo.evcam.telemetry.Telemetry;
 import com.kooo.evcam.telemetry.VehicleState;
 import com.kooo.evcam.trip.Arrival;
 import com.kooo.evcam.trip.DestinationLink;
+import com.kooo.evcam.trip.Trip;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -72,13 +74,15 @@ public final class Navigator {
         public final Double carLat;
         public final Double carLng;
         public final Double carBearing;
+        /** km/h, or null when the car does not say. */
+        public final Float carSpeedKmh;
         /** Battery at arrival, or null until the car has given battery and range. */
         public final Arrival.Estimate battery;
         public final boolean muted;
 
         Snapshot(Phase phase, DestinationLink.Place destination, NavRoute route, Guidance.Progress progress,
                  boolean rerouting, int error, String errorDetail, Double carLat, Double carLng, Double carBearing,
-                 Arrival.Estimate battery, boolean muted) {
+                 Float carSpeedKmh, Arrival.Estimate battery, boolean muted) {
             this.phase = phase;
             this.destination = destination;
             this.route = route;
@@ -89,6 +93,7 @@ public final class Navigator {
             this.carLat = carLat;
             this.carLng = carLng;
             this.carBearing = carBearing;
+            this.carSpeedKmh = carSpeedKmh;
             this.battery = battery;
             this.muted = muted;
         }
@@ -113,6 +118,7 @@ public final class Navigator {
     private final List<Listener> listeners = new ArrayList<>();
     private final VoicePlan voicePlan = new VoicePlan();
     private final HudTurnWindow hud = new HudTurnWindow();
+    private final HudMapWindow hudMap = new HudMapWindow();
     private final Runnable tick = new Runnable() {
         @Override
         public void run() {
@@ -140,13 +146,18 @@ public final class Navigator {
     private Double carLat;
     private Double carLng;
     private Double carBearing;
+    private Float carSpeed;
     private double headingFromLat = Double.NaN;
     private double headingFromLng = Double.NaN;
     private Arrival.Estimate battery;
     private boolean muted;
     private boolean telemetryHeld;
-    /** The Navigation screen is open: GPS on for the map and the search, even with nothing planned. */
-    private boolean attached;
+    /** A place came from the iPhone while guiding: start guiding to it as soon as its route is in. */
+    private boolean startWhenRouted;
+    /** The turn card is being placed by hand ({@link #setHudPlacing}). */
+    private boolean hudPlacing;
+    /** Navigation screens open (the full screen, the floating window): GPS on for the map and the search, even with nothing planned. */
+    private int attached;
 
     private Navigator() {
     }
@@ -161,21 +172,88 @@ public final class Navigator {
         return GoogleApi.hasKey();
     }
 
-    /** The Navigation screen opened: keep the car's position coming. */
+    /** At launch: places shared from the iPhone open Navigation. */
+    public static void install(Context context) {
+        Context app = context.getApplicationContext();
+        Trip.setSharedListener(place -> get().onShared(app, place));
+    }
+
+    /**
+     * The iPhone shared a place: show its route, or switch to it while guiding. With no Navigation
+     * screen open, the floating window opens so the head unit shows it at once.
+     */
+    private void onShared(Context context, DestinationLink.Place place) {
+        if (!active(context) || !hasKey() || !new AppConfig(context).isNavShareEnabled()) {
+            return;
+        }
+        boolean wasGuiding = phase == Phase.GUIDING;
+        AppLog.i(TAG, "place shared from the phone" + (wasGuiding ? " while guiding" : ""));
+        preview(context, place);
+        startWhenRouted = wasGuiding;
+        if (attached == 0 && OverlayCoordinator.canShowOverlay(context)) {
+            NavFloatWindow.get().show(context);
+        }
+    }
+
+    /** A Navigation screen opened: keep the car's position coming. Pair with {@link #detach}. */
     public void attach(Context context) {
         bind(context);
-        attached = true;
+        attached++;
         keepRunning();
     }
 
-    /** The Navigation screen closed: guiding goes on, but nothing else needs the GPS. */
+    /** A Navigation screen closed: guiding goes on, but nothing else needs the GPS. */
     public void detach() {
-        attached = false;
+        attached = Math.max(0, attached - 1);
         keepRunning();
     }
 
     private boolean running() {
-        return attached || phase != Phase.IDLE;
+        return attached > 0 || phase != Phase.IDLE;
+    }
+
+    /** What the HUD card shows: the next turn, how far, what to do, and the trip. */
+    public static final class HudLine {
+        public final Maneuver maneuver;
+        public final String distance;
+        public final String text;
+        /** "Arrive 21:42 · 23%"; empty when there is nothing to say. */
+        public final String trip;
+        public final Arrival.Level tripLevel;
+
+        HudLine(Maneuver maneuver, String distance, String text, String trip, Arrival.Level tripLevel) {
+            this.maneuver = maneuver;
+            this.distance = distance;
+            this.text = text;
+            this.trip = trip;
+            this.tripLevel = tripLevel;
+        }
+    }
+
+    /** A made-up card for the HUD preview when nothing is being guided. */
+    public static HudLine sampleHudLine(Context context) {
+        return new HudLine(Maneuver.TURN_RIGHT, context.getString(R.string.nav_m, 300),
+                context.getString(R.string.nav_hud_sample_text),
+                context.getString(R.string.nav_hud_trip, "21:42", "64%"), Arrival.Level.OK);
+    }
+
+    /** The HUD card for this moment; null when nothing is being guided. */
+    public static HudLine hudLine(Context context, Snapshot s) {
+        if (s.phase == Phase.ARRIVED) {
+            return new HudLine(Maneuver.ARRIVE, context.getString(R.string.nav_arrived),
+                    s.destination == null ? "" : s.destination.name, "", Arrival.Level.OK);
+        }
+        if (s.phase != Phase.GUIDING || s.route == null || s.progress == null) {
+            return null;
+        }
+        int next = s.progress.next;
+        Maneuver m = next < 0 ? Maneuver.ARRIVE : s.route.steps.get(next).maneuver;
+        String eta = NavText.eta(context, s.progress.remainingSeconds);
+        String trip = s.battery == null ? context.getString(R.string.nav_hud_eta, eta)
+                : context.getString(R.string.nav_hud_trip, eta, TripLine.battery(s.battery));
+        return new HudLine(m, NavText.distance(context, s.progress.toNext),
+                s.rerouting ? context.getString(R.string.nav_rerouting) : NavText.headline(context, s.route, next),
+                trip, s.battery == null ? Arrival.Level.OK : s.battery.level);
     }
 
     /** Telemetry held and the tick going while {@link #running}, released and stopped when not. */
@@ -206,7 +284,7 @@ public final class Navigator {
 
     public Snapshot snapshot() {
         return new Snapshot(phase, destination, guidance == null ? null : guidance.route(), progress, rerouting,
-                error, errorDetail, carLat, carLng, carBearing, battery, muted);
+                error, errorDetail, carLat, carLng, carBearing, carSpeed, battery, muted);
     }
 
     public boolean isGuiding() {
@@ -220,11 +298,13 @@ public final class Navigator {
         destination = place;
         guidance = null;
         progress = null;
+        startWhenRouted = false;
         voicePlan.reset();
         phase = Phase.ROUTING;
         AppLog.i(TAG, "planning" + (place.name.isEmpty() ? "" : " to " + place.name));
         if (wasGuiding) {
             hud.hide();
+            hudMap.hide();
         }
         keepRunning();
         askRoute(false);
@@ -257,10 +337,14 @@ public final class Navigator {
         guidance = null;
         progress = null;
         rerouting = false;
+        startWhenRouted = false;
+        // the place from the iPhone is done with too: no trip left on the Dash panel
+        Trip.get().clear();
         error = 0;
         errorDetail = null;
         ask++;
         hud.hide();
+        hudMap.hide();
         if (voice != null) {
             voice.stop();
         }
@@ -376,6 +460,11 @@ public final class Navigator {
         errorDetail = null;
         if (phase != Phase.GUIDING) {
             phase = Phase.PREVIEW;
+            if (startWhenRouted) {
+                startWhenRouted = false;
+                start();
+                return;
+            }
         }
         onTick();
     }
@@ -404,6 +493,7 @@ public final class Navigator {
         }
         carLat = s.latitude;
         carLng = s.longitude;
+        carSpeed = s.speedKmh;
         if (Double.isNaN(headingFromLat)) {
             headingFromLat = carLat;
             headingFromLng = carLng;
@@ -461,7 +551,7 @@ public final class Navigator {
             phase = Phase.ARRIVED;
             arrivedAt = now;
             speak(app.getString(R.string.nav_say_arrived));
-            showHud(Maneuver.ARRIVE, app.getString(R.string.nav_arrived), destinationName());
+            showHud();
             return;
         }
         if (progress.offRoute && !rerouting && now - routedAt > REROUTE_MS) {
@@ -471,9 +561,7 @@ public final class Navigator {
             askRoute(true);
         }
         NavRoute route = guidance.route();
-        Maneuver m = progress.next < 0 ? Maneuver.ARRIVE : route.steps.get(progress.next).maneuver;
-        String headline = NavText.headline(app, route, progress.next);
-        showHud(m, NavText.distance(app, progress.toNext), rerouting ? app.getString(R.string.nav_rerouting) : headline);
+        showHud();
 
         float kmh = s == null || s.speedKmh == null ? 0 : s.speedKmh;
         double leg = progress.next < 0 ? route.meters - route.steps.get(route.steps.size() - 1).startAlong
@@ -489,13 +577,44 @@ public final class Navigator {
         return destination == null || destination.name.isEmpty() ? "" : destination.name;
     }
 
-    private void showHud(Maneuver m, String distance, String text) {
+    /** The HUD card for now, or none when it is switched off. While it is being placed: a sample if nothing is guided. */
+    private void showHud() {
+        if (app == null) {
+            return;
+        }
+        HudLine line = hudLine(app, snapshot());
         AppConfig config = new AppConfig(app);
-        if (config.isNavHudEnabled()) {
-            hud.show(app, m, distance, text);
+        if (hudPlacing) {
+            hud.show(app, line != null ? line : sampleHudLine(app));
+        } else if (line != null && config.isNavHudEnabled()) {
+            hud.show(app, line);
         } else {
             hud.hide();
         }
+        if ((hudPlacing || line != null) && config.isNavHudMapEnabled()) {
+            hudMap.show(app);
+        } else {
+            hudMap.hide();
+        }
+    }
+
+    /** The turn card is being placed by hand: keep it on the real HUD, a sample when nothing is guided. */
+    public void setHudPlacing(Context context, boolean on) {
+        bind(context);
+        hudPlacing = on;
+        hud.hide();
+        showHud();
+    }
+
+    /** Its place or size changed (the card's or the map's), or the map was switched: draw them again. */
+    public void relayoutHud() {
+        if (app == null) {
+            return;
+        }
+        hud.hide();
+        hudMap.reset();
+        hudMap.relayout(app);
+        showHud();
     }
 
     private void speak(String text) {

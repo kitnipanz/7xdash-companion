@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.7.7-beta] - 2026-11-03
+
+### Navigation (beta)
+- **Send a place from 7xDash web.** For when the iPhone Shortcut is not set up: on 7xDash web, the Navigation card (Beta) takes a Google Maps or Apple Maps link or a typed place name, and the car shows the route, the same as a place shared from the iPhone (the floating map opens if Navigation is closed; while guiding it switches to the new place). The card shows where the car is going and the trip (km left · battery at arrival), and whether the car found the place. Needs the car linked to 7xDash web.
+
 ## [1.7.6-beta] - 2026-11-03
 
 ### Navigation (beta)

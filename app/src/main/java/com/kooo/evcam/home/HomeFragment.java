@@ -289,12 +289,12 @@ public class HomeFragment extends Fragment {
                 .pill(() -> getString(config.isMacroPadEnabled() ? R.string.home_state_on : R.string.home_state_off),
                         () -> config.isMacroPadEnabled(), this::toggleMacroPad);
 
-        // Beta: battery at arrival for the place shared from the phone. Tap opens its screen; the
-        // state shows the estimate while there is a destination
+        // Beta: turn-by-turn navigation on a Google map, with battery at arrival. Tap opens it; the
+        // state shows the trip (km left · battery at arrival) while there is one
         if (betaShown) {
-            addCard(R.drawable.ic_arrival, R.string.arrival_title, R.string.home_card_arrival_sub,
-                    () -> startActivity(new Intent(requireContext(), com.kooo.evcam.trip.ArrivalActivity.class)), null)
-                    .state(this::arrivalLabel, () -> com.kooo.evcam.trip.Trip.get().status().destination != null);
+            addCard(R.drawable.ic_navigation, R.string.nav_title, R.string.home_card_nav_sub,
+                    () -> startActivity(new Intent(requireContext(), com.kooo.evcam.nav.NavigationActivity.class)), null)
+                    .state(this::navLabel, () -> com.kooo.evcam.nav.TripLine.now(requireContext()) != null);
         }
 
         // Beta: 停在哪。点卡片当场读一次，长按开扫描窗（手动扫一次、看读到什么）；胶囊开关决定挂 P 时自动读，另一颗决定 3 km/h 以下边开边读柱子上的牌
@@ -490,13 +490,10 @@ public class HomeFragment extends Fragment {
         recToggle.setTextColor(ContextCompat.getColor(context, R.color.on_energy));
     }
 
-    private String arrivalLabel() {
-        com.kooo.evcam.trip.Trip.Status s = com.kooo.evcam.trip.Trip.get().status();
-        String line = com.kooo.evcam.trip.ArrivalText.line(requireContext(), s);
-        if (line != null) {
-            return line;
-        }
-        return getString(com.kooo.evcam.trip.Trip.active(requireContext()) ? R.string.home_state_on : R.string.home_state_off);
+    /** The trip, "4.4 km · 23%", while there is one; else empty. */
+    private String navLabel() {
+        com.kooo.evcam.nav.TripLine trip = com.kooo.evcam.nav.TripLine.now(requireContext());
+        return trip == null ? "" : trip.text;
     }
 
     private void toggleMacroPad() {

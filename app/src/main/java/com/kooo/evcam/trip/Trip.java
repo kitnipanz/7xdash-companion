@@ -16,7 +16,8 @@ import java.util.concurrent.Executors;
  * Battery at arrival (beta). The phone shares a place over the car's Wi-Fi
  * ({@link DestinationServer}); this keeps that destination, asks for the road km now and then
  * ({@link RouteLookup}) and turns battery %, range and km left into an {@link Arrival.Estimate}
- * for the Dash panel, the Home card and {@link ArrivalActivity}. CarPlay keeps its route on the
+ * for the Dash panel and the Home card ({@link com.kooo.evcam.nav.TripLine}), and hands the place
+ * to Navigation. CarPlay keeps its route on the
  * phone, so the phone has to tell us where it is going.
  *
  * <p>Runs only while Settings → Beta features is on and the feature's switch is on. While a
@@ -95,10 +96,26 @@ public final class Trip implements Telemetry.Listener {
         get().apply(context);
     }
 
-    /** Is it allowed to run: beta features on and its own switch on. */
+    /**
+     * Is it allowed to run: beta features on and Navigation taking places from the iPhone
+     * ({@link AppConfig#isNavShareEnabled}). Without a Google key the shared place still gets its
+     * battery estimate here, on the Dash panel and the Home card.
+     */
     public static boolean active(Context context) {
         AppConfig config = new AppConfig(context);
-        return config.isBetaFeaturesEnabled() && config.isArrivalEnabled();
+        return config.isBetaFeaturesEnabled() && config.isNavShareEnabled();
+    }
+
+    /** Told on the main thread of each place the phone shares. */
+    public interface SharedListener {
+        void onShared(DestinationLink.Place place);
+    }
+
+    private static volatile SharedListener sharedListener;
+
+    /** Navigation listens here, so a place from the iPhone also opens its route. */
+    public static void setSharedListener(SharedListener listener) {
+        sharedListener = listener;
     }
 
     /** Starts or stops to match the settings. */
@@ -168,6 +185,11 @@ public final class Trip implements Telemetry.Listener {
             String url = DestinationLink.firstUrl(shared);
             if (url != null) {
                 p = route.resolve(url, DestinationLink.nameOf(shared, url));
+            } else if (DestinationLink.looksLikeName(shared)) {
+                // typed on the phone page instead of a link: look the name up
+                String name = shared.trim();
+                DestinationLink.Place found = route.search(name);
+                p = found == null ? null : new DestinationLink.Place(found.lat, found.lng, name);
             }
         }
         if (p == null) {
@@ -175,6 +197,11 @@ public final class Trip implements Telemetry.Listener {
             return null;
         }
         setDestination(p, true);
+        SharedListener l = sharedListener;
+        if (l != null) {
+            DestinationLink.Place place = p;
+            main.post(() -> l.onShared(place));
+        }
         return p;
     }
 

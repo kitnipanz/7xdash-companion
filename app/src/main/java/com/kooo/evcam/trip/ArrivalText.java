@@ -6,7 +6,7 @@ import com.kooo.evcam.R;
 
 import java.util.Locale;
 
-/** The words for an estimate, shared by the Dash panel, the Home card and {@link ArrivalActivity}. */
+/** The words for an estimate of the place shared from the iPhone (see {@link com.kooo.evcam.nav.TripLine}). */
 public final class ArrivalText {
 
     private ArrivalText() {
@@ -19,23 +19,7 @@ public final class ArrivalText {
         return (s.roughKm ? "~" : "") + n + " km";
     }
 
-    /** The big number: "23%" at arrival, or "Short 40 km". */
-    public static String headline(Context context, Trip.Status s) {
-        Arrival.Estimate e = s.estimate;
-        if (e.level == Arrival.Level.SHORT) {
-            return context.getString(R.string.arrival_short, Math.round(-e.spareKm));
-        }
-        return context.getString(R.string.arrival_percent, Math.round(Math.max(0f, e.percent)));
-    }
 
-    /** "182 km to go · 64 km spare". */
-    public static String detail(Context context, Trip.Status s) {
-        Arrival.Estimate e = s.estimate;
-        if (e.level == Arrival.Level.SHORT) {
-            return context.getString(R.string.arrival_detail_short, km(s));
-        }
-        return context.getString(R.string.arrival_detail, km(s), Math.round(e.spareKm));
-    }
 
     /** One short line for the Dash panel and the Home card: "182 km · 23%", or "182 km · −40 km" when short. */
     public static String line(Context context, Trip.Status s) {

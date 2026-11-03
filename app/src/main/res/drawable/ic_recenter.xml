@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- ic_recenter: back to the car, a crosshair. Same icon set (24dp grid, 1.7 stroke, round caps). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M12,5a7,7 0,1 1,0 14a7,7 0,1 1,0 -14z M12,9.5a2.5,2.5 0,1 1,0 5a2.5,2.5 0,1 1,0 -5z M12,2v3 M12,19v3 M2,12h3 M19,12h3"
+        android:strokeWidth="1.7"
+        android:strokeColor="@color/text_primary"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+</vector>

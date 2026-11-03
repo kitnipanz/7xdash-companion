@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- ic_float_window: the map in a floating window, a small screen inside a big one. Same icon set (24dp grid, 1.7 stroke, round caps). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M5,4h14a2,2 0,0 1,2 2v12a2,2 0,0 1,-2 2h-14a2,2 0,0 1,-2 -2v-12a2,2 0,0 1,2 -2z M12.5,12h5a0.5,0.5 0,0 1,0.5 0.5v3.5a0.5,0.5 0,0 1,-0.5 0.5h-5a0.5,0.5 0,0 1,-0.5 -0.5v-3.5a0.5,0.5 0,0 1,0.5 -0.5z"
+        android:strokeWidth="1.7"
+        android:strokeColor="@color/text_primary"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+</vector>

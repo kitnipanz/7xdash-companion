@@ -2616,20 +2616,10 @@ public class AppConfig {
         prefs.edit().putString(KEY_MACRO_PAD_BOUNDS, x + "," + y + "," + width + "," + height).apply();
     }
 
-    // ==================== Battery at arrival (beta) ====================
+    // ==================== Places from the iPhone (trip.Trip, for Navigation) ====================
 
-    private static final String KEY_ARRIVAL = "arrival";
     private static final String KEY_ARRIVAL_TOKEN = "arrival_token";
     private static final String KEY_ARRIVAL_DESTINATION = "arrival_destination";
-
-    /** Battery at arrival (trip.Trip): listen for places shared from the phone. Off by default; beta. */
-    public boolean isArrivalEnabled() {
-        return prefs.getBoolean(KEY_ARRIVAL, false);
-    }
-
-    public void setArrivalEnabled(boolean on) {
-        prefs.edit().putBoolean(KEY_ARRIVAL, on).apply();
-    }
 
     /** The secret part of the phone's address, made once and kept so the iPhone Shortcut keeps working. */
     public String getArrivalToken() {
@@ -3041,4 +3031,100 @@ public class AppConfig {
         return value;
     }
 
+
+    // ==================== Navigation (beta) ====================
+
+    private static final String KEY_NAV_VOICE = "nav_voice";
+    private static final String KEY_NAV_HUD = "nav_hud";
+
+    /** Navigation (nav.Navigator): speak the turns in the cabin. On by default. */
+    public boolean isNavVoiceEnabled() {
+        return prefs.getBoolean(KEY_NAV_VOICE, true);
+    }
+
+    public void setNavVoiceEnabled(boolean on) {
+        prefs.edit().putBoolean(KEY_NAV_VOICE, on).apply();
+    }
+
+    /** Navigation: keep the next turn on the HUD while guiding. On by default. */
+    public boolean isNavHudEnabled() {
+        return prefs.getBoolean(KEY_NAV_HUD, true);
+    }
+
+    public void setNavHudEnabled(boolean on) {
+        prefs.edit().putBoolean(KEY_NAV_HUD, on).apply();
+    }
+
+    private static final String KEY_NAV_MAP_SCHEME = "nav_map_scheme";
+    /** The map's colours follow the head unit's day / night. */
+    public static final int NAV_MAP_AUTO = 0;
+    public static final int NAV_MAP_LIGHT = 1;
+    public static final int NAV_MAP_DARK = 2;
+
+    /** Navigation: light or dark map, or following the head unit ({@link #NAV_MAP_AUTO}, the default). */
+    public int getNavMapScheme() {
+        int v = prefs.getInt(KEY_NAV_MAP_SCHEME, NAV_MAP_AUTO);
+        return v == NAV_MAP_LIGHT || v == NAV_MAP_DARK ? v : NAV_MAP_AUTO;
+    }
+
+    public void setNavMapScheme(int scheme) {
+        prefs.edit().putInt(KEY_NAV_MAP_SCHEME, scheme).apply();
+    }
+
+    private static final String KEY_NAV_SHARE = "nav_share";
+
+    /**
+     * Navigation: a place shared from the iPhone (the Battery at arrival receiver) opens Navigation
+     * with its route, and switches to it while guiding. On by default.
+     */
+    public boolean isNavShareEnabled() {
+        return prefs.getBoolean(KEY_NAV_SHARE, true);
+    }
+
+    public void setNavShareEnabled(boolean on) {
+        prefs.edit().putBoolean(KEY_NAV_SHARE, on).apply();
+    }
+
+    private static final String KEY_NAV_HUD_PREVIEW = "nav_hud_preview";
+
+    /** Navigation: show the HUD card over the map too (a sample when nothing is guided). On by default. */
+    public boolean isNavHudPreviewEnabled() {
+        return prefs.getBoolean(KEY_NAV_HUD_PREVIEW, true);
+    }
+
+    public void setNavHudPreviewEnabled(boolean on) {
+        prefs.edit().putBoolean(KEY_NAV_HUD_PREVIEW, on).apply();
+    }
+
+    private static final String KEY_NAV_HUD_PLACE = "nav_hud_place";
+
+    /** Navigation: where the turn card sits on the HUD, "x,y,w,h" as shares of the HUD; empty = like the notice cards. */
+    public String getNavHudPlace() {
+        return prefs.getString(KEY_NAV_HUD_PLACE, "");
+    }
+
+    public void setNavHudPlace(String place) {
+        prefs.edit().putString(KEY_NAV_HUD_PLACE, place == null ? "" : place).apply();
+    }
+
+    private static final String KEY_NAV_HUD_MAP = "nav_hud_map";
+    private static final String KEY_NAV_HUD_MAP_PLACE = "nav_hud_map_place";
+
+    /** Navigation: a live map on the HUD too while guiding. On by default. */
+    public boolean isNavHudMapEnabled() {
+        return prefs.getBoolean(KEY_NAV_HUD_MAP, true);
+    }
+
+    public void setNavHudMapEnabled(boolean on) {
+        prefs.edit().putBoolean(KEY_NAV_HUD_MAP, on).apply();
+    }
+
+    /** Navigation: where the HUD map sits, "x,y,w,h" as shares of the HUD; empty = the right part. */
+    public String getNavHudMapPlace() {
+        return prefs.getString(KEY_NAV_HUD_MAP_PLACE, "");
+    }
+
+    public void setNavHudMapPlace(String place) {
+        prefs.edit().putString(KEY_NAV_HUD_MAP_PLACE, place == null ? "" : place).apply();
+    }
 }

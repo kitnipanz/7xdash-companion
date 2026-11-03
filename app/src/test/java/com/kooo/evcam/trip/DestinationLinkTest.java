@@ -1,8 +1,10 @@
 package com.kooo.evcam.trip;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
@@ -91,5 +93,15 @@ public class DestinationLinkTest {
         assertNull(DestinationLink.googleQuery(null));
         // and such a link has no place of its own
         assertNull(DestinationLink.parse("https://maps.google.com/?q=Siam+Paragon&ftid=0x1:0x2"));
+    }
+
+    @Test
+    public void aTypedPlaceNameIsLookedUp() {
+        assertTrue(DestinationLink.looksLikeName("Siam Paragon"));
+        assertTrue(DestinationLink.looksLikeName("  เซ็นทรัลเวิลด์ "));
+        assertFalse(DestinationLink.looksLikeName("x"));
+        assertFalse(DestinationLink.looksLikeName("https://maps.app.goo.gl/abc"));
+        assertFalse(DestinationLink.looksLikeName("line one\nline two"));
+        assertFalse(DestinationLink.looksLikeName(null));
     }
 }

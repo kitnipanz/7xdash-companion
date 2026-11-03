@@ -53,7 +53,9 @@ public enum ShortcutAction {
     /** The floating Dash panel on or off (overlay.DashPanelService). */
     DASH_PANEL("toggle_dash_panel", R.string.shortcut_action_dash_panel, R.drawable.ic_dash_panel),
     /** The floating Macro pad on or off (overlay.MacroPadService). */
-    MACRO_PAD("toggle_macro_pad", R.string.shortcut_action_macro_pad, R.drawable.ic_macro_pad);
+    MACRO_PAD("toggle_macro_pad", R.string.shortcut_action_macro_pad, R.drawable.ic_macro_pad),
+    // Navigation's map in a floating window over other apps, on / off
+    NAV_FLOAT("toggle_nav_float", R.string.shortcut_action_nav_float, R.drawable.ic_float_window);
 
     /** The tabs actions are picked from, in tab order. */
     public enum Group {

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Navigation: the next-turn banner, in the energy orange so it reads at a glance over the map -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="@color/energy" />
+    <corners android:radius="@dimen/corner_radius" />
+</shape>

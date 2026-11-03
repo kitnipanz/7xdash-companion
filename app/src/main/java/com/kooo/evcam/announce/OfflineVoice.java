@@ -113,7 +113,7 @@ public final class OfflineVoice {
     }
 
     /** Worker thread. The phrase in the English voice, or null when the voice is missing or fails. */
-    static synchronized Wav speak(Context context, String text) {
+    public static synchronized Wav speak(Context context, String text) {
         if (!isReady(context)) {
             return null;
         }

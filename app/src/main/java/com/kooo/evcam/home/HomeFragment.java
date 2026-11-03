@@ -297,6 +297,13 @@ public class HomeFragment extends Fragment {
                     .state(this::arrivalLabel, () -> com.kooo.evcam.trip.Trip.get().status().destination != null);
         }
 
+        // Beta: turn-by-turn navigation on a Google map. Tap opens it; the state shows the next turn while guiding
+        if (betaShown) {
+            addCard(R.drawable.ic_navigation, R.string.nav_title, R.string.home_card_nav_sub,
+                    () -> startActivity(new Intent(requireContext(), com.kooo.evcam.nav.NavigationActivity.class)), null)
+                    .state(this::navLabel, () -> com.kooo.evcam.nav.Navigator.get().isGuiding());
+        }
+
         // Beta: 停在哪。点卡片当场读一次，长按开扫描窗（手动扫一次、看读到什么）；胶囊开关决定挂 P 时自动读，另一颗决定 3 km/h 以下边开边读柱子上的牌
         if (betaShown) {
             addCard(R.drawable.ic_parking, R.string.home_card_parking,
@@ -488,6 +495,15 @@ public class HomeFragment extends Fragment {
         recToggle.setBackgroundTintList(ColorStateList.valueOf(
                 ContextCompat.getColor(context, rec ? R.color.recording : R.color.energy)));
         recToggle.setTextColor(ContextCompat.getColor(context, R.color.on_energy));
+    }
+
+    /** The next turn and how far, while guiding; else empty. */
+    private String navLabel() {
+        com.kooo.evcam.nav.Navigator.Snapshot s = com.kooo.evcam.nav.Navigator.get().snapshot();
+        if (!com.kooo.evcam.nav.Navigator.get().isGuiding() || s.progress == null) {
+            return "";
+        }
+        return com.kooo.evcam.nav.NavText.distance(requireContext(), s.progress.toNext);
     }
 
     private String arrivalLabel() {

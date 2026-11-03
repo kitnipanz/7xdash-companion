@@ -1065,7 +1065,7 @@ Then reopen this app.</string>
     <!-- Interface section · first-launch side question · record unavailable · status bar -->
     <string name="set_section_interface">Interface</string>
     <string name="set_beta_features_title">Beta features</string>
-    <string name="set_beta_features_summary">Show features that are still being tried on the car, and let them run. Now: Where I parked (home card, and reading the signs when the car goes into P) and Battery at arrival. The Where I parked shortcut still works.</string>
+    <string name="set_beta_features_summary">Show features that are still being tried on the car, and let them run. Now: Where I parked (home card, and reading the signs when the car goes into P) Battery at arrival and Navigation. The Where I parked shortcut still works.</string>
     <string name="set_usage_stats_title">Anonymous usage stats</string>
     <string name="set_usage_stats_summary">Which features get used: app start, home cards, pages, actions and what ran them, buttons you set up, recording, 7xDash web controls. A random install id only: no email, plate or location. About 20–50 KB a day</string>
     <string name="usage_consent_title">Help fix and improve 7xDash?</string>
@@ -1743,4 +1743,50 @@ Then reopen this app.</string>
     <string name="macro_pad_button">Button %1$d</string>
     <string name="macro_pad_clear">Clear</string>
     <string name="shortcut_action_macro_pad">Macro pad on / off</string>
+    <!-- Navigation (beta) -->
+    <string name="nav_title">Navigation</string>
+    <string name="nav_beta">BETA</string>
+    <string name="home_card_nav_sub">Beta · Turn-by-turn with Google Maps</string>
+    <string name="nav_search_hint">Search Google Maps</string>
+    <string name="nav_searching">Searching…</string>
+    <string name="nav_no_results">Nothing found</string>
+    <string name="nav_shared">Go to %1$s</string>
+    <string name="nav_shared_sub">Shared from your iPhone</string>
+    <string name="nav_dropped_pin">Dropped pin</string>
+    <string name="nav_idle_hint">Search for a place, or touch and hold on the map</string>
+    <string name="nav_need_beta">Turn on Settings → Interface → Beta features first</string>
+    <string name="nav_routing">Finding the best route…</string>
+    <string name="nav_waiting_gps">Waiting for GPS from the car…</string>
+    <string name="nav_start">Start</string>
+    <string name="nav_end">End</string>
+    <string name="nav_cancel">Cancel</string>
+    <string name="nav_retry">Try again</string>
+    <string name="nav_summary">%1$s · %2$s · arrive %3$s</string>
+    <string name="nav_battery">%1$d%% battery at arrival</string>
+    <string name="nav_battery_short">Short by %1$d km: charge on the way</string>
+    <string name="nav_battery_unknown">Battery at arrival: waiting for the car</string>
+    <string name="nav_rerouting">Rerouting…</string>
+    <string name="nav_arrived">Arrived</string>
+    <string name="nav_arrive">Arrive at your destination</string>
+    <string name="nav_continue">Continue</string>
+    <string name="nav_voice_switch">Speak the turns</string>
+    <string name="nav_hud_switch">Next turn on the HUD</string>
+    <string name="nav_mute">Voice on or off</string>
+    <string name="nav_recenter">Back to the car</string>
+    <string name="nav_no_map">The map needs Google Play services and a Google Maps key. Turn-by-turn guidance still works without the map.</string>
+    <string name="nav_error_no_key">This build has no Google Maps key (MAPS_API_KEY)</string>
+    <string name="nav_error_offline">No internet: could not reach Google</string>
+    <string name="nav_error_no_road">Google found no road to that place</string>
+    <string name="nav_error_route">Google could not give a route</string>
+    <string name="nav_m">%1$d m</string>
+    <string name="nav_km_1">%1$s km</string>
+    <string name="nav_km">%1$d km</string>
+    <string name="nav_min">%1$d min</string>
+    <string name="nav_h_min">%1$d h %2$d min</string>
+    <!-- Spoken: "In 300 metres, turn left onto Rama IV" -->
+    <string name="nav_say_in">In %1$s, %2$s</string>
+    <string name="nav_say_m">%1$d metres</string>
+    <string name="nav_say_km">%1$s kilometres</string>
+    <string name="nav_say_destination">you will reach your destination</string>
+    <string name="nav_say_arrived">You have arrived at your destination</string>
 </resources>

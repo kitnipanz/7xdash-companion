@@ -3021,4 +3021,27 @@ public class AppConfig {
         return value;
     }
 
+
+    // ==================== Navigation (beta) ====================
+
+    private static final String KEY_NAV_VOICE = "nav_voice";
+    private static final String KEY_NAV_HUD = "nav_hud";
+
+    /** Navigation (nav.Navigator): speak the turns in the cabin. On by default. */
+    public boolean isNavVoiceEnabled() {
+        return prefs.getBoolean(KEY_NAV_VOICE, true);
+    }
+
+    public void setNavVoiceEnabled(boolean on) {
+        prefs.edit().putBoolean(KEY_NAV_VOICE, on).apply();
+    }
+
+    /** Navigation: keep the next turn on the HUD while guiding. On by default. */
+    public boolean isNavHudEnabled() {
+        return prefs.getBoolean(KEY_NAV_HUD, true);
+    }
+
+    public void setNavHudEnabled(boolean on) {
+        prefs.edit().putBoolean(KEY_NAV_HUD, on).apply();
+    }
 }

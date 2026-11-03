@@ -20,10 +20,15 @@ import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
+import java.util.regex.Pattern;
 
 /**
  * Experimental: writes every signal the car interface offers to the USB drive, to find out what
@@ -40,6 +45,9 @@ import java.util.Objects;
  * </ol>
  * <p>All ids are read in one pass every {@link #MIN_PASS_MS} or slower: the pass waits twice as
  * long as the last one took, so the car interface is never kept busy.</p>
+ * <p>The blind-spot candidates ({@link #pushedCandidate}) are also watched by callback: some values
+ * are only pushed by the car and read 255 when asked. Each push is written at once, with its zone
+ * and the reading "callback".</p>
  */
 public final class SignalRecorder {
 
@@ -47,6 +55,9 @@ public final class SignalRecorder {
     private static final String DIR = "7xDash/signals";
     static final long MIN_PASS_MS = 1_000L;
     private static final long RETRY_MS = 10_000L;
+    /** Names watched by callback as well as read: blind spot, cross traffic, door open, lane change, turn signal. */
+    private static final Pattern PUSHED = Pattern.compile(
+            "BLIND|RCTA|RCTB|CROSS_TRAFFIC|DOOR_OPEN_WARN|LANE_CHANGE|REAR_COLLISION|INDCR|(^|_)(DOW|LCA|BSD|BSW)(_|$)");
     /** A file stops growing past this; a new session starts a new file. */
     private static final long MAX_BYTES = 200L * 1024 * 1024;
 
@@ -70,6 +81,9 @@ public final class SignalRecorder {
     private String[] last;
     private String lastSituation;
     private long changes;
+    /** Callback: id to name, and the last value pushed per id and zone. */
+    private Map<Integer, String> pushedNames;
+    private final Map<Long, String> pushedLast = new HashMap<>();
 
     private final Runnable pass = this::pass;
 
@@ -233,6 +247,7 @@ public final class SignalRecorder {
                     + (SystemClock.uptimeMillis() - started) + " ms)");
             write("time\tname\tid\treading\tbefore\tnow\t| gear, km/h, turn, hazard");
             write(time.format(new Date()) + "\t(start)\t\t\t\t\t| " + BlindSpotLog.context(Telemetry.get().latest()));
+            watchCandidates();
             out.flush();
         } catch (IOException e) {
             AppLog.w(TAG, "cannot write " + file + ": " + e.getMessage());
@@ -242,6 +257,75 @@ public final class SignalRecorder {
         AppLog.i(TAG, "recording " + ids.size() + " signals to " + file);
         BlackBox.note("All car signals: recording to " + file.getName());
         return true;
+    }
+
+    /** True for a name worth watching by callback too. */
+    static boolean pushedCandidate(String name) {
+        return name != null && PUSHED.matcher(name).find();
+    }
+
+    /** Registers the callback for the candidates and writes what the car said. Worker thread, file open. */
+    private void watchCandidates() throws IOException {
+        pushedNames = new LinkedHashMap<>();
+        pushedLast.clear();
+        for (CarAmbientLab.Constant k : ids) {
+            if (pushedCandidate(k.name) && !pushedNames.containsKey(k.value)) {
+                pushedNames.put(k.value, k.name);
+            }
+        }
+        int[] list = new int[pushedNames.size()];
+        int i = 0;
+        for (Integer id : pushedNames.keySet()) {
+            list[i++] = id;
+        }
+        String status = list.length == 0 ? "no candidates" : reader.watch(list, new CarAmbientLab.Reader.Pushed() {
+            @Override
+            public void value(int id, int zone, Object value) {
+                String at = time.format(new Date());
+                String now = String.valueOf(value);
+                work.post(() -> pushed(at, id, zone, now));
+            }
+
+            @Override
+            public void other(String method, Object[] args) {
+                String at = time.format(new Date());
+                String text = method + " " + Arrays.toString(args);
+                work.post(() -> pushedOther(at, text));
+            }
+        });
+        write(time.format(new Date()) + "\t(callback)\t\t\t\t\t| " + status + ": "
+                + String.join(", ", pushedNames.values()));
+        AppLog.i(TAG, "callback " + status);
+    }
+
+    private void pushed(String at, int id, int zone, String now) {
+        if (out == null) {
+            return;
+        }
+        long key = ((long) id << 32) | (zone & 0xFFFFFFFFL);
+        String before = pushedLast.put(key, now);
+        String name = pushedNames == null ? null : pushedNames.get(id);
+        try {
+            write(at + "\t" + (name == null ? "?" : name) + "\t" + String.format(Locale.US, "0x%08X", id)
+                    + "\tcallback zone " + zone + "\t" + before + "\t" + now + "\t| "
+                    + BlindSpotLog.context(Telemetry.get().latest()));
+            changes++;
+            out.flush();
+        } catch (IOException e) {
+            AppLog.w(TAG, "write failed, USB drive gone? " + e.getMessage());
+        }
+    }
+
+    private void pushedOther(String at, String text) {
+        if (out == null) {
+            return;
+        }
+        try {
+            write(at + "\t(callback)\t\t\t\t\t| " + text);
+            out.flush();
+        } catch (IOException e) {
+            AppLog.w(TAG, "write failed, USB drive gone? " + e.getMessage());
+        }
     }
 
     /** What {@link #snapshot} did, for the Settings message. */
@@ -355,6 +439,9 @@ public final class SignalRecorder {
         }
         out = null;
         file = null;
+        if (reader != null) {
+            reader.unwatch();
+        }
         reader = null;
     }
 }

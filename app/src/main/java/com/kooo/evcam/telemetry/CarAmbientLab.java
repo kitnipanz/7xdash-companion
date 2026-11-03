@@ -538,6 +538,96 @@ public final class CarAmbientLab {
             }
             return safe(() -> m.invoke(target, id));
         }
+
+        /** What the car pushes to {@link #watch}. Called on a car binder thread. */
+        public interface Pushed {
+            /** {@code onFunctionValueChanged(id, zone, value)}. */
+            void value(int id, int zone, Object value);
+
+            /** Any other callback, such as {@code onSupportedFunctionStatusChanged}. */
+            void other(String method, Object[] args);
+        }
+
+        private Object watcher;
+        private int[] watched;
+
+        /**
+         * Asks the car to push every change of {@code ids}, the way {@link EcarxSource} does: all at
+         * once, or one by one when the head unit refuses the list. Some values are only ever pushed
+         * and read 255 when asked. Returns a line for the file.
+         */
+        public String watch(int[] ids, Pushed to) {
+            unwatch();
+            if (function == null) {
+                return "no car function interface";
+            }
+            Method byArray = EcarxSource.findMethodWithInterface(function, "registerFunctionValueWatcher", int[].class);
+            Method byOne = EcarxSource.findMethodWithInterface(function, "registerFunctionValueWatcher", int.class);
+            Method any = byArray != null ? byArray : byOne;
+            if (any == null) {
+                return "no registerFunctionValueWatcher";
+            }
+            Class<?> type = any.getParameterTypes()[1];
+            Object proxy = java.lang.reflect.Proxy.newProxyInstance(Reader.class.getClassLoader(), new Class<?>[]{type},
+                    (p, method, args) -> {
+                        String name = method.getName();
+                        if ("onFunctionValueChanged".equals(name) && args != null && args.length == 3
+                                && args[0] instanceof Integer && args[1] instanceof Integer) {
+                            to.value((Integer) args[0], (Integer) args[1], args[2]);
+                        } else if (!"toString".equals(name) && !"hashCode".equals(name) && !"equals".equals(name)) {
+                            to.other(name, args);
+                        }
+                        return EcarxSource.proxyDefault(p, method, args, "SignalRecorder.watch");
+                    });
+            if (byArray != null && EcarxSource.invokeOk(byArray, function, ids, proxy)) {
+                watcher = proxy;
+                watched = ids;
+                return "watching " + ids.length + " as one list";
+            }
+            if (byOne != null) {
+                int done = 0;
+                for (int id : ids) {
+                    if (EcarxSource.invokeOk(byOne, function, id, proxy)) {
+                        done++;
+                    }
+                }
+                if (done > 0) {
+                    watcher = proxy;
+                    watched = ids;
+                }
+                return "watching " + done + " of " + ids.length + " one by one";
+            }
+            return "the car refused the list";
+        }
+
+        /** Stops {@link #watch}. */
+        public void unwatch() {
+            Object w = watcher;
+            watcher = null;
+            if (w == null || function == null) {
+                return;
+            }
+            try {
+                Method one = EcarxSource.findMethodWithInterface(function, "unregisterFunctionValueWatcher");
+                if (one != null) {
+                    one.invoke(function, w);
+                    return;
+                }
+                Method withIds = EcarxSource.findMethodWithInterface(function, "unregisterFunctionValueWatcher", int[].class);
+                if (withIds != null) {
+                    withIds.invoke(function, watched, w);
+                    return;
+                }
+                Method perId = EcarxSource.findMethodWithInterface(function, "unregisterFunctionValueWatcher", int.class);
+                if (perId != null) {
+                    for (int id : watched) {
+                        perId.invoke(function, id, w);
+                    }
+                }
+            } catch (Throwable t) {
+                AppLog.w(TAG, "unregisterFunctionValueWatcher failed: " + rootMessage(t));
+            }
+        }
     }
 
     private interface Call {

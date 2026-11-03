@@ -300,8 +300,8 @@ Then reopen this app.</string>
     <string name="set_sticker_summary">Finds a Bluetooth sticker the head unit does not pair yet. A press runs a saved shortcut</string>
     <string name="set_mood_light_title">Mood light</string>
     <string name="set_mood_light_summary">Set the color of a cheap Bluetooth RGB light, like ELK-BLEDOM or Happy Lighting ones</string>
-    <string name="set_mood_light_blind_spot_title">Blink orange for a car in the blind spot</string>
-    <string name="set_mood_light_blind_spot_summary">While the turn signal is on and the car warns of a vehicle in the blind spot on that side, the mood lights blink orange, then go back to their usual color</string>
+    <string name="set_mood_light_blind_spot_title">Red for a car in the blind spot</string>
+    <string name="set_mood_light_blind_spot_summary">Like Tesla: while the car warns of a vehicle in the blind spot, the mood lights turn red. When your turn signal is on towards it they blink between red and their usual color, then go back to their usual color. Add Car ambient light to a group to use the car\'s own ambient light too</string>
     <string name="mood_light_subtitle">Close the light\'s own phone app first. The light takes one connection at a time</string>
     <string name="mood_light_pick">Scan, then tap Connect on your light.</string>
     <string name="mood_light_none">No light yet.\n1. Plug in the light and close its own phone app.\n2. Tap Scan.\n3. Tap Connect on your light.</string>
@@ -671,7 +671,7 @@ Then reopen this app.</string>
     <string name="opt_side_popup_square">Square</string>
     <string name="opt_side_popup_wide">Wide</string>
     <string name="bsd_finder_title">Blind-spot warning finder</string>
-    <string name="bsd_finder_summary">Teach 7xDash which car signal means a car is in your blind spot. Then the side view gets a red edge and the mood lights blink orange while it warns</string>
+    <string name="bsd_finder_summary">Teach 7xDash which car signal means a car is in your blind spot. Then the side view gets a red edge and the mood lights turn red while it warns</string>
     <string name="bsd_finder_intro">Drive or park with a car right beside you in the blind spot (the mirror warning light is on). The row that lights up and changes is the warning. Tap Left or Right on it while the warning is on: 7xDash remembers that signal and the value it reads while warning. Do the other side the same way. If no row changes, tap All to watch every car setting.</string>
     <string name="bsd_finder_all">All</string>
     <string name="bsd_finder_named">Blind-spot only</string>
@@ -687,7 +687,7 @@ Then reopen this app.</string>
     <string name="bsd_finder_right">Right</string>
     <string name="bsd_finder_not_number">This one does not read as a number</string>
     <string name="set_bsd_sniffer_title">Report blind-spot signals (experimental)</string>
-    <string name="set_bsd_sniffer_summary">While the screen is on, watches every car setting that looks blind-spot related. Each change is written to the log and black box and shown on the HUD as \"BSD?\" with its name and value, so you notice when the car sends something as a car passes. Then teach it in the Blind-spot warning finder</string>
+    <string name="set_bsd_sniffer_summary">While the screen is on, watches every car setting that looks blind-spot related. Each change is written to the log and black box and shown on the HUD as \"BSD?\" with its name and value, so you notice when the car sends something as a car passes. Each time it also writes a log file: every car setting with its value at the start, then each change with the time, gear, speed and turn signal. Then teach it in the Blind-spot warning finder</string>
     <string name="set_side_popup_door_title">Show the side when a door opens</string>
     <string name="set_side_popup_door_summary">While stopped, opening a door shows the camera on that side, so you can see cars and bikes coming from behind. It closes when the doors close</string>
     <string name="set_side_popup_over_factory_title">Show over the car\'s own view</string>
@@ -1789,4 +1789,20 @@ Then reopen this app.</string>
     <string name="nav_say_km">%1$s kilometres</string>
     <string name="nav_say_destination">you will reach your destination</string>
     <string name="nav_say_arrived">You have arrived at your destination</string>
+    <string name="set_bsd_log_send_title">Send blind-spot log to phone</string>
+    <string name="set_bsd_log_send_summary">The newest log from Report blind-spot signals, as a text file over Wi-Fi with a QR code. Turn the report on, drive with cars passing on both sides, then send it.</string>
+    <string name="set_side_popup_warning_title">Show the side when the car warns</string>
+    <string name="set_side_popup_warning_summary">When the car lights the warning lamp in a mirror (or warns of cross traffic), that side\'s camera opens and the edge of the picture on that side blinks red, like Tesla, even without the turn signal. The turn signal still wins. Never in R.</string>
+    <string name="set_signal_recorder_title">Record all car signals to USB (experimental)</string>
+    <string name="set_signal_recorder_summary">While the screen is on and a USB drive is in, writes every signal the car offers to 7xDash/signals on the drive: first all of them with their values, then every change with the time, gear, speed and turn signal. One file each time the screen comes on. Turn it off when done: it keeps the car interface busy.</string>
+    <string name="set_signal_snapshot_title">Save all car signals to USB now</string>
+    <string name="set_signal_snapshot_summary">One file with every signal the car offers right now and its value. No need to drive: works parked. Saved to 7xDash/signals on the USB drive.</string>
+    <string name="signal_snapshot_saving">Reading every car signal…</string>
+    <string name="signal_snapshot_failed">Not saved: %1$s</string>
+    <string name="signal_snapshot_saved_detail">Saved %1$s: %2$d of %3$d signals readable</string>
+    <string name="signal_snapshot_no_usb">insert the USB drive first</string>
+    <string name="signal_snapshot_no_car">the car interface is not available on this head unit</string>
+    <string name="signal_snapshot_no_write">cannot write to the USB drive</string>
+    <string name="set_bsd_test_title">Show a test warning</string>
+    <string name="set_bsd_test_summary">Pretends the car warns of a car on the left for 4 seconds: the left side view opens and its left edge blinks red. Works parked.</string>
 </resources>

@@ -1,5 +1,59 @@
 # Changelog
 
+## [1.7.5-beta] - 2026-11-03
+
+### Battery at arrival
+- **Google Maps places work.** Sharing a place from Google Maps said "could not find a place in that link" while Apple Maps worked. Google sends its pages without a length, and 7xDash's link reader gave up on them; it now reads them.
+- **Places shared by name only are found.** The iPhone's Google Maps links often end at a link with the place's name but no coordinates (`?q=Name, Address&ftid=...` or `/maps/place/Name/data=...`). 7xDash now looks that name up in Google's map search and takes the first place found.
+- The small map picture on Google's page is no longer taken for the place: its centre is only the area shown, often where the reader is.
+
+## [1.7.4-beta] - 2026-11-03
+
+Same as 1.7.4-alpha, now as a beta so the car's update check offers it.
+
+### Signal recorder
+- **Listens for blind-spot signals the car pushes.** Two drives showed no blind-spot reading changing when asked every few seconds: the mirror lamps (BCM_DOOR_OPEN_WARN_*) stayed 0, RCTA and the blind-spot warnings stayed 255. Some car values are only ever pushed, so the USB recorder now also asks the car to push every change of 58 candidates (blind spot, RCTA, cross traffic, door open warning, lane change, rear collision, turn signal) and writes each push at once with its zone, read as "callback zone N". Other callbacks for them are written as "(callback)".
+- The first line under Changes says whether the car took the request ("watching 58 as one list").
+- The blind-spot warning itself is unchanged; the mirror lamps are likely the door open warning (parked), not the driving blind-spot warning.
+
+## [1.7.4-alpha] - 2026-11-03
+
+### Signal recorder (test build)
+- **Listens for blind-spot signals the car pushes.** Two drives showed no blind-spot reading changing when asked every few seconds: the mirror lamps (BCM_DOOR_OPEN_WARN_*) stayed 0, RCTA and the blind-spot warnings stayed 255. Some car values are only ever pushed, so the USB recorder now also asks the car to push every change of 58 candidates (blind spot, RCTA, cross traffic, door open warning, lane change, rear collision, turn signal) and writes each push at once with its zone, read as "callback zone N". Other callbacks for them are written as "(callback)".
+- The first line under Changes says whether the car took the request ("watching 58 as one list").
+- The blind-spot warning itself is unchanged; the mirror lamps are likely the door open warning (parked), not the driving blind-spot warning.
+
+## [1.7.3-beta] - 2026-11-03
+
+### Mood light
+- **The blind-spot blink keeps your colour.** While the turn signal is on towards a car in the blind spot, the mood lights now blink between red and the colour their gear rules show right now (for example blue in D), instead of red and off. Each group, the car's own ambient light included, follows its own colour.
+- The red uses the lights' current brightness, so the warning matches the cabin; full brightness when the lights are off. Steady red with no turn signal also keeps the brightness.
+
+## [1.7.2-beta] - 2026-11-03
+
+### Blind spot, Tesla style
+- **The mirror warning lamps tell left from right.** 7xDash now reads BCM_DOOR_OPEN_WARN_LEFT_INDCN and RIGHT_INDCN (the warning lamps in the mirrors, found in the all-signals recording) as the built-in warning, with the RCTA flags as a second source: either one warning counts. Every change of them goes to the black box.
+- **Red blink on the warning side of the video.** While the car warns, the side view's edge on that side (left edge for the left camera, right edge for the right) glows red and blinks, like Tesla, instead of a red frame all round. It shows at once, even before the first picture arrives.
+- **The camera opens on the warning** (Show the side when the car warns, on by default), without the turn signal; the turn signal still wins, never in R.
+- **Show a test warning** in Settings → Side mirror → Blind spot: pretends the car warns on the left for 4 seconds, to see it parked.
+- **Removed: the full-screen red edge** from 1.7.1-beta, with its setting and test button.
+- A side taught in the blind-spot finder no longer counts when it was taught 255 (the car's "no reading"); the built-in signals take over for that side.
+
+## [1.7.1-beta] - 2026-11-03
+
+### Blind spot
+- **The car's cross traffic flags tell left from right.** 7xDash now reads PAS_FUNC_RCTA_LEFT_WARNING and PAS_FUNC_RCTA_RIGHT_WARNING (found with the blind-spot finder) as the built-in warning; a signal you taught in the finder still wins for its side. 0 is quiet, 255 is no reading, anything between counts as a warning. Every change of them goes to the black box, to check what the car really sends.
+- **Red screen edge, like Tesla.** While the car warns of a car on one side, that edge of the screen blinks red over any app; touches go through. Settings → Side mirror → **Red screen edge for the blind spot** (on), with **Show a test blink**.
+- **Show the side when the car warns** (new, on): that side's camera opens even without the turn signal. The turn signal still wins; never in R.
+- The red border on the side view now **blinks** instead of staying on.
+- **Mood lights go red** instead of orange: steady red while a car is in the blind spot, blinking red when you signal towards it. Add Car ambient light to a group to use the car's own ambient light, as in Tesla's 2026.14 update.
+
+### Car signal logs (experimental)
+- **Save all car signals to USB now** (Settings → System): one file with every signal the car offers right now and its value, read as a car setting, a sensor event and a sensor value, plus whether the car supports it. Works parked.
+- **Record all car signals to USB:** while the screen is on and a USB drive is in, writes all signals and then every change, with the time, gear, speed and turn signal. Off by default; turn it off when done.
+- Both write tab-separated text to 7xDash/signals on the USB drive.
+- **Report blind-spot signals** also writes a log file (all car settings at the start, then each change of the blind-spot ones), with **Send blind-spot log to phone** in Settings → Side mirror.
+
 ## [1.7.0] - 2026-10-31
 
 Changes since 1.6.0 (includes 1.6.1-beta to 1.6.13-beta).

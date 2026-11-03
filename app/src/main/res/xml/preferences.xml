@@ -400,6 +400,12 @@
                 app:showSeekBarValue="true" />
 
             <SwitchPreferenceCompat
+                android:key="pref_side_popup_warning"
+                android:dependency="pref_side_popup"
+                android:title="@string/set_side_popup_warning_title"
+                android:summary="@string/set_side_popup_warning_summary" />
+
+            <SwitchPreferenceCompat
                 android:key="pref_side_popup_door"
                 android:dependency="pref_side_popup"
                 android:title="@string/set_side_popup_door_title"
@@ -476,6 +482,12 @@
             android:title="@string/set_side_cat_blind_spot">
 
             <Preference
+                android:key="pref_side_popup_bsd_test"
+                android:dependency="pref_side_popup"
+                android:title="@string/set_bsd_test_title"
+                android:summary="@string/set_bsd_test_summary" />
+
+            <Preference
                 android:key="pref_side_popup_bsd_finder"
                 android:dependency="pref_side_popup"
                 android:title="@string/bsd_finder_title"
@@ -485,6 +497,11 @@
                 android:key="pref_side_popup_bsd_sniffer"
                 android:title="@string/set_bsd_sniffer_title"
                 android:summary="@string/set_bsd_sniffer_summary" />
+
+            <Preference
+                android:key="pref_side_popup_bsd_log_send"
+                android:title="@string/set_bsd_log_send_title"
+                android:summary="@string/set_bsd_log_send_summary" />
         </PreferenceCategory>
     </PreferenceScreen>
 
@@ -714,6 +731,16 @@
             android:key="pref_usb_restore"
             android:title="@string/usb_settings_restore_title"
             android:summary="@string/usb_settings_restore_summary" />
+
+        <SwitchPreferenceCompat
+            android:key="pref_signal_recorder"
+            android:title="@string/set_signal_recorder_title"
+            android:summary="@string/set_signal_recorder_summary" />
+
+        <Preference
+            android:key="pref_signal_snapshot"
+            android:title="@string/set_signal_snapshot_title"
+            android:summary="@string/set_signal_snapshot_summary" />
 
         <Preference
             android:key="pref_diagnostics"

@@ -806,6 +806,10 @@ public class SettingsPreferenceFragment extends PreferenceFragmentCompat {
                     appConfig.setSidePopupStyle(value);
                     com.kooo.evcam.zeekr.SideViewPopupService.applyConfig();
                 });
+        bindSwitch("pref_side_popup_warning", appConfig.isSidePopupOnWarning(), value -> {
+            appConfig.setSidePopupOnWarning(value);
+            com.kooo.evcam.zeekr.SideViewPopupService.applyConfig();
+        });
         bindSwitch("pref_side_popup_door", appConfig.isSidePopupOnDoor(), value -> {
             appConfig.setSidePopupOnDoor(value);
             com.kooo.evcam.zeekr.SideViewPopupService.applyConfig();
@@ -1279,6 +1283,17 @@ public class SettingsPreferenceFragment extends PreferenceFragmentCompat {
                         .setPositiveButton(R.string.usb_settings_restore_go,
                                 (d, w) -> UsbSettings.restoreNow(requireContext()))
                         .setNegativeButton(android.R.string.cancel, null)));
+        bindSwitch("pref_signal_recorder", appConfig.isSignalRecorderEnabled(), value -> {
+            appConfig.setSignalRecorderEnabled(value);
+            com.kooo.evcam.telemetry.SignalRecorder.applyConfig();
+        });
+        onClick("pref_signal_snapshot", pref -> {
+            android.content.Context ctx = requireContext().getApplicationContext();
+            com.kooo.evcam.ui.Notice.makeText(ctx, R.string.signal_snapshot_saving, android.widget.Toast.LENGTH_SHORT).show();
+            com.kooo.evcam.telemetry.SignalRecorder.snapshot(ctx, (ok, message) ->
+                    com.kooo.evcam.ui.Notice.makeText(ctx, ok ? message
+                            : ctx.getString(R.string.signal_snapshot_failed, message), android.widget.Toast.LENGTH_LONG).show());
+        });
         onClick("pref_diagnostics", pref ->
                 startActivity(new Intent(getContext(), DiagnosticsActivity.class)));
         // 系统信息（试验性）：车机能读到的车辆信号。只在这一页开着时多读浮点和定位，离开就放掉（离散信号熄屏判断一直在读）
@@ -1306,6 +1321,9 @@ public class SettingsPreferenceFragment extends PreferenceFragmentCompat {
             appConfig.setBlindSpotSnifferEnabled(value);
             com.kooo.evcam.telemetry.BlindSpotSniffer.applyConfig();
         });
+        onClick("pref_side_popup_bsd_log_send", pref -> com.kooo.evcam.share.PhoneShare.show(requireActivity(),
+                com.kooo.evcam.telemetry.BlindSpotLog.latest(requireContext())));
+        onClick("pref_side_popup_bsd_test", pref -> com.kooo.evcam.telemetry.BlindSpotWatch.test());
         onClick("pref_side_popup_bsd_finder", pref ->
                 startActivity(new Intent(getContext(), com.kooo.evcam.zeekr.BlindSpotFinderActivity.class)));
         onClick("pref_button_lab", pref ->

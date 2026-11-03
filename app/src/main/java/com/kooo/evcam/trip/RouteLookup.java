@@ -20,12 +20,16 @@ import okhttp3.ResponseBody;
 /**
  * The two things that need the internet: road km from here to there (OSRM's public server on
  * OpenStreetMap data; free, no key, fair use only, which one car asking every few minutes is) and
- * following a short share link to the long one with the coordinates in it. Blocking: call off the
- * main thread.
+ * following a short share link to the long one with the coordinates in it. A Google link that only
+ * names the place is looked up in Google's map search. Blocking: call off the main thread.
  */
 final class RouteLookup {
 
     private static final String TAG = "RouteLookup";
+    private static final String SEARCH = "https://www.google.com/search?tbm=map&hl=en&q=";
+    /** A result's pin in Google's map search answer: [null,null,lat,lng]. */
+    private static final Pattern SEARCH_PIN = Pattern.compile(
+            "\\[null,null,(-?\\d{1,2}\\.\\d+),(-?\\d{1,3}\\.\\d+)\\]");
     private static final String OSRM = "https://router.project-osrm.org/route/v1/driving/%.6f,%.6f;%.6f,%.6f?overview=false";
     private static final int MAX_HOPS = 6;
     private static final int MAX_BODY = 512 * 1024;
@@ -67,10 +71,13 @@ final class RouteLookup {
 
     /**
      * The place behind a short link: follows the redirects, trying each address on the way, then
-     * looks in the last page for the coordinates Apple and Google put there. Null if none found.
+     * looks in the last page for the coordinates Apple and Google put there. Google links that
+     * only name the place (no pin on the way, none in the page) are looked up by that name in
+     * Google's map search. Null if none found.
      */
     DestinationLink.Place resolve(String url, String name) {
         String at = url;
+        String googleName = DestinationLink.googleQuery(url);
         for (int hop = 0; hop < MAX_HOPS && at != null; hop++) {
             try (Response r = client.newCall(new Request.Builder().url(at).header("User-Agent", agent).build()).execute()) {
                 String next = r.isRedirect() ? r.header("Location") : null;
@@ -81,22 +88,85 @@ final class RouteLookup {
                     if (p != null) {
                         return named(p, name);
                     }
+                    String q = DestinationLink.googleQuery(next);
+                    if (q != null) {
+                        googleName = q;
+                    }
                     at = next;
                     continue;
                 }
                 ResponseBody body = r.body();
-                if (body == null) {
-                    return null;
+                DestinationLink.Place p = body == null ? null : fromPage(readCapped(body));
+                if (p != null) {
+                    return named(p, name);
                 }
-                String page = body.source().readUtf8(Math.min(MAX_BODY, Math.max(0, body.contentLength() < 0
-                        ? MAX_BODY : body.contentLength())));
-                return named(fromPage(page), name);
+                break;
             } catch (IOException | RuntimeException e) {
                 AppLog.w(TAG, "resolve failed at hop " + hop + ": " + e.getMessage());
+                break;
+            }
+        }
+        if (googleName == null) {
+            AppLog.w(TAG, "resolve: no coordinates and no Google place name");
+            return null;
+        }
+        return named(search(googleName), name);
+    }
+
+    /** The first place Google's map search finds for {@code query}, or null. */
+    DestinationLink.Place search(String query) {
+        String url;
+        try {
+            url = SEARCH + java.net.URLEncoder.encode(query, "UTF-8");
+        } catch (java.io.UnsupportedEncodingException e) {
+            return null;
+        }
+        try (Response r = client.newCall(new Request.Builder().url(url).header("User-Agent", agent).build()).execute()) {
+            ResponseBody body = r.body();
+            if (!r.isSuccessful() || body == null) {
+                AppLog.w(TAG, "search: HTTP " + r.code());
                 return null;
+            }
+            DestinationLink.Place p = fromSearch(readCapped(body));
+            if (p == null) {
+                AppLog.w(TAG, "search: no place found");
+            }
+            return p;
+        } catch (IOException | RuntimeException e) {
+            AppLog.w(TAG, "search failed: " + e.getMessage());
+            return null;
+        }
+    }
+
+    /** The first pin in a Google map search answer, or null. */
+    static DestinationLink.Place fromSearch(String answer) {
+        if (answer == null) {
+            return null;
+        }
+        Matcher m = SEARCH_PIN.matcher(answer);
+        while (m.find()) {
+            try {
+                double lat = Double.parseDouble(m.group(1));
+                double lng = Double.parseDouble(m.group(2));
+                if (lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180 && !(lat == 0 && lng == 0)) {
+                    return new DestinationLink.Place(lat, lng, "");
+                }
+            } catch (NumberFormatException ignored) {
+                // try the next one
             }
         }
         return null;
+    }
+
+    /**
+     * The body, at most {@link #MAX_BODY} bytes. Google sends pages without a length (chunked):
+     * asking for exactly MAX_BODY bytes then fails at the end of a shorter page, so read up to it.
+     */
+    private static String readCapped(ResponseBody body) throws IOException {
+        okio.BufferedSource source = body.source();
+        source.request(MAX_BODY);
+        okio.Buffer buffer = source.getBuffer();
+        return buffer.readUtf8(Math.min(buffer.size(), MAX_BODY));
     }
 
     static DestinationLink.Place fromPage(String page) {
@@ -116,6 +186,10 @@ final class RouteLookup {
         // Google pages carry the long link (with the !3d!4d pin) somewhere in them
         Matcher m = Pattern.compile("https?://[^\\s\"'<>\\\\]*maps[^\\s\"'<>\\\\]*").matcher(page);
         while (m.find()) {
+            // The static map's centre is the area the page shows (often where the reader is), not the place
+            if (m.group().contains("staticmap")) {
+                continue;
+            }
             DestinationLink.Place p = DestinationLink.parse(m.group());
             if (p != null) {
                 return p;

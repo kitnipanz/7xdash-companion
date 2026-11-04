@@ -219,7 +219,7 @@ public class NavCoreTest {
 
     @Test
     public void routeRequestHasTraffic() throws Exception {
-        org.json.JSONObject j = new org.json.JSONObject(GoogleJson.routeRequest(1, 2, 370.4, 3, 4, "th"));
+        org.json.JSONObject j = new org.json.JSONObject(GoogleJson.routeRequest(1, 2, 370.4, 3, 4, "th", true));
         assertEquals("TRAFFIC_AWARE", j.getString("routingPreference"));
         assertEquals(10, j.getJSONObject("origin").getJSONObject("location").getInt("heading"));
         assertEquals(3, j.getJSONObject("destination").getJSONObject("location")

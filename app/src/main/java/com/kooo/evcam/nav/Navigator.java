@@ -79,10 +79,12 @@ public final class Navigator {
         /** Battery at arrival, or null until the car has given battery and range. */
         public final Arrival.Estimate battery;
         public final boolean muted;
+        /** Before starting, the routes to choose from (Google's pick first); one or none otherwise. */
+        public final List<NavRoute> choices;
 
         Snapshot(Phase phase, DestinationLink.Place destination, NavRoute route, Guidance.Progress progress,
                  boolean rerouting, int error, String errorDetail, Double carLat, Double carLng, Double carBearing,
-                 Float carSpeedKmh, Arrival.Estimate battery, boolean muted) {
+                 Float carSpeedKmh, Arrival.Estimate battery, boolean muted, List<NavRoute> choices) {
             this.phase = phase;
             this.destination = destination;
             this.route = route;
@@ -96,6 +98,7 @@ public final class Navigator {
             this.carSpeedKmh = carSpeedKmh;
             this.battery = battery;
             this.muted = muted;
+            this.choices = choices;
         }
     }
 
@@ -152,6 +155,8 @@ public final class Navigator {
     private Arrival.Estimate battery;
     private boolean muted;
     private boolean telemetryHeld;
+    /** The routes to choose from before starting (Google's pick first); the chosen one is {@link #guidance}'s. */
+    private List<NavRoute> choices = new ArrayList<>();
     /** A place came from the iPhone while guiding: start guiding to it as soon as its route is in. */
     private boolean startWhenRouted;
     /** The turn card is being placed by hand ({@link #setHudPlacing}). */
@@ -183,16 +188,26 @@ public final class Navigator {
      * screen open, the floating window opens so the head unit shows it at once.
      */
     private void onShared(Context context, DestinationLink.Place place) {
+        String name = NavMapPainter.placeName(place);
         if (!active(context) || !hasKey() || !new AppConfig(context).isNavShareEnabled()) {
+            // no route here, but the place is in: battery at arrival on the Dash panel and Home
+            notice(context, context.getString(R.string.nav_place_received_plain, name));
             return;
         }
         boolean wasGuiding = phase == Phase.GUIDING;
         AppLog.i(TAG, "place shared from the phone" + (wasGuiding ? " while guiding" : ""));
+        notice(context, context.getString(wasGuiding ? R.string.nav_place_received_switch
+                : R.string.nav_place_received, name));
         preview(context, place);
         startWhenRouted = wasGuiding;
         if (attached == 0 && OverlayCoordinator.canShowOverlay(context)) {
             NavFloatWindow.get().show(context);
         }
+    }
+
+    /** The pop-up on the head unit (and on the HUD when HUD notices are on): a place came in from the phone. */
+    private static void notice(Context context, String text) {
+        com.kooo.evcam.ui.Notice.makeText(context, text, android.widget.Toast.LENGTH_LONG).show();
     }
 
     /** A Navigation screen opened: keep the car's position coming. Pair with {@link #detach}. */
@@ -284,7 +299,7 @@ public final class Navigator {
 
     public Snapshot snapshot() {
         return new Snapshot(phase, destination, guidance == null ? null : guidance.route(), progress, rerouting,
-                error, errorDetail, carLat, carLng, carBearing, carSpeed, battery, muted);
+                error, errorDetail, carLat, carLng, carBearing, carSpeed, battery, muted, java.util.Collections.unmodifiableList(new ArrayList<>(choices)));
     }
 
     public boolean isGuiding() {
@@ -298,6 +313,7 @@ public final class Navigator {
         destination = place;
         guidance = null;
         progress = null;
+        choices = new ArrayList<>();
         startWhenRouted = false;
         voicePlan.reset();
         phase = Phase.ROUTING;
@@ -309,6 +325,17 @@ public final class Navigator {
         keepRunning();
         askRoute(false);
         changed();
+    }
+
+    /** Before starting: drive {@code route} instead (one of {@link Snapshot#choices}). */
+    public void choose(NavRoute route) {
+        if (phase != Phase.PREVIEW || route == null || !choices.contains(route)
+                || (guidance != null && guidance.route() == route)) {
+            return;
+        }
+        guidance = new Guidance(route);
+        AppLog.i(TAG, String.format(Locale.US, "chose the route %.1f km, %.0f min", route.meters / 1000, route.seconds / 60));
+        onTick();
     }
 
     /** Starts guiding along the route shown. */
@@ -336,6 +363,7 @@ public final class Navigator {
         destination = null;
         guidance = null;
         progress = null;
+        choices = new ArrayList<>();
         rerouting = false;
         startWhenRouted = false;
         // the place from the iPhone is done with too: no trip left on the Dash panel
@@ -417,27 +445,30 @@ public final class Navigator {
         int mine = ++ask;
         routedAt = System.currentTimeMillis();
         rerouting = reroute;
+        // the other good routes only when planning, to choose from; never for a reroute while driving
+        boolean alternatives = !reroute && phase != Phase.GUIDING && !startWhenRouted;
         worker.execute(() -> {
-            NavRoute route = null;
+            List<NavRoute> routes = new ArrayList<>();
             String why = null;
             try {
-                route = api.route(fromLat, fromLng, heading, to.lat, to.lng);
-                if (route == null) {
+                routes = api.routes(fromLat, fromLng, heading, to.lat, to.lng, alternatives);
+                if (routes.isEmpty()) {
                     why = "no route";
                 }
             } catch (GoogleApi.Failure f) {
                 why = f.getMessage();
             }
-            NavRoute got = route;
+            List<NavRoute> got = routes;
             String failure = why;
             main.post(() -> onRoute(mine, got, failure, reroute));
         });
     }
 
-    private void onRoute(int mine, NavRoute route, String failure, boolean reroute) {
+    private void onRoute(int mine, List<NavRoute> all, String failure, boolean reroute) {
         if (mine != ask || phase == Phase.IDLE) {
             return;
         }
+        NavRoute route = all.isEmpty() ? null : all.get(0);
         rerouting = false;
         if (route == null) {
             AppLog.w(TAG, "no route: " + failure);
@@ -455,6 +486,7 @@ public final class Navigator {
         AppLog.i(TAG, String.format(Locale.US, "route: %.1f km, %.0f min, %d steps%s", route.meters / 1000,
                 route.seconds / 60, route.steps.size(), reroute ? " (rerouted)" : ""));
         guidance = new Guidance(route);
+        choices = phase == Phase.GUIDING ? new ArrayList<>(java.util.Collections.singletonList(route)) : all;
         voicePlan.reset();
         error = 0;
         errorDetail = null;

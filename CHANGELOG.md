@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.7.9-beta] - 2026-11-04
+
+### Navigation (beta)
+- **Choose your route.** Before you start, up to three routes show as cards with their time, distance and the road they go by, the recommended one marked Best. Tap a card, or a grey line on the map, to pick one.
+- **Traffic on the route.** The route line itself shows the traffic: blue when clear, orange when slow, red in a jam. Google's traffic layer over the whole map is gone, so the only coloured line is your route.
+- **Smoother driving.** Between GPS fixes the map works out where the car is from its speed and moves it every frame, so the car glides instead of stepping once a second.
+- **The road behind you is gone.** The blue line now starts at the car and is trimmed as you drive, and it no longer comes back when you arrive.
+- **A notice when a place arrives.** A place sent from the iPhone or 7xDash web shows a notice as soon as the car gets it, and another if the place can't be found.
+
 ## [1.7.8-beta] - 2026-11-03
 
 ### Navigation (beta)

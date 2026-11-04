@@ -1814,6 +1814,13 @@ Then reopen this app.</string>
     <string name="nav_hud_adjust_reset">Reset</string>
     <string name="nav_share_switch">Go to places shared from the iPhone</string>
     <string name="nav_share_hint">Share a place in Google Maps or Apple Maps → Send to 7xDash. Set it up once with Set up iPhone below.</string>
+    <string name="nav_route_time">%1$s · %2$s</string>
+    <string name="nav_route_best">Best</string>
+    <string name="nav_route_via">via %1$s</string>
+    <string name="nav_place_received">Place from your phone: %1$s · showing the route</string>
+    <string name="nav_place_received_switch">New place from your phone: %1$s · switching to it</string>
+    <string name="nav_place_received_plain">Place from your phone: %1$s</string>
+    <string name="nav_place_not_found">The phone sent something, but no place was found in it</string>
     <string name="nav_share_off">Turn on Go to places shared from the iPhone first</string>
     <string name="set_bsd_log_send_title">Send blind-spot log to phone</string>
     <string name="set_bsd_log_send_summary">The newest log from Report blind-spot signals, as a text file over Wi-Fi with a QR code. Turn the report on, drive with cars passing on both sides, then send it.</string>

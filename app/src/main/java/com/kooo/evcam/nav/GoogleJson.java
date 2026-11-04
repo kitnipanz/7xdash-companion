@@ -18,7 +18,9 @@ public final class GoogleJson {
     /** Only the fields guidance uses: Google bills by the fields asked for. */
     public static final String ROUTE_FIELDS = "routes.duration,routes.staticDuration,routes.distanceMeters,"
             + "routes.legs.steps.distanceMeters,routes.legs.steps.staticDuration,"
-            + "routes.legs.steps.polyline.encodedPolyline,routes.legs.steps.navigationInstruction";
+            + "routes.legs.steps.polyline.encodedPolyline,routes.legs.steps.navigationInstruction,"
+            + "routes.polyline.encodedPolyline,routes.travelAdvisory.speedReadingIntervals,"
+            + "routes.description,routes.routeLabels";
     public static final String PLACE_FIELDS = "places.displayName,places.formattedAddress,places.location";
 
     private GoogleJson() {
@@ -35,9 +37,12 @@ public final class GoogleJson {
         }
     }
 
-    /** The computeRoutes request body: drive from here to there, with traffic. */
+    /**
+     * The computeRoutes request body: drive from here to there, with traffic, and the traffic along
+     * the line; {@code alternatives} asks for the other good routes too (to choose before starting).
+     */
     public static String routeRequest(double fromLat, double fromLng, Double heading,
-                                      double toLat, double toLng, String language) {
+                                      double toLat, double toLng, String language, boolean alternatives) {
         try {
             JSONObject origin = waypoint(fromLat, fromLng);
             if (heading != null) {
@@ -50,6 +55,8 @@ public final class GoogleJson {
                     .put("routingPreference", "TRAFFIC_AWARE")
                     .put("languageCode", language)
                     .put("units", "METRIC")
+                    .put("computeAlternativeRoutes", alternatives)
+                    .put("extraComputations", new JSONArray().put("TRAFFIC_ON_POLYLINE"))
                     .toString();
         } catch (JSONException e) {
             throw new IllegalStateException(e);
@@ -78,14 +85,33 @@ public final class GoogleJson {
 
     /** The first route in a computeRoutes answer, or null when there is none. */
     public static NavRoute route(String body) throws JSONException {
-        JSONObject json = new JSONObject(body);
-        JSONArray routes = json.optJSONArray("routes");
-        if (routes == null || routes.length() == 0) {
-            return null;
+        List<NavRoute> all = routes(body);
+        return all.isEmpty() ? null : all.get(0);
+    }
+
+    /** Every route in a computeRoutes answer, Google's pick first. */
+    public static List<NavRoute> routes(String body) throws JSONException {
+        List<NavRoute> out = new ArrayList<>();
+        JSONArray routes = new JSONObject(body).optJSONArray("routes");
+        for (int i = 0; routes != null && i < routes.length(); i++) {
+            NavRoute r = route(routes.getJSONObject(i));
+            if (r != null) {
+                out.add(r);
+            }
         }
-        JSONObject r = routes.getJSONObject(0);
+        return out;
+    }
+
+    private static NavRoute route(JSONObject r) throws JSONException {
+        JSONArray labels = r.optJSONArray("routeLabels");
+        boolean best = labels == null || labels.length() == 0;
+        for (int i = 0; labels != null && i < labels.length(); i++) {
+            best |= "DEFAULT_ROUTE".equals(labels.optString(i));
+        }
         NavRoute.Builder b = new NavRoute.Builder()
-                .duration(seconds(r.optString("duration")), seconds(r.optString("staticDuration")));
+                .duration(seconds(r.optString("duration")), seconds(r.optString("staticDuration")))
+                .label(r.optString("description", ""), best);
+        addTraffic(b, r);
         JSONArray legs = r.optJSONArray("legs");
         for (int l = 0; legs != null && l < legs.length(); l++) {
             JSONArray steps = legs.getJSONObject(l).optJSONArray("steps");
@@ -104,6 +130,39 @@ public final class GoogleJson {
             }
         }
         return b.build();
+    }
+
+    /**
+     * Google's traffic along the route: intervals of the whole-route line's points (SLOW,
+     * TRAFFIC_JAM; NORMAL needs nothing), turned into metres along the route.
+     */
+    private static void addTraffic(NavRoute.Builder b, JSONObject r) {
+        JSONObject line = r.optJSONObject("polyline");
+        JSONObject advisory = r.optJSONObject("travelAdvisory");
+        JSONArray intervals = advisory == null ? null : advisory.optJSONArray("speedReadingIntervals");
+        if (line == null || intervals == null) {
+            return;
+        }
+        double[] pts = Geo.decode(line.optString("encodedPolyline", null));
+        if (pts == null || pts.length < 4) {
+            return;
+        }
+        int count = pts.length / 2;
+        double[] along = new double[count];
+        for (int i = 1; i < count; i++) {
+            along[i] = along[i - 1] + Geo.meters(pts[2 * i - 2], pts[2 * i - 1], pts[2 * i], pts[2 * i + 1]);
+        }
+        for (int i = 0; i < intervals.length(); i++) {
+            JSONObject w = intervals.optJSONObject(i);
+            if (w == null) {
+                continue;
+            }
+            String speed = w.optString("speed", "NORMAL");
+            byte level = "TRAFFIC_JAM".equals(speed) ? NavRoute.JAM : "SLOW".equals(speed) ? NavRoute.SLOW : NavRoute.FREE;
+            int from = Math.max(0, Math.min(count - 1, w.optInt("startPolylinePointIndex", 0)));
+            int to = Math.max(0, Math.min(count - 1, w.optInt("endPolylinePointIndex", 0)));
+            b.traffic(along[from], along[to], level);
+        }
     }
 
     /** The places in a searchText answer, in Google's order. */

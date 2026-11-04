@@ -216,6 +216,14 @@
                 android:text="@string/nav_settings_button"
                 app:icon="@drawable/ic_settings" />
         </LinearLayout>
+        <!-- before starting: the routes to choose from, Google's pick first; filled in by NavigationActivity -->
+        <LinearLayout
+            android:id="@+id/nav_routes"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:orientation="vertical"
+            android:visibility="gone" />
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

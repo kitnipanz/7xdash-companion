@@ -1789,6 +1789,13 @@
     <string name="nav_hud_adjust_reset">คืนค่าเดิม</string>
     <string name="nav_share_switch">นำทางไปที่ที่แชร์จาก iPhone</string>
     <string name="nav_share_hint">แชร์สถานที่ใน Google Maps หรือ Apple Maps → ส่งไป 7xDash ตั้งค่าครั้งแรกด้วยปุ่ม ตั้งค่า iPhone ด้านล่าง</string>
+    <string name="nav_route_time">%1$s · %2$s</string>
+    <string name="nav_route_best">แนะนำ</string>
+    <string name="nav_route_via">ผ่าน %1$s</string>
+    <string name="nav_place_received">ได้รับที่หมายจากโทรศัพท์: %1$s · กำลังแสดงเส้นทาง</string>
+    <string name="nav_place_received_switch">ที่หมายใหม่จากโทรศัพท์: %1$s · เปลี่ยนไปที่นี่</string>
+    <string name="nav_place_received_plain">ได้รับที่หมายจากโทรศัพท์: %1$s</string>
+    <string name="nav_place_not_found">ได้รับข้อมูลจากโทรศัพท์ แต่หาสถานที่ไม่เจอ</string>
     <string name="nav_share_off">เปิด นำทางไปที่ที่แชร์จาก iPhone ก่อน</string>
     <string name="set_bsd_log_send_title">ส่งล็อกจุดบอดเข้ามือถือ</string>
     <string name="set_bsd_log_send_summary">ส่งไฟล์ล็อกล่าสุดจาก แจ้งสัญญาณจุดบอด เป็นไฟล์ข้อความผ่าน Wi-Fi ด้วย QR เปิดการแจ้งไว้ ขับให้มีรถผ่านทั้งสองฝั่ง แล้วค่อยส่ง</string>

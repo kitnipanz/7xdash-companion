@@ -55,12 +55,16 @@ final class GoogleApi {
         return !BuildConfig.MAPS_API_KEY.isEmpty();
     }
 
-    /** The route, or null when Google found no road there. */
-    NavRoute route(double fromLat, double fromLng, Double heading, double toLat, double toLng) throws Failure {
+    /**
+     * The routes, Google's pick first; with {@code alternatives} the other good ones too (up to two
+     * more). Empty when Google found no road there.
+     */
+    java.util.List<NavRoute> routes(double fromLat, double fromLng, Double heading, double toLat, double toLng,
+                                    boolean alternatives) throws Failure {
         String body = post(ROUTES, GoogleJson.ROUTE_FIELDS,
-                GoogleJson.routeRequest(fromLat, fromLng, heading, toLat, toLng, language()));
+                GoogleJson.routeRequest(fromLat, fromLng, heading, toLat, toLng, language(), alternatives));
         try {
-            return GoogleJson.route(body);
+            return GoogleJson.routes(body);
         } catch (Exception e) {
             throw new Failure("unreadable route: " + e.getMessage());
         }

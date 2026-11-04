@@ -62,6 +62,10 @@ public class NavigationActivity extends AppCompatActivity implements Navigator.L
     private MaterialButton end;
     private MaterialButton mute;
     private View recenter;
+    private LinearLayout routes;
+    /** The choices and the chosen one the cards were last made for. */
+    private java.util.List<NavRoute> shownRoutes;
+    private NavRoute shownChosen;
     private View hudPreview;
     private TextView hudPreviewLabel;
     private HudTurnCard hudCard;
@@ -92,6 +96,7 @@ public class NavigationActivity extends AppCompatActivity implements Navigator.L
         end = findViewById(R.id.nav_end);
         mute = findViewById(R.id.nav_mute);
         recenter = findViewById(R.id.nav_recenter);
+        routes = findViewById(R.id.nav_routes);
         hudPreview = findViewById(R.id.nav_hud_preview);
         hudPreviewLabel = findViewById(R.id.nav_hud_preview_label);
         hudCard = new HudTurnCard(this, Math.round(84 * getResources().getDisplayMetrics().density));
@@ -160,6 +165,7 @@ public class NavigationActivity extends AppCompatActivity implements Navigator.L
         float d = getResources().getDisplayMetrics().density;
         // the cards cover the left and the top: keep the route, Google's logo and the compass clear of them
         painter = new NavMapPainter(this, map, findViewById(R.id.nav_map), Math.round(540 * d), 0);
+        painter.onRouteTapped = r -> Navigator.get().choose(r);
         map.getUiSettings().setCompassEnabled(true);
         map.setOnCameraMoveStartedListener(reason -> {
             if (reason == GoogleMap.OnCameraMoveStartedListener.REASON_GESTURE) {
@@ -287,6 +293,56 @@ public class NavigationActivity extends AppCompatActivity implements Navigator.L
                 .setView(box)
                 .setPositiveButton(R.string.nav_hud_adjust_done, null)
                 .show();
+    }
+
+    /**
+     * Before starting, the routes Google offers: time and distance, the main road, Google's pick
+     * marked; the chosen one highlighted. A tap (or a tap on its grey line) chooses it.
+     */
+    private void showRoutes(Navigator.Snapshot s) {
+        java.util.List<NavRoute> choices = s.phase == Navigator.Phase.PREVIEW && s.choices.size() > 1
+                ? s.choices : java.util.Collections.emptyList();
+        routes.setVisibility(choices.isEmpty() ? View.GONE : View.VISIBLE);
+        if (choices.equals(shownRoutes) && s.route == shownChosen) {
+            return;
+        }
+        shownRoutes = choices;
+        shownChosen = s.route;
+        routes.removeAllViews();
+        float d = getResources().getDisplayMetrics().density;
+        for (NavRoute r : choices) {
+            boolean chosen = r == s.route;
+            LinearLayout card = new LinearLayout(this);
+            card.setOrientation(LinearLayout.VERTICAL);
+            int pad = Math.round(12 * d);
+            card.setPadding(pad, pad / 2 + 2, pad, pad / 2 + 2);
+            android.graphics.drawable.GradientDrawable bg = new android.graphics.drawable.GradientDrawable();
+            bg.setCornerRadius(12 * d);
+            bg.setColor(ContextCompat.getColor(this, chosen ? R.color.energy_quiet : R.color.surface));
+            bg.setStroke(Math.round((chosen ? 2 : 1) * d), ContextCompat.getColor(this, chosen ? R.color.energy : R.color.line));
+            card.setBackground(bg);
+            TextView time = new TextView(this);
+            String head = getString(R.string.nav_route_time, NavText.duration(this, r.seconds), NavText.distance(this, r.meters));
+            time.setText(r.best ? head + "  ·  " + getString(R.string.nav_route_best) : head);
+            time.setTextAppearance(R.style.TextAppearance_Cam_Row);
+            time.setTextColor(ContextCompat.getColor(this, chosen ? R.color.energy_text : R.color.text_primary));
+            time.setTypeface(time.getTypeface(), android.graphics.Typeface.BOLD);
+            card.addView(time);
+            if (!r.label.isEmpty()) {
+                TextView via = new TextView(this);
+                via.setText(getString(R.string.nav_route_via, r.label));
+                via.setTextAppearance(R.style.TextAppearance_Cam_Caption);
+                via.setTextColor(ContextCompat.getColor(this, R.color.text_secondary));
+                via.setSingleLine(true);
+                via.setEllipsize(android.text.TextUtils.TruncateAt.END);
+                card.addView(via);
+            }
+            card.setOnClickListener(v -> Navigator.get().choose(r));
+            LinearLayout.LayoutParams at = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT);
+            at.bottomMargin = Math.round(6 * d);
+            routes.addView(card, at);
+        }
     }
 
     /** Navigation settings, in three groups: voice and HUD, the map (colours, car colour), the iPhone. */
@@ -456,6 +512,7 @@ public class NavigationActivity extends AppCompatActivity implements Navigator.L
         mute.setVisibility(guiding ? View.VISIBLE : View.GONE);
         showBanner(s);
         showSheet(s);
+        showRoutes(s);
         showHudPreview(s);
         if (painter == null) {
             return;

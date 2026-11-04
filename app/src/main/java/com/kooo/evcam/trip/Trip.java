@@ -195,6 +195,12 @@ public final class Trip implements Telemetry.Listener {
         }
         if (p == null) {
             AppLog.w(TAG, "no place in what the phone sent (" + (shared == null ? 0 : shared.length()) + " chars)");
+            Context context = app;
+            if (context != null) {
+                // the phone got its answer; the driver should know too
+                main.post(() -> com.kooo.evcam.ui.Notice.makeText(context, com.kooo.evcam.R.string.nav_place_not_found,
+                        android.widget.Toast.LENGTH_LONG).show());
+            }
             return null;
         }
         setDestination(p, true);

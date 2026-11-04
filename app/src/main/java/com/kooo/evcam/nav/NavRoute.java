@@ -7,7 +7,8 @@ import java.util.List;
 /**
  * One driving route: the line on the map and its turn-by-turn steps. The line is the steps' own
  * lines joined end to end, so every step knows where it starts on it ({@link Step#startPoint}).
- * Immutable. Pure Java.
+ * Each piece of the line carries Google's traffic there ({@link #traffic}), and the route its "via"
+ * label and whether Google rates it best, for choosing among alternatives. Immutable. Pure Java.
  */
 public final class NavRoute {
 
@@ -45,14 +46,28 @@ public final class NavRoute {
     public final double seconds;
     /** Without traffic. */
     public final double staticSeconds;
+    /** Traffic on each piece of the line, between point i and i + 1: {@link #FREE}, {@link #SLOW} or {@link #JAM}. */
+    public final byte[] traffic;
+    /** "ถ. พญาไท": the main road it takes, from Google; may be empty. */
+    public final String label;
+    /** Google's own pick among the routes it gave. */
+    public final boolean best;
 
-    private NavRoute(double[] points, double[] along, List<Step> steps, double seconds, double staticSeconds) {
+    public static final byte FREE = 0;
+    public static final byte SLOW = 1;
+    public static final byte JAM = 2;
+
+    private NavRoute(double[] points, double[] along, List<Step> steps, double seconds, double staticSeconds,
+                     byte[] traffic, String label, boolean best) {
         this.points = points;
         this.along = along;
         this.steps = Collections.unmodifiableList(steps);
         this.meters = along.length == 0 ? 0 : along[along.length - 1];
         this.seconds = seconds;
         this.staticSeconds = staticSeconds;
+        this.traffic = traffic;
+        this.label = label == null ? "" : label;
+        this.best = best;
     }
 
     public int pointCount() {
@@ -88,6 +103,24 @@ public final class NavRoute {
         private final List<double[]> sizes = new ArrayList<>();
         private double seconds;
         private double staticSeconds;
+        /** {from metres, to metres, level}, along the route. */
+        private final List<double[]> slowings = new ArrayList<>();
+        private String label = "";
+        private boolean best = true;
+
+        /** Traffic from {@code fromMeters} to {@code toMeters} along the route; outside them it is free flowing. */
+        public Builder traffic(double fromMeters, double toMeters, byte level) {
+            if (level != FREE && toMeters > fromMeters) {
+                slowings.add(new double[]{fromMeters, toMeters, level});
+            }
+            return this;
+        }
+
+        public Builder label(String label, boolean best) {
+            this.label = label;
+            this.best = best;
+            return this;
+        }
 
         public Builder step(Maneuver maneuver, String instruction, double meters, double seconds, double[] line) {
             if (line == null || line.length < 2) {
@@ -146,7 +179,16 @@ public final class NavRoute {
             }
             double st = staticSeconds > 0 ? staticSeconds : stepSeconds;
             double sec = seconds > 0 ? seconds : st;
-            return new NavRoute(points, along, steps, sec, st);
+            byte[] traffic = new byte[Math.max(0, count - 1)];
+            for (int i = 0; i < traffic.length; i++) {
+                double mid = (along[i] + along[i + 1]) / 2;
+                for (double[] w : slowings) {
+                    if (mid >= w[0] && mid < w[1]) {
+                        traffic[i] = (byte) Math.max(traffic[i], (int) w[2]);
+                    }
+                }
+            }
+            return new NavRoute(points, along, steps, sec, st, traffic, label, best);
         }
     }
 }

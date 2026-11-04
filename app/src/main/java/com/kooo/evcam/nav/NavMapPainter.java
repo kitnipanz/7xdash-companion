@@ -22,8 +22,8 @@ import java.util.Locale;
 
 /**
  * Draws a {@link Navigator.Snapshot} on a Google map: the route, the destination pin, the car, and
- * the camera. Live traffic shows on the route preview and goes while guiding, so the only coloured
- * line is the way to go. While guiding, the camera follows like a phone's navigation, every frame:
+ * the camera. The route line is coloured by the traffic on it (blue free, orange slow, red jam);
+ * the other routes to choose from are grey and can be tapped. While guiding, the camera follows like a phone's navigation, every frame:
  * heading up, tilted, the car (a Zeekr 7X from above) centred left to right and near the bottom so
  * the road ahead fills the map. It aims ahead of the car rather than using map padding, which the
  * MapLibre-based Play services on head units ignore, and checks where the car landed to correct the
@@ -37,6 +37,10 @@ final class NavMapPainter {
 
     private static final int ROUTE_BLUE = 0xFF4285F4;
     private static final int ROUTE_EDGE = 0xFF1A5BC4;
+    private static final int TRAFFIC_SLOW = 0xFFF29900;
+    private static final int TRAFFIC_JAM = 0xFFD93025;
+    private static final int OTHER_ROUTE = 0xFF9AA5B5;
+    private static final int OTHER_EDGE = 0xFF5F6B7A;
     /** While guiding, the car sits this far down the map, centred left to right. */
     static final float CAR_AT = 0.78f;
     private static final float TILT = 50f;
@@ -50,7 +54,9 @@ final class NavMapPainter {
     private static final double TURN_NEAR_M = 250;
     private static final float ZOOM_TURN = 20.0f;
     /** Smoothing times: the car's place and heading, zooming in (slowing down) and out (speeding up). */
-    private static final float POS_S = 0.45f;
+    private static final float POS_S = 0.25f;
+    /** Between fixes the car goes on at its speed for at most this long, then waits for the next. */
+    private static final float PREDICT_MAX_S = 1.5f;
     private static final float BEARING_S = 0.5f;
     private static final float ZOOM_IN_S = 0.9f;
     private static final float ZOOM_OUT_S = 2.2f;
@@ -64,8 +70,19 @@ final class NavMapPainter {
     private final int cardsLeft;
     private final int cardsTop;
 
-    private Polyline routeLine;
+    /** The route: one darker line under it all, and on top one piece per stretch of the same traffic. */
     private Polyline routeEdge;
+    private final List<Polyline> runs = new ArrayList<>();
+    /** The edge's points and the first piece's points, so their start can follow the car every frame. */
+    private List<LatLng> edgePts;
+    private Polyline firstRun;
+    private List<LatLng> firstRunPts;
+    /** The other routes to choose from (grey), and which route each line is. */
+    private final List<Polyline> others = new ArrayList<>();
+    private final java.util.Map<String, NavRoute> otherRoutes = new java.util.HashMap<>();
+    private List<NavRoute> shownChoices = new ArrayList<>();
+    /** Told when a grey route is tapped: choose it. */
+    java.util.function.Consumer<NavRoute> onRouteTapped;
     private Marker car;
     private Marker pin;
     private NavRoute shownRoute;
@@ -73,8 +90,8 @@ final class NavMapPainter {
     private int[] padding;
     private int shownCarColor = -1;
     private boolean trafficShown;
-    /** Live traffic on the map before guiding (the route preview); the HUD map never shows it. */
-    boolean trafficAllowed = true;
+    /** Google's traffic colours on every road: off, the route line carries the traffic on the way. */
+    boolean trafficAllowed = false;
     private int shownScheme = -1;
     private boolean shownDark;
     private boolean placed;
@@ -87,14 +104,21 @@ final class NavMapPainter {
         this.cardsLeft = cardsLeft;
         this.cardsTop = cardsTop;
         density = context.getResources().getDisplayMetrics().density;
-        map.setTrafficEnabled(true);
-        trafficShown = true;
+        // the route line shows the traffic on the way; every road coloured hid the routes
+        map.setTrafficEnabled(false);
+        trafficShown = false;
         map.setBuildingsEnabled(true);
         map.getUiSettings().setMapToolbarEnabled(false);
         map.getUiSettings().setZoomControlsEnabled(false);
         applyScheme(new AppConfig(context).getNavMapScheme());
         // moved by hand: keep the car pointing the right way on screen
         map.setOnCameraMoveListener(this::placeCar);
+        map.setOnPolylineClickListener(line -> {
+            NavRoute r = otherRoutes.get(line.getId());
+            if (r != null && onRouteTapped != null) {
+                onRouteTapped.accept(r);
+            }
+        });
     }
 
     /**
@@ -150,21 +174,15 @@ final class NavMapPainter {
         pad(guiding ? 0 : cardsLeft, guiding ? 0 : cardsTop, 0, 0);
         if (s.route != shownRoute) {
             shownRoute = s.route;
-            if (routeLine != null) {
-                routeLine.remove();
-                routeEdge.remove();
-                routeLine = null;
-                routeEdge = null;
-            }
+            clearLine();
+            trimmedSegment = -1;
             if (s.route != null) {
-                List<LatLng> pts = new ArrayList<>(s.route.pointCount());
-                for (int i = 0; i < s.route.pointCount(); i++) {
-                    pts.add(new LatLng(s.route.lat(i), s.route.lng(i)));
-                }
-                routeEdge = map.addPolyline(new PolylineOptions().addAll(pts).color(ROUTE_EDGE).width(15 * density).zIndex(1));
-                routeLine = map.addPolyline(new PolylineOptions().addAll(pts).color(ROUTE_BLUE).width(10 * density).zIndex(2));
+                drawLine(whole(s.route), s.route.traffic.clone());
             }
         }
+        drawChoices(s);
+        // arrived still counts: the driven route must not come back for the last moments
+        trimRoute(s, guiding || s.phase == Navigator.Phase.ARRIVED);
         if (s.destination != shownPin) {
             shownPin = s.destination;
             if (pin != null) {
@@ -192,6 +210,21 @@ final class NavMapPainter {
             shownCarColor = color;
             car.setIcon(BitmapDescriptorFactory.fromBitmap(CarIcon.zeekr7x(density, CarIcon.Color.of(color))));
         }
+        long now = android.os.SystemClock.uptimeMillis();
+        if (guiding && !Double.isNaN(goalLat) && (at.latitude != goalLat || at.longitude != goalLng)) {
+            // how fast the fixes come in: the car keeps that pace between them
+            float dt = (now - goalAt) / 1000f;
+            if (dt > 0.2f && dt < 5f) {
+                float seen = (float) (Geo.meters(goalLat, goalLng, at.latitude, at.longitude) / dt);
+                speed = Math.min(60f, speed <= 0 ? seen : speed * 0.5f + seen * 0.5f);
+            }
+        }
+        if (s.carSpeedKmh != null && s.carSpeedKmh >= 0) {
+            speed = s.carSpeedKmh / 3.6f;
+        }
+        if (at.latitude != goalLat || at.longitude != goalLng) {
+            goalAt = now;
+        }
         goalLat = at.latitude;
         goalLng = at.longitude;
         goalBearing = bearing;
@@ -218,8 +251,11 @@ final class NavMapPainter {
 
     // ---- following: every frame, eased towards the car ----
 
-    private double goalLat;
+    private double goalLat = Double.NaN;
     private double goalLng;
+    /** When the last fix came in (uptime ms), and the car's speed in m/s, measured or from the car. */
+    private long goalAt;
+    private float speed;
     private float goalBearing = Float.NaN;
     private float goalZoom = 15;
     private boolean guiding;
@@ -313,9 +349,13 @@ final class NavMapPainter {
         if (Float.isNaN(curZoom)) {
             curZoom = goalZoom;
         }
+        // where the car is by now: the last fix, carried on at its speed (at most a second and a half)
+        float since = Math.min(PREDICT_MAX_S, (android.os.SystemClock.uptimeMillis() - goalAt) / 1000f);
+        double[] predicted = speed > 0.5f ? Geo.offset(goalLat, goalLng, goalBearing, speed * since)
+                : new double[] {goalLat, goalLng};
         float pos = ease(dt, POS_S);
-        curLat += (goalLat - curLat) * pos;
-        curLng += (goalLng - curLng) * pos;
+        curLat += (predicted[0] - curLat) * pos;
+        curLng += (predicted[1] - curLng) * pos;
         curBearing = turn(curBearing, goalBearing, ease(dt, BEARING_S));
         // closer in quickly when slowing down, further out gently when speeding up
         curZoom += (goalZoom - curZoom) * ease(dt, goalZoom > curZoom ? ZOOM_IN_S : ZOOM_OUT_S);
@@ -330,6 +370,7 @@ final class NavMapPainter {
         map.moveCamera(CameraUpdateFactory.newCameraPosition(new CameraPosition.Builder()
                 .target(new LatLng(target[0], target[1])).bearing(curBearing).tilt(TILT).zoom(camZoom).build()));
         placeCar();
+        lineToCar();
         learnAhead(h, carAt);
     }
 
@@ -393,6 +434,159 @@ final class NavMapPainter {
     static double aheadMeters(double lat, float zoom, int heightPx, float carAt) {
         double metresPerPx = 156543.03392 * Math.cos(Math.toRadians(lat)) / Math.pow(2, zoom);
         return (carAt - 0.5) * heightPx * metresPerPx / Math.cos(Math.toRadians(TILT));
+    }
+
+    /**
+     * The route still to drive: from the car's place on the line ({@code lat, lng} on segment
+     * {@code segment}) to the end. Behind the car the line is gone, like a phone's navigation.
+     */
+    static List<LatLng> ahead(NavRoute r, int segment, double lat, double lng) {
+        int from = Math.max(0, Math.min(segment + 1, r.pointCount() - 1));
+        List<LatLng> pts = new ArrayList<>(r.pointCount() - from + 1);
+        pts.add(new LatLng(lat, lng));
+        for (int i = from; i < r.pointCount(); i++) {
+            pts.add(new LatLng(r.lat(i), r.lng(i)));
+        }
+        return pts;
+    }
+
+    /** The line the car is on and where on it, last drawn; -1 = the whole route. */
+    private int trimmedSegment = -1;
+    private double trimmedLat;
+    private double trimmedLng;
+
+    /**
+     * While guiding, the route line starts at the car: the part already driven goes. Redrawn when
+     * the car moves on along the line; the whole route again before guiding.
+     */
+    private void trimRoute(Navigator.Snapshot s, boolean guiding) {
+        if (routeEdge == null || s.route == null) {
+            trimmedSegment = -1;
+            return;
+        }
+        Guidance.Progress p = s.progress;
+        if (!guiding || p == null || p.offRoute) {
+            if (trimmedSegment != -1 && !guiding) {
+                drawLine(whole(s.route), s.route.traffic.clone());
+                trimmedSegment = -1;
+            }
+            return;
+        }
+        if (p.segment == trimmedSegment && Geo.meters(p.lat, p.lng, trimmedLat, trimmedLng) < 3) {
+            return;
+        }
+        trimmedSegment = p.segment;
+        trimmedLat = p.lat;
+        trimmedLng = p.lng;
+        drawLine(ahead(s.route, p.segment, p.lat, p.lng), aheadTraffic(s.route, p.segment));
+    }
+
+    private static List<LatLng> whole(NavRoute r) {
+        List<LatLng> pts = new ArrayList<>(r.pointCount());
+        for (int i = 0; i < r.pointCount(); i++) {
+            pts.add(new LatLng(r.lat(i), r.lng(i)));
+        }
+        return pts;
+    }
+
+    /** The traffic on each piece of {@link #ahead}'s line: the car's own piece, then the route's. */
+    static byte[] aheadTraffic(NavRoute r, int segment) {
+        int from = Math.max(0, Math.min(segment + 1, r.pointCount() - 1));
+        byte[] out = new byte[r.pointCount() - from];
+        if (out.length == 0 || r.traffic.length == 0) {
+            return out;
+        }
+        out[0] = r.traffic[Math.max(0, Math.min(segment, r.traffic.length - 1))];
+        for (int k = 1; k < out.length; k++) {
+            out[k] = r.traffic[Math.min(from + k - 1, r.traffic.length - 1)];
+        }
+        return out;
+    }
+
+    /** The colour of a stretch: blue when free, orange when slow, red in a jam, like Google Maps. */
+    static int trafficColor(byte level) {
+        return level == NavRoute.JAM ? TRAFFIC_JAM : level == NavRoute.SLOW ? TRAFFIC_SLOW : ROUTE_BLUE;
+    }
+
+    /** The line through {@code pts}, coloured by {@code levels} (one per piece between two points). */
+    private void drawLine(List<LatLng> pts, byte[] levels) {
+        for (Polyline p : runs) {
+            p.remove();
+        }
+        runs.clear();
+        firstRun = null;
+        edgePts = new ArrayList<>(pts);
+        if (routeEdge == null) {
+            routeEdge = map.addPolyline(new PolylineOptions().addAll(pts).color(ROUTE_EDGE).width(15 * density).zIndex(1));
+        } else {
+            routeEdge.setPoints(edgePts);
+        }
+        int i = 0;
+        while (i < pts.size() - 1) {
+            byte level = i < levels.length ? levels[i] : NavRoute.FREE;
+            int j = i;
+            while (j < pts.size() - 1 && (j < levels.length ? levels[j] : NavRoute.FREE) == level) {
+                j++;
+            }
+            List<LatLng> run = new ArrayList<>(pts.subList(i, j + 1));
+            Polyline line = map.addPolyline(new PolylineOptions().addAll(run).color(trafficColor(level))
+                    .width(10 * density).zIndex(2));
+            if (runs.isEmpty()) {
+                firstRun = line;
+                firstRunPts = run;
+            }
+            runs.add(line);
+            i = j;
+        }
+    }
+
+    private void clearLine() {
+        for (Polyline p : runs) {
+            p.remove();
+        }
+        runs.clear();
+        firstRun = null;
+        if (routeEdge != null) {
+            routeEdge.remove();
+            routeEdge = null;
+        }
+    }
+
+    /** While guiding: the line's start sits right under the car as it moves, every frame. */
+    private void lineToCar() {
+        if (trimmedSegment < 0 || firstRun == null || firstRunPts.isEmpty() || edgePts == null || edgePts.isEmpty()) {
+            return;
+        }
+        LatLng here = new LatLng(curLat, curLng);
+        firstRunPts.set(0, here);
+        firstRun.setPoints(firstRunPts);
+        edgePts.set(0, here);
+        routeEdge.setPoints(edgePts);
+    }
+
+    /** Before starting: the other routes in grey, under the chosen one; a tap on one chooses it. */
+    private void drawChoices(Navigator.Snapshot s) {
+        List<NavRoute> want = s.phase == Navigator.Phase.PREVIEW && s.choices.size() > 1 ? s.choices : new ArrayList<>();
+        if (want.equals(shownChoices) && (want.isEmpty() || !otherRoutes.containsValue(s.route))) {
+            return;
+        }
+        for (Polyline p : others) {
+            p.remove();
+        }
+        others.clear();
+        otherRoutes.clear();
+        shownChoices = new ArrayList<>(want);
+        for (NavRoute r : want) {
+            if (r == s.route) {
+                continue;
+            }
+            List<LatLng> pts = whole(r);
+            others.add(map.addPolyline(new PolylineOptions().addAll(pts).color(OTHER_EDGE).width(13 * density).zIndex(0)));
+            Polyline line = map.addPolyline(new PolylineOptions().addAll(pts).color(OTHER_ROUTE)
+                    .width(9 * density).zIndex(0.5f).clickable(true));
+            others.add(line);
+            otherRoutes.put(line.getId(), r);
+        }
     }
 
     /** Back to following the car, flat and north-up when not guiding. */

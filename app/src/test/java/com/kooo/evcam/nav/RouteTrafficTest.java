@@ -10,26 +10,26 @@ import java.util.List;
 
 public class RouteTrafficTest {
 
-    /** Google's example line, three points: used as the step's line and the whole route's line. */
-    private static final String LINE = "_p~iF~ps|U_ulLnnqC_mqNvxq`@";
+    private static final String POINTS = "{\"latitude\":13.70,\"longitude\":100.50},"
+            + "{\"latitude\":13.71,\"longitude\":100.50},{\"latitude\":13.72,\"longitude\":100.50}";
 
-    private static String route(String description, String label, String speed) {
-        return "{\"duration\":\"600s\",\"staticDuration\":\"500s\",\"distanceMeters\":2000,"
-                + "\"description\":\"" + description + "\",\"routeLabels\":[\"" + label + "\"],"
-                + "\"polyline\":{\"encodedPolyline\":\"" + LINE + "\"},"
-                + "\"travelAdvisory\":{\"speedReadingIntervals\":["
-                + "{\"startPolylinePointIndex\":0,\"endPolylinePointIndex\":1},"
-                + "{\"startPolylinePointIndex\":1,\"endPolylinePointIndex\":2,\"speed\":\"" + speed + "\"}]},"
-                + "\"legs\":[{\"steps\":[{\"distanceMeters\":2000,\"staticDuration\":\"500s\","
-                + "\"polyline\":{\"encodedPolyline\":\"" + LINE + "\"},"
-                + "\"navigationInstruction\":{\"maneuver\":\"DEPART\",\"instructions\":\"Go\"}}]}]}";
+    private static String route(String street, int delay, String category) {
+        return "{\"summary\":{\"travelTimeInSeconds\":600,\"trafficDelayInSeconds\":100},"
+                + "\"legs\":[{\"points\":[" + POINTS + "]}],"
+                + "\"sections\":[{\"sectionType\":\"TRAVEL_MODE\",\"startPointIndex\":0,\"endPointIndex\":2},"
+                + "{\"sectionType\":\"TRAFFIC\",\"startPointIndex\":1,\"endPointIndex\":2,"
+                + "\"simpleCategory\":\"" + category + "\",\"magnitudeOfDelay\":" + delay + "}],"
+                + "\"guidance\":{\"instructions\":["
+                + "{\"maneuverPoint\":{\"latitude\":13.70,\"longitude\":100.50},\"routeOffsetInMeters\":0,\"maneuver\":\"DEPART\","
+                + "\"instructionMessage\":\"Go\",\"nextRoadInfo\":{\"streetName\":{\"text\":\"" + street + "\"}}},"
+                + "{\"maneuverPoint\":{\"latitude\":13.72,\"longitude\":100.50},\"routeOffsetInMeters\":2200,\"maneuver\":\"ARRIVE_LEFT\","
+                + "\"routePath\":[{\"travelTimeInSeconds\":600}]}]}}";
     }
 
     @Test
     public void trafficAlongTheRouteAndTheAlternatives() throws Exception {
-        String body = "{\"routes\":[" + route("ถ. พญาไท", "DEFAULT_ROUTE", "TRAFFIC_JAM") + ","
-                + route("ทางพิเศษศรีรัช", "DEFAULT_ROUTE_ALTERNATE", "SLOW") + "]}";
-        List<NavRoute> all = GoogleJson.routes(body);
+        String body = "{\"routes\":[" + route("ถ. พญาไท", 3, "JAM") + "," + route("ทางพิเศษศรีรัช", 1, "JAM") + "]}";
+        List<NavRoute> all = TomTomJson.routes(body);
         assertEquals(2, all.size());
         NavRoute best = all.get(0);
         assertTrue(best.best);
@@ -41,19 +41,25 @@ public class RouteTrafficTest {
         assertFalse(other.best);
         assertEquals(NavRoute.SLOW, other.traffic[1]);
         // the first route alone, as before
-        assertEquals(best.meters, GoogleJson.route(body).meters, 1e-6);
+        assertEquals(best.meters, TomTomJson.route(body).meters, 1e-6);
+    }
+
+    @Test
+    public void aClosureCountsAsAJam() throws Exception {
+        NavRoute r = TomTomJson.routes("{\"routes\":[" + route("x", 0, "ROAD_CLOSURE") + "]}").get(0);
+        assertEquals(NavRoute.JAM, r.traffic[1]);
     }
 
     @Test
     public void colours() {
-        assertEquals(0xFFD93025, NavMapPainter.trafficColor(NavRoute.JAM));
-        assertEquals(0xFFF29900, NavMapPainter.trafficColor(NavRoute.SLOW));
-        assertEquals(0xFF4285F4, NavMapPainter.trafficColor(NavRoute.FREE));
+        assertEquals("#D93025", NavMapPainter.trafficColor(NavRoute.JAM));
+        assertEquals("#F29900", NavMapPainter.trafficColor(NavRoute.SLOW));
+        assertEquals("#4285F4", NavMapPainter.trafficColor(NavRoute.FREE));
     }
 
     @Test
     public void theTrimmedLineKeepsItsTraffic() throws Exception {
-        NavRoute r = GoogleJson.routes("{\"routes\":[" + route("x", "DEFAULT_ROUTE", "TRAFFIC_JAM") + "]}").get(0);
+        NavRoute r = TomTomJson.routes("{\"routes\":[" + route("x", 3, "JAM") + "]}").get(0);
         // on the first piece: the car's piece is free, the next one jammed
         byte[] t = NavMapPainter.aheadTraffic(r, 0);
         assertEquals(r.pointCount() - 1, t.length);
@@ -65,11 +71,14 @@ public class RouteTrafficTest {
     }
 
     @Test
-    public void requestAsksForTrafficAndAlternatives() throws Exception {
-        org.json.JSONObject j = new org.json.JSONObject(GoogleJson.routeRequest(1, 2, null, 3, 4, "th", true));
-        assertTrue(j.getBoolean("computeAlternativeRoutes"));
-        assertEquals("TRAFFIC_ON_POLYLINE", j.getJSONArray("extraComputations").getString(0));
-        assertFalse(new org.json.JSONObject(GoogleJson.routeRequest(1, 2, null, 3, 4, "th", false))
-                .getBoolean("computeAlternativeRoutes"));
+    public void requestAsksForTrafficAndAlternatives() {
+        String url = TomTomJson.routeUrl(1, 2, null, 3, 4, "th-TH", true);
+        assertTrue(url, url.contains("/maps/orbis/routing/calculateRoute/1.000000,2.000000:3.000000,4.000000/json"));
+        assertTrue(url, url.contains("apiVersion=2"));
+        assertTrue(url, url.contains("sectionType=traffic"));
+        assertTrue(url, url.contains("maxAlternatives=2"));
+        assertTrue(url, url.contains("language=th-TH"));
+        assertFalse(url, url.contains("key="));
+        assertTrue(TomTomJson.routeUrl(1, 2, null, 3, 4, "th-TH", false).contains("maxAlternatives=0"));
     }
 }

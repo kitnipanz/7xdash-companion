@@ -24,7 +24,7 @@ jobs:
       DRIVE_CLIENT_SECRET: ${{ secrets.DRIVE_CLIENT_SECRET }}
       GA_MEASUREMENT_ID: ${{ secrets.GA_MEASUREMENT_ID }}
       GA_API_SECRET: ${{ secrets.GA_API_SECRET }}
-      MAPS_API_KEY: ${{ secrets.MAPS_API_KEY }}
+      TOMTOM_API_KEY: ${{ secrets.TOMTOM_API_KEY }}
 
     steps:
       - name: Checkout

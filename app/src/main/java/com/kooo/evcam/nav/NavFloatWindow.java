@@ -26,16 +26,15 @@ import android.widget.TextView;
 
 import androidx.core.content.ContextCompat;
 
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GoogleApiAvailability;
-import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.MapView;
 import com.kooo.evcam.AppConfig;
 import com.kooo.evcam.AppLog;
 import com.kooo.evcam.R;
 import com.kooo.evcam.overlay.OverlayCoordinator;
 import com.kooo.evcam.zeekr.FloatingWindowGestures;
 import com.kooo.evcam.zeekr.RearViewTouchModel;
+
+import org.maplibre.android.maps.MapLibreMap;
+import org.maplibre.android.maps.MapView;
 
 /**
  * Navigation in a floating window over whatever else is on the head unit: the map, with the next
@@ -83,6 +82,7 @@ public final class NavFloatWindow implements Navigator.Listener {
     /** Start (on a route preview) or Try again (no route), right on the bar. */
     private ImageView go;
     private FloatingWindowGestures gestures;
+    private NavFloatSettings settings;
     /** Something was planned while open: back to nothing closes the window. */
     private boolean hadTrip;
     private Navigator.Phase shownPhase;
@@ -205,6 +205,10 @@ public final class NavFloatWindow implements Navigator.Listener {
         Navigator.get().removeListener(this);
         Navigator.get().detach();
         context.getApplicationContext().unregisterComponentCallbacks(dayNight);
+        if (settings != null) {
+            settings.hide();
+            settings = null;
+        }
         if (gestures != null) {
             gestures.cancel();
         }
@@ -330,8 +334,7 @@ public final class NavFloatWindow implements Navigator.Listener {
     // ---- building ----
 
     private void addMap(int bar) {
-        int play = GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(context);
-        if (play != ConnectionResult.SUCCESS || !Navigator.hasKey()) {
+        if (!Navigator.hasKey()) {
             TextView none = new TextView(context);
             none.setText(R.string.nav_no_map);
             none.setTextAppearance(R.style.TextAppearance_Cam_Body);
@@ -343,8 +346,8 @@ public final class NavFloatWindow implements Navigator.Listener {
                     FrameLayout.LayoutParams.MATCH_PARENT));
             return;
         }
-        NavMapPainter.useLatestRenderer(context);
-        mapView = new MapView(context);
+        NavMap.start(context);
+        mapView = new MapView(context, NavMap.options(context));
         mapView.onCreate(null);
         root.addView(mapView, new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT,
                 FrameLayout.LayoutParams.MATCH_PARENT));
@@ -354,8 +357,8 @@ public final class NavFloatWindow implements Navigator.Listener {
             }
             painter = new NavMapPainter(context, map, mapView, 0, bar);
             map.getUiSettings().setCompassEnabled(false);
-            map.setOnCameraMoveStartedListener(reason -> {
-                if (reason == GoogleMap.OnCameraMoveStartedListener.REASON_GESTURE && painter != null) {
+            map.addOnCameraMoveStartedListener(reason -> {
+                if (reason == MapLibreMap.OnCameraMoveStartedListener.REASON_API_GESTURE && painter != null) {
                     painter.following = false;
                     recenter.setVisibility(View.VISIBLE);
                 }
@@ -411,6 +414,8 @@ public final class NavFloatWindow implements Navigator.Listener {
         });
         go.setVisibility(View.GONE);
         bar.addView(go, new LinearLayout.LayoutParams(b, b));
+        bar.addView(plain(R.drawable.ic_settings, R.string.nav_settings_title, v -> toggleSettings()),
+                new LinearLayout.LayoutParams(b, b));
         bar.addView(plain(R.drawable.ic_fullscreen, R.string.nav_float_expand, v -> {
             Intent open = new Intent(context, NavigationActivity.class);
             open.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -420,6 +425,34 @@ public final class NavFloatWindow implements Navigator.Listener {
                 new LinearLayout.LayoutParams(b, b));
         bar.setOnTouchListener(new MoveTouch());
         return bar;
+    }
+
+    /** The settings in a window of their own beside the map, so nothing of the car's covers them. */
+    private void toggleSettings() {
+        if (settings == null) {
+            settings = new NavFloatSettings(context, new NavSettings.Host() {
+                @Override
+                public void hudChanged() {
+                    refresh();
+                }
+
+                @Override
+                public void schemeChanged(int scheme) {
+                    applyScheme(scheme);
+                }
+
+                @Override
+                public void carColorChanged() {
+                    refresh();
+                }
+            });
+        }
+        if (settings.isShown()) {
+            settings.hide();
+        } else {
+            DisplayMetrics dm = screen();
+            settings.show(lp.x, lp.y, lp.width, dm.widthPixels, dm.heightPixels);
+        }
     }
 
     private TextView text(int style, int color, boolean bold) {

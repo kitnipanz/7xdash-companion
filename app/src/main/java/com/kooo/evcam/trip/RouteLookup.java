@@ -2,6 +2,7 @@ package com.kooo.evcam.trip;
 
 import com.kooo.evcam.AppLog;
 import com.kooo.evcam.BuildConfig;
+import com.kooo.evcam.nav.TomTomJson;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -21,15 +22,11 @@ import okhttp3.ResponseBody;
  * The two things that need the internet: road km from here to there (OSRM's public server on
  * OpenStreetMap data; free, no key, fair use only, which one car asking every few minutes is) and
  * following a short share link to the long one with the coordinates in it. A Google link that only
- * names the place is looked up in Google's map search. Blocking: call off the main thread.
+ * names the place is looked up in TomTom's search. Blocking: call off the main thread.
  */
 final class RouteLookup {
 
     private static final String TAG = "RouteLookup";
-    private static final String SEARCH = "https://www.google.com/search?tbm=map&hl=en&q=";
-    /** A result's pin in Google's map search answer: [null,null,lat,lng]. */
-    private static final Pattern SEARCH_PIN = Pattern.compile(
-            "\\[null,null,(-?\\d{1,2}\\.\\d+),(-?\\d{1,3}\\.\\d+)\\]");
     private static final String OSRM = "https://router.project-osrm.org/route/v1/driving/%.6f,%.6f;%.6f,%.6f?overview=false";
     private static final int MAX_HOPS = 6;
     private static final int MAX_BODY = 512 * 1024;
@@ -73,7 +70,7 @@ final class RouteLookup {
      * The place behind a short link: follows the redirects, trying each address on the way, then
      * looks in the last page for the coordinates Apple and Google put there. Google links that
      * only name the place (no pin on the way, none in the page) are looked up by that name in
-     * Google's map search. Null if none found.
+     * TomTom's search. Null if none found.
      */
     DestinationLink.Place resolve(String url, String name) {
         String at = url;
@@ -113,14 +110,12 @@ final class RouteLookup {
         return named(search(googleName), name);
     }
 
-    /** The first place Google's map search finds for {@code query}, or null. */
+    /** The first place TomTom's search finds for {@code query}, or null. */
     DestinationLink.Place search(String query) {
-        String url;
-        try {
-            url = SEARCH + java.net.URLEncoder.encode(query, "UTF-8");
-        } catch (java.io.UnsupportedEncodingException e) {
+        if (BuildConfig.TOMTOM_API_KEY.isEmpty()) {
             return null;
         }
+        String url = TomTomJson.searchUrl(query, null, null, "th-TH") + "&key=" + BuildConfig.TOMTOM_API_KEY;
         try (Response r = client.newCall(new Request.Builder().url(url).header("User-Agent", agent).build()).execute()) {
             ResponseBody body = r.body();
             if (!r.isSuccessful() || body == null) {
@@ -133,29 +128,26 @@ final class RouteLookup {
             }
             return p;
         } catch (IOException | RuntimeException e) {
-            AppLog.w(TAG, "search failed: " + e.getMessage());
+            AppLog.w(TAG, "search failed");
             return null;
         }
     }
 
-    /** The first pin in a Google map search answer, or null. */
+    /** Where the first place in a TomTom search answer is, or null; its name stays the one that was shared. */
     static DestinationLink.Place fromSearch(String answer) {
         if (answer == null) {
             return null;
         }
-        Matcher m = SEARCH_PIN.matcher(answer);
-        while (m.find()) {
-            try {
-                double lat = Double.parseDouble(m.group(1));
-                double lng = Double.parseDouble(m.group(2));
-                if (lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180 && !(lat == 0 && lng == 0)) {
-                    return new DestinationLink.Place(lat, lng, "");
-                }
-            } catch (NumberFormatException ignored) {
-                // try the next one
+        try {
+            java.util.List<TomTomJson.Found> found = TomTomJson.places(answer);
+            if (found.isEmpty()) {
+                return null;
             }
+            DestinationLink.Place p = found.get(0).place;
+            return new DestinationLink.Place(p.lat, p.lng, "");
+        } catch (org.json.JSONException e) {
+            return null;
         }
-        return null;
     }
 
     /**

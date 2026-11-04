@@ -19,12 +19,7 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GoogleApiAvailability;
-import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.material.button.MaterialButton;
-import com.google.android.material.switchmaterial.SwitchMaterial;
 import com.kooo.evcam.AppConfig;
 import com.kooo.evcam.AppLog;
 import com.kooo.evcam.R;
@@ -32,6 +27,9 @@ import com.kooo.evcam.overlay.OverlayCoordinator;
 import com.kooo.evcam.trip.Arrival;
 import com.kooo.evcam.trip.DestinationLink;
 import com.kooo.evcam.trip.Trip;
+
+import org.maplibre.android.maps.MapLibreMap;
+import org.maplibre.android.maps.SupportMapFragment;
 
 /**
  * Navigation (beta): search a place (or take the one shared from the iPhone, or hold on the map),
@@ -70,7 +68,7 @@ public class NavigationActivity extends AppCompatActivity implements Navigator.L
     private TextView hudPreviewLabel;
     private HudTurnCard hudCard;
 
-    private GoogleMap map;
+    private MapLibreMap map;
     /** Null until the map is ready (and stays null without one). */
     private NavMapPainter painter;
     private Navigator.Phase shownPhase;
@@ -145,40 +143,40 @@ public class NavigationActivity extends AppCompatActivity implements Navigator.L
     }
 
     private void setUpMap() {
-        int play = GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(this);
-        if (play != ConnectionResult.SUCCESS || !Navigator.hasKey()) {
-            AppLog.w(TAG, "no map: Play services " + play + ", key " + Navigator.hasKey());
+        if (!Navigator.hasKey()) {
+            AppLog.w(TAG, "no map: no key");
             findViewById(R.id.nav_no_map).setVisibility(View.VISIBLE);
             return;
         }
-        NavMapPainter.useLatestRenderer(this);
+        NavMap.start(this);
         SupportMapFragment fragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.nav_map);
         if (fragment == null) {
-            fragment = SupportMapFragment.newInstance();
+            fragment = SupportMapFragment.newInstance(NavMap.options(this));
             getSupportFragmentManager().beginTransaction().replace(R.id.nav_map, fragment).commitNow();
         }
         fragment.getMapAsync(this::onMap);
     }
 
-    private void onMap(GoogleMap m) {
+    private void onMap(MapLibreMap m) {
         map = m;
         float d = getResources().getDisplayMetrics().density;
-        // the cards cover the left and the top: keep the route, Google's logo and the compass clear of them
+        // the cards cover the left and the top: keep the route and the compass clear of them
         painter = new NavMapPainter(this, map, findViewById(R.id.nav_map), Math.round(540 * d), 0);
         painter.onRouteTapped = r -> Navigator.get().choose(r);
         map.getUiSettings().setCompassEnabled(true);
-        map.setOnCameraMoveStartedListener(reason -> {
-            if (reason == GoogleMap.OnCameraMoveStartedListener.REASON_GESTURE) {
+        map.addOnCameraMoveStartedListener(reason -> {
+            if (reason == MapLibreMap.OnCameraMoveStartedListener.REASON_API_GESTURE) {
                 painter.following = false;
                 recenter.setVisibility(View.VISIBLE);
             }
         });
-        map.setOnMapLongClickListener(at -> {
+        map.addOnMapLongClickListener(at -> {
             if (!Navigator.get().isGuiding()) {
-                Navigator.get().preview(this, new DestinationLink.Place(at.latitude, at.longitude,
+                Navigator.get().preview(this, new DestinationLink.Place(at.getLatitude(), at.getLongitude(),
                         getString(R.string.nav_dropped_pin)));
                 painter.following = false;
             }
+            return true;
         });
         onNavChanged(Navigator.get().snapshot());
     }
@@ -347,56 +345,36 @@ public class NavigationActivity extends AppCompatActivity implements Navigator.L
 
     /** Navigation settings, in three groups: voice and HUD, the map (colours, car colour), the iPhone. */
     private void openSettings() {
-        View box = getLayoutInflater().inflate(R.layout.dialog_nav_settings, null);
-        SwitchMaterial voice = box.findViewById(R.id.nav_voice_switch);
-        voice.setChecked(config.isNavVoiceEnabled());
-        voice.setOnCheckedChangeListener((b, on) -> config.setNavVoiceEnabled(on));
-        SwitchMaterial hud = box.findViewById(R.id.nav_hud_switch);
-        hud.setChecked(config.isNavHudEnabled());
-        hud.setOnCheckedChangeListener((b, on) -> {
-            config.setNavHudEnabled(on);
-            Navigator.get().relayoutHud();
-            showHudPreview(Navigator.get().snapshot());
-        });
-        SwitchMaterial hudMap = box.findViewById(R.id.nav_hud_map_switch);
-        hudMap.setChecked(config.isNavHudMapEnabled());
-        hudMap.setOnCheckedChangeListener((b, on) -> {
-            config.setNavHudMapEnabled(on);
-            Navigator.get().relayoutHud();
-        });
-        box.findViewById(R.id.nav_hud_adjust).setOnClickListener(v -> openHudPlacer());
-
-        com.google.android.material.button.MaterialButtonToggleGroup scheme = box.findViewById(R.id.nav_scheme_group);
-        int[] schemeIds = {R.id.nav_scheme_auto, R.id.nav_scheme_light, R.id.nav_scheme_dark};
-        scheme.check(schemeIds[config.getNavMapScheme()]);
-        scheme.addOnButtonCheckedListener((group, id, checked) -> {
-            if (!checked) {
-                return;
+        View box = NavSettings.build(this, new NavSettings.Host() {
+            @Override
+            public void hudChanged() {
+                showHudPreview(Navigator.get().snapshot());
             }
-            int chosen = id == R.id.nav_scheme_light ? AppConfig.NAV_MAP_LIGHT
-                    : id == R.id.nav_scheme_dark ? AppConfig.NAV_MAP_DARK : AppConfig.NAV_MAP_AUTO;
-            config.setNavMapScheme(chosen);
-            if (painter != null) {
-                painter.applyScheme(chosen);
-            }
-            NavFloatWindow.get().applyScheme(chosen);
-        });
-        buildSwatches(box.findViewById(R.id.nav_car_swatches));
 
-        SwitchMaterial preview = box.findViewById(R.id.nav_hud_preview_switch);
-        preview.setChecked(config.isNavHudPreviewEnabled());
-        preview.setOnCheckedChangeListener((b, on) -> {
-            config.setNavHudPreviewEnabled(on);
-            showHudPreview(Navigator.get().snapshot());
+            @Override
+            public void schemeChanged(int scheme) {
+                if (painter != null) {
+                    painter.applyScheme(scheme);
+                }
+                NavFloatWindow.get().applyScheme(scheme);
+            }
+
+            @Override
+            public void carColorChanged() {
+                onNavChanged(Navigator.get().snapshot());
+                NavFloatWindow.get().refresh();
+            }
+
+            @Override
+            public Runnable hudPlacer() {
+                return NavigationActivity.this::openHudPlacer;
+            }
+
+            @Override
+            public Runnable phoneSetup() {
+                return NavigationActivity.this::openPhoneSetup;
+            }
         });
-        SwitchMaterial share = box.findViewById(R.id.nav_share_switch);
-        share.setChecked(config.isNavShareEnabled());
-        share.setOnCheckedChangeListener((b, on) -> {
-            config.setNavShareEnabled(on);
-            // the receiver runs for Navigation too: start or stop it
-            Trip.get().apply(this);
-        });
-        box.findViewById(R.id.nav_phone_setup).setOnClickListener(v -> openPhoneSetup());
 
         androidx.appcompat.app.AlertDialog dialog = new androidx.appcompat.app.AlertDialog.Builder(this)
                 .setTitle(R.string.nav_settings_title)
@@ -406,53 +384,6 @@ public class NavigationActivity extends AppCompatActivity implements Navigator.L
         if (dialog.getWindow() != null) {
             dialog.getWindow().setLayout(Math.round(560 * getResources().getDisplayMetrics().density),
                     WindowManager.LayoutParams.WRAP_CONTENT);
-        }
-    }
-
-    /** The car colour as four round swatches with their names; the chosen one has an orange ring. */
-    private void buildSwatches(LinearLayout row) {
-        int[] names = {R.string.nav_car_forest_green, R.string.nav_car_silver, R.string.nav_car_black,
-                R.string.nav_car_white};
-        float d = getResources().getDisplayMetrics().density;
-        row.removeAllViews();
-        for (int i = 0; i < names.length; i++) {
-            int index = i;
-            CarIcon.Color color = CarIcon.Color.of(i);
-            LinearLayout cell = new LinearLayout(this);
-            cell.setOrientation(LinearLayout.VERTICAL);
-            cell.setGravity(Gravity.CENTER_HORIZONTAL);
-            int pad = Math.round(6 * d);
-            cell.setPadding(pad, pad, pad, pad);
-            View dot = new View(this);
-            android.graphics.drawable.GradientDrawable fill = new android.graphics.drawable.GradientDrawable();
-            fill.setShape(android.graphics.drawable.GradientDrawable.OVAL);
-            fill.setColors(new int[] {color.light, color.edge});
-            fill.setGradientType(android.graphics.drawable.GradientDrawable.RADIAL_GRADIENT);
-            fill.setGradientRadius(28 * d);
-            boolean chosen = config.getNavCarColor() == i;
-            fill.setStroke(Math.round((chosen ? 4 : 1) * d), chosen ? ContextCompat.getColor(this, R.color.energy)
-                    : ContextCompat.getColor(this, R.color.line));
-            dot.setBackground(fill);
-            int size = Math.round(48 * d);
-            cell.addView(dot, new LinearLayout.LayoutParams(size, size));
-            TextView name = new TextView(this);
-            name.setText(names[i]);
-            name.setTextAppearance(R.style.TextAppearance_Cam_Caption);
-            name.setTextColor(ContextCompat.getColor(this, chosen ? R.color.text_primary : R.color.text_secondary));
-            name.setGravity(Gravity.CENTER);
-            name.setPadding(0, Math.round(4 * d), 0, 0);
-            cell.addView(name);
-            android.util.TypedValue ripple = new android.util.TypedValue();
-            getTheme().resolveAttribute(android.R.attr.selectableItemBackgroundBorderless, ripple, true);
-            cell.setBackgroundResource(ripple.resourceId);
-            cell.setContentDescription(getString(names[i]));
-            cell.setOnClickListener(v -> {
-                config.setNavCarColor(index);
-                buildSwatches(row);
-                onNavChanged(Navigator.get().snapshot());
-                NavFloatWindow.get().refresh();
-            });
-            row.addView(cell, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1));
         }
     }
 
@@ -659,7 +590,7 @@ public class NavigationActivity extends AppCompatActivity implements Navigator.L
                 return;
             }
             for (int i = 0; i < Math.min(6, found.size()); i++) {
-                GoogleJson.Found f = found.get(i);
+                TomTomJson.Found f = found.get(i);
                 results.addView(row(f.place.name, f.address, () -> choose(f.place)));
             }
         });

@@ -36,6 +36,7 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <!-- 前台服务类型：摄像头（Android 10+） -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CAMERA" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
     <!-- AirPlay 投屏：前台服务放声音；mDNS 要多播锁 -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
@@ -95,11 +96,6 @@
             android:name="android.car"
             android:required="false" />
 
-        <!-- Navigation (beta): the Google Maps Platform key from the build (MAPS_API_KEY) -->
-        <meta-data
-            android:name="com.google.android.geo.API_KEY"
-            android:value="${mapsApiKey}" />
-
 
         <!-- 高优先级保活 Provider：在应用启动的最早阶段初始化服务 -->
         <!-- initOrder="2147483647" 确保最先执行（参考保活效果好的应用） -->
@@ -136,6 +132,12 @@
         </activity>
 
         <!-- 前台服务：用于后台录制保护 -->
+        <!-- Navigation: GPS while a trip is on and no screen of the app is in front -->
+        <service
+            android:name="com.kooo.evcam.nav.NavGuideService"
+            android:exported="false"
+            android:foregroundServiceType="location" />
+
         <service
             android:name=".CameraForegroundService"
             android:foregroundServiceType="camera"

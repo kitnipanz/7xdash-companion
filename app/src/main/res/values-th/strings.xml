@@ -1707,10 +1707,11 @@
     <string name="shortcut_action_macro_pad">เปิด / ปิดมาโครแพด</string>
     <string name="shortcut_action_nav_float">เปิด / ปิด แผนที่ลอย</string>
     <!-- Navigation (beta) -->
+    <string name="nav_guide_running">กำลังนำทาง: อัปเดตตำแหน่งของคุณอยู่</string>
     <string name="nav_title">นำทาง</string>
     <string name="nav_beta">BETA</string>
-    <string name="home_card_nav_sub">เบต้า · นำทางทีละจุดด้วย Google Maps</string>
-    <string name="nav_search_hint">ค้นหาใน Google Maps</string>
+    <string name="home_card_nav_sub">เบต้า · นำทางทีละจุดด้วย TomTom</string>
+    <string name="nav_search_hint">ค้นหาสถานที่</string>
     <string name="nav_searching">กำลังค้นหา…</string>
     <string name="nav_no_results">ไม่พบสถานที่</string>
     <string name="nav_shared">ไปที่ %1$s</string>
@@ -1736,11 +1737,11 @@
     <string name="nav_hud_switch">แสดงทางเลี้ยวถัดไปบน HUD</string>
     <string name="nav_mute">เปิดหรือปิดเสียงบอกทาง</string>
     <string name="nav_recenter">กลับไปที่รถ</string>
-    <string name="nav_no_map">แผนที่ต้องใช้ Google Play services และคีย์ Google Maps การนำทางทีละจุดยังใช้ได้แม้ไม่มีแผนที่</string>
-    <string name="nav_error_no_key">บิลด์นี้ไม่มีคีย์ Google Maps (MAPS_API_KEY)</string>
-    <string name="nav_error_offline">ไม่มีอินเทอร์เน็ต: ติดต่อ Google ไม่ได้</string>
-    <string name="nav_error_no_road">Google ไม่พบถนนไปยังที่นั่น</string>
-    <string name="nav_error_route">Google ให้เส้นทางไม่ได้</string>
+    <string name="nav_no_map">แผนที่ต้องใช้คีย์ TomTom การนำทางทีละจุดยังใช้ได้แม้ไม่มีแผนที่</string>
+    <string name="nav_error_no_key">บิลด์นี้ไม่มีคีย์ TomTom (TOMTOM_API_KEY)</string>
+    <string name="nav_error_offline">ไม่มีอินเทอร์เน็ต: ติดต่อ TomTom ไม่ได้</string>
+    <string name="nav_error_no_road">TomTom ไม่พบถนนไปยังที่นั่น</string>
+    <string name="nav_error_route">TomTom ให้เส้นทางไม่ได้</string>
     <string name="nav_m">%1$d ม.</string>
     <string name="nav_km_1">%1$s กม.</string>
     <string name="nav_km">%1$d กม.</string>

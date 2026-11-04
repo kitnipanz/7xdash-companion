@@ -3,7 +3,7 @@ package com.kooo.evcam.nav;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import com.google.android.gms.maps.model.LatLng;
+import org.maplibre.android.geometry.LatLng;
 
 import org.junit.Test;
 
@@ -35,14 +35,14 @@ public class RouteTrimTest {
         // a quarter of the way up the first road
         Guidance.Progress p = g.update(LAT0 + DLAT_1KM / 4, LNG0, 5);
         List<LatLng> left = NavMapPainter.ahead(r, p.segment, p.lat, p.lng);
-        assertEquals(p.lat, left.get(0).latitude, 1e-9);
-        assertEquals(p.lng, left.get(0).longitude, 1e-9);
+        assertEquals(p.lat, left.get(0).getLatitude(), 1e-9);
+        assertEquals(p.lng, left.get(0).getLongitude(), 1e-9);
         LatLng end = left.get(left.size() - 1);
-        assertEquals(r.endLat(), end.latitude, 1e-9);
-        assertEquals(r.endLng(), end.longitude, 1e-9);
+        assertEquals(r.endLat(), end.getLatitude(), 1e-9);
+        assertEquals(r.endLng(), end.getLongitude(), 1e-9);
         // nothing behind the car: every point is at or north of it, or on the east road
         for (LatLng pt : left) {
-            assertTrue(pt.latitude >= p.lat - 1e-9);
+            assertTrue(pt.getLatitude() >= p.lat - 1e-9);
         }
 
         // past the corner: the whole first road is gone
@@ -50,7 +50,7 @@ public class RouteTrimTest {
         List<LatLng> rest = NavMapPainter.ahead(r, later.segment, later.lat, later.lng);
         assertTrue(rest.size() < left.size());
         for (LatLng pt : rest) {
-            assertTrue(pt.longitude >= later.lng - 1e-9);
+            assertTrue(pt.getLongitude() >= later.lng - 1e-9);
         }
     }
 

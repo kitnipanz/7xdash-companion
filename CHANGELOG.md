@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.7.15-beta] - 2026-11-04
+
+Test build from the develop branch: the TomTom map is back, with the fixes from 1.7.13-beta and 1.7.14-beta.
+
+### Navigation (beta)
+- **The route sits on the road again.** Map and route both come from TomTom, so the line follows the drawn road; on the Google map in 1.7.13-beta and 1.7.14-beta it ran metres beside it, because the head unit draws its own non-Google map.
+- **The car stays on the road between GPS fixes,** moving along the route round bends, and is drawn where it is now rather than where the last fix was.
+- **No jumps from network location,** and fewer false "off the route" with a weak GPS fix (as in 1.7.13-beta).
+
 ## [1.7.14-beta] - 2026-11-04
 
 Test build from the develop branch (Google map).
@@ -16,6 +25,35 @@ Test build from the develop branch: Navigation on the Google map again (the TomT
 - **The car is where it is now, not a second ago.** Each GPS fix is timed from when it was measured, not when it reached the map, so at speed the car no longer trails behind.
 - **No more jumps from network location.** Rough positions from cell towers and Wi-Fi are ignored while the GPS has a fix; they pulled the car hundreds of metres away, gave a wrong km left and set off false re-routing.
 - **Fewer false "off the route".** A weak GPS fix (under a roof, between tall buildings) is given its accuracy before the car counts as off the route.
+
+## [1.7.12-beta] - 2026-11-04
+
+Test build from the feature/tomtom-map branch.
+
+### Navigation (beta)
+- **Place names found with TomTom.** A shared Google Maps link without coordinates, or a typed name, is now looked up in TomTom's search instead of Google's search page. Links with coordinates still go straight to the exact pin.
+
+## [1.7.11-beta] - 2026-11-04
+
+Test build from the feature/tomtom-map branch.
+
+### Navigation (beta)
+- **The route sits on the road.** Routes now come from the same TomTom map as the tiles; before, the line ran metres beside the drawn road.
+- **No red left behind the car.** TomTom's jam lines along the roads are hidden while guiding, so the route alone shows the traffic and clears as you drive. They still show before you start, and incident icons stay on.
+- **Guiding goes on with Navigation closed.** The position keeps updating on any screen, which a quiet notification shows during a trip; before, the map and the HUD could freeze.
+- **Closer at low speed.** The map is twice as close up to 25 km/h.
+- **HUD text fits.** The turn card shrinks its text so the arrival time is never cut off.
+
+## [1.7.10-beta] - 2026-11-04
+
+Test build from the feature/tomtom-map branch.
+
+### Navigation (beta)
+- **TomTom map, routes and search instead of Google's.** The map is drawn inside the app with MapLibre, so it looks the same on every head unit and no longer depends on Play services. Thai labels, Thai turn instructions and Thai place search.
+- **Construction and accidents on the map.** Road works, closures, accidents and jams show as icons, with their delay.
+- **Floating settings.** The floating map has a Settings button that opens the settings in their own window beside it, over any app, so the car's screens can't cover them. Place on the HUD, Set up iPhone and the HUD preview stay on the full screen.
+- **The map stays still when parked.** Below 3 km/h the car no longer moves or turns with the GPS wandering, which swung the map under a roof.
+- **The route runs under the car.** The car is drawn above the map, so the line never covers it.
 
 ## [1.7.9-beta] - 2026-11-04
 

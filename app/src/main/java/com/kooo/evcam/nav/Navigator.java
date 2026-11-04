@@ -23,13 +23,13 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
- * Turn-by-turn navigation (beta), Google Maps style: a route with traffic from the car's GPS to
- * a place ({@link GoogleApi}), followed fix by fix ({@link Guidance}), with the turns spoken in the
+ * Turn-by-turn navigation (beta): a route with traffic from the car's GPS to
+ * a place ({@link TomTomApi}), followed fix by fix ({@link Guidance}), with the turns spoken in the
  * cabin ({@link VoicePlan}, {@link NavVoice}) and kept on the HUD ({@link HudTurnWindow}). Leaving
  * the route asks for a new one. Keeps going when the Navigation screen is closed, until the
  * destination or End.
  *
- * <p>Main thread only, except the Google calls, which run on a worker and come back to it.</p>
+ * <p>Main thread only, except the TomTom calls, which run on a worker and come back to it.</p>
  */
 public final class Navigator {
 
@@ -44,11 +44,15 @@ public final class Navigator {
     private static final long ARRIVED_SHOW_MS = 15_000L;
     /** Moved this far between fixes: enough to tell which way the car is heading off the route. */
     private static final double HEADING_MIN_M = 8;
+    /** Below this the car counts as standing: its GPS only wanders, worst under a roof. */
+    private static final float STANDING_KMH = 3f;
+    /** Further from where it stopped than this it has moved, whatever the speed says. */
+    private static final double WANDER_M = 60;
 
     public enum Phase {
         /** Nothing planned. */
         IDLE,
-        /** Asking Google for the route. */
+        /** Asking TomTom for the route. */
         ROUTING,
         /** Route shown, not started yet. */
         PREVIEW,
@@ -81,7 +85,7 @@ public final class Navigator {
         /** Battery at arrival, or null until the car has given battery and range. */
         public final Arrival.Estimate battery;
         public final boolean muted;
-        /** Before starting, the routes to choose from (Google's pick first); one or none otherwise. */
+        /** Before starting, the routes to choose from (TomTom's pick first); one or none otherwise. */
         public final List<NavRoute> choices;
 
         Snapshot(Phase phase, DestinationLink.Place destination, NavRoute route, Guidance.Progress progress,
@@ -137,7 +141,7 @@ public final class Navigator {
     };
 
     private Context app;
-    private GoogleApi api;
+    private TomTomApi api;
     private NavVoice voice;
     private Phase phase = Phase.IDLE;
     private DestinationLink.Place destination;
@@ -162,7 +166,7 @@ public final class Navigator {
     private Arrival.Estimate battery;
     private boolean muted;
     private boolean telemetryHeld;
-    /** The routes to choose from before starting (Google's pick first); the chosen one is {@link #guidance}'s. */
+    /** The routes to choose from before starting (TomTom's pick first); the chosen one is {@link #guidance}'s. */
     private List<NavRoute> choices = new ArrayList<>();
     /** A place came from the iPhone while guiding: start guiding to it as soon as its route is in. */
     private boolean startWhenRouted;
@@ -170,6 +174,8 @@ public final class Navigator {
     private boolean hudPlacing;
     /** Navigation screens open (the full screen, the floating window): GPS on for the map and the search, even with nothing planned. */
     private int attached;
+    /** {@link NavGuideService} is on: there is a trip. */
+    private boolean guideService;
 
     private Navigator() {
     }
@@ -179,9 +185,9 @@ public final class Navigator {
         return new AppConfig(context).isBetaFeaturesEnabled();
     }
 
-    /** True when the build has a Google Maps Platform key. */
+    /** True when the build has a TomTom key. */
     public static boolean hasKey() {
-        return GoogleApi.hasKey();
+        return TomTomApi.hasKey();
     }
 
     /** At launch: places shared from the iPhone open Navigation. */
@@ -281,6 +287,14 @@ public final class Navigator {
     /** Telemetry held and the tick going while {@link #running}, released and stopped when not. */
     private void keepRunning() {
         main.removeCallbacks(tick);
+        if (app != null && (phase != Phase.IDLE) != guideService) {
+            guideService = !guideService;
+            if (guideService) {
+                NavGuideService.start(app);
+            } else {
+                NavGuideService.stop(app);
+            }
+        }
         if (running()) {
             if (!telemetryHeld) {
                 telemetryHeld = true;
@@ -410,14 +424,14 @@ public final class Navigator {
         Double lat = carLat;
         Double lng = carLng;
         worker.execute(() -> {
-            List<GoogleJson.Found> found = null;
+            List<TomTomJson.Found> found = null;
             String why = null;
             try {
                 found = api.search(query, lat, lng);
-            } catch (GoogleApi.Failure f) {
+            } catch (TomTomApi.Failure f) {
                 why = f.getMessage();
             }
-            List<GoogleJson.Found> result = found;
+            List<TomTomJson.Found> result = found;
             String failure = why;
             main.post(() -> callback.onResult(result, failure == null ? 0 : errorText(failure)));
         });
@@ -425,13 +439,13 @@ public final class Navigator {
 
     public interface SearchCallback {
         /** {@code found} is null on failure, with {@code error} a string resource. */
-        void onResult(List<GoogleJson.Found> found, int error);
+        void onResult(List<TomTomJson.Found> found, int error);
     }
 
     private void bind(Context context) {
         if (app == null) {
             app = context.getApplicationContext();
-            api = new GoogleApi(app);
+            api = new TomTomApi(app);
             voice = new NavVoice(app);
         }
     }
@@ -462,7 +476,7 @@ public final class Navigator {
                 if (routes.isEmpty()) {
                     why = "no route";
                 }
-            } catch (GoogleApi.Failure f) {
+            } catch (TomTomApi.Failure f) {
                 why = f.getMessage();
             }
             List<NavRoute> got = routes;
@@ -530,11 +544,14 @@ public final class Navigator {
         if (s == null || s.latitude == null || s.longitude == null) {
             return s;
         }
-        carLat = s.latitude;
-        carLng = s.longitude;
         carSpeed = s.speedKmh;
         carAccuracy = s.positionAccuracyM == null ? 0 : s.positionAccuracyM;
         carFixAt = s.positionAtMs;
+        if (carLat != null && standing(s.speedKmh, Geo.meters(carLat, carLng, s.latitude, s.longitude))) {
+            return s;
+        }
+        carLat = s.latitude;
+        carLng = s.longitude;
         if (Double.isNaN(headingFromLat)) {
             headingFromLat = carLat;
             headingFromLng = carLng;
@@ -544,6 +561,11 @@ public final class Navigator {
             headingFromLng = carLng;
         }
         return s;
+    }
+
+    /** A standing car stays where it is: its wandering fixes must not move or turn it on the map. */
+    static boolean standing(Float kmh, double movedM) {
+        return kmh != null && kmh < STANDING_KMH && movedM < WANDER_M;
     }
 
     private void onTick() {

@@ -25,6 +25,12 @@ final class NavMap {
 
     private static final String STYLE = "https://api.tomtom.com/maps/orbis/assets/styles/0.*/style?apiVersion=1"
             + "&map=basic_street-%1$s-driving&trafficIncidents=incidents_%1$s";
+    /**
+     * How much bigger than the map's own size it is drawn, everything together (roads, lanes,
+     * buildings, labels, the route). A head unit is far wider in dp than a phone, so at 1 the same
+     * map reads small and distant; this brings it to a phone map's proportions.
+     */
+    static final float SCALE = 1.6f;
     private static boolean started;
 
     private NavMap() {
@@ -45,7 +51,8 @@ final class NavMap {
 
     /** Texture mode: the map clips to rounded windows and stays under the views over it. */
     static MapLibreMapOptions options(Context context) {
-        return MapLibreMapOptions.createFromAttributes(context).textureMode(true);
+        float density = context.getResources().getDisplayMetrics().density;
+        return MapLibreMapOptions.createFromAttributes(context).textureMode(true).pixelRatio(density * SCALE);
     }
 
     static String styleUrl(boolean dark) {

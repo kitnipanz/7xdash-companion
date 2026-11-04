@@ -10,12 +10,12 @@ public class NavZoomTest {
 
     @Test
     public void slowIsCloseFastIsFar() {
-        assertEquals(23.0f, NavMapPainter.zoomFor(0f, 1_500.0), 1e-4);
-        assertEquals(23.0f, NavMapPainter.zoomFor(10f, 1_500.0), 1e-4);
+        assertEquals(20.5f, NavMapPainter.zoomFor(0f, 1_500.0), 1e-4);
+        assertEquals(20.5f, NavMapPainter.zoomFor(10f, 1_500.0), 1e-4);
         // slow: the closest it goes, all the way up to 25 km/h
-        assertEquals(23.0f, NavMapPainter.zoomFor(20f, 1_500.0), 1e-4);
-        assertEquals(23.0f, NavMapPainter.zoomFor(25f, 1_500.0), 1e-4);
-        assertEquals(19.0f, NavMapPainter.zoomFor(130f, 5_000.0), 1e-4);
+        assertEquals(20.5f, NavMapPainter.zoomFor(20f, 1_500.0), 1e-4);
+        assertEquals(20.5f, NavMapPainter.zoomFor(25f, 1_500.0), 1e-4);
+        assertEquals(18.5f, NavMapPainter.zoomFor(130f, 5_000.0), 1e-4);
         float last = 99f;
         for (float kmh = 0; kmh <= 120; kmh += 10) {
             float z = NavMapPainter.zoomFor(kmh, 5_000.0);
@@ -36,17 +36,27 @@ public class NavZoomTest {
     }
 
     @Test
+    public void narrowWindowsSeeFurtherWithASmallerCar() {
+        assertEquals(0f, NavMapPainter.windowZoom(1400f), 1e-4);
+        assertEquals(0f, NavMapPainter.windowZoom(0f), 1e-4);
+        assertEquals(-1f, NavMapPainter.windowZoom(225f), 1e-4);
+        assertEquals(1f, NavMapPainter.carScale(1400f), 1e-4);
+        assertEquals(0.8f, NavMapPainter.carScale(720f), 1e-4);
+        assertEquals(0.65f, NavMapPainter.carScale(270f), 1e-4);
+    }
+
+    @Test
     public void closeInBeforeATurnEvenWhenFast() {
         assertEquals(20.0f, NavMapPainter.zoomFor(90f, 200.0), 1e-4);
-        assertEquals(23.0f, NavMapPainter.zoomFor(5f, 200.0), 1e-4);
+        assertEquals(20.5f, NavMapPainter.zoomFor(5f, 200.0), 1e-4);
     }
 
     @Test
     public void withoutSpeedTheDistanceDecides() {
         assertEquals(20.0f, NavMapPainter.zoomFor(null, 200.0), 1e-4);
-        assertEquals(16.5f, NavMapPainter.zoomFor(null, 1_000.0), 1e-4);
-        assertEquals(15.5f, NavMapPainter.zoomFor(null, 9_000.0), 1e-4);
-        assertEquals(16.5f, NavMapPainter.zoomFor(null, null), 1e-4);
+        assertEquals(19.5f, NavMapPainter.zoomFor(null, 1_000.0), 1e-4);
+        assertEquals(19.0f, NavMapPainter.zoomFor(null, 9_000.0), 1e-4);
+        assertEquals(19.5f, NavMapPainter.zoomFor(null, null), 1e-4);
     }
 
     @Test

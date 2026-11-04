@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.7.16-beta] - 2026-11-04
+
+Test build from the develop branch.
+
+### Navigation (beta)
+- **A new look for the map.** Pale land, white roads, yellow highways, soft green parks and blue water, with a slate version at night. The floating map and the HUD map get the same colours. Buildings are soft blocks instead of dark slabs.
+- **Everything in proportion.** Roads, lanes, buildings, labels and the route line are drawn bigger together, and so is the car, so the map no longer looks small and far away on the wide screen.
+- **The zoom follows the speed in a calmer range.** Closest up to 25 km/h, further out as you speed up, close again before a turn. The floating map and the HUD map sit a little further out with a smaller car, so they show more road ahead.
+- **The controls match the map.** A pill search bar, a green turn banner, round floating buttons and a blue Start. While guiding, the time left is big and green beside a round X that ends the trip. The cards turn dark with the night map.
+
 ## [1.7.15-beta] - 2026-11-04
 
 Test build from the develop branch: the TomTom map is back, with the fixes from 1.7.13-beta and 1.7.14-beta.

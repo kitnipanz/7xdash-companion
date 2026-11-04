@@ -1750,6 +1750,7 @@ Then reopen this app.</string>
     <string name="nav_cancel">Cancel</string>
     <string name="nav_retry">Try again</string>
     <string name="nav_summary">%1$s · %2$s · arrive %3$s</string>
+    <string name="nav_summary_sub">%1$s · arrive %2$s</string>
     <string name="nav_battery">%1$d%% battery at arrival</string>
     <string name="nav_battery_short">Short by %1$d km: charge on the way</string>
     <string name="nav_battery_unknown">Battery at arrival: waiting for the car</string>

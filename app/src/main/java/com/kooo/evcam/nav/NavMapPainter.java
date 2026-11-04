@@ -45,8 +45,8 @@ final class NavMapPainter {
     private static final String ROUTE_EDGE = "#1A5BC4";
     private static final String TRAFFIC_SLOW = "#F29900";
     private static final String TRAFFIC_JAM = "#D93025";
-    private static final String OTHER_ROUTE = "#9AA5B5";
-    private static final String OTHER_EDGE = "#5F6B7A";
+    private static final String OTHER_ROUTE = "#B4C6E4";
+    private static final String OTHER_EDGE = "#8199BF";
     /** Our zoom numbers count 256 px tiles; MapLibre's world is 512 px, one level closer. */
     private static final float ZOOM_SHIFT = 1f;
     private static final String COLOR = "color";
@@ -58,8 +58,11 @@ final class NavMapPainter {
     static final float CAR_AT = 0.78f;
     private static final float TILT = 50f;
     /** Zoom when crawling and at motorway speed; between them it eases off, staying close at low speeds. */
-    private static final float ZOOM_SLOW = 23.0f;
-    private static final float ZOOM_FAST = 19.0f;
+    private static final float ZOOM_SLOW = 20.5f;
+    private static final float ZOOM_FAST = 18.5f;
+    /** From this width (in the map's own units) the map is at its full size; a narrower window sees further and draws the car smaller. */
+    private static final float FULL_WIDTH = 900f;
+    private static final float CAR_SCALE_MIN = 0.65f;
     /** Up to this speed the map stays at its closest. */
     private static final float SLOW_KMH = 25f;
     private static final float FAST_KMH = 110f;
@@ -111,6 +114,7 @@ final class NavMapPainter {
     private NavRoute shownRoute;
     private com.kooo.evcam.trip.DestinationLink.Place shownPin;
     private int shownCarColor = -1;
+    private float shownCarScale = -1;
     private int shownScheme = -1;
     private boolean shownDark;
     private String url;
@@ -154,6 +158,7 @@ final class NavMapPainter {
     /** A new style has no layers of ours: add them, then draw what is on again. */
     private void onStyle(Style loaded) {
         style = loaded;
+        NavMapColors.apply(loaded, shownDark);
         restSource = new GeoJsonSource("nav-rest");
         headSource = new GeoJsonSource("nav-head");
         // moved every frame: an update that waits for the map's worker leaves the line behind the car
@@ -199,23 +204,30 @@ final class NavMapPainter {
                 PropertyFactory.lineCap(Property.LINE_CAP_ROUND), PropertyFactory.lineJoin(Property.LINE_JOIN_ROUND));
     }
 
+    /** A red drop with a dark dot, its point on the place. */
     private android.graphics.Bitmap pinIcon() {
-        int w = Math.round(32 * density);
-        int h = Math.round(44 * density);
+        int w = Math.round(40 * density);
+        int h = Math.round(56 * density);
         android.graphics.Bitmap b = android.graphics.Bitmap.createBitmap(w, h, android.graphics.Bitmap.Config.ARGB_8888);
         android.graphics.Canvas c = new android.graphics.Canvas(b);
         android.graphics.Paint p = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+        float cx = w / 2f;
+        float r = w / 2f - density * 2;
+        float cy = r + density * 2;
         android.graphics.Path drop = new android.graphics.Path();
-        float r = w / 2f - density;
-        drop.addCircle(w / 2f, r + density, r, android.graphics.Path.Direction.CW);
-        drop.moveTo(w / 2f - r * 0.8f, r * 1.6f);
-        drop.lineTo(w / 2f, h);
-        drop.lineTo(w / 2f + r * 0.8f, r * 1.6f);
+        drop.addArc(cx - r, cy - r, cx + r, cy + r, 150, 240);
+        drop.cubicTo(cx + r * 0.55f, cy + r * 1.1f, cx + r * 0.2f, h - density * 12, cx, h - density);
+        drop.cubicTo(cx - r * 0.2f, h - density * 12, cx - r * 0.55f, cy + r * 1.1f, cx - r * 0.87f, cy + r * 0.5f);
         drop.close();
-        p.setColor(0xFFD93025);
+        p.setColor(0xFFEA4335);
         c.drawPath(drop, p);
-        p.setColor(0xFFFFFFFF);
-        c.drawCircle(w / 2f, r + density, r * 0.4f, p);
+        p.setStyle(android.graphics.Paint.Style.STROKE);
+        p.setStrokeWidth(density * 1.2f);
+        p.setColor(0xFFB3261E);
+        c.drawPath(drop, p);
+        p.setStyle(android.graphics.Paint.Style.FILL);
+        p.setColor(0xFF7A1411);
+        c.drawCircle(cx, cy, r * 0.36f, p);
         return b;
     }
 
@@ -225,7 +237,7 @@ final class NavMapPainter {
      * owner calls this again when the head unit switches.
      */
     void applyScheme(int scheme) {
-        boolean dark = scheme == AppConfig.NAV_MAP_DARK || (scheme == AppConfig.NAV_MAP_AUTO && headUnitNight(mapView.getContext()));
+        boolean dark = isDark(mapView.getContext(), scheme);
         if (scheme != shownScheme || dark != shownDark) {
             shownScheme = scheme;
             shownDark = dark;
@@ -237,6 +249,11 @@ final class NavMapPainter {
             style = null;
             map.setStyle(new Style.Builder().fromUri(url), this::onStyle);
         }
+    }
+
+    /** Whether this scheme means the dark map right now. */
+    static boolean isDark(Context context, int scheme) {
+        return scheme == AppConfig.NAV_MAP_DARK || (scheme == AppConfig.NAV_MAP_AUTO && headUnitNight(context));
     }
 
     /** The head unit's own night mode (the system's, not this app's theme). */
@@ -281,9 +298,12 @@ final class NavMapPainter {
         LatLng at = onRoute ? new LatLng(s.progress.lat, s.progress.lng) : new LatLng(s.carLat, s.carLng);
         float bearing = s.carBearing == null ? (Float.isNaN(goalBearing) ? 0 : goalBearing) : s.carBearing.floatValue();
         int color = new AppConfig(mapView.getContext()).getNavCarColor();
-        if (color != shownCarColor || car == null) {
+        float width = mapView.getWidth() / (density * NavMap.SCALE);
+        float carScale = carScale(width);
+        if (color != shownCarColor || carScale != shownCarScale || car == null) {
             shownCarColor = color;
-            showCar(CarIcon.zeekr7x(density, CarIcon.Color.of(color)));
+            shownCarScale = carScale;
+            showCar(CarIcon.zeekr7x(density * NavMap.SCALE * carScale, CarIcon.Color.of(color)));
         }
         long now = android.os.SystemClock.uptimeMillis();
         // when the GPS measured this fix, on the uptime clock: the car is drawn where it is now, not
@@ -316,7 +336,7 @@ final class NavMapPainter {
         goalRoute = onRoute ? s.route : null;
         goalAlong = onRoute ? s.progress.along : 0;
         goalBearing = bearing;
-        goalZoom = guiding ? zoomFor(s.carSpeedKmh, s.progress == null ? null : s.progress.toNext) : 15;
+        goalZoom = guiding ? zoomFor(s.carSpeedKmh, s.progress == null ? null : s.progress.toNext) + windowZoom(width) : 15;
         this.guiding = guiding;
         if (!placed) {
             // straight to the car the first time, not a fly-in from the whole world
@@ -445,6 +465,11 @@ final class NavMapPainter {
             car.setClickable(false);
             car.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
             ((ViewGroup) mapView).addView(car, new FrameLayout.LayoutParams(icon.getWidth(), icon.getHeight()));
+        } else {
+            ViewGroup.LayoutParams size = car.getLayoutParams();
+            size.width = icon.getWidth();
+            size.height = icon.getHeight();
+            car.setLayoutParams(size);
         }
         car.setImageBitmap(icon);
     }
@@ -485,7 +510,7 @@ final class NavMapPainter {
         float scale = viewScale(curZoom, camZoom);
         setViewScale(scale);
         float carAt = carAtInView(scale);
-        double ahead = h <= 0 ? 0 : aheadMeters(curLat, camZoom, h, carAt) * aheadScale;
+        double ahead = h <= 0 ? 0 : aheadMeters(curLat, camZoom, h / (density * NavMap.SCALE), carAt) * aheadScale;
         double[] target = Geo.offset(curLat, curLng, curBearing, ahead);
         map.moveCamera(CameraUpdateFactory.newCameraPosition(new CameraPosition.Builder()
                 .target(new LatLng(target[0], target[1])).bearing(curBearing).tilt(TILT).zoom(camZoom - ZOOM_SHIFT)
@@ -546,6 +571,16 @@ final class NavMapPainter {
                 .padding(0, 0, 0, 0).build()));
     }
 
+    /** How much further out a narrow window sits: enough road ahead shows in the floating window and on the HUD. */
+    static float windowZoom(float width) {
+        return width <= 0 || width >= FULL_WIDTH ? 0f : (float) (-0.5 * Math.log(FULL_WIDTH / width) / Math.log(2));
+    }
+
+    /** The car's size in a window this wide, so it stays in proportion to the map around it. */
+    static float carScale(float width) {
+        return width <= 0 ? 1f : Math.max(CAR_SCALE_MIN, Math.min(1f, width / FULL_WIDTH));
+    }
+
     /** Share of the way to go this frame, for a smoothing time of {@code seconds}. */
     static float ease(float dt, float seconds) {
         return (float) (1 - Math.exp(-dt / seconds));
@@ -566,7 +601,7 @@ final class NavMapPainter {
      * Metres ahead of the car to aim the camera so the car sits at {@link #CAR_AT} of the map's
      * height: the ground under that many screen pixels at this zoom, stretched by the tilt.
      */
-    static double aheadMeters(double lat, float zoom, int heightPx, float carAt) {
+    static double aheadMeters(double lat, float zoom, float heightPx, float carAt) {
         double metresPerPx = 156543.03392 * Math.cos(Math.toRadians(lat)) / Math.pow(2, zoom);
         return (carAt - 0.5) * heightPx * metresPerPx / Math.cos(Math.toRadians(TILT));
     }
@@ -774,7 +809,7 @@ final class NavMapPainter {
             z = ZOOM_SLOW + (ZOOM_FAST - ZOOM_SLOW) * out;
         } else {
             double d = toNextM == null ? 1_000 : toNextM;
-            z = d < 300 ? 17.5f : d < 2_000 ? 16.5f : 15.5f;
+            z = d < 300 ? 20.0f : d < 2_000 ? 19.5f : 19.0f;
         }
         if (toNextM != null && toNextM < TURN_NEAR_M) {
             z = Math.max(z, ZOOM_TURN);

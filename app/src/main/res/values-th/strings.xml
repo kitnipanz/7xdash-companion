@@ -1726,6 +1726,7 @@
     <string name="nav_cancel">ยกเลิก</string>
     <string name="nav_retry">ลองอีกครั้ง</string>
     <string name="nav_summary">%1$s · %2$s · ถึง %3$s</string>
+    <string name="nav_summary_sub">%1$s · ถึง %2$s</string>
     <string name="nav_battery">แบตเตอรี่เหลือ %1$d%% เมื่อถึง</string>
     <string name="nav_battery_short">ขาดอีก %1$d กม.: แวะชาร์จระหว่างทาง</string>
     <string name="nav_battery_unknown">แบตเตอรี่เมื่อถึง: กำลังรอข้อมูลจากรถ</string>

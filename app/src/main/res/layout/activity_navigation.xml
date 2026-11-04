@@ -35,7 +35,8 @@
             android:id="@+id/nav_search_bar"
             android:layout_width="match_parent"
             android:layout_height="@dimen/title_bar_height"
-            android:background="@drawable/bg_surface_card"
+            android:background="@drawable/bg_nav_pill"
+            android:elevation="6dp"
             android:gravity="center_vertical"
             android:orientation="horizontal"
             android:paddingStart="6dp"
@@ -46,6 +47,8 @@
                 android:layout_width="@dimen/icon_button_size"
                 android:layout_height="@dimen/icon_button_size"
                 android:contentDescription="@string/action_back"
+                app:backgroundTint="@android:color/transparent"
+                app:cornerRadius="28dp"
                 app:icon="@drawable/ic_back" />
             <EditText
                 android:id="@+id/nav_search"
@@ -83,7 +86,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:background="@drawable/bg_surface_card"
+            android:background="@drawable/bg_nav_card"
+            android:elevation="6dp"
             android:orientation="vertical"
             android:paddingTop="6dp"
             android:paddingBottom="6dp"
@@ -95,6 +99,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@drawable/bg_nav_banner"
+            android:elevation="6dp"
             android:gravity="center_vertical"
             android:minHeight="128dp"
             android:orientation="horizontal"
@@ -174,33 +179,58 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|start"
         android:layout_margin="16dp"
-        android:background="@drawable/bg_surface_card"
+        android:background="@drawable/bg_nav_card"
+        android:elevation="6dp"
         android:orientation="vertical"
         android:padding="22dp">
-        <TextView
-            android:id="@+id/nav_place"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:ellipsize="end"
-            android:maxLines="1"
-            android:textAppearance="@style/TextAppearance.Cam.Title"
-            android:textColor="@color/text_primary"
-            android:textStyle="bold" />
-        <TextView
-            android:id="@+id/nav_summary"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:textAppearance="@style/TextAppearance.Cam.Row"
-            android:textColor="@color/energy_text"
-            android:textStyle="bold" />
-        <TextView
-            android:id="@+id/nav_status"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:textAppearance="@style/TextAppearance.Cam.Body"
-            android:textColor="@color/text_secondary" />
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+            <!-- while guiding: end the trip, beside the time -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/nav_end_guiding"
+                style="@style/Widget.Cam.IconButton"
+                android:layout_width="64dp"
+                android:layout_height="64dp"
+                android:layout_marginEnd="18dp"
+                android:contentDescription="@string/nav_end"
+                android:visibility="gone"
+                app:cornerRadius="32dp"
+                app:icon="@drawable/ic_close"
+                app:iconSize="30dp" />
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+                <TextView
+                    android:id="@+id/nav_place"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:textAppearance="@style/TextAppearance.Cam.Title"
+                    android:textColor="@color/text_primary"
+                    android:textStyle="bold" />
+                <TextView
+                    android:id="@+id/nav_summary"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:textAppearance="@style/TextAppearance.Cam.Row"
+                    android:textColor="@color/nav_time"
+                    android:textStyle="bold" />
+                <TextView
+                    android:id="@+id/nav_status"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:textAppearance="@style/TextAppearance.Cam.Body"
+                    android:textColor="@color/text_secondary" />
+            </LinearLayout>
+        </LinearLayout>
         <LinearLayout
             android:id="@+id/nav_options"
             android:layout_width="match_parent"
@@ -214,6 +244,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="56dp"
                 android:text="@string/nav_settings_button"
+                app:cornerRadius="28dp"
                 app:icon="@drawable/ic_settings" />
         </LinearLayout>
         <!-- before starting: the routes to choose from, Google's pick first; filled in by NavigationActivity -->
@@ -225,6 +256,7 @@
             android:orientation="vertical"
             android:visibility="gone" />
         <LinearLayout
+            android:id="@+id/nav_actions"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="14dp"
@@ -234,9 +266,13 @@
                 style="@style/Widget.Cam.RailSmall"
                 android:layout_width="wrap_content"
                 android:layout_height="56dp"
-                android:minWidth="160dp"
+                android:minWidth="180dp"
                 android:text="@string/nav_start"
-                app:icon="@drawable/ic_navigation" />
+                android:textColor="@color/white"
+                app:backgroundTint="@color/nav_blue"
+                app:cornerRadius="28dp"
+                app:icon="@drawable/ic_navigation"
+                app:iconTint="@color/white" />
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/nav_end"
                 style="@style/Widget.Cam.RailSmall"
@@ -244,7 +280,8 @@
                 android:layout_height="56dp"
                 android:layout_marginStart="12dp"
                 android:minWidth="120dp"
-                android:text="@string/nav_end" />
+                android:text="@string/nav_end"
+                app:cornerRadius="28dp" />
         </LinearLayout>
     </LinearLayout>
 
@@ -257,29 +294,50 @@
         <com.google.android.material.button.MaterialButton
             android:id="@+id/nav_float"
             style="@style/Widget.Cam.IconButton"
-            android:layout_width="88dp"
-            android:layout_height="88dp"
+            android:layout_width="72dp"
+            android:layout_height="72dp"
+            android:layout_gravity="end"
             android:layout_marginBottom="12dp"
             android:contentDescription="@string/nav_float"
+            android:elevation="6dp"
+            android:stateListAnimator="@null"
+            app:backgroundTint="@color/surface"
+            app:cornerRadius="36dp"
             app:icon="@drawable/ic_float_window"
-            app:iconSize="36dp" />
+            app:iconSize="30dp" />
         <com.google.android.material.button.MaterialButton
             android:id="@+id/nav_mute"
             style="@style/Widget.Cam.IconButton"
-            android:layout_width="88dp"
-            android:layout_height="88dp"
+            android:layout_width="72dp"
+            android:layout_height="72dp"
+            android:layout_gravity="end"
             android:contentDescription="@string/nav_mute"
+            android:elevation="6dp"
+            android:stateListAnimator="@null"
+            app:backgroundTint="@color/surface"
+            app:cornerRadius="36dp"
             app:icon="@drawable/ic_voice_on"
-            app:iconSize="36dp" />
+            app:iconSize="30dp" />
+        <!-- the map was moved by hand: back to the car -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/nav_recenter"
             style="@style/Widget.Cam.IconButton"
-            android:layout_width="88dp"
-            android:layout_height="88dp"
-            app:iconSize="36dp"
+            android:layout_width="wrap_content"
+            android:layout_height="64dp"
+            android:layout_gravity="end"
             android:layout_marginTop="12dp"
-            android:contentDescription="@string/nav_recenter"
+            android:elevation="6dp"
+            android:paddingLeft="20dp"
+            android:paddingRight="24dp"
+            android:stateListAnimator="@null"
+            android:text="@string/nav_recenter"
+            android:textAppearance="@style/TextAppearance.Cam.Body"
+            android:textColor="@color/nav_blue_text"
             android:visibility="gone"
-            app:icon="@drawable/ic_recenter" />
+            app:backgroundTint="@color/surface"
+            app:cornerRadius="32dp"
+            app:icon="@drawable/ic_navigation"
+            app:iconPadding="8dp"
+            app:iconTint="@color/nav_blue_text" />
     </LinearLayout>
 </FrameLayout>

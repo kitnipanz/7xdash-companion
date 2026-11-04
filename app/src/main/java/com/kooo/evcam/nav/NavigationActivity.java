@@ -58,6 +58,8 @@ public class NavigationActivity extends AppCompatActivity implements Navigator.L
     private View options;
     private MaterialButton go;
     private MaterialButton end;
+    private View endGuiding;
+    private View actions;
     private MaterialButton mute;
     private View recenter;
     private LinearLayout routes;
@@ -75,9 +77,10 @@ public class NavigationActivity extends AppCompatActivity implements Navigator.L
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        config = new AppConfig(this);
+        matchMap();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_navigation);
-        config = new AppConfig(this);
         search = findViewById(R.id.nav_search);
         results = findViewById(R.id.nav_results);
         searchBar = findViewById(R.id.nav_search_bar);
@@ -92,6 +95,8 @@ public class NavigationActivity extends AppCompatActivity implements Navigator.L
         options = findViewById(R.id.nav_options);
         go = findViewById(R.id.nav_go);
         end = findViewById(R.id.nav_end);
+        endGuiding = findViewById(R.id.nav_end_guiding);
+        actions = findViewById(R.id.nav_actions);
         mute = findViewById(R.id.nav_mute);
         recenter = findViewById(R.id.nav_recenter);
         routes = findViewById(R.id.nav_routes);
@@ -125,10 +130,12 @@ public class NavigationActivity extends AppCompatActivity implements Navigator.L
                 Navigator.get().start();
             }
         });
-        end.setOnClickListener(v -> {
+        View.OnClickListener endTrip = v -> {
             Navigator.get().end();
             clearMap();
-        });
+        };
+        end.setOnClickListener(endTrip);
+        endGuiding.setOnClickListener(endTrip);
         mute.setOnClickListener(v -> Navigator.get().setMuted(!Navigator.get().snapshot().muted));
         recenter.setOnClickListener(v -> {
             recenter.setVisibility(View.GONE);
@@ -140,6 +147,13 @@ public class NavigationActivity extends AppCompatActivity implements Navigator.L
         findViewById(R.id.nav_settings).setOnClickListener(v -> openSettings());
 
         setUpMap();
+    }
+
+    /** The cards go with the map: light on the day map, dark on the night map. */
+    private void matchMap() {
+        getDelegate().setLocalNightMode(NavMapPainter.isDark(this, config.getNavMapScheme())
+                ? androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_YES
+                : androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_NO);
     }
 
     private void setUpMap() {
@@ -315,15 +329,15 @@ public class NavigationActivity extends AppCompatActivity implements Navigator.L
             int pad = Math.round(12 * d);
             card.setPadding(pad, pad / 2 + 2, pad, pad / 2 + 2);
             android.graphics.drawable.GradientDrawable bg = new android.graphics.drawable.GradientDrawable();
-            bg.setCornerRadius(12 * d);
-            bg.setColor(ContextCompat.getColor(this, chosen ? R.color.energy_quiet : R.color.surface));
-            bg.setStroke(Math.round((chosen ? 2 : 1) * d), ContextCompat.getColor(this, chosen ? R.color.energy : R.color.line));
+            bg.setCornerRadius(16 * d);
+            bg.setColor(ContextCompat.getColor(this, chosen ? R.color.nav_blue_quiet : R.color.surface));
+            bg.setStroke(Math.round((chosen ? 2 : 1) * d), ContextCompat.getColor(this, chosen ? R.color.nav_blue : R.color.line));
             card.setBackground(bg);
             TextView time = new TextView(this);
             String head = getString(R.string.nav_route_time, NavText.duration(this, r.seconds), NavText.distance(this, r.meters));
             time.setText(r.best ? head + "  ·  " + getString(R.string.nav_route_best) : head);
             time.setTextAppearance(R.style.TextAppearance_Cam_Row);
-            time.setTextColor(ContextCompat.getColor(this, chosen ? R.color.energy_text : R.color.text_primary));
+            time.setTextColor(ContextCompat.getColor(this, chosen ? R.color.nav_blue_text : R.color.text_primary));
             time.setTypeface(time.getTypeface(), android.graphics.Typeface.BOLD);
             card.addView(time);
             if (!r.label.isEmpty()) {
@@ -381,6 +395,8 @@ public class NavigationActivity extends AppCompatActivity implements Navigator.L
                 .setView(box)
                 .setPositiveButton(R.string.nav_hud_adjust_done, null)
                 .show();
+        // a new map colour turns the cards too, which remakes this screen: only once the dialog is gone
+        dialog.setOnDismissListener(d -> matchMap());
         if (dialog.getWindow() != null) {
             dialog.getWindow().setLayout(Math.round(560 * getResources().getDisplayMetrics().density),
                     WindowManager.LayoutParams.WRAP_CONTENT);
@@ -502,9 +518,17 @@ public class NavigationActivity extends AppCompatActivity implements Navigator.L
 
     private void showSheet(Navigator.Snapshot s) {
         go.setVisibility(View.GONE);
-        end.setVisibility(s.phase == Navigator.Phase.IDLE ? View.GONE : View.VISIBLE);
-        end.setText(s.phase == Navigator.Phase.GUIDING ? R.string.nav_end : R.string.nav_cancel);
-        summary.setTextColor(ContextCompat.getColor(this, R.color.energy_text));
+        boolean guiding = s.phase == Navigator.Phase.GUIDING;
+        // while guiding the trip ends with the round X beside the time, not a button under it
+        end.setVisibility(s.phase == Navigator.Phase.IDLE || guiding ? View.GONE : View.VISIBLE);
+        end.setText(R.string.nav_cancel);
+        endGuiding.setVisibility(guiding ? View.VISIBLE : View.GONE);
+        actions.setVisibility(end.getVisibility());
+        summary.setVisibility(View.VISIBLE);
+        place.setTextAppearance(R.style.TextAppearance_Cam_Title);
+        place.setTextColor(ContextCompat.getColor(this, R.color.text_primary));
+        place.setTypeface(place.getTypeface(), android.graphics.Typeface.BOLD);
+        summary.setTextColor(ContextCompat.getColor(this, R.color.nav_time));
         switch (s.phase) {
             case IDLE:
                 place.setText(R.string.nav_title);
@@ -523,6 +547,7 @@ public class NavigationActivity extends AppCompatActivity implements Navigator.L
                 status.setText(s.error == 0 ? getString(R.string.nav_error_route) : getString(s.error));
                 go.setText(R.string.nav_retry);
                 go.setVisibility(View.VISIBLE);
+                actions.setVisibility(View.VISIBLE);
                 return;
             default:
                 break;
@@ -532,6 +557,14 @@ public class NavigationActivity extends AppCompatActivity implements Navigator.L
         double seconds = s.progress != null ? s.progress.remainingSeconds : s.route == null ? 0 : s.route.seconds;
         if (s.phase == Navigator.Phase.ARRIVED) {
             summary.setText(R.string.nav_arrived);
+        } else if (guiding) {
+            // the time left first and big, in green; the rest under it
+            place.setText(NavText.duration(this, seconds));
+            place.setTextAppearance(R.style.TextAppearance_Cam_Display);
+            place.setTextColor(ContextCompat.getColor(this, R.color.nav_time));
+            place.setTypeface(place.getTypeface(), android.graphics.Typeface.BOLD);
+            summary.setText(getString(R.string.nav_summary_sub, NavText.distance(this, meters), NavText.eta(this, seconds)));
+            summary.setTextColor(ContextCompat.getColor(this, R.color.text_primary));
         } else {
             summary.setText(getString(R.string.nav_summary, NavText.duration(this, seconds),
                     NavText.distance(this, meters), NavText.eta(this, seconds)));
@@ -546,6 +579,7 @@ public class NavigationActivity extends AppCompatActivity implements Navigator.L
         if (s.phase == Navigator.Phase.PREVIEW) {
             go.setText(R.string.nav_start);
             go.setVisibility(View.VISIBLE);
+            actions.setVisibility(View.VISIBLE);
         }
     }
 

@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.7.10-beta] - 2026-11-04
+
+Test build from the feature/tomtom-map branch.
+
+### Navigation (beta)
+- **TomTom map, routes and search instead of Google's.** The map is drawn inside the app with MapLibre, so it looks the same on every head unit and no longer depends on Play services. Thai labels, Thai turn instructions and Thai place search.
+- **Construction and accidents on the map.** Road works, closures, accidents and jams show as icons, with their delay.
+- **Floating settings.** The floating map has a Settings button that opens the settings in their own window beside it, over any app, so the car's screens can't cover them. Place on the HUD, Set up iPhone and the HUD preview stay on the full screen.
+- **The map stays still when parked.** Below 3 km/h the car no longer moves or turns with the GPS wandering, which swung the map under a roof.
+- **The route runs under the car.** The car is drawn above the map, so the line never covers it.
+
 ## [1.7.9-beta] - 2026-11-04
 
 ### Navigation (beta)

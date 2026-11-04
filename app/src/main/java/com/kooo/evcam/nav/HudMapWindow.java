@@ -12,9 +12,7 @@ import android.view.ViewOutlineProvider;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
 
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GoogleApiAvailability;
-import com.google.android.gms.maps.MapView;
+import org.maplibre.android.maps.MapView;
 import com.kooo.evcam.AppConfig;
 import com.kooo.evcam.AppLog;
 import com.kooo.evcam.overlay.OverlayCoordinator;
@@ -24,7 +22,7 @@ import com.kooo.evcam.zeekr.HudDisplay;
  * A live map on the HUD while guiding: the route and the car, heading up, following like the full
  * screen ({@link NavMapPainter}), always dark (it reads better in the windscreen). Where it sits and
  * its size are set with the turn card's ({@link HudTurnPlace}, {@link HudPlacementView}). Does
- * nothing on a car without a HUD or without Google's map. Main thread.
+ * nothing on a car without a HUD. Main thread.
  */
 final class HudMapWindow implements Navigator.Listener {
 
@@ -44,8 +42,7 @@ final class HudMapWindow implements Navigator.Listener {
 
     void show(Context context) {
         if (root != null || failed || Build.VERSION.SDK_INT < Build.VERSION_CODES.R
-                || !OverlayCoordinator.canShowOverlay(context) || !Navigator.hasKey()
-                || GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(context) != ConnectionResult.SUCCESS) {
+                || !OverlayCoordinator.canShowOverlay(context) || !Navigator.hasKey()) {
             return;
         }
         Display hud = HudDisplay.find(context);
@@ -70,8 +67,8 @@ final class HudMapWindow implements Navigator.Listener {
                 }
             });
             frame.setClipToOutline(true);
-            NavMapPainter.useLatestRenderer(window);
-            mapView = new MapView(window);
+            NavMap.start(window);
+            mapView = new MapView(window, NavMap.options(window));
             mapView.onCreate(null);
             frame.addView(mapView, new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT,
                     FrameLayout.LayoutParams.MATCH_PARENT));
@@ -94,10 +91,8 @@ final class HudMapWindow implements Navigator.Listener {
                 }
                 painter = new NavMapPainter(window, map, mapView, 0, 0);
                 painter.applyScheme(AppConfig.NAV_MAP_DARK);
-                painter.trafficAllowed = false;
                 map.getUiSettings().setAllGesturesEnabled(false);
                 map.getUiSettings().setCompassEnabled(false);
-                map.setTrafficEnabled(false);
                 painter.draw(Navigator.get().snapshot());
             });
             Navigator.get().addListener(this);

@@ -1733,8 +1733,8 @@ Then reopen this app.</string>
     <!-- Navigation (beta) -->
     <string name="nav_title">Navigation</string>
     <string name="nav_beta">BETA</string>
-    <string name="home_card_nav_sub">Beta · Turn-by-turn with Google Maps</string>
-    <string name="nav_search_hint">Search Google Maps</string>
+    <string name="home_card_nav_sub">Beta · Turn-by-turn with TomTom</string>
+    <string name="nav_search_hint">Search places</string>
     <string name="nav_searching">Searching…</string>
     <string name="nav_no_results">Nothing found</string>
     <string name="nav_shared">Go to %1$s</string>
@@ -1760,11 +1760,11 @@ Then reopen this app.</string>
     <string name="nav_hud_switch">Next turn on the HUD</string>
     <string name="nav_mute">Voice on or off</string>
     <string name="nav_recenter">Back to the car</string>
-    <string name="nav_no_map">The map needs Google Play services and a Google Maps key. Turn-by-turn guidance still works without the map.</string>
-    <string name="nav_error_no_key">This build has no Google Maps key (MAPS_API_KEY)</string>
-    <string name="nav_error_offline">No internet: could not reach Google</string>
-    <string name="nav_error_no_road">Google found no road to that place</string>
-    <string name="nav_error_route">Google could not give a route</string>
+    <string name="nav_no_map">The map needs a TomTom key. Turn-by-turn guidance still works without the map.</string>
+    <string name="nav_error_no_key">This build has no TomTom key (TOMTOM_API_KEY)</string>
+    <string name="nav_error_offline">No internet: could not reach TomTom</string>
+    <string name="nav_error_no_road">TomTom found no road to that place</string>
+    <string name="nav_error_route">TomTom could not give a route</string>
     <string name="nav_m">%1$d m</string>
     <string name="nav_km_1">%1$s km</string>
     <string name="nav_km">%1$d km</string>

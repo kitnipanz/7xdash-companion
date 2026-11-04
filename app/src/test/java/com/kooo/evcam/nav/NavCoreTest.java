@@ -173,19 +173,24 @@ public class NavCoreTest {
 
     @Test
     public void readsARoutesAnswer() throws Exception {
-        String body = "{\"routes\":[{\"distanceMeters\":2000,\"duration\":\"300s\",\"staticDuration\":\"200s\","
-                + "\"legs\":[{\"steps\":["
-                + "{\"distanceMeters\":1000,\"staticDuration\":\"100s\",\"polyline\":{\"encodedPolyline\":\"_p~iF~ps|U_ulLnnqC\"},"
-                + "\"navigationInstruction\":{\"instructions\":\"Head north on Soi 1\"}},"
-                + "{\"distanceMeters\":1000,\"staticDuration\":\"100s\",\"polyline\":{\"encodedPolyline\":\"_mqNvxq`@_mqNvxq`@\"},"
-                + "\"navigationInstruction\":{\"maneuver\":\"TURN_LEFT\",\"instructions\":\"Turn left onto Rama IV\"}}"
-                + "]}]}]}";
-        NavRoute r = GoogleJson.route(body);
+        String body = "{\"routes\":[{\"summary\":{\"travelTimeInSeconds\":300,\"noTrafficTravelTimeInSeconds\":200},"
+                + "\"legs\":[{\"points\":[{\"latitude\":13.70,\"longitude\":100.50},{\"latitude\":13.71,\"longitude\":100.50},"
+                + "{\"latitude\":13.72,\"longitude\":100.50},{\"latitude\":13.72,\"longitude\":100.51}]}],"
+                + "\"guidance\":{\"instructions\":["
+                + "{\"pointIndex\":0,\"routeOffsetInMeters\":0,\"travelTimeInSeconds\":0,\"maneuver\":\"DEPART\",\"message\":\"Head north on Soi 1\"},"
+                + "{\"pointIndex\":2,\"routeOffsetInMeters\":2200,\"travelTimeInSeconds\":200,\"maneuver\":\"TURN_LEFT\",\"message\":\"Turn left onto Rama IV\"},"
+                + "{\"pointIndex\":3,\"routeOffsetInMeters\":3200,\"travelTimeInSeconds\":300,\"maneuver\":\"ARRIVE\",\"message\":\"You have arrived\"}"
+                + "]}}]}";
+        NavRoute r = TomTomJson.route(body);
         assertNotNull(r);
         assertEquals(2, r.steps.size());
         assertEquals(Maneuver.DEPART, r.steps.get(0).maneuver);
         assertEquals(Maneuver.TURN_LEFT, r.steps.get(1).maneuver);
         assertEquals("Turn left onto Rama IV", r.steps.get(1).instruction);
+        assertEquals(2, r.steps.get(1).startPoint);
+        assertEquals(2200, r.steps.get(0).meters, 1e-9);
+        // steps count without traffic, so the traffic factor doesn't go on twice
+        assertEquals(200 * 200.0 / 300, r.steps.get(0).seconds, 1e-9);
         assertEquals(300, r.seconds, 1e-9);
         assertEquals(200, r.staticSeconds, 1e-9);
         assertEquals(4, r.pointCount());
@@ -193,20 +198,33 @@ public class NavCoreTest {
 
     @Test
     public void noRouteIsNull() throws Exception {
-        assertNull(GoogleJson.route("{}"));
-        assertEquals("API key not valid.", GoogleJson.error("{\"error\":{\"code\":400,\"message\":\"API key not valid.\"}}"));
-        assertNull(GoogleJson.error("not json"));
+        assertNull(TomTomJson.route("{}"));
+        assertTrue(TomTomJson.noRoute("{\"detailedError\":{\"code\":\"NO_ROUTE_FOUND\",\"message\":\"No route\"}}"));
+        assertEquals("No route", TomTomJson.error("{\"detailedError\":{\"code\":\"NO_ROUTE_FOUND\",\"message\":\"No route\"}}"));
+        assertEquals("Invalid key", TomTomJson.error("{\"error\":{\"description\":\"Invalid key\"}}"));
+        assertNull(TomTomJson.error("not json"));
     }
 
     @Test
     public void readsPlaces() throws Exception {
-        String body = "{\"places\":[{\"displayName\":{\"text\":\"Siam Paragon\"},\"formattedAddress\":\"991 Rama I Rd\","
-                + "\"location\":{\"latitude\":13.746,\"longitude\":100.535}},{\"displayName\":{\"text\":\"No location\"}}]}";
-        List<GoogleJson.Found> found = GoogleJson.places(body);
-        assertEquals(1, found.size());
+        String body = "{\"results\":[{\"poi\":{\"name\":\"Siam Paragon\"},\"address\":{\"freeformAddress\":\"991 Rama I Rd\"},"
+                + "\"position\":{\"lat\":13.746,\"lon\":100.535}},{\"poi\":{\"name\":\"No location\"}},"
+                + "{\"address\":{\"freeformAddress\":\"Rama IV Rd\"},\"position\":{\"lat\":13.7,\"lon\":100.5}}]}";
+        List<TomTomJson.Found> found = TomTomJson.places(body);
+        assertEquals(2, found.size());
         assertEquals("Siam Paragon", found.get(0).place.name);
         assertEquals("991 Rama I Rd", found.get(0).address);
         assertEquals(13.746, found.get(0).place.lat, 1e-9);
+        assertEquals("Rama IV Rd", found.get(1).place.name);
+    }
+
+    @Test
+    public void searchUrlIsEscapedAndInThailand() {
+        String url = TomTomJson.searchUrl("สยาม พารากอน", 13.7, 100.5, "th-TH");
+        assertTrue(url, url.contains("/search/2/search/%E0%B8%AA"));
+        assertFalse(url, url.contains(" "));
+        assertTrue(url, url.contains("countrySet=TH"));
+        assertTrue(url, url.contains("lat=13.700000&lon=100.500000"));
     }
 
     @Test
@@ -218,11 +236,18 @@ public class NavCoreTest {
     }
 
     @Test
-    public void routeRequestHasTraffic() throws Exception {
-        org.json.JSONObject j = new org.json.JSONObject(GoogleJson.routeRequest(1, 2, 370.4, 3, 4, "th", true));
-        assertEquals("TRAFFIC_AWARE", j.getString("routingPreference"));
-        assertEquals(10, j.getJSONObject("origin").getJSONObject("location").getInt("heading"));
-        assertEquals(3, j.getJSONObject("destination").getJSONObject("location")
-                .getJSONObject("latLng").getDouble("latitude"), 1e-9);
+    public void tomTomManeuvers() {
+        assertEquals(Maneuver.TURN_SHARP_LEFT, Maneuver.ofTomTom("SHARP_LEFT"));
+        assertEquals(Maneuver.TURN_SLIGHT_RIGHT, Maneuver.ofTomTom("KEEP_RIGHT"));
+        assertEquals(Maneuver.UTURN_RIGHT, Maneuver.ofTomTom("MAKE_UTURN"));
+        assertEquals(Maneuver.RAMP_LEFT, Maneuver.ofTomTom("MOTORWAY_EXIT_LEFT"));
+        assertEquals(Maneuver.ARRIVE, Maneuver.ofTomTom("ARRIVE_RIGHT"));
+        assertEquals(Maneuver.STRAIGHT, Maneuver.ofTomTom("SOMETHING_NEW"));
+        assertEquals(Maneuver.STRAIGHT, Maneuver.ofTomTom(null));
+    }
+
+    @Test
+    public void routeHeadingIsWrapped() {
+        assertTrue(TomTomJson.routeUrl(1, 2, 370.4, 3, 4, "th-TH", false).contains("vehicleHeading=10"));
     }
 }

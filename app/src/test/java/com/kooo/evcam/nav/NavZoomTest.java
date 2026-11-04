@@ -1,6 +1,7 @@
 package com.kooo.evcam.nav;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
@@ -88,5 +89,26 @@ public class NavZoomTest {
         assertEquals(NavMapPainter.CAR_AT, NavMapPainter.carAtInView(1f), 1e-6);
         // drawn twice as big around the middle: the car sits half as far below the middle in the view
         assertEquals(0.5f + (NavMapPainter.CAR_AT - 0.5f) / 2f, NavMapPainter.carAtInView(2f), 1e-6);
+    }
+
+    @Test
+    public void aStandingCarIgnoresItsWanderingFixes() {
+        assertTrue(Navigator.standing(0f, 20));
+        assertTrue(Navigator.standing(2.9f, 20));
+        assertFalse(Navigator.standing(3f, 20));
+        // no speed from the car: can't tell, keep following the fixes
+        assertFalse(Navigator.standing(null, 20));
+        // a stuck speed signal must not freeze the car on the map
+        assertFalse(Navigator.standing(0f, 60));
+    }
+
+    @Test
+    public void floatingSettingsOpenBesideTheMap() {
+        // room on the left
+        assertEquals(1000 - 460 - 12, NavFloatSettings.place(1000, 700, 460, 2000, 12));
+        // none on the left: on the right
+        assertEquals(312, NavFloatSettings.place(100, 200, 460, 2000, 12));
+        // none on either side: inside the screen
+        assertEquals(2000 - 460 - 12, NavFloatSettings.place(300, 1700, 460, 2000, 12));
     }
 }

@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.7.13-beta] - 2026-11-04
+
+Test build from the develop branch: Navigation on the Google map again (the TomTom map of 1.7.10-beta to 1.7.12-beta is not in it).
+
+### Navigation (beta)
+- **The car stays on the road.** Between GPS fixes the car now moves along the route, round bends and corners, the way Google Maps does; before, it slid straight ahead off the road on every curve.
+- **The car is where it is now, not a second ago.** Each GPS fix is timed from when it was measured, not when it reached the map, so at speed the car no longer trails behind.
+- **No more jumps from network location.** Rough positions from cell towers and Wi-Fi are ignored while the GPS has a fix; they pulled the car hundreds of metres away, gave a wrong km left and set off false re-routing.
+- **Fewer false "off the route".** A weak GPS fix (under a roof, between tall buildings) is given its accuracy before the car counts as off the route.
+
 ## [1.7.9-beta] - 2026-11-04
 
 ### Navigation (beta)

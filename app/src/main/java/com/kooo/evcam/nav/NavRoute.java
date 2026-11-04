@@ -90,6 +90,42 @@ public final class NavRoute {
         return lng(pointCount() - 1);
     }
 
+    /**
+     * The point {@code metres} along the route and the road's direction there: {lat, lng, bearing}.
+     * Clamped to the start and the end.
+     */
+    public double[] pointAt(double metres) {
+        int n = pointCount();
+        if (n == 0) {
+            return new double[] {0, 0, 0};
+        }
+        if (n == 1) {
+            return new double[] {lat(0), lng(0), 0};
+        }
+        // the segment [i, i + 1] that holds it
+        int lo = 0;
+        int hi = n - 2;
+        while (lo < hi) {
+            int mid = (lo + hi + 1) >>> 1;
+            if (along[mid] <= metres) {
+                lo = mid;
+            } else {
+                hi = mid - 1;
+            }
+        }
+        int i = lo;
+        // skip zero-length pieces so the direction is the road's
+        while (i < n - 2 && along[i + 1] - along[i] <= 0) {
+            i++;
+        }
+        double len = along[i + 1] - along[i];
+        double t = len <= 0 ? 0 : Math.max(0, Math.min(1, (metres - along[i]) / len));
+        return new double[] {
+                lat(i) + t * (lat(i + 1) - lat(i)),
+                lng(i) + t * (lng(i + 1) - lng(i)),
+                Geo.bearing(lat(i), lng(i), lat(i + 1), lng(i + 1))};
+    }
+
     /** Traffic slows it by this much (1 = free flowing). */
     public double trafficFactor() {
         return staticSeconds > 0 && seconds > 0 ? seconds / staticSeconds : 1;

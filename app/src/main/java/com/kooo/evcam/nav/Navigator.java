@@ -76,6 +76,8 @@ public final class Navigator {
         public final Double carBearing;
         /** km/h, or null when the car does not say. */
         public final Float carSpeedKmh;
+        /** When the GPS measured {@link #carLat} (SystemClock.elapsedRealtime ms), or null when not known. */
+        public final Long carFixAtMs;
         /** Battery at arrival, or null until the car has given battery and range. */
         public final Arrival.Estimate battery;
         public final boolean muted;
@@ -84,7 +86,8 @@ public final class Navigator {
 
         Snapshot(Phase phase, DestinationLink.Place destination, NavRoute route, Guidance.Progress progress,
                  boolean rerouting, int error, String errorDetail, Double carLat, Double carLng, Double carBearing,
-                 Float carSpeedKmh, Arrival.Estimate battery, boolean muted, List<NavRoute> choices) {
+                 Float carSpeedKmh, Long carFixAtMs, Arrival.Estimate battery, boolean muted,
+                 List<NavRoute> choices) {
             this.phase = phase;
             this.destination = destination;
             this.route = route;
@@ -96,6 +99,7 @@ public final class Navigator {
             this.carLng = carLng;
             this.carBearing = carBearing;
             this.carSpeedKmh = carSpeedKmh;
+            this.carFixAtMs = carFixAtMs;
             this.battery = battery;
             this.muted = muted;
             this.choices = choices;
@@ -148,6 +152,9 @@ public final class Navigator {
     private String errorDetail;
     private Double carLat;
     private Double carLng;
+    /** The GPS fix's accuracy in metres (0 when not known) and when it was measured (null when not known). */
+    private double carAccuracy;
+    private Long carFixAt;
     private Double carBearing;
     private Float carSpeed;
     private double headingFromLat = Double.NaN;
@@ -299,7 +306,7 @@ public final class Navigator {
 
     public Snapshot snapshot() {
         return new Snapshot(phase, destination, guidance == null ? null : guidance.route(), progress, rerouting,
-                error, errorDetail, carLat, carLng, carBearing, carSpeed, battery, muted, java.util.Collections.unmodifiableList(new ArrayList<>(choices)));
+                error, errorDetail, carLat, carLng, carBearing, carSpeed, carFixAt, battery, muted, java.util.Collections.unmodifiableList(new ArrayList<>(choices)));
     }
 
     public boolean isGuiding() {
@@ -526,6 +533,8 @@ public final class Navigator {
         carLat = s.latitude;
         carLng = s.longitude;
         carSpeed = s.speedKmh;
+        carAccuracy = s.positionAccuracyM == null ? 0 : s.positionAccuracyM;
+        carFixAt = s.positionAtMs;
         if (Double.isNaN(headingFromLat)) {
             headingFromLat = carLat;
             headingFromLng = carLng;
@@ -559,7 +568,7 @@ public final class Navigator {
             changed();
             return;
         }
-        progress = guidance.update(carLat, carLng, 0);
+        progress = guidance.update(carLat, carLng, carAccuracy);
         if (!progress.offRoute) {
             carBearing = progress.bearing;
         }

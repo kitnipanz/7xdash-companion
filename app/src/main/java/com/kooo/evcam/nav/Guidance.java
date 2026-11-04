@@ -13,6 +13,8 @@ public final class Guidance {
     static final int OFF_ROUTE_FIXES = 3;
     /** This close to the end, we are there. */
     static final double ARRIVED_M = 30;
+    /** A GPS fix less sure than this (metres) still counts as off the line past this. */
+    static final double ACCURACY_CAP_M = 100;
     /** How far ahead of the last snap to look first; a full search only when that finds nothing near. */
     private static final double LOOK_AHEAD_M = 1_500;
 
@@ -39,9 +41,12 @@ public final class Guidance {
         public final double remainingSeconds;
         /** The piece of the route's line the car is on: between points {@code segment} and {@code segment + 1}. */
         public final int segment;
+        /** Metres along the route to the snapped point. */
+        public final double along;
 
         Progress(double lat, double lng, double bearing, double offMeters, boolean offRoute, boolean arrived,
-                 int step, int next, double toNext, double remainingMeters, double remainingSeconds, int segment) {
+                 int step, int next, double toNext, double remainingMeters, double remainingSeconds, int segment,
+                 double along) {
             this.lat = lat;
             this.lng = lng;
             this.bearing = bearing;
@@ -54,6 +59,7 @@ public final class Guidance {
             this.remainingMeters = remainingMeters;
             this.remainingSeconds = remainingSeconds;
             this.segment = segment;
+            this.along = along;
         }
     }
 
@@ -72,8 +78,9 @@ public final class Guidance {
     /** A new GPS fix. {@code accuracyM} may be 0 when not known. */
     public Progress update(double lat, double lng, double accuracyM) {
         int segments = route.pointCount() - 1;
+        accuracyM = Math.max(0, Math.min(ACCURACY_CAP_M, accuracyM));
         if (segments < 1) {
-            return new Progress(route.lat(0), route.lng(0), 0, 0, false, true, 0, -1, 0, 0, 0, 0);
+            return new Progress(route.lat(0), route.lng(0), 0, 0, false, true, 0, -1, 0, 0, 0, 0, 0);
         }
         // first near the last snap and ahead of it (no jumping back onto a parallel road we left);
         // the whole line only when that finds nothing close, e.g. after a GPS gap
@@ -110,7 +117,7 @@ public final class Guidance {
         double nextAt = next < 0 ? route.meters : route.steps.get(next).startAlong;
         return new Progress(snapLat, snapLng, Geo.bearing(aLat, aLng, bLat, bLng), off,
                 offFixes >= OFF_ROUTE_FIXES, arrived, step, next, Math.max(0, nextAt - along),
-                remaining, secondsLeft(step, along), seg);
+                remaining, secondsLeft(step, along), seg, along);
     }
 
     /** The last segment to look at first: {@link #LOOK_AHEAD_M} on from segment {@code from}. */

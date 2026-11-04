@@ -55,8 +55,11 @@ final class NavMapPainter {
     private static final float ZOOM_TURN = 20.0f;
     /** Smoothing times: the car's place and heading, zooming in (slowing down) and out (speeding up). */
     private static final float POS_S = 0.25f;
-    /** Between fixes the car goes on at its speed for at most this long, then waits for the next. */
-    private static final float PREDICT_MAX_S = 1.5f;
+    /**
+     * Between fixes the car goes on at its speed for at most this long after the fix was measured,
+     * then waits for the next (fixes reach the map up to a second late, through Navigator's tick).
+     */
+    private static final float PREDICT_MAX_S = 2.5f;
     private static final float BEARING_S = 0.5f;
     private static final float ZOOM_IN_S = 0.9f;
     private static final float ZOOM_OUT_S = 2.2f;
@@ -211,9 +214,18 @@ final class NavMapPainter {
             car.setIcon(BitmapDescriptorFactory.fromBitmap(CarIcon.zeekr7x(density, CarIcon.Color.of(color))));
         }
         long now = android.os.SystemClock.uptimeMillis();
+        // when the GPS measured this fix, on the uptime clock: the car is drawn where it is now, not
+        // where it was when the fix reached the map
+        long fixAt = now;
+        if (s.carFixAtMs != null) {
+            long age = android.os.SystemClock.elapsedRealtime() - s.carFixAtMs;
+            if (age >= 0 && age < 5_000L) {
+                fixAt = now - age;
+            }
+        }
         if (guiding && !Double.isNaN(goalLat) && (at.latitude != goalLat || at.longitude != goalLng)) {
             // how fast the fixes come in: the car keeps that pace between them
-            float dt = (now - goalAt) / 1000f;
+            float dt = (fixAt - goalAt) / 1000f;
             if (dt > 0.2f && dt < 5f) {
                 float seen = (float) (Geo.meters(goalLat, goalLng, at.latitude, at.longitude) / dt);
                 speed = Math.min(60f, speed <= 0 ? seen : speed * 0.5f + seen * 0.5f);
@@ -223,10 +235,14 @@ final class NavMapPainter {
             speed = s.carSpeedKmh / 3.6f;
         }
         if (at.latitude != goalLat || at.longitude != goalLng) {
-            goalAt = now;
+            goalAt = fixAt;
         }
         goalLat = at.latitude;
         goalLng = at.longitude;
+        // on the route the car goes on along the road between fixes, round the bends, as Google Maps
+        // does; off it, straight on
+        goalRoute = onRoute ? s.route : null;
+        goalAlong = onRoute ? s.progress.along : 0;
         goalBearing = bearing;
         goalZoom = guiding ? zoomFor(s.carSpeedKmh, s.progress == null ? null : s.progress.toNext) : 15;
         this.guiding = guiding;
@@ -256,6 +272,9 @@ final class NavMapPainter {
     /** When the last fix came in (uptime ms), and the car's speed in m/s, measured or from the car. */
     private long goalAt;
     private float speed;
+    /** The route the car is on and how far along it the last fix was; null when off it. */
+    private NavRoute goalRoute;
+    private double goalAlong;
     private float goalBearing = Float.NaN;
     private float goalZoom = 15;
     private boolean guiding;
@@ -351,12 +370,20 @@ final class NavMapPainter {
         }
         // where the car is by now: the last fix, carried on at its speed (at most a second and a half)
         float since = Math.min(PREDICT_MAX_S, (android.os.SystemClock.uptimeMillis() - goalAt) / 1000f);
-        double[] predicted = speed > 0.5f ? Geo.offset(goalLat, goalLng, goalBearing, speed * since)
-                : new double[] {goalLat, goalLng};
+        float bearingNow = goalBearing;
+        double[] predicted;
+        if (speed <= 0.5f) {
+            predicted = new double[] {goalLat, goalLng};
+        } else if (goalRoute != null) {
+            predicted = goalRoute.pointAt(goalAlong + speed * since);
+            bearingNow = (float) predicted[2];
+        } else {
+            predicted = Geo.offset(goalLat, goalLng, goalBearing, speed * since);
+        }
         float pos = ease(dt, POS_S);
         curLat += (predicted[0] - curLat) * pos;
         curLng += (predicted[1] - curLng) * pos;
-        curBearing = turn(curBearing, goalBearing, ease(dt, BEARING_S));
+        curBearing = turn(curBearing, bearingNow, ease(dt, BEARING_S));
         // closer in quickly when slowing down, further out gently when speeding up
         curZoom += (goalZoom - curZoom) * ease(dt, goalZoom > curZoom ? ZOOM_IN_S : ZOOM_OUT_S);
         int h = mapView.getHeight();

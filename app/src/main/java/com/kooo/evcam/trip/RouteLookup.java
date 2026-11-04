@@ -12,21 +12,27 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
+import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 
 /**
- * The two things that need the internet: road km from here to there (OSRM's public server on
- * OpenStreetMap data; free, no key, fair use only, which one car asking every few minutes is) and
+ * The two things that need the internet: the road from here to there (Google's Routes API when a
+ * key is set, else OSRM's public server on OpenStreetMap data; free, no key, fair use only, which
+ * one car asking every few minutes is) and
  * following a short share link to the long one with the coordinates in it. Blocking: call off the
  * main thread.
  */
 final class RouteLookup {
 
     private static final String TAG = "RouteLookup";
-    private static final String OSRM = "https://router.project-osrm.org/route/v1/driving/%.6f,%.6f;%.6f,%.6f?overview=false";
+    private static final String OSRM = "https://router.project-osrm.org/route/v1/driving/%.6f,%.6f;%.6f,%.6f"
+            + "?overview=full&geometries=polyline";
+    private static final String GOOGLE_ROUTES = "https://routes.googleapis.com/directions/v2:computeRoutes";
+    private static final MediaType JSON = MediaType.get("application/json; charset=utf-8");
     private static final int MAX_HOPS = 6;
     private static final int MAX_BODY = 512 * 1024;
     private static final String NUM = "(-?\\d{1,3}\\.\\d+)";
@@ -43,8 +49,83 @@ final class RouteLookup {
             .build();
     private final String agent = "7xDash/" + BuildConfig.VERSION_NAME;
 
-    /** Road km, or null when there is no answer (no internet, no road). */
-    Double drivingKm(double fromLat, double fromLng, double toLat, double toLng) {
+    /** A route answer: the line of the road and who drew it. */
+    static final class Route {
+        final RouteLine line;
+        /** True when Google drew it (the same route Google Maps on the phone takes). */
+        final boolean google;
+
+        Route(RouteLine line, boolean google) {
+            this.line = line;
+            this.google = google;
+        }
+    }
+
+    /**
+     * The driving route from here to there with its line, or null when there is no answer (no
+     * internet, no road). With a Google Maps API key it asks Google's Routes API, traffic aware and
+     * starting in the direction the car is heading, so the road and the km are the ones Google Maps
+     * shows; without a key, or when Google does not answer, OSRM.
+     *
+     * @param heading degrees clockwise from north the car is driving, or null when not known
+     */
+    Route drivingRoute(double fromLat, double fromLng, Float heading, double toLat, double toLng, String googleKey) {
+        if (googleKey != null && !googleKey.trim().isEmpty()) {
+            RouteLine line = google(fromLat, fromLng, heading, toLat, toLng, googleKey.trim());
+            if (line != null) {
+                return new Route(line, true);
+            }
+        }
+        RouteLine line = osrm(fromLat, fromLng, toLat, toLng);
+        return line == null ? null : new Route(line, false);
+    }
+
+    private RouteLine google(double fromLat, double fromLng, Float heading, double toLat, double toLng, String key) {
+        try {
+            JSONObject origin = new JSONObject().put("location", new JSONObject()
+                    .put("latLng", new JSONObject().put("latitude", fromLat).put("longitude", fromLng)));
+            if (heading != null) {
+                origin.getJSONObject("location").put("heading", Math.round(((heading % 360) + 360) % 360) % 360);
+            }
+            JSONObject request = new JSONObject()
+                    .put("origin", origin)
+                    .put("destination", new JSONObject().put("location", new JSONObject()
+                            .put("latLng", new JSONObject().put("latitude", toLat).put("longitude", toLng))))
+                    .put("travelMode", "DRIVE")
+                    .put("routingPreference", "TRAFFIC_AWARE")
+                    .put("polylineQuality", "HIGH_QUALITY")
+                    .put("polylineEncoding", "ENCODED_POLYLINE");
+            Request http = new Request.Builder()
+                    .url(GOOGLE_ROUTES)
+                    .header("User-Agent", agent)
+                    .header("X-Goog-Api-Key", key)
+                    .header("X-Goog-FieldMask", "routes.distanceMeters,routes.polyline.encodedPolyline")
+                    .post(RequestBody.create(request.toString(), JSON))
+                    .build();
+            try (Response r = client.newCall(http).execute()) {
+                ResponseBody body = r.body();
+                String text = body == null ? "" : body.string();
+                if (!r.isSuccessful()) {
+                    AppLog.w(TAG, "google route: HTTP " + r.code() + " " + errorOf(text));
+                    return null;
+                }
+                JSONArray routes = new JSONObject(text).optJSONArray("routes");
+                if (routes == null || routes.length() == 0) {
+                    AppLog.w(TAG, "google route: no route");
+                    return null;
+                }
+                JSONObject route = routes.getJSONObject(0);
+                JSONObject polyline = route.optJSONObject("polyline");
+                return RouteLine.decode(polyline == null ? null : polyline.optString("encodedPolyline"),
+                        route.optDouble("distanceMeters", 0));
+            }
+        } catch (Exception e) {
+            AppLog.w(TAG, "google route failed: " + e.getMessage());
+            return null;
+        }
+    }
+
+    private RouteLine osrm(double fromLat, double fromLng, double toLat, double toLng) {
         String url = String.format(Locale.US, OSRM, fromLng, fromLat, toLng, toLat);
         try (Response r = client.newCall(new Request.Builder().url(url).header("User-Agent", agent).build()).execute()) {
             ResponseBody body = r.body();
@@ -58,10 +139,21 @@ final class RouteLookup {
                 AppLog.w(TAG, "route: " + json.optString("code"));
                 return null;
             }
-            return routes.getJSONObject(0).getDouble("distance") / 1000.0;
+            JSONObject route = routes.getJSONObject(0);
+            return RouteLine.decode(route.optString("geometry"), route.optDouble("distance", 0));
         } catch (Exception e) {
             AppLog.w(TAG, "route failed: " + e.getMessage());
             return null;
+        }
+    }
+
+    /** Google's error message, short, for the log (never the key). */
+    private static String errorOf(String body) {
+        try {
+            String m = new JSONObject(body).getJSONObject("error").optString("message");
+            return m.length() > 160 ? m.substring(0, 160) : m;
+        } catch (Exception e) {
+            return "";
         }
     }
 

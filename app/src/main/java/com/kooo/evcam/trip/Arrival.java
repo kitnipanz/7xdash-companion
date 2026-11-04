@@ -56,23 +56,13 @@ public final class Arrival {
         return 2 * r * Math.asin(Math.min(1.0, Math.sqrt(a)));
     }
 
-    /**
-     * Road km still to go. After a route answer: its km less what the odometer has counted since,
-     * but never less than the straight line; without an odometer, the route's road / straight ratio
-     * applied to the straight line now. Before any route answer: straight line x {@link #ROAD_FACTOR}.
-     *
-     * @param routeKm        road km at the last route answer, or null if none yet
-     * @param straightAtRoute straight-line km at the last route answer
-     * @param drivenSince    odometer km since the last route answer, or null without an odometer
-     */
-    public static double kmLeft(double straightNow, Double routeKm, double straightAtRoute, Double drivenSince) {
-        if (routeKm == null) {
-            return straightNow * ROAD_FACTOR;
-        }
-        if (drivenSince != null) {
-            return Math.max(straightNow, routeKm - Math.max(0, drivenSince));
-        }
-        double ratio = straightAtRoute > 0.05 ? Math.max(1.0, routeKm / straightAtRoute) : ROAD_FACTOR;
-        return straightNow * ratio;
+    /** Initial bearing from the first point to the second, degrees clockwise from north, 0..360. */
+    public static double bearing(double lat1, double lng1, double lat2, double lng2) {
+        double p1 = Math.toRadians(lat1);
+        double p2 = Math.toRadians(lat2);
+        double dl = Math.toRadians(lng2 - lng1);
+        double y = Math.sin(dl) * Math.cos(p2);
+        double x = Math.cos(p1) * Math.sin(p2) - Math.sin(p1) * Math.cos(p2) * Math.cos(dl);
+        return (Math.toDegrees(Math.atan2(y, x)) + 360.0) % 360.0;
     }
 }

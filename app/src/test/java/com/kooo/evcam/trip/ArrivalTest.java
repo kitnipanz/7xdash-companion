@@ -37,14 +37,10 @@ public class ArrivalTest {
     }
 
     @Test
-    public void kmLeft() {
-        // no route yet: straight x 1.3
-        assertEquals(130, Arrival.kmLeft(100, null, 0, null), 0.01);
-        // route 150 km, 20 km driven since
-        assertEquals(130, Arrival.kmLeft(95, 150.0, 110, 20.0), 0.01);
-        // never less than the straight line
-        assertEquals(90, Arrival.kmLeft(90, 100.0, 95, 50.0), 0.01);
-        // no odometer: keep the route's road / straight ratio
-        assertEquals(75, Arrival.kmLeft(50, 150.0, 100, null), 0.01);
+    public void bearing() {
+        assertEquals(0, Arrival.bearing(13.0, 100.0, 13.1, 100.0), 0.1);
+        assertEquals(90, Arrival.bearing(13.0, 100.0, 13.0, 100.1), 0.1);
+        assertEquals(180, Arrival.bearing(13.1, 100.0, 13.0, 100.0), 0.1);
+        assertEquals(270, Arrival.bearing(13.0, 100.1, 13.0, 100.0), 0.1);
     }
 }

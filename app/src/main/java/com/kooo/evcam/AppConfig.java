@@ -2636,6 +2636,20 @@ public class AppConfig {
         prefs.edit().putString(KEY_ARRIVAL_DESTINATION, value == null ? "" : value).apply();
     }
 
+    private static final String KEY_GOOGLE_MAPS_KEY = "arrival_google_maps_key";
+
+    /**
+     * Google Maps Platform API key (Routes API) for battery at arrival, or "" for none: with one the
+     * route and km are Google's, the same as Google Maps on the phone; without, OSRM's.
+     */
+    public String getGoogleMapsKey() {
+        return prefs.getString(KEY_GOOGLE_MAPS_KEY, "");
+    }
+
+    public void setGoogleMapsKey(String key) {
+        prefs.edit().putString(KEY_GOOGLE_MAPS_KEY, key == null ? "" : key.trim()).apply();
+    }
+
     // ==================== 全屏遮罩 ====================
 
     public boolean isDimOverlayEnabled() {

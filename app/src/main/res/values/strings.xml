@@ -1713,6 +1713,10 @@ Then reopen this app.</string>
     <string name="arrival_none_hint">In Google Maps or Apple Maps on your iPhone: open the place → Share → Send to 7xDash</string>
     <string name="arrival_unnamed">Shared place</string>
     <string name="arrival_clear">Clear destination</string>
+    <string name="arrival_google_key_hint">Google Maps API key (optional)</string>
+    <string name="arrival_route_hint">Km to go are counted along the road, as Google Maps does. With a Google Maps API key (Routes API) the road is the one Google Maps picks.</string>
+    <string name="arrival_route_google">Route: Google (same as Google Maps)</string>
+    <string name="arrival_route_osm">Route: OpenStreetMap. Add a Google Maps API key to follow Google Maps exactly.</string>
     <string name="arrival_off">Turn on the switch to receive places from your iPhone</string>
     <string name="arrival_off_setup">Turn the switch on to show the setup code</string>
     <string name="arrival_need_beta">Turn on Settings → Interface → Beta features first</string>

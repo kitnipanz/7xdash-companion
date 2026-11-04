@@ -4,7 +4,10 @@ import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -42,6 +45,7 @@ public class ArrivalActivity extends AppCompatActivity {
     private View clear;
     private ImageView qr;
     private TextView address;
+    private TextView routeSource;
     private String shownUrl;
 
     @Override
@@ -56,6 +60,23 @@ public class ArrivalActivity extends AppCompatActivity {
         clear = findViewById(R.id.arrival_clear);
         qr = findViewById(R.id.arrival_qr);
         address = findViewById(R.id.arrival_address);
+        routeSource = findViewById(R.id.arrival_route_source);
+        EditText googleKey = findViewById(R.id.arrival_google_key);
+        googleKey.setText(config.getGoogleMapsKey());
+        googleKey.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence t, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence t, int start, int before, int count) {
+            }
+
+            @Override
+            public void afterTextChanged(Editable e) {
+                config.setGoogleMapsKey(e.toString());
+            }
+        });
         findViewById(R.id.arrival_close).setOnClickListener(v -> finish());
         toggle.setChecked(config.isArrivalEnabled());
         toggle.setOnCheckedChangeListener((b, on) -> {
@@ -86,6 +107,8 @@ public class ArrivalActivity extends AppCompatActivity {
         Trip.Status s = Trip.get().status();
         percent.setTextColor(ContextCompat.getColor(this, R.color.text_primary));
         clear.setVisibility(s.destination == null ? View.GONE : View.VISIBLE);
+        routeSource.setText(s.destination == null || s.roughKm ? R.string.arrival_route_hint
+                : s.google ? R.string.arrival_route_google : R.string.arrival_route_osm);
         if (!config.isBetaFeaturesEnabled()) {
             place.setText(R.string.arrival_need_beta);
             percent.setText("—");

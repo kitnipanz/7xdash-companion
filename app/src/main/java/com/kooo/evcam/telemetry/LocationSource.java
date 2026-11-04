@@ -27,6 +27,13 @@ final class LocationSource implements LocationListener {
     private static final String TAG = "LocationSource";
     /** 多久要一次；信息条 5 次/秒重画，定位半秒一次足够。 */
     private static final long MIN_INTERVAL_MS = 500L;
+    /** GPS 定位在这么久之内算新鲜：这期间来的网络定位不用。 */
+    private static final long GPS_FRESH_MS = 10_000L;
+    /** GPS 停了以后，误差比这还大（米）的网络定位也不用（隧道里宁可停在最后的 GPS 位置）。 */
+    private static final float COARSE_M = 500f;
+
+    /** 最近一次 GPS 定位的时间（elapsedRealtime），0 = 还没有过。 */
+    private volatile long lastGpsAt;
 
     private final Telemetry telemetry;
     private LocationManager manager;
@@ -113,6 +120,18 @@ final class LocationSource implements LocationListener {
 
     @Override
     public void onLocationChanged(@NonNull Location location) {
+        // GPS 和网络定位都订阅了：网络定位（基站/Wi-Fi）差几百米，GPS 还新鲜时不能让它把位置拉走
+        long now = android.os.SystemClock.elapsedRealtime();
+        boolean gps = LocationManager.GPS_PROVIDER.equals(location.getProvider());
+        if (gps) {
+            // 用定位自己的时间：启动时的 getLastKnownLocation 可能是几小时前的
+            long at = location.getElapsedRealtimeNanos() / 1_000_000L;
+            lastGpsAt = at > 0 && at <= now ? at : now;
+        } else if (lastGpsAt != 0 && now - lastGpsAt < GPS_FRESH_MS) {
+            return;
+        } else if (location.hasAccuracy() && location.getAccuracy() > COARSE_M && lastGpsAt != 0) {
+            return;
+        }
         final double lat = location.getLatitude();
         final double lon = location.getLongitude();
         final boolean hasSpeed = location.hasSpeed() && !telemetry.hasCarSpeed();

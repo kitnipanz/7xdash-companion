@@ -26,10 +26,18 @@ public final class Trip implements Telemetry.Listener {
 
     private static final String TAG = "Trip";
     private static final String TELEMETRY_USER = "arrival";
-    /** Ask for a fresh route this often while moving... */
-    private static final long REROUTE_MS = 3 * 60_000L;
-    /** ...and only after moving this far since the last one. */
-    private static final double REROUTE_MOVED_KM = 1.0;
+    /** Ask for a fresh route this often anyway (traffic changes the road Google picks). */
+    private static final long REROUTE_MS = 5 * 60_000L;
+    /** Further than this from the route line (metres) and the car is off it... */
+    private static final double OFF_ROUTE_M = 60.0;
+    /** ...for this many position fixes in a row: it took another road, ask for a new route... */
+    private static final int OFF_ROUTE_FIXES = 3;
+    /** ...but not sooner than this after the last ask. */
+    private static final long REROUTE_MIN_MS = 15_000L;
+    /** After an ask that got no answer, try again after this. */
+    private static final long RETRY_MS = 30_000L;
+    /** Move this far (metres) before taking the direction of travel from two positions. */
+    private static final double HEADING_MOVED_M = 15.0;
     /** Inside this, we are there: the destination clears itself. */
     private static final double ARRIVED_KM = 0.25;
     /** A destination older than this is from another day: dropped on start. */
@@ -50,11 +58,14 @@ public final class Trip implements Telemetry.Listener {
         public final Arrival.Estimate estimate;
         /** True until the route service has answered: km left is straight line x 1.3. */
         public final boolean roughKm;
+        /** True when the route is Google's (the same road and km Google Maps shows). */
+        public final boolean google;
 
-        Status(DestinationLink.Place destination, Arrival.Estimate estimate, boolean roughKm) {
+        Status(DestinationLink.Place destination, Arrival.Estimate estimate, boolean roughKm, boolean google) {
             this.destination = destination;
             this.estimate = estimate;
             this.roughKm = roughKm;
+            this.google = google;
         }
     }
 
@@ -78,12 +89,22 @@ public final class Trip implements Telemetry.Listener {
     private DestinationServer server;
     private boolean listening;
     private DestinationLink.Place destination;
-    private Double routeKm;
-    private double straightAtRoute;
-    private Float odometerAtRoute;
-    private double latAtRoute;
-    private double lngAtRoute;
+    /** The road to the destination; null until the route service has answered. */
+    private RouteLine line;
+    private boolean lineFromGoogle;
+    /** The segment of the line the car was last matched to, -1 for none yet. */
+    private int lineSegment = -1;
+    /** Position fixes in a row that were off the line. */
+    private int offRoute;
     private long routedAt;
+    /** When to ask for a route next even without leaving it (0 = now). */
+    private long nextRouteAt;
+    private double headingLat = Double.NaN;
+    private double headingLng = Double.NaN;
+    /** Direction of travel, degrees from north; null until the car has moved. */
+    private Float heading;
+    private double lastLat = Double.NaN;
+    private double lastLng = Double.NaN;
     private boolean routing;
     private Arrival.Estimate estimate;
 
@@ -185,8 +206,7 @@ public final class Trip implements Telemetry.Listener {
             context = app;
             acquire = destination == null;
             destination = p;
-            routeKm = null;
-            routedAt = 0;
+            forgetRoute();
             estimate = null;
             if (!listening) {
                 listening = true;
@@ -215,7 +235,7 @@ public final class Trip implements Telemetry.Listener {
         synchronized (lock) {
             had = destination != null;
             destination = null;
-            routeKm = null;
+            forgetRoute();
             estimate = null;
             context = app;
             if (listening) {
@@ -235,9 +255,19 @@ public final class Trip implements Telemetry.Listener {
         }
     }
 
+    /** Under {@link #lock}. */
+    private void forgetRoute() {
+        line = null;
+        lineFromGoogle = false;
+        lineSegment = -1;
+        offRoute = 0;
+        routedAt = 0;
+        nextRouteAt = 0;
+    }
+
     public Status status() {
         synchronized (lock) {
-            return new Status(destination, estimate, routeKm == null);
+            return new Status(destination, estimate, line == null, line != null && lineFromGoogle);
         }
     }
 
@@ -255,23 +285,54 @@ public final class Trip implements Telemetry.Listener {
         double fromLat = s.latitude;
         double fromLng = s.longitude;
         DestinationLink.Place to;
+        Float headingNow;
         synchronized (lock) {
             to = destination;
             if (to == null) {
                 return;
             }
+            // direction of travel from the last two positions far enough apart (Google starts the
+            // route in that direction, so it does not send the car into a U-turn)
+            if (Double.isNaN(headingLat)
+                    || RouteLine.metres(headingLat, headingLng, fromLat, fromLng) >= HEADING_MOVED_M) {
+                if (!Double.isNaN(headingLat)) {
+                    heading = (float) Arrival.bearing(headingLat, headingLng, fromLat, fromLng);
+                }
+                headingLat = fromLat;
+                headingLng = fromLng;
+            }
+            headingNow = heading;
+            boolean moved = fromLat != lastLat || fromLng != lastLng;
+            lastLat = fromLat;
+            lastLng = fromLng;
             double straight = Arrival.straightKm(fromLat, fromLng, to.lat, to.lng);
             if (straight < ARRIVED_KM) {
                 arrived = true;
             } else {
-                Double driven = routeKm == null || odometerAtRoute == null || s.odometerKm == null
-                        ? null : (double) (s.odometerKm - odometerAtRoute);
-                double left = Arrival.kmLeft(straight, routeKm, straightAtRoute, driven);
+                double left;
+                if (line == null) {
+                    left = straight * Arrival.ROAD_FACTOR;
+                } else {
+                    // Google Maps' way: snap onto the route line and count what is left along it
+                    RouteLine.Fix fix = line.locate(fromLat, fromLng, lineSegment);
+                    if (fix.offRouteM <= OFF_ROUTE_M) {
+                        lineSegment = fix.segment;
+                        offRoute = 0;
+                        left = fix.remainingM / 1000.0;
+                    } else {
+                        // count each new fix only: the tick repeats the same one every 5 s
+                        if (moved) {
+                            offRoute++;
+                        }
+                        // off the line until the new route comes: at least the way back to it
+                        left = Math.max(straight, (fix.remainingM + fix.offRouteM) / 1000.0);
+                    }
+                }
                 estimate = Arrival.estimate(battery, range, left);
                 long now = System.currentTimeMillis();
-                boolean due = routedAt == 0 || (now - routedAt > REROUTE_MS
-                        // NaN (last ask failed) counts as moved
-                        && !(Arrival.straightKm(latAtRoute, lngAtRoute, fromLat, fromLng) <= REROUTE_MOVED_KM));
+                boolean due = line == null ? now >= nextRouteAt
+                        : now >= nextRouteAt
+                        || (offRoute >= OFF_ROUTE_FIXES && now - routedAt >= REROUTE_MIN_MS);
                 if (due && !routing) {
                     routing = true;
                     routedAt = now;
@@ -285,32 +346,41 @@ public final class Trip implements Telemetry.Listener {
             return;
         }
         if (reroute) {
-            Float odometer = s.odometerKm;
-            worker.execute(() -> askRoute(fromLat, fromLng, to, odometer));
+            String key;
+            Context context;
+            synchronized (lock) {
+                context = app;
+            }
+            key = context == null ? null : new AppConfig(context).getGoogleMapsKey();
+            worker.execute(() -> askRoute(fromLat, fromLng, headingNow, to, key));
         }
     }
 
-    private void askRoute(double fromLat, double fromLng, DestinationLink.Place to, Float odometer) {
-        Double km = route.drivingKm(fromLat, fromLng, to.lat, to.lng);
+    private void askRoute(double fromLat, double fromLng, Float heading, DestinationLink.Place to, String key) {
+        RouteLookup.Route r = route.drivingRoute(fromLat, fromLng, heading, to.lat, to.lng, key);
+        boolean wasOff;
         synchronized (lock) {
             routing = false;
             if (destination != to) {
                 return;
             }
-            if (km != null) {
-                routeKm = km;
-                straightAtRoute = Arrival.straightKm(fromLat, fromLng, to.lat, to.lng);
-                odometerAtRoute = odometer;
-                latAtRoute = fromLat;
-                lngAtRoute = fromLng;
+            wasOff = offRoute >= OFF_ROUTE_FIXES;
+            long now = System.currentTimeMillis();
+            if (r != null) {
+                line = r.line;
+                lineFromGoogle = r.google;
+                lineSegment = -1;
+                offRoute = 0;
+                nextRouteAt = now + REROUTE_MS;
             } else {
-                // no answer: try again sooner than a full REROUTE_MS from a place we have not moved from
-                routedAt = System.currentTimeMillis() - REROUTE_MS + 30_000L;
-                latAtRoute = Double.NaN;
+                // no answer: keep the old line (if any) and try again soon
+                nextRouteAt = now + RETRY_MS;
             }
         }
-        if (km != null) {
-            AppLog.i(TAG, String.format(java.util.Locale.US, "route: %.1f km", km));
+        if (r != null) {
+            AppLog.i(TAG, String.format(java.util.Locale.US, "route%s: %.1f km, %d points (%s)",
+                    wasOff ? " (left the old one)" : "", r.line.totalM / 1000.0, r.line.size(),
+                    r.google ? "Google" : "OSRM"));
         }
         onReadingsChanged(null);
     }

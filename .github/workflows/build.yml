@@ -7,6 +7,11 @@ on:
   pull_request:
     branches: [main, develop]
   workflow_dispatch:
+    inputs:
+      release:
+        description: 'Publish a release for this commit (creates the v<versionName> tag)'
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -88,7 +93,7 @@ jobs:
       # Release 正文由 CHANGELOG.md 里对应版本的小节自动生成，
       # 这样每个版本的说明就是它自己的改动，而不是每次都一样的模板。
       - name: Build release notes
-        if: startsWith(github.ref, 'refs/tags/v')
+        if: startsWith(github.ref, 'refs/tags/v') || inputs.release
         env:
           PYTHONIOENCODING: utf-8
         run: |
@@ -98,10 +103,13 @@ jobs:
           cat RELEASE_NOTES.md
 
       - name: Publish release
-        if: startsWith(github.ref, 'refs/tags/v')
+        if: startsWith(github.ref, 'refs/tags/v') || inputs.release
         uses: softprops/action-gh-release@v2
         with:
           files: ${{ steps.apk.outputs.path }}
+          # 手动运行（release 打勾）时没有 tag：按 versionName 在这个提交上建一个
+          tag_name: ${{ startsWith(github.ref, 'refs/tags/v') && github.ref_name || format('v{0}', steps.apk.outputs.version) }}
+          target_commitish: ${{ github.sha }}
           # -alpha / -beta 是测试版（GitHub 上标成 Pre-release）。车机「检查更新」默认也收 beta。
           prerelease: ${{ contains(steps.apk.outputs.version, '-alpha') || contains(steps.apk.outputs.version, '-beta') }}
           # 检查更新读的是公开 Release。草稿对 api.github.com 不可见，车机永远查不到。

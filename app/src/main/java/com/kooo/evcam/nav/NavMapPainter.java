@@ -52,11 +52,13 @@ final class NavMapPainter {
     private static final String COLOR = "color";
     private static final String ROUTE_INDEX = "route";
     private static final String OTHERS_LINE = "nav-others-line";
+    /** The map style's source of incidents: icons, and lines along the jammed roads. */
+    private static final String INCIDENTS = "vectorTilesIncidents";
     /** While guiding, the car sits this far down the map, centred left to right. */
     static final float CAR_AT = 0.78f;
     private static final float TILT = 50f;
     /** Zoom when crawling and at motorway speed; between them it eases off, staying close at low speeds. */
-    private static final float ZOOM_SLOW = 22.0f;
+    private static final float ZOOM_SLOW = 23.0f;
     private static final float ZOOM_FAST = 19.0f;
     /** Up to this speed the map stays at its closest. */
     private static final float SLOW_KMH = 25f;
@@ -90,6 +92,9 @@ final class NavMapPainter {
     private GeoJsonSource othersSource;
     private GeoJsonSource pinSource;
     private Navigator.Snapshot last;
+    /** The style's jam lines stay on the road after the car has passed: gone while guiding, the route shows the traffic. */
+    private final List<LineLayer> incidentLines = new ArrayList<>();
+    private boolean incidentLinesShown = true;
     /** The stretch from the car to the next point of the line, apart so it moves cheaply every frame. */
     private List<Point> head;
     private String headColor = ROUTE_BLUE;
@@ -169,6 +174,13 @@ final class NavMapPainter {
                 PropertyFactory.iconAnchor(Property.ICON_ANCHOR_BOTTOM),
                 PropertyFactory.iconAllowOverlap(true),
                 PropertyFactory.iconIgnorePlacement(true)));
+        incidentLines.clear();
+        for (org.maplibre.android.style.layers.Layer layer : loaded.getLayers()) {
+            if (layer instanceof LineLayer && INCIDENTS.equals(((LineLayer) layer).getSourceId())) {
+                incidentLines.add((LineLayer) layer);
+            }
+        }
+        incidentLinesShown = true;
         shownRoute = null;
         shownPin = null;
         shownChoices = new ArrayList<>();
@@ -237,6 +249,12 @@ final class NavMapPainter {
             return;
         }
         boolean guiding = s.phase == Navigator.Phase.GUIDING;
+        if (incidentLinesShown == guiding) {
+            incidentLinesShown = !guiding;
+            for (LineLayer layer : incidentLines) {
+                layer.setProperties(PropertyFactory.visibility(guiding ? Property.NONE : Property.VISIBLE));
+            }
+        }
         if (s.route != shownRoute) {
             shownRoute = s.route;
             clearLine();

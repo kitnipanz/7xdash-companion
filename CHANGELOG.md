@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.7.11-beta] - 2026-11-04
+
+Test build from the feature/tomtom-map branch.
+
+### Navigation (beta)
+- **The route sits on the road.** Routes now come from the same TomTom map as the tiles; before, the line ran metres beside the drawn road.
+- **No red left behind the car.** TomTom's jam lines along the roads are hidden while guiding, so the route alone shows the traffic and clears as you drive. They still show before you start, and incident icons stay on.
+- **Guiding goes on with Navigation closed.** The position keeps updating on any screen, which a quiet notification shows during a trip; before, the map and the HUD could freeze.
+- **Closer at low speed.** The map is twice as close up to 25 km/h.
+- **HUD text fits.** The turn card shrinks its text so the arrival time is never cut off.
+
 ## [1.7.10-beta] - 2026-11-04
 
 Test build from the feature/tomtom-map branch.

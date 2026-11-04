@@ -48,6 +48,7 @@ public enum Maneuver {
                 return DEPART;
             case "KEEP_LEFT":
             case "BEAR_LEFT":
+            case "SLIGHT_LEFT":
                 return TURN_SLIGHT_LEFT;
             case "TURN_LEFT":
                 return TURN_LEFT;
@@ -55,6 +56,7 @@ public enum Maneuver {
                 return TURN_SHARP_LEFT;
             case "KEEP_RIGHT":
             case "BEAR_RIGHT":
+            case "SLIGHT_RIGHT":
                 return TURN_SLIGHT_RIGHT;
             case "TURN_RIGHT":
                 return TURN_RIGHT;
@@ -67,11 +69,15 @@ public enum Maneuver {
             case "ENTER_FREEWAY":
             case "ENTER_HIGHWAY":
             case "ENTRANCE_RAMP":
+            case "MERGE_LEFT_LANE":
+            case "MERGE_RIGHT_LANE":
                 return MERGE;
             case "MOTORWAY_EXIT_LEFT":
+            case "EXIT_MOTORWAY_LEFT":
                 return RAMP_LEFT;
             case "TAKE_EXIT":
             case "MOTORWAY_EXIT_RIGHT":
+            case "EXIT_MOTORWAY_RIGHT":
                 return RAMP_RIGHT;
             case "TAKE_FERRY":
                 return FERRY;

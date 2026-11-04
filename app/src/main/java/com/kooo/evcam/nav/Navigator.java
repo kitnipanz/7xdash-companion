@@ -167,6 +167,8 @@ public final class Navigator {
     private boolean hudPlacing;
     /** Navigation screens open (the full screen, the floating window): GPS on for the map and the search, even with nothing planned. */
     private int attached;
+    /** {@link NavGuideService} is on: there is a trip. */
+    private boolean guideService;
 
     private Navigator() {
     }
@@ -278,6 +280,14 @@ public final class Navigator {
     /** Telemetry held and the tick going while {@link #running}, released and stopped when not. */
     private void keepRunning() {
         main.removeCallbacks(tick);
+        if (app != null && (phase != Phase.IDLE) != guideService) {
+            guideService = !guideService;
+            if (guideService) {
+                NavGuideService.start(app);
+            } else {
+                NavGuideService.stop(app);
+            }
+        }
         if (running()) {
             if (!telemetryHeld) {
                 telemetryHeld = true;

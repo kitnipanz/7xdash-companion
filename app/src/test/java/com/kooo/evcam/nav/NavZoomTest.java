@@ -10,11 +10,11 @@ public class NavZoomTest {
 
     @Test
     public void slowIsCloseFastIsFar() {
-        assertEquals(22.0f, NavMapPainter.zoomFor(0f, 1_500.0), 1e-4);
-        assertEquals(22.0f, NavMapPainter.zoomFor(10f, 1_500.0), 1e-4);
+        assertEquals(23.0f, NavMapPainter.zoomFor(0f, 1_500.0), 1e-4);
+        assertEquals(23.0f, NavMapPainter.zoomFor(10f, 1_500.0), 1e-4);
         // slow: the closest it goes, all the way up to 25 km/h
-        assertEquals(22.0f, NavMapPainter.zoomFor(20f, 1_500.0), 1e-4);
-        assertEquals(22.0f, NavMapPainter.zoomFor(25f, 1_500.0), 1e-4);
+        assertEquals(23.0f, NavMapPainter.zoomFor(20f, 1_500.0), 1e-4);
+        assertEquals(23.0f, NavMapPainter.zoomFor(25f, 1_500.0), 1e-4);
         assertEquals(19.0f, NavMapPainter.zoomFor(130f, 5_000.0), 1e-4);
         float last = 99f;
         for (float kmh = 0; kmh <= 120; kmh += 10) {
@@ -38,7 +38,7 @@ public class NavZoomTest {
     @Test
     public void closeInBeforeATurnEvenWhenFast() {
         assertEquals(20.0f, NavMapPainter.zoomFor(90f, 200.0), 1e-4);
-        assertEquals(22.0f, NavMapPainter.zoomFor(5f, 200.0), 1e-4);
+        assertEquals(23.0f, NavMapPainter.zoomFor(5f, 200.0), 1e-4);
     }
 
     @Test
@@ -110,5 +110,13 @@ public class NavZoomTest {
         assertEquals(312, NavFloatSettings.place(100, 200, 460, 2000, 12));
         // none on either side: inside the screen
         assertEquals(2000 - 460 - 12, NavFloatSettings.place(300, 1700, 460, 2000, 12));
+    }
+
+    @Test
+    public void hudCardTextShrinksOnlyWhenItWouldOverflow() {
+        assertEquals(1f, HudTurnCard.fitScale(90, 100), 1e-6);
+        assertEquals(1f, HudTurnCard.fitScale(100, 100), 1e-6);
+        assertTrue(HudTurnCard.fitScale(120, 100) * 120 < 100);
+        assertTrue(HudTurnCard.fitScale(120, 100) > 0.8f);
     }
 }

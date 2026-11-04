@@ -173,13 +173,16 @@ public class NavCoreTest {
 
     @Test
     public void readsARoutesAnswer() throws Exception {
-        String body = "{\"routes\":[{\"summary\":{\"travelTimeInSeconds\":300,\"noTrafficTravelTimeInSeconds\":200},"
+        String body = "{\"routes\":[{\"summary\":{\"travelTimeInSeconds\":300,\"trafficDelayInSeconds\":100},"
                 + "\"legs\":[{\"points\":[{\"latitude\":13.70,\"longitude\":100.50},{\"latitude\":13.71,\"longitude\":100.50},"
                 + "{\"latitude\":13.72,\"longitude\":100.50},{\"latitude\":13.72,\"longitude\":100.51}]}],"
                 + "\"guidance\":{\"instructions\":["
-                + "{\"pointIndex\":0,\"routeOffsetInMeters\":0,\"travelTimeInSeconds\":0,\"maneuver\":\"DEPART\",\"message\":\"Head north on Soi 1\"},"
-                + "{\"pointIndex\":2,\"routeOffsetInMeters\":2200,\"travelTimeInSeconds\":200,\"maneuver\":\"TURN_LEFT\",\"message\":\"Turn left onto Rama IV\"},"
-                + "{\"pointIndex\":3,\"routeOffsetInMeters\":3200,\"travelTimeInSeconds\":300,\"maneuver\":\"ARRIVE\",\"message\":\"You have arrived\"}"
+                + "{\"maneuverPoint\":{\"latitude\":13.70,\"longitude\":100.50},\"routeOffsetInMeters\":0,\"maneuver\":\"DEPART\",\"instructionMessage\":\"Head north on Soi 1\","
+                + "\"routePath\":[{\"travelTimeInSeconds\":0}]},"
+                + "{\"maneuverPoint\":{\"latitude\":13.72,\"longitude\":100.50},\"routeOffsetInMeters\":2200,\"maneuver\":\"TURN_LEFT\",\"instructionMessage\":\"Turn left onto Rama IV\","
+                + "\"routePath\":[{\"travelTimeInSeconds\":200}]},"
+                + "{\"maneuverPoint\":{\"latitude\":13.72,\"longitude\":100.51},\"routeOffsetInMeters\":3200,\"maneuver\":\"ARRIVE_RIGHT\",\"instructionMessage\":\"You have arrived\","
+                + "\"routePath\":[{\"travelTimeInSeconds\":300}]}"
                 + "]}}]}";
         NavRoute r = TomTomJson.route(body);
         assertNotNull(r);
@@ -240,7 +243,9 @@ public class NavCoreTest {
         assertEquals(Maneuver.TURN_SHARP_LEFT, Maneuver.ofTomTom("SHARP_LEFT"));
         assertEquals(Maneuver.TURN_SLIGHT_RIGHT, Maneuver.ofTomTom("KEEP_RIGHT"));
         assertEquals(Maneuver.UTURN_RIGHT, Maneuver.ofTomTom("MAKE_UTURN"));
-        assertEquals(Maneuver.RAMP_LEFT, Maneuver.ofTomTom("MOTORWAY_EXIT_LEFT"));
+        assertEquals(Maneuver.RAMP_LEFT, Maneuver.ofTomTom("EXIT_MOTORWAY_LEFT"));
+        assertEquals(Maneuver.MERGE, Maneuver.ofTomTom("MERGE_LEFT_LANE"));
+        assertEquals(Maneuver.TURN_SLIGHT_RIGHT, Maneuver.ofTomTom("SLIGHT_RIGHT"));
         assertEquals(Maneuver.ARRIVE, Maneuver.ofTomTom("ARRIVE_RIGHT"));
         assertEquals(Maneuver.STRAIGHT, Maneuver.ofTomTom("SOMETHING_NEW"));
         assertEquals(Maneuver.STRAIGHT, Maneuver.ofTomTom(null));

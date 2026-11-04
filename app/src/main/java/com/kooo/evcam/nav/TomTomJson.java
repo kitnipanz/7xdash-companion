@@ -13,8 +13,9 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * Writes what we ask TomTom's Routing and Search APIs and reads what they answer. Pure Java plus
- * org.json, see the test.
+ * Writes what we ask TomTom's Orbis Routing and Search APIs and reads what they answer. Routes must
+ * come from Orbis, the same map as the tiles ({@link NavMap}): the older Routing API's line runs
+ * metres beside the drawn roads. Pure Java plus org.json, see the test.
  */
 public final class TomTomJson {
 
@@ -41,9 +42,9 @@ public final class TomTomJson {
     public static String routeUrl(double fromLat, double fromLng, Double heading,
                                   double toLat, double toLng, String language, boolean alternatives) {
         StringBuilder url = new StringBuilder(String.format(Locale.US,
-                "%s/routing/1/calculateRoute/%.6f,%.6f:%.6f,%.6f/json", BASE, fromLat, fromLng, toLat, toLng))
-                .append("?travelMode=car&routeType=fastest&traffic=true&sectionType=traffic")
-                .append("&instructionsType=text&computeTravelTimeFor=all&language=").append(language)
+                "%s/maps/orbis/routing/calculateRoute/%.6f,%.6f:%.6f,%.6f/json", BASE, fromLat, fromLng, toLat, toLng))
+                .append("?apiVersion=2&travelMode=car&routeType=fast&traffic=live&sectionType=traffic")
+                .append("&instructionsType=text&guidanceVersion=2&instructionPhonetics=LHP&language=").append(language)
                 .append("&maxAlternatives=").append(alternatives ? 2 : 0);
         if (heading != null) {
             url.append("&vehicleHeading=").append(((int) Math.round(heading) % 360 + 360) % 360);
@@ -95,7 +96,8 @@ public final class TomTomJson {
         }
         JSONObject summary = r.optJSONObject("summary");
         double seconds = summary == null ? 0 : summary.optDouble("travelTimeInSeconds", 0);
-        double free = summary == null ? 0 : summary.optDouble("noTrafficTravelTimeInSeconds", seconds);
+        double delay = summary == null ? 0 : summary.optDouble("trafficDelayInSeconds", 0);
+        double free = Math.max(0, seconds - delay);
         NavRoute.Builder b = new NavRoute.Builder().duration(seconds, free);
         addTraffic(b, r, pts);
 
@@ -108,6 +110,7 @@ public final class TomTomJson {
         }
         String via = "";
         double longest = 0;
+        int from = 0;
         for (int i = 0; i < steps.length(); i++) {
             JSONObject step = steps.getJSONObject(i);
             Maneuver m = Maneuver.ofTomTom(step.optString("maneuver", null));
@@ -116,22 +119,56 @@ public final class TomTomJson {
                 continue;
             }
             JSONObject next = last ? null : steps.getJSONObject(i + 1);
-            int from = Math.max(0, Math.min(count - 1, step.optInt("pointIndex", 0)));
-            int to = next == null ? count - 1 : Math.max(from, Math.min(count - 1, next.optInt("pointIndex", count - 1)));
+            int to = next == null ? count - 1 : pointOf(next, pts, from);
             double meters = next == null ? 0 : next.optDouble("routeOffsetInMeters", 0) - step.optDouble("routeOffsetInMeters", 0);
-            double time = next == null ? 0 : next.optDouble("travelTimeInSeconds", 0) - step.optDouble("travelTimeInSeconds", 0);
             // a step's own time is without traffic: the route's traffic factor goes on top of it
+            double time = next == null ? 0 : timeAt(next) - timeAt(step);
             time *= seconds > 0 ? free / seconds : 1;
             double[] line = new double[(to - from + 1) * 2];
             System.arraycopy(pts, from * 2, line, 0, line.length);
-            b.step(m, step.optString("message", ""), meters, time, line);
-            String street = step.optString("street", "");
+            b.step(m, step.optString("instructionMessage", ""), meters, time, line);
+            String street = street(step);
             if (meters > longest && !street.isEmpty()) {
                 longest = meters;
                 via = street;
             }
+            from = to;
         }
         return b.label(via, best).build();
+    }
+
+    /** The line's point at an instruction's maneuver, at or after {@code from}. */
+    private static int pointOf(JSONObject step, double[] pts, int from) {
+        JSONObject at = step.optJSONObject("maneuverPoint");
+        if (at == null) {
+            return from;
+        }
+        double lat = at.optDouble("latitude");
+        double lng = at.optDouble("longitude");
+        int best = from;
+        double nearest = Double.MAX_VALUE;
+        for (int i = from; i < pts.length / 2; i++) {
+            double d = Math.abs(pts[2 * i] - lat) + Math.abs(pts[2 * i + 1] - lng);
+            if (d < nearest) {
+                nearest = d;
+                best = i;
+            }
+        }
+        return best;
+    }
+
+    /** Seconds from the start of the route to an instruction, from the first point of its path. */
+    private static double timeAt(JSONObject step) {
+        JSONArray path = step.optJSONArray("routePath");
+        JSONObject first = path == null ? null : path.optJSONObject(0);
+        return first == null ? 0 : first.optDouble("travelTimeInSeconds", 0);
+    }
+
+    /** The road an instruction leads onto. */
+    private static String street(JSONObject step) {
+        JSONObject road = step.optJSONObject("nextRoadInfo");
+        JSONObject name = road == null ? null : road.optJSONObject("streetName");
+        return name == null ? "" : name.optString("text", "");
     }
 
     /** {@code [lat0, lng0, lat1, lng1, ...]} of all the route's legs, joined. */

@@ -14,15 +14,16 @@ public class RouteTrafficTest {
             + "{\"latitude\":13.71,\"longitude\":100.50},{\"latitude\":13.72,\"longitude\":100.50}";
 
     private static String route(String street, int delay, String category) {
-        return "{\"summary\":{\"travelTimeInSeconds\":600,\"noTrafficTravelTimeInSeconds\":500},"
+        return "{\"summary\":{\"travelTimeInSeconds\":600,\"trafficDelayInSeconds\":100},"
                 + "\"legs\":[{\"points\":[" + POINTS + "]}],"
                 + "\"sections\":[{\"sectionType\":\"TRAVEL_MODE\",\"startPointIndex\":0,\"endPointIndex\":2},"
                 + "{\"sectionType\":\"TRAFFIC\",\"startPointIndex\":1,\"endPointIndex\":2,"
                 + "\"simpleCategory\":\"" + category + "\",\"magnitudeOfDelay\":" + delay + "}],"
                 + "\"guidance\":{\"instructions\":["
-                + "{\"pointIndex\":0,\"routeOffsetInMeters\":0,\"travelTimeInSeconds\":0,\"maneuver\":\"DEPART\","
-                + "\"message\":\"Go\",\"street\":\"" + street + "\"},"
-                + "{\"pointIndex\":2,\"routeOffsetInMeters\":2200,\"travelTimeInSeconds\":600,\"maneuver\":\"ARRIVE\"}]}}";
+                + "{\"maneuverPoint\":{\"latitude\":13.70,\"longitude\":100.50},\"routeOffsetInMeters\":0,\"maneuver\":\"DEPART\","
+                + "\"instructionMessage\":\"Go\",\"nextRoadInfo\":{\"streetName\":{\"text\":\"" + street + "\"}}},"
+                + "{\"maneuverPoint\":{\"latitude\":13.72,\"longitude\":100.50},\"routeOffsetInMeters\":2200,\"maneuver\":\"ARRIVE_LEFT\","
+                + "\"routePath\":[{\"travelTimeInSeconds\":600}]}]}}";
     }
 
     @Test
@@ -72,7 +73,8 @@ public class RouteTrafficTest {
     @Test
     public void requestAsksForTrafficAndAlternatives() {
         String url = TomTomJson.routeUrl(1, 2, null, 3, 4, "th-TH", true);
-        assertTrue(url, url.contains("/calculateRoute/1.000000,2.000000:3.000000,4.000000/json"));
+        assertTrue(url, url.contains("/maps/orbis/routing/calculateRoute/1.000000,2.000000:3.000000,4.000000/json"));
+        assertTrue(url, url.contains("apiVersion=2"));
         assertTrue(url, url.contains("sectionType=traffic"));
         assertTrue(url, url.contains("maxAlternatives=2"));
         assertTrue(url, url.contains("language=th-TH"));

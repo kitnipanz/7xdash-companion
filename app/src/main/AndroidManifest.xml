@@ -36,6 +36,7 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <!-- 前台服务类型：摄像头（Android 10+） -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CAMERA" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
     <!-- AirPlay 投屏：前台服务放声音；mDNS 要多播锁 -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
@@ -131,6 +132,12 @@
         </activity>
 
         <!-- 前台服务：用于后台录制保护 -->
+        <!-- Navigation: GPS while a trip is on and no screen of the app is in front -->
+        <service
+            android:name="com.kooo.evcam.nav.NavGuideService"
+            android:exported="false"
+            android:foregroundServiceType="location" />
+
         <service
             android:name=".CameraForegroundService"
             android:foregroundServiceType="camera"

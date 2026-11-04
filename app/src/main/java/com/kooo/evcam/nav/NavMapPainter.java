@@ -2,10 +2,12 @@ package com.kooo.evcam.nav;
 
 import android.content.Context;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.FrameLayout;
+import android.widget.ImageView;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
@@ -86,7 +88,8 @@ final class NavMapPainter {
     private List<NavRoute> shownChoices = new ArrayList<>();
     /** Told when a grey route is tapped: choose it. */
     java.util.function.Consumer<NavRoute> onRouteTapped;
-    private Marker car;
+    /** The car: a view above the map, not a marker, so the route line never covers it. */
+    private ImageView car;
     private Marker pin;
     private NavRoute shownRoute;
     private com.kooo.evcam.trip.DestinationLink.Place shownPin;
@@ -204,14 +207,9 @@ final class NavMapPainter {
         LatLng at = onRoute ? new LatLng(s.progress.lat, s.progress.lng) : new LatLng(s.carLat, s.carLng);
         float bearing = s.carBearing == null ? (Float.isNaN(goalBearing) ? 0 : goalBearing) : s.carBearing.floatValue();
         int color = new AppConfig(mapView.getContext()).getNavCarColor();
-        if (car == null) {
-            // not flat, turned against the camera: points the right way on every renderer
-            car = map.addMarker(new MarkerOptions().position(at).flat(false).anchor(0.5f, 0.5f).zIndex(3)
-                    .icon(BitmapDescriptorFactory.fromBitmap(CarIcon.zeekr7x(density, CarIcon.Color.of(color)))));
+        if (car == null || color != shownCarColor) {
             shownCarColor = color;
-        } else if (color != shownCarColor) {
-            shownCarColor = color;
-            car.setIcon(BitmapDescriptorFactory.fromBitmap(CarIcon.zeekr7x(density, CarIcon.Color.of(color))));
+            showCar(CarIcon.zeekr7x(density, CarIcon.Color.of(color)));
         }
         long now = android.os.SystemClock.uptimeMillis();
         // when the GPS measured this fix, on the uptime clock: the car is drawn where it is now, not
@@ -357,6 +355,10 @@ final class NavMapPainter {
     /** The owner is going: no more frames. */
     void release() {
         stopFollowing();
+        if (car != null && car.getParent() instanceof ViewGroup) {
+            ((ViewGroup) car.getParent()).removeView(car);
+        }
+        car = null;
     }
 
     private void step(float dt) {
@@ -406,8 +408,45 @@ final class NavMapPainter {
         if (car == null || Double.isNaN(curLat)) {
             return;
         }
-        car.setPosition(new LatLng(curLat, curLng));
+        try {
+            android.graphics.Point p = map.getProjection().toScreenLocation(new LatLng(curLat, curLng));
+            ViewGroup.LayoutParams size = car.getLayoutParams();
+            car.setTranslationX(p.x - size.width / 2f);
+            car.setTranslationY(p.y - size.height / 2f);
+        } catch (RuntimeException ignored) {
+            // no projection yet
+            return;
+        }
         car.setRotation(screenTurn(curBearing, map.getCameraPosition().bearing));
+        // the map view may be drawn bigger past the closest zoom: the car stays its own size
+        car.setScaleX(1f / shownScale);
+        car.setScaleY(1f / shownScale);
+        car.setVisibility(View.VISIBLE);
+    }
+
+    /**
+     * The car as a view above the map's own drawing. A marker would do on Google's own renderer,
+     * but the MapLibre-based Play services on head units draw route lines over markers, whatever
+     * their z-index, so the blue line ran over the car.
+     */
+    private void showCar(android.graphics.Bitmap icon) {
+        if (car == null) {
+            car = new ImageView(mapView.getContext());
+            car.setScaleType(ImageView.ScaleType.FIT_XY);
+            car.setClickable(false);
+            car.setFocusable(false);
+            car.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+            car.setVisibility(View.INVISIBLE);
+            ((ViewGroup) mapView).addView(car, new FrameLayout.LayoutParams(icon.getWidth(), icon.getHeight()));
+        } else {
+            ViewGroup.LayoutParams size = car.getLayoutParams();
+            if (size.width != icon.getWidth() || size.height != icon.getHeight()) {
+                size.width = icon.getWidth();
+                size.height = icon.getHeight();
+                car.setLayoutParams(size);
+            }
+        }
+        car.setImageBitmap(icon);
     }
 
     /** Checks where the car landed on the map and nudges the aim, so it settles at {@link #CAR_AT}. */

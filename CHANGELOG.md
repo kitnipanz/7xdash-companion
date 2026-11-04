@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.14-beta] - 2026-11-04
+
+Test build from the develop branch (Google map).
+
+### Navigation (beta)
+- **The car is drawn on top of the route.** On head units the blue line ran over the car; the car is now drawn above the map, so the route always passes under it.
+
 ## [1.7.13-beta] - 2026-11-04
 
 Test build from the develop branch: Navigation on the Google map again (the TomTom map of 1.7.10-beta to 1.7.12-beta is not in it).

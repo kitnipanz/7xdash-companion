@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.12-beta] - 2026-11-04
+
+Test build from the feature/tomtom-map branch.
+
+### Navigation (beta)
+- **Place names found with TomTom.** A shared Google Maps link without coordinates, or a typed name, is now looked up in TomTom's search instead of Google's search page. Links with coordinates still go straight to the exact pin.
+
 ## [1.7.11-beta] - 2026-11-04
 
 Test build from the feature/tomtom-map branch.

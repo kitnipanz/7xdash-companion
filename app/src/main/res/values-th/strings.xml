@@ -498,6 +498,7 @@
     <string name="sticker_knob_left">หมุนซ้าย</string>
     <string name="sticker_unnamed">ไม่มีชื่อ</string>
     <string name="sticker_device_meta">%1$s  %2$d dBm</string>
+    <string name="sticker_battery">แบตเตอรี่ %1$d%%</string>
     <string name="sticker_signal">สัญญาณ %1$d dBm</string>
     <string name="sticker_signal_none">สัญญาณ —</string>
     
@@ -1651,6 +1652,11 @@
     <string name="shortcut_group_car">รถและแอป</string>
     <string name="shortcut_step_press">วิธีกด</string>
     <string name="shortcut_step_action">ให้ทำอะไร</string>
+    <string name="shortcut_action_media_play_pause">เล่น / หยุด</string>
+    <string name="shortcut_action_media_next">เพลงถัดไป</string>
+    <string name="shortcut_action_media_previous">เพลงก่อนหน้า</string>
+    <string name="set_rear_ac_restore_title">คงแอร์หลังไว้</string>
+    <string name="set_rear_ac_restore_summary">รถจะปิดแอร์หลังเมื่อปิดแล้วเปิดระบบปรับอากาศ ถ้าเดิมเปิดอยู่จะเปิดกลับให้ เฉพาะเกียร์ P ยังอยู่ระหว่างทดลอง</string>
     <string name="shortcut_action_fog_lamp">เปิด/ปิดไฟตัดหมอกหลัง</string>
     <string name="shortcut_action_volume_up">เพิ่มเสียง</string>
     <string name="shortcut_action_volume_down">ลดเสียง</string>

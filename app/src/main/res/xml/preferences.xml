@@ -722,6 +722,12 @@
             android:title="@string/set_screen_off_keep_title"
             android:summary="@string/set_screen_off_keep_summary" />
 
+        <SwitchPreferenceCompat
+            android:key="pref_rear_ac_restore"
+            android:defaultValue="false"
+            android:title="@string/set_rear_ac_restore_title"
+            android:summary="@string/set_rear_ac_restore_summary" />
+
         <Preference
             android:key="pref_usb_backup"
             android:title="@string/usb_settings_backup_title"

@@ -51,6 +51,8 @@ public class ZeekrShortcutApp extends Application {
         com.kooo.evcam.announce.SentryAnnouncer.install(this);
         // Mood light follows the gear when its rules are on; gear is core telemetry too
         com.kooo.evcam.light.GearLight.install(this);
+        // Off unless switched on in Settings: it writes to the car by itself
+        com.kooo.evcam.climate.RearAc.install(this);
         com.kooo.evcam.telemetry.BlindSpotWatch.install(this);
         com.kooo.evcam.telemetry.BlindSpotSniffer.install(this);
         // Experimental: every car signal to the USB drive, when switched on

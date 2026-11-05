@@ -1313,6 +1313,10 @@ public class SettingsPreferenceFragment extends PreferenceFragmentCompat {
             appConfig.setMoodLightBlindSpotBlink(value);
             com.kooo.evcam.light.GearLight.reload();
         });
+        bindSwitch("pref_rear_ac_restore", appConfig.isRearAcRestore(), value -> {
+            appConfig.setRearAcRestore(value);
+            com.kooo.evcam.climate.RearAc.reload();
+        });
         onClick("pref_car_ambient", pref ->
                 startActivity(new Intent(getContext(), com.kooo.evcam.light.CarAmbientLabActivity.class)));
         onClick("pref_volume_lab", pref ->

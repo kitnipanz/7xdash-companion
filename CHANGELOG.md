@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.7.17-beta] - 2026-11-05
+
+Test build from the develop branch.
+
+### Shortcuts and Smart sticker
+- **Play / pause, Next track and Previous track**, new actions in the **Sound** tab for any remote button, steering-wheel key or Smart sticker. A sticker in the back seat can now run the music. The key goes to whichever app is playing.
+- **Battery on the Smart sticker screen.** Press a sticker while scanning and its row shows the battery, read from its broadcast with no connection. The level comes in steps of 25%. This is new on the car: tell us if it never moves.
+
+### Climate (experimental)
+- **Keep rear AC on**, in Settings → System, off by default. The car turns the rear AC off when the whole climate system goes off and on. With this on, 7xDash turns it back on if it was on before. It sends one command, only in P and not during maximum front defrost, and leaves the rear off if you turned it off yourself.
+
 ## [1.7.16-beta] - 2026-11-04
 
 Test build from the develop branch.

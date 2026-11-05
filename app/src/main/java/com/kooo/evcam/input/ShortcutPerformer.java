@@ -175,6 +175,15 @@ public final class ShortcutPerformer {
             case FOG_LAMP:
                 com.kooo.evcam.light.FogLamp.toggle(context);
                 return;
+            case MEDIA_PLAY_PAUSE:
+                com.kooo.evcam.audio.MediaKeys.playPause(context);
+                return;
+            case MEDIA_NEXT:
+                com.kooo.evcam.audio.MediaKeys.next(context);
+                return;
+            case MEDIA_PREVIOUS:
+                com.kooo.evcam.audio.MediaKeys.previous(context);
+                return;
             case VOLUME_UP:
                 com.kooo.evcam.audio.CarVolume.step(context, 1);
                 return;

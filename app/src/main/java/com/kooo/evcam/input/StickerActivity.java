@@ -450,12 +450,12 @@ public class StickerActivity extends AppCompatActivity implements StickerHub.Wat
                 || StickerAdverts.isButton(record.getDeviceName()));
         hear(result.getDevice(), result.getRssi(), advertises(record));
         if (button) {
-            markButton(result.getDevice());
+            markButton(result.getDevice(), StickerAdverts.battery(record.getBytes()));
         }
     }
 
     /** A ZEEKR_button: its presses come from its broadcast, so it is added without connecting. */
-    private void markButton(BluetoothDevice device) {
+    private void markButton(BluetoothDevice device, int battery) {
         String address;
         try {
             address = StickerDevices.normalize(device.getAddress());
@@ -463,8 +463,13 @@ public class StickerActivity extends AppCompatActivity implements StickerHub.Wat
             return;
         }
         Seen row = seen.get(address);
-        if (row != null && !row.button) {
+        if (row == null) {
+            return;
+        }
+        // Highest seen: the level dips for a moment on the press that woke the button.
+        if (!row.button || battery > row.battery) {
             row.button = true;
+            row.battery = Math.max(row.battery, battery);
             render();
         }
     }
@@ -550,14 +555,15 @@ public class StickerActivity extends AppCompatActivity implements StickerHub.Wat
         int shown = 0;
         for (String address : saved) {
             Seen row = seen.get(address);
-            addRow(address, row == null ? null : row.name, row == null ? null : row.rssi, true);
+            addRow(address, row == null ? null : row.name, row == null ? null : row.rssi,
+                    row == null ? -1 : row.battery, true);
             shown++;
         }
         for (Seen row : seen.values()) {
             if (saved.contains(row.address) || row.rank >= StickerMatch.RANK_OTHER) {
                 continue;
             }
-            addRow(row.address, row.name, row.rssi, false);
+            addRow(row.address, row.name, row.rssi, row.battery, false);
             shown++;
         }
         if (!candidate) {
@@ -579,7 +585,7 @@ public class StickerActivity extends AppCompatActivity implements StickerHub.Wat
                     devices.addView(title);
                     header = true;
                 }
-                addRow(row.address, row.name, row.rssi, false);
+                addRow(row.address, row.name, row.rssi, row.battery, false);
                 shown++;
                 others++;
                 if (others >= OTHER_LIMIT) {
@@ -590,7 +596,7 @@ public class StickerActivity extends AppCompatActivity implements StickerHub.Wat
         empty.setVisibility(shown == 0 ? View.VISIBLE : View.GONE);
     }
 
-    private void addRow(String address, String name, Integer rssi, boolean saved) {
+    private void addRow(String address, String name, Integer rssi, int battery, boolean saved) {
         View line = LayoutInflater.from(this).inflate(R.layout.item_sticker, devices, false);
         TextView title = line.findViewById(R.id.sticker_name);
         TextView meta = line.findViewById(R.id.sticker_meta);
@@ -608,6 +614,9 @@ public class StickerActivity extends AppCompatActivity implements StickerHub.Wat
             title.setContentDescription(getString(R.string.sticker_rename_hint_a11y, title.getText()));
         }
         String detail = rssi == null ? address : getString(R.string.sticker_device_meta, address, rssi);
+        if (battery >= 0) {
+            detail = detail + "  " + getString(R.string.sticker_battery, battery);
+        }
         boolean up = saved && StickerHub.isUp(address);
         if (saved) {
             String mapped = mapped(address);
@@ -856,6 +865,8 @@ public class StickerActivity extends AppCompatActivity implements StickerHub.Wat
     }
 
     private static final class Seen {
+        /** Percent from its adverts, -1 until one carries it. */
+        int battery = -1;
         String address;
         String name;
         Integer rssi;

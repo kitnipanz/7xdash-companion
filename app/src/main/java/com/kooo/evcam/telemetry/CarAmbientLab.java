@@ -190,6 +190,43 @@ public final class CarAmbientLab {
         }
     }
 
+    /** What the car reads for this function in this zone, or null. Blocking. */
+    public static Integer valueInZone(Context context, int id, int zone) {
+        Object function = carFunction(context);
+        Method get = function == null ? null
+                : EcarxSource.findMethod(function, "getFunctionValue", int.class, int.class);
+        if (get == null) {
+            return null;
+        }
+        try {
+            Object r = get.invoke(function, id, zone);
+            return r instanceof Integer ? (Integer) r : null;
+        } catch (Throwable t) {
+            return null;
+        }
+    }
+
+    /**
+     * Sends one value to one zone, with no fallback: a value meant for a zone must not reach the
+     * whole function. Returns null when sent, else why not. Sent is not done: read it back. Blocking.
+     */
+    public static String writeInZone(Context context, int id, int zone, int value) {
+        Object function = carFunction(context);
+        if (function == null) {
+            return "No car function interface";
+        }
+        Method setter = EcarxSource.findMethod(function, "setFunctionValue", int.class, int.class, int.class);
+        if (setter == null) {
+            return "No zoned setFunctionValue on this car";
+        }
+        try {
+            Object r = setter.invoke(function, id, zone, value);
+            return Boolean.FALSE.equals(r) ? "car said no" : null;
+        } catch (Throwable t) {
+            return "threw " + rootMessage(t);
+        }
+    }
+
     /** Sends one value. Returns null when sent, else why not. Blocking. */
     public static String write(Context context, int id, int value) {
         Object function = carFunction(context);

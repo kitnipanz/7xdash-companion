@@ -502,6 +502,7 @@ Then reopen this app.</string>
     <string name="sticker_knob_left">Knob left</string>
     <string name="sticker_unnamed">Unnamed</string>
     <string name="sticker_device_meta">%1$s  %2$d dBm</string>
+    <string name="sticker_battery">Battery %1$d%%</string>
     <string name="sticker_signal">Signal %1$d dBm</string>
     <string name="sticker_signal_none">Signal —</string>
     
@@ -1677,6 +1678,11 @@ Then reopen this app.</string>
     <string name="shortcut_step_action">What it does</string>
     <string name="shortcut_action_fog_lamp">Rear fog lamp on/off</string>
     <string name="shortcut_action_volume_up">Volume up</string>
+    <string name="shortcut_action_media_play_pause">Play / pause</string>
+    <string name="shortcut_action_media_next">Next track</string>
+    <string name="shortcut_action_media_previous">Previous track</string>
+    <string name="set_rear_ac_restore_title">Keep rear AC on</string>
+    <string name="set_rear_ac_restore_summary">The car turns the rear AC off when the climate goes off and on. If it was on, turn it back on, only in P. Experimental.</string>
     <string name="shortcut_action_volume_down">Volume down</string>
     <string name="shortcut_group_lights">Lights &amp; display</string>
     <string name="fog_lamp_turned_on">Rear fog lamp on</string>

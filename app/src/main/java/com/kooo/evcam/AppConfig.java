@@ -2830,6 +2830,27 @@ public class AppConfig {
     public void setMoodLightBlindSpotBlink(boolean on) {
         prefs.edit().putBoolean(KEY_MOOD_LIGHT_BLIND_SPOT_BLINK, on).apply();
     }
+    private static final String KEY_REAR_AC_RESTORE = "rear_ac_restore";
+    private static final String KEY_REAR_AC_WANTED = "rear_ac_wanted";
+
+    /** Turn the rear AC back on after the climate went off and on ({@code climate.RearAc}). Off by default. */
+    public boolean isRearAcRestore() {
+        return prefs.getBoolean(KEY_REAR_AC_RESTORE, false);
+    }
+
+    public void setRearAcRestore(boolean on) {
+        prefs.edit().putBoolean(KEY_REAR_AC_RESTORE, on).apply();
+    }
+
+    /** The rear AC was last set on while the climate ran. */
+    public boolean isRearAcWanted() {
+        return prefs.getBoolean(KEY_REAR_AC_WANTED, false);
+    }
+
+    public void setRearAcWanted(boolean on) {
+        prefs.edit().putBoolean(KEY_REAR_AC_WANTED, on).apply();
+    }
+
     private static final String KEY_MOOD_LIGHT_GROUP_SHOWN = "mood_light_group_shown";
 
     /**

@@ -51,6 +51,27 @@ public class StickerAdvertsTest {
     }
 
     @Test
+    public void batteryComesFromTheCarLogAdvert() {
+        assertEquals(75, StickerAdverts.battery(
+                hex("02 01 06 12 02 FF 01 00 4B 01 03 01 AA 04 00 00 0F D0 7F 81 94 B3")));
+    }
+
+    @Test
+    public void batteryReadsTheShortLayoutToo() {
+        assertEquals(50, StickerAdverts.battery(hex("02 01 06 08 02 FF 01 01 32 01 02 01")));
+        assertEquals(100, StickerAdverts.battery(hex("02 01 06 08 03 FF 01 01 64 01 02 01")));
+    }
+
+    @Test
+    public void noBatteryWhenTheByteIsNotALevel() {
+        assertEquals(-1, StickerAdverts.battery(hex("02 01 06 08 02 FF 01 00 00 01 02 01")));
+        assertEquals(-1, StickerAdverts.battery(hex("02 01 06 08 02 FF 01 00 33 01 02 01")));
+        assertEquals(-1, StickerAdverts.battery(hex("02 01 06 03 03 D0 FF")));
+        assertEquals(-1, StickerAdverts.battery(hex("02 01 06 08 02 FF 01")));
+        assertEquals(-1, StickerAdverts.battery(null));
+    }
+
+    @Test
     public void onlyAChangedCounterIsAPress() {
         // First advert after start is the baseline, not a press.
         assertFalse(StickerAdverts.isNewPress(null, 0xBC));

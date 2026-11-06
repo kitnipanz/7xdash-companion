@@ -309,6 +309,12 @@ public class HomeFragment extends Fragment {
                                     config.isParkingCreepEnabled() ? R.string.home_state_on : R.string.home_state_off)),
                             () -> config.isParkingCreepEnabled(), this::toggleParkingCreep);
         }
+
+        // Beta: live values and trouble codes through an ELM327 adapter
+        if (betaShown) {
+            addCard(R.drawable.ic_obd, R.string.obd_title, R.string.home_card_obd_sub,
+                    () -> startActivity(new Intent(requireContext(), com.kooo.evcam.obd.ObdActivity.class)), null);
+        }
         layoutGrid(true);
         refresh();
     }

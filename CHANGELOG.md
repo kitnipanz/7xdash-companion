@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.7.18-beta] - 2026-11-06
+
+Test build from the develop branch. Not tried on a car or with a real adapter yet: tell us what you see.
+
+### OBD2 (beta)
+- **OBD2 card, new.** Turn on Settings → Interface → Beta features, plug an ELM327 adapter into the OBD socket and pair it. Bluetooth Classic and Wi-Fi adapters work; Bluetooth LE ones do not yet.
+- **Made for a pure electric car.** Shows the 12 V battery, the standard values the car reports, and trouble codes. No engine values. It also asks the battery module directly, the way the Zeekr 001 and Geely EX5 are read, and shows the raw bytes or the car's refusal. What the bytes mean on the 7X is not known yet.
+- **Record all signals.** Saves everything the adapter can hear to `7xDash/odb_logs` on the USB drive, with the time and the car's gear, speed and turn signal. After a short check at the start it only listens. It stops after 1 hour, at 200 MB, or after 5 minutes of silence. An empty file is a real answer: it means the car keeps that socket quiet.
+- **Live signals window.** Floats over any app while recording and lists bytes that sat still and then changed, so counters stay out of the way. Tap **Mark** when something happens: the log notes the moment and what changed. Have a passenger watch it.
+- **Read only.** 7xDash cannot clear codes or change anything through the adapter. Unplug the adapter when you are done: many keep drawing from the 12 V battery.
+
 ## [1.7.17-beta] - 2026-11-05
 
 Test build from the develop branch.

@@ -78,7 +78,7 @@ public final class BlindSpotLog {
     }
 
     /** "D, 42 km/h, turn L, hazard off" from the latest telemetry. Pure enough to test with a state. */
-    static String context(VehicleState s) {
+    public static String context(VehicleState s) {
         if (s == null) {
             return "?";
         }

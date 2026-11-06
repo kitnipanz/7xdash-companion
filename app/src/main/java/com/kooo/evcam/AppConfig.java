@@ -39,6 +39,7 @@ public class AppConfig {
     private static final String KEY_USAGE_STATS_REMEMBERED = "usage_stats_remembered";  // don't ask again on open
     private static final String KEY_CRASH_REPORTS = "crash_reports";  // anonymous crash reports, apart from usage stats
     private static final String KEY_CONSENT_ASKED = "usage_consent_asked";  // version of the question last shown
+    private static final String KEY_OBD_ADAPTER = "obd_adapter";  // OBD2 (beta): Bluetooth address, or "wifi"
     private static final String KEY_BETA_FEATURES = "beta_features";  // show features still in beta (home cards, automatic triggers)
     private static final String KEY_HUD_NOTICE_LEFT = "hud_notice_left_pct";  // 抬头显示通知离左边多少（%）
     private static final String KEY_HUD_NOTICE_RIGHT = "hud_notice_right_pct";  // 离右边多少（%）  // 别的应用的通知投到抬头显示
@@ -475,6 +476,15 @@ public class AppConfig {
 
     public void setBetaFeaturesEnabled(boolean enabled) {
         prefs.edit().putBoolean(KEY_BETA_FEATURES, enabled).apply();
+    }
+
+    /** OBD2 (beta): the adapter last connected, null before the first time. */
+    public String getObdAdapter() {
+        return prefs.getString(KEY_OBD_ADAPTER, null);
+    }
+
+    public void setObdAdapter(String adapter) {
+        prefs.edit().putString(KEY_OBD_ADAPTER, adapter).apply();
     }
 
     /** Anonymous usage stats (see {@link com.kooo.evcam.analytics.Analytics}): the last answer. Off until one. */

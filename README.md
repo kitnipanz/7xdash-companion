@@ -132,6 +132,22 @@ a photo in the notification shade and on 7xDash web.
 - Hold the card to scan once by hand: **Scan now** shows the photo, the floor and bay read, what is
   remembered and the raw text, and sends the spot to 7xDash web.
 
+### OBD2 (beta)
+Reads the car through an ELM327 adapter in the OBD socket, while the screen is open.
+- Pair a Bluetooth Classic adapter in the car's Bluetooth settings, or join a Wi-Fi adapter's network.
+  Bluetooth LE adapters are not supported yet.
+- Turn on Settings → Interface → **Beta features**, tap the **OBD2** card, choose the adapter, press
+  **Connect**.
+- Shows the 12 V battery voltage, the standard values the car reports, and raw bytes read directly
+  from the battery module with the request used on the Zeekr 001. The 7X may answer little: its
+  owners report only the VIN and voltage so far, and the bytes are not decoded yet.
+- **Record all signals** saves everything the adapter can hear to `7xDash/odb_logs` on the USB drive.
+  After a short check at the start it only listens. It stops after 1 hour, or 5 minutes of silence.
+  A floating window lists signals that just changed. Tap **Mark** when something happens: the log
+  notes the moment and what changed. Have a passenger watch it, or read the log later.
+- Read only: it cannot clear codes or change anything. Unplug the adapter when you are done, because
+  many keep drawing from the 12 V battery.
+
 ### Navigation (beta)
 Turn-by-turn navigation on a Google map, with live traffic, spoken turns and the next turn on the HUD.
 - Turn on Settings → Interface → **Beta features**, then tap the **Navigation** card.

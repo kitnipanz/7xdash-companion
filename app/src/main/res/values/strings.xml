@@ -562,6 +562,7 @@ Then reopen this app.</string>
     <string name="vi_temp_outside">Outside temperature</string>
     <string name="vi_temp_inside">Cabin temperature</string>
     <string name="vi_battery_temp">Battery temperature</string>
+    <string name="vi_rain">Rain</string>
     <string name="vi_day_night">Day / night</string>
     <string name="vi_sentry_mode">Sentry Mode</string>
     <string name="vi_screen_power_event">Center screen</string>
@@ -1912,7 +1913,19 @@ Then reopen this app.</string>
     <string name="obd_pid_distance_cleared">Distance since codes cleared</string>
     <string name="obd_pid_odometer">Odometer</string>
 
-    <!-- Automation (beta) -->
+    <!-- Automation -->
+    <string name="automation_group_rain">Rain</string>
+    <string name="automation_chip_rain_start">Starts</string>
+    <string name="automation_chip_rain_stop">Stops</string>
+    <string name="automation_when_rain_start">It starts raining</string>
+    <string name="automation_when_rain_stop">The rain stops</string>
+    <string name="automation_do_ac">AC</string>
+    <string name="automation_do_temp_zones">Temperature zones</string>
+    <string name="automation_temp_synced">Synced</string>
+    <string name="automation_temp_dual">Dual zone</string>
+    <string name="automation_do_glovebox">Glovebox (parked only)</string>
+    <string name="automation_open">Open</string>
+    <string name="automation_glovebox_parked">glovebox opens only in P</string>
     <string name="automation_paused">Off. Nothing below runs until you turn this on.</string>
     <string name="automation_examples">Start from an example, or press Add automation</string>
     <string name="automation_new_title">New automation</string>
@@ -1990,4 +2003,21 @@ Then reopen this app.</string>
     <string name="automation_color_blue">Blue</string>
     <string name="automation_color_purple">Purple</string>
     <string name="automation_color_pink">Pink</string>
+
+    <!-- Customize Home -->
+    <string name="home_edit_title">Customize Home</string>
+    <string name="home_card_customize_sub">Add or remove cards. Hold any card and drag to move it.</string>
+    <string name="home_edit_shown">On Home (%1$d)</string>
+    <string name="home_edit_shown_hint">Drag a card by its dots to move it. Tap × to remove it.</string>
+    <string name="home_edit_more">More cards</string>
+    <string name="home_edit_more_hint">Tap a card to put it on Home.</string>
+    <string name="home_edit_more_empty">Nothing waiting here. Cards you remove show up here.</string>
+    <string name="home_edit_add">Add %1$s</string>
+    <string name="home_edit_remove">Remove %1$s</string>
+    <string name="home_edit_reset">Reset</string>
+    <string name="home_edit_reset_title">Put every card back in the usual order?</string>
+    <string name="home_edit_tab_stable">Stable (%1$d)</string>
+    <string name="home_edit_tab_beta">Beta (%1$d)</string>
+    <string name="home_edit_drag">Move</string>
+    <string name="home_edit_done">Done</string>
 </resources>

@@ -14,6 +14,8 @@ public enum AutomationTrigger {
     SPEED_BELOW("speed_below", R.string.automation_when_speed_below, R.string.automation_chip_drops, Group.SPEED, Measure.SPEED, false),
     DARK("dark", R.string.automation_when_dark, R.string.automation_chip_dark, Group.DAYLIGHT, null, false),
     LIGHT("light", R.string.automation_when_light, R.string.automation_chip_light, Group.DAYLIGHT, null, false),
+    RAIN_START("rain_start", R.string.automation_when_rain_start, R.string.automation_chip_rain_start, Group.RAIN, null, false),
+    RAIN_STOP("rain_stop", R.string.automation_when_rain_stop, R.string.automation_chip_rain_stop, Group.RAIN, null, false),
     BATTERY_BELOW("battery_below", R.string.automation_when_battery_below, R.string.automation_chip_drops, Group.BATTERY, Measure.BATTERY, false),
     OUTSIDE_ABOVE("outside_above", R.string.automation_when_outside_above, R.string.automation_chip_reaches, Group.OUTSIDE, Measure.OUTSIDE, true),
     OUTSIDE_BELOW("outside_below", R.string.automation_when_outside_below, R.string.automation_chip_drops, Group.OUTSIDE, Measure.OUTSIDE, false);
@@ -24,6 +26,7 @@ public enum AutomationTrigger {
         GEAR(R.string.automation_group_gear, R.drawable.ic_automation_gear, 0),
         SPEED(R.string.automation_group_speed, R.drawable.ic_automation_speed, R.string.automation_unit_speed),
         DAYLIGHT(R.string.automation_group_daylight, R.drawable.ic_automation_daylight, 0),
+        RAIN(R.string.automation_group_rain, R.drawable.ic_automation_rain, 0),
         BATTERY(R.string.automation_group_battery, R.drawable.ic_automation_battery, R.string.automation_percent),
         OUTSIDE(R.string.automation_group_outside, R.drawable.ic_automation_temp, R.string.automation_unit_temp);
 

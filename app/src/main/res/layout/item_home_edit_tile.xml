@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- One card on the Customize Home page: drag handle, icon, name, and the × or + button at the end. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="64dp"
+    android:layout_margin="5dp"
+    android:background="@drawable/bg_automation_chip"
+    android:gravity="center_vertical"
+    android:orientation="horizontal">
+
+    <!-- Press here and the card moves straight away. Only on cards that are on Home. -->
+    <ImageView
+        android:id="@+id/tile_grip"
+        android:layout_width="44dp"
+        android:layout_height="match_parent"
+        android:contentDescription="@string/home_edit_drag"
+        android:paddingHorizontal="10dp"
+        android:src="@drawable/ic_drag_handle" />
+
+    <ImageView
+        android:id="@+id/tile_icon"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:importantForAccessibility="no" />
+
+    <TextView
+        android:id="@+id/tile_title"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:layout_weight="1"
+        android:ellipsize="end"
+        android:maxLines="2"
+        android:textAppearance="@style/TextAppearance.Cam.Caption"
+        android:textColor="@color/text_primary" />
+
+    <ImageView
+        android:id="@+id/tile_action"
+        android:layout_width="56dp"
+        android:layout_height="match_parent"
+        android:background="?android:attr/selectableItemBackgroundBorderless"
+        android:clickable="true"
+        android:focusable="true"
+        android:padding="16dp" />
+</LinearLayout>

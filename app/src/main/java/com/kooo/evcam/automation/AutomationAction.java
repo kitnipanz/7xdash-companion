@@ -22,6 +22,10 @@ public enum AutomationAction {
     CAR_AMBIENT("car_ambient", R.string.automation_do_car_ambient, R.drawable.ic_light),
     CAR_AMBIENT_LEVEL("car_ambient_level", R.string.automation_do_car_ambient_level, R.drawable.ic_light),
     DIM("dim", R.string.automation_do_dim, R.drawable.ic_dim),
+    AC("ac", R.string.automation_do_ac, R.drawable.ic_automation_climate),
+    TEMP_ZONES("temp_zones", R.string.automation_do_temp_zones, R.drawable.ic_automation_temp_zones),
+    /** Only in P ({@link CarControls#openGlovebox}). */
+    GLOVEBOX("glovebox", R.string.automation_do_glovebox, R.drawable.ic_automation_glovebox),
     /** Any shortcut action, by its stored key. */
     SHORTCUT("shortcut", R.string.automation_do_shortcut, R.drawable.ic_shortcut);
 
@@ -41,6 +45,9 @@ public enum AutomationAction {
 
     static final String ON = "on";
     static final String OFF = "off";
+    static final String SYNCED = "synced";
+    static final String DUAL = "dual";
+    static final String OPEN = "open";
     private static final int[] COLORS = {0xFFFFFF, 0xFF0000, 0xFF6000, 0xFFD000, 0x00FF00, 0x00E0FF, 0x0060FF, 0x8000FF, 0xFF2090};
     private static final int[] COLOR_NAMES = {R.string.automation_color_white, R.string.automation_color_red,
             R.string.automation_color_orange, R.string.automation_color_yellow, R.string.automation_color_green,
@@ -77,7 +84,15 @@ public enum AutomationAction {
                 out.add(new Option("sport", context.getString(R.string.automation_mode_sport), -1));
                 break;
             case MOOD_LIGHT:
+            case AC:
                 addOnOff(context, out);
+                break;
+            case TEMP_ZONES:
+                out.add(new Option(SYNCED, context.getString(R.string.automation_temp_synced), -1));
+                out.add(new Option(DUAL, context.getString(R.string.automation_temp_dual), -1));
+                break;
+            case GLOVEBOX:
+                out.add(new Option(OPEN, context.getString(R.string.automation_open), -1));
                 break;
             case MOOD_COLOR:
                 addColors(context, out);

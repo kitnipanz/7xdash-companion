@@ -13,7 +13,8 @@ Plug in a USB drive before you start: videos, photos and the settings backup go 
 ## Features and how to use them
 
 Most features have a card on the **Home** page and a section in **Settings**. Hold a card to jump to its
-settings. The rail on the left (Home, Record, Dim, Rear, Capture, Megaphone, EQ, AirPlay, Settings) is on
+settings; hold and drag to move it to another card's place. To choose what is on Home, tap **Customize Home**, the last card: drag a card by its dots to move it, × to
+remove, tap a card under More cards to add it back. With Beta features on, Stable and Beta tabs split the cards. The rail on the left (Home, Record, Dim, Rear, Capture, Megaphone, EQ, AirPlay, Settings) is on
 every page.
 
 ### Drive recorder
@@ -164,11 +165,11 @@ Turn-by-turn navigation on a Google map, with live traffic, spoken turns and the
   Android**, **Routes API** and **Places API (New)** enabled, and internet. The map needs Google Play
   services on the head unit; without it, guidance still works with no map.
 
-### Automation (beta)
-When something happens on the car, 7xDash does what you picked. Turn on Settings → Interface → Beta features, then open the **Automation** card. Off until you turn it on.
-- **When:** the car turns on or off, shift to P, D or R, speed reaches or drops to a number, it gets dark or light, battery drops to a number, outside temperature reaches or drops to a number.
-- **Do**, as many as you like, in order: drive mode (Comfort, Normal, Sport), mood light on or off, mood light colour, car ambient light and its brightness, dim overlay, or any shortcut action.
-- Automations run on a change, not on a state: opening the app in D does not run "Shift to D". A speed has to drop 3 km/h back before it runs again, and a number runs at most once in 30 seconds.
+### Automation
+When something happens on the car, 7xDash does what you picked. Open the **Automation** card on Home. Off until you turn it on.
+- **When:** the car turns on or off, shift to P, D or R, speed reaches or drops to a number, it gets dark or light, it starts or stops raining, battery drops to a number, outside temperature reaches or drops to a number.
+- **Do**, as many as you like, in order: drive mode (Comfort, Normal, Sport), mood light on or off, mood light colour, car ambient light and its brightness, dim overlay, AC on or off, temperature zones (synced or dual), open the glovebox (only in P), or any shortcut action.
+- Automations run on a change, not on a state: opening the app in D does not run "Shift to D". A speed has to drop 3 km/h back before it runs again, and a number or rain runs at most once in 30 seconds.
 - Press **Add automation**, or start from an example. Pick When on the left and Do on the right; the line at the bottom reads back what you built. Tap a choice again to take it back.
 - **Try it now** at the bottom runs its actions straight away. A mood light colour stays until the gear rules pick a new look.
 

@@ -103,6 +103,8 @@ public enum Signal {
     TEMP_INSIDE(Group.VEHICLE, Kind.SENSOR_VALUE, 0x00100C00, 0, R.string.vi_temp_inside, Trust.CONFIRMED, Format.CELSIUS),
     BATTERY_TEMP(Group.VEHICLE, Kind.SENSOR_VALUE, 0x00102A00, 0, R.string.vi_battery_temp, Trust.CONFIRMED, Format.CELSIUS),
     DAY_NIGHT(Group.VEHICLE, Kind.SENSOR_EVENT, 0x00201000, 0, R.string.vi_day_night, Trust.CONFIRMED, Format.DAY_NIGHT),
+    /** Raining, per the car (IVehicle.SETTING_FUNC_OMS_DETECTION_RAIN_FALL_STATUS): 0 and 1 seen flipping on the car. */
+    RAIN(Group.VEHICLE, Kind.FUNCTION, 0x20314900, 0, R.string.vi_rain, Trust.CONFIRMED, Format.ON_OFF),
     /**
      * 哨兵模式（SETTING_FUNC_VSTD_MODE_STS）：0 关，1 开，2 推测是锁车后布防（锁车一分半后 1 → 2，解锁回 1，挂 D 回 0；
      * Lab 0.18.0）。1 和 2 都算开着。Lab 还在对；用户 2026-10-02 点名先开放：熄屏后还能不能录，看的就是它。

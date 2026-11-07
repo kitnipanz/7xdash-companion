@@ -90,6 +90,12 @@ final class AutomationRunner {
                 return carAmbientLevel(step.choice);
             case DIM:
                 return dim(step.choice);
+            case AC:
+                return CarControls.ac(app, AutomationAction.ON.equals(step.choice));
+            case TEMP_ZONES:
+                return CarControls.tempZones(app, AutomationAction.DUAL.equals(step.choice));
+            case GLOVEBOX:
+                return CarControls.openGlovebox(app);
             case SHORTCUT:
                 main.post(() -> ShortcutPerformer.perform(app, step.choice, "automation", null));
                 return null;

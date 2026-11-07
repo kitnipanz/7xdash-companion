@@ -20,10 +20,10 @@ import java.util.Map;
 
 /**
  * Runs the person's automations: when something happens on the car, do what they picked
- * ({@link AutomationWatch}, {@link AutomationRunner}). Off by default and only while Beta features
- * is on: it writes to the car by itself.
+ * ({@link AutomationWatch}, {@link AutomationRunner}). Off by default: it writes to the car by
+ * itself.
  *
- * <p>Gear, ignition and day or night are core telemetry, read for as long as the process lives.
+ * <p>Gear, ignition, day or night and rain are core telemetry, read for as long as the process lives.
  * Speed, battery and temperature are float sensors, so this registers as a full telemetry user
  * only while a rule that is on needs one. Installed after {@code GearLight}, so a colour set when
  * the gear changes lands on top of what the gear picks. Main thread only.</p>
@@ -84,7 +84,7 @@ public final class Automation implements Telemetry.Listener {
 
     @Override
     public void onReadingsChanged(Readings readings) {
-        boolean active = config.isBetaFeaturesEnabled() && config.isAutomationOn();
+        boolean active = config.isAutomationOn();
         holdFloats(active && wantsFloats());
         List<AutomationRule> fired = watch.step(active ? rules : Collections.emptyList(), sample(readings));
         if (fired.isEmpty() || UserExit.isExited(app)) {
@@ -107,6 +107,7 @@ public final class Automation implements Telemetry.Listener {
         s.dayNight = readings.code(Signal.DAY_NIGHT);
         s.battery = readings.number(Signal.BATTERY);
         s.outside = readings.number(Signal.TEMP_OUTSIDE);
+        s.rain = readings.bool(Signal.RAIN);
         s.at = SystemClock.elapsedRealtime();
         s.justBooted = s.at < BOOT_MS;
         return s;

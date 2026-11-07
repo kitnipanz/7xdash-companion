@@ -339,6 +339,12 @@
             android:screenOrientation="landscape"
             android:exported="false" />
         <activity
+            android:name=".home.HomeEditActivity"
+            android:label="@string/home_edit_title"
+            android:theme="@style/Theme.Cam"
+            android:screenOrientation="landscape"
+            android:exported="false" />
+        <activity
             android:name=".input.MacroPadActivity"
             android:label="@string/macro_pad_title"
             android:theme="@style/Theme.Cam"

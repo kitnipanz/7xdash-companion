@@ -1,5 +1,56 @@
 # Changelog
 
+## [1.8.0] - 2026-11-07
+
+Changes since 1.7.0 (includes 1.7.1-beta to 1.7.20-beta).
+
+### Automation (new)
+- **When something happens on the car, 7xDash does what you picked.** Open the **Automation** card on Home and turn on **Run my automations**. It is off by default: 7xDash changes settings on the car by itself.
+- **When:** the car turns on or off, shift to P, D or R, speed reaches or drops to a number, it gets dark or light, it starts or stops raining, battery drops to a number, outside temperature reaches or drops to a number.
+- **Do, as many as you like:** drive mode (Comfort, Normal, Sport), AC on or off, temperature zones (synced or dual), open the glovebox (only in P; close it by hand), mood light on or off and its colour, car ambient light and its brightness, dim overlay, or any shortcut action.
+- **One page.** When on the left, Do on the right, and a line at the bottom that reads back what you built. Tap a choice again to take it back. Examples are there to start from.
+- **Try it now** runs the actions straight away. Use it while parked first.
+- **No flip-flopping.** Automations run on a change, not on a state. A speed has to drop 3 km/h back before it runs again, and a number or rain runs at most once in 30 seconds.
+- Not tried on a car yet. Setting the drive mode and the AC has never been sent to a real car: tell us if the car refuses.
+
+### Customize Home (new)
+- **Move cards where you want them.** Hold a card on Home and drag it to another card's place. Holding and letting go still opens its settings.
+- **Choose what is on Home.** **Customize Home**, the last card, lists the cards on Home: drag by the dots to move, × to remove, tap a hidden card to bring it back. **Reset** puts everything back.
+- With Beta features on, **Stable** and **Beta** tabs split the cards. New cards in later versions appear by themselves.
+
+### Navigation (beta)
+- **Turn-by-turn navigation, new.** Search a place, take one sent from the iPhone or 7xDash web, or hold on the map. Up to three routes with time, distance, traffic and battery at arrival; Start for the turn banner, spoken turns, a new route when you leave it, and the next turn on the HUD.
+- **TomTom map, routes and search.** The map is drawn inside the app, so it looks the same on every head unit. Thai labels, Thai turn instructions, Thai place search, and road works, closures, accidents and jams on the map.
+- **Floating map** over any app, with its own settings window, and a **map on the HUD**. Guiding goes on with Navigation closed.
+- **A Zeekr 7X on the map** in your colour, that stays on the road between GPS fixes and sits above the route. The zoom follows the speed.
+- **Battery at arrival is part of Navigation now.** Its own screen and Home card are gone. Google Maps places, including ones shared by name only, work.
+
+### OBD2 (beta)
+- **OBD2 card, new.** Plug in an ELM327 adapter: Bluetooth Classic, Wi-Fi or Bluetooth LE. Shows the 12 V battery, the standard values the car reports and trouble codes, made for a pure electric car.
+- **Record all signals** to `7xDash/odb_logs` on the USB drive, with a **live signals window** over any app.
+- **Read only.** 7xDash cannot clear codes or change anything through the adapter. Unplug the adapter when you are done: many keep drawing from the 12 V battery. Not tried with a real adapter yet.
+
+### Blind spot
+- **Tells left from right,** from the warning lamps in the mirrors and the cross traffic flags. A signal taught in the finder still wins for its side.
+- **Red blink on the warning side of the video,** like Tesla.
+- **The camera opens on the warning** without the turn signal (on by default). The turn signal still wins, never in R. **Show a test warning** in Settings → Side mirror shows it parked.
+
+### Mood light
+- **Red for the blind spot:** steady while a car is there, blinking between red and your colour when you signal towards it. Add Car ambient light to a group to use the car's own light.
+
+### Shortcuts and Smart sticker
+- **Play / pause, Next track and Previous track,** new actions for any button, steering-wheel key or Smart sticker.
+- **Battery on the Smart sticker screen,** in steps of 25%.
+
+### Climate (experimental)
+- **Keep rear AC on,** in Settings → System, off by default. Turns the rear AC back on after the car's climate went off and on, if it was on before. Only in P.
+
+### Car signal logs (experimental)
+- **Save or record all car signals** to `7xDash/signals` on the USB drive, in Settings → System, off by default.
+
+### Thai
+- Clearer words on Home, the side rail, Automation and Customize Home. Instant capture now says what it does: it saves a clip.
+
 ## [1.7.20-beta] - 2026-11-07
 
 Test build from the develop branch. Not tried on a car yet: tell us what you see.

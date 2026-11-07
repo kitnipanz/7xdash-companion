@@ -2593,10 +2593,31 @@ public class AppConfig {
 
     // ==================== Macro pad ====================
 
+    private static final String KEY_HOME_CARD_ORDER = "home_card_order";
+    private static final String KEY_HOME_CARDS_HIDDEN = "home_cards_hidden";
+
+    /** Home cards in the person's order ({@link com.kooo.evcam.home.HomeCardOrder}), null for the usual order. */
+    public String getHomeCardOrder() {
+        return prefs.getString(KEY_HOME_CARD_ORDER, null);
+    }
+
+    public void setHomeCardOrder(String ids) {
+        prefs.edit().putString(KEY_HOME_CARD_ORDER, ids).apply();
+    }
+
+    /** Home cards the person removed from the page, null for none. */
+    public String getHomeCardsHidden() {
+        return prefs.getString(KEY_HOME_CARDS_HIDDEN, null);
+    }
+
+    public void setHomeCardsHidden(String ids) {
+        prefs.edit().putString(KEY_HOME_CARDS_HIDDEN, ids).apply();
+    }
+
     private static final String KEY_AUTOMATION = "automation_on";
     private static final String KEY_AUTOMATION_RULES = "automation_rules";
 
-    /** Beta: run the person's automations (automation.Automation). Off by default: it writes to the car. */
+    /** Run the person's automations (automation.Automation). Off by default: it writes to the car. */
     public boolean isAutomationOn() {
         return prefs.getBoolean(KEY_AUTOMATION, false);
     }

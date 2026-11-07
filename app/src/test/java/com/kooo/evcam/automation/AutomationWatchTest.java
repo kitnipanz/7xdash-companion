@@ -121,6 +121,40 @@ public class AutomationWatchTest {
         assertEquals(Collections.singletonList(light), watch.step(both, s));
     }
 
+    private boolean rain(AutomationRule rule, Boolean raining) {
+        AutomationWatch.Sample s = sample();
+        s.rain = raining;
+        return !watch.step(Collections.singletonList(rule), s).isEmpty();
+    }
+
+    @Test
+    public void rainStart_firesOnTheChange_notWhenAlreadyRaining() {
+        AutomationRule start = rule(AutomationTrigger.RAIN_START, 0);
+        assertFalse("already raining when first seen", rain(start, true));
+        assertFalse(rain(start, null));
+        assertFalse(rain(start, false));
+        assertTrue(rain(start, true));
+    }
+
+    @Test
+    public void rainStop_firesWhenItStops() {
+        AutomationRule stop = rule(AutomationTrigger.RAIN_STOP, 0);
+        rain(stop, true);
+        assertTrue(rain(stop, false));
+    }
+
+    @Test
+    public void rainFlickering_runsOnceInTheGap() {
+        AutomationRule start = rule(AutomationTrigger.RAIN_START, 0);
+        rain(start, false);
+        assertTrue(rain(start, true));
+        rain(start, false);
+        assertFalse("too soon", rain(start, true));
+        rain(start, false);
+        now += AutomationWatch.NUMBER_GAP_MS;
+        assertTrue(rain(start, true));
+    }
+
     @Test
     public void speedAbove_firesOnce_andNeedsToDropBack() {
         AutomationRule fast = rule(AutomationTrigger.SPEED_ABOVE, 80);

@@ -20,7 +20,7 @@ import java.util.Set;
  *
  * <p>A number has to come back by {@link AutomationTrigger.Measure#hysteresis} before it can fire
  * again, and at least {@link #NUMBER_GAP_MS} passes between two runs, so driving around 80 km/h
- * does not flip the drive mode over and over.</p>
+ * does not flip the drive mode over and over. Rain gets the same gap.</p>
  */
 final class AutomationWatch {
 
@@ -32,6 +32,7 @@ final class AutomationWatch {
         Integer dayNight;
         Float battery;
         Float outside;
+        Boolean rain;
         /** The head unit started moments ago. */
         boolean justBooted;
         long at;
@@ -44,6 +45,7 @@ final class AutomationWatch {
     private Boolean carOn;
     private String gear;
     private Integer dayNight;
+    private Boolean rain;
     /** Per rule and number: past the number now. */
     private final Map<String, Boolean> past = new HashMap<>();
     private final Map<String, Long> lastRun = new HashMap<>();
@@ -58,7 +60,7 @@ final class AutomationWatch {
                 continue;
             }
             boolean fires = trigger.measure == null
-                    ? events.contains(trigger)
+                    ? events.contains(trigger) && settled(rule, trigger, s.at)
                     : crossed(rule, trigger, reading(trigger.measure, s), s.at);
             if (fires) {
                 out.add(rule);
@@ -95,7 +97,26 @@ final class AutomationWatch {
             }
             dayNight = s.dayNight;
         }
+        if (s.rain != null) {
+            if (rain != null && !s.rain.equals(rain)) {
+                events.add(s.rain ? AutomationTrigger.RAIN_START : AutomationTrigger.RAIN_STOP);
+            }
+            rain = s.rain;
+        }
         return events;
+    }
+
+    /** Light rain can read on and off every few seconds: rain gets the same gap between runs as a number. */
+    private boolean settled(AutomationRule rule, AutomationTrigger trigger, long at) {
+        if (trigger.group != AutomationTrigger.Group.RAIN) {
+            return true;
+        }
+        Long last = lastRun.get(rule.id);
+        if (last != null && at - last < NUMBER_GAP_MS) {
+            return false;
+        }
+        lastRun.put(rule.id, at);
+        return true;
     }
 
     private boolean crossed(AutomationRule rule, AutomationTrigger trigger, Float reading, long at) {

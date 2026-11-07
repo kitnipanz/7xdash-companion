@@ -33,7 +33,9 @@ import com.kooo.evcam.zeekr.HudDisplay;
 import com.kooo.evcam.zeekr.SideViewPopupService;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * 7xDash 主页，照极氪 OS 7 的沉浸壁纸桌面排：左边一列小组件（时钟、行车记录），右边壁纸上功能卡片，
@@ -42,6 +44,10 @@ import java.util.List;
  * <p>Responsive: the widget column takes 30% of the width (240–360dp), the cards take as many
  * columns as fit (2–4, each at least {@link #CARD_MIN_WIDTH_DP} wide) and scroll when the rows
  * do not fit. Beta features only get a card when Settings → Interface → Beta features is on.</p>
+ *
+ * <p>The person picks which cards show and their order ({@link HomeEditActivity}, {@link HomeCardOrder}),
+ * and can drag a card to another place right here ({@link HomeCardDrag}).
+ * The Customize tile is always last, so the page can be changed even with every card removed.</p>
  *
  * <p>功能本身一行没重写：开关走 {@link ShortcutPerformer}（和贴纸、实体键同一条路），
  * 进页面走 {@link MainActivity#openPage}，设置走各自的分区。这里只排版和显示开 / 关。</p>
@@ -77,6 +83,13 @@ public class HomeFragment extends Fragment {
     private static final float WIDGETS_SHARE = 0.3f;
 
     private final List<View> cards = new ArrayList<>();
+    /** Every card on offer now, in the usual order: id (its title's name), title and icon. */
+    private final List<String> cardIds = new ArrayList<>();
+    private final List<Integer> cardTitles = new ArrayList<>();
+    private final List<Integer> cardIcons = new ArrayList<>();
+    private String builtLayout = "";
+    private HomeCardDrag drag;
+    private int firstBetaCard;
     private LinearLayout grid;
     private View gridScroll;
     private int laidColumns;
@@ -135,6 +148,17 @@ public class HomeFragment extends Fragment {
         }
         grid = view.findViewById(R.id.home_grid);
         gridScroll = view.findViewById(R.id.home_grid_scroll);
+        drag = new HomeCardDrag((android.widget.ScrollView) gridScroll, new HomeCardDrag.Host() {
+            @Override
+            public List<View> movable() {
+                return cards.subList(0, cards.size() - 1);
+            }
+
+            @Override
+            public void moved(View card, int to) {
+                moveCard(card, to);
+            }
+        });
         View widgets = view.findViewById(R.id.home_widgets);
         view.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or, ob) -> sizeWidgets(widgets, r - l));
         gridScroll.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or, ob) -> v.post(() -> layoutGrid(false)));
@@ -144,7 +168,7 @@ public class HomeFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        if (grid != null && betaShown != config.isBetaFeaturesEnabled()) {
+        if (grid != null && (betaShown != config.isBetaFeaturesEnabled() || !savedLayout().equals(builtLayout))) {
             buildGrid();
         }
         handler.post(tick);
@@ -154,6 +178,9 @@ public class HomeFragment extends Fragment {
     @Override
     public void onPause() {
         super.onPause();
+        if (drag != null) {
+            drag.cancel();
+        }
         handler.removeCallbacks(tick);
         handler.removeCallbacks(previewTick);
     }
@@ -209,6 +236,9 @@ public class HomeFragment extends Fragment {
     private void buildGrid() {
         refreshers.clear();
         cards.clear();
+        cardIds.clear();
+        cardTitles.clear();
+        cardIcons.clear();
         betaShown = config.isBetaFeaturesEnabled();
         // 拍照、回看、后视镜头、盲区
         addCard(R.drawable.ic_photo, R.string.home_card_photo,
@@ -289,6 +319,15 @@ public class HomeFragment extends Fragment {
                 .pill(() -> getString(config.isMacroPadEnabled() ? R.string.home_state_on : R.string.home_state_off),
                         () -> config.isMacroPadEnabled(), this::toggleMacroPad);
 
+        // Automation: when something happens on the car, do what the person picked
+        addCard(R.drawable.ic_automation, R.string.automation_title, R.string.home_card_automation_sub,
+                () -> startActivity(new Intent(requireContext(), com.kooo.evcam.automation.AutomationActivity.class)), null)
+                .pill(() -> getString(config.isAutomationOn() ? R.string.home_state_on : R.string.home_state_off),
+                        () -> config.isAutomationOn(), this::toggleAutomation);
+
+        // Stable cards stop here. Every card added below is a beta one: the Customize page tabs go by this
+        firstBetaCard = cardIds.size();
+
         // Beta: turn-by-turn navigation on a Google map, with battery at arrival. Tap opens it; the
         // state shows the trip (km left · battery at arrival) while there is one
         if (betaShown) {
@@ -315,16 +354,63 @@ public class HomeFragment extends Fragment {
             addCard(R.drawable.ic_obd, R.string.obd_title, R.string.home_card_obd_sub,
                     () -> startActivity(new Intent(requireContext(), com.kooo.evcam.obd.ObdActivity.class)), null);
         }
-
-        // Beta: when something happens on the car, do what the person picked
-        if (betaShown) {
-            addCard(R.drawable.ic_automation, R.string.automation_title, R.string.home_card_automation_sub,
-                    () -> startActivity(new Intent(requireContext(), com.kooo.evcam.automation.AutomationActivity.class)), null)
-                    .pill(() -> getString(config.isAutomationOn() ? R.string.home_state_on : R.string.home_state_off),
-                            () -> config.isAutomationOn(), this::toggleAutomation);
-        }
+        arrangeCards();
         layoutGrid(true);
         refresh();
+    }
+
+    /** What the person chose for this page, to see whether the grid is out of date. */
+    private String savedLayout() {
+        return config.getHomeCardOrder() + "|" + config.getHomeCardsHidden();
+    }
+
+    /** Puts the cards in the person's order without the hidden ones, then the Customize tile. */
+    private void arrangeCards() {
+        builtLayout = savedLayout();
+        Set<String> hidden = new HashSet<>(HomeCardOrder.parse(config.getHomeCardsHidden()));
+        List<String> shown = HomeCardOrder.visible(cardIds,
+                HomeCardOrder.parse(config.getHomeCardOrder()), hidden);
+        List<View> everything = new ArrayList<>(cards);
+        cards.clear();
+        for (String id : shown) {
+            cards.add(everything.get(cardIds.indexOf(id)));
+        }
+        View tile = LayoutInflater.from(grid.getContext()).inflate(R.layout.item_home_card, grid, false);
+        ((ImageView) tile.findViewById(R.id.card_icon)).setImageResource(R.drawable.ic_edit);
+        ((TextView) tile.findViewById(R.id.card_title)).setText(R.string.home_edit_title);
+        ((TextView) tile.findViewById(R.id.card_sub)).setText(R.string.home_card_customize_sub);
+        tile.setOnClickListener(v -> openCustomize());
+        cards.add(tile);
+    }
+
+    /** A card was dragged: it takes place {@code to}, the ones between shift, the Customize tile stays last. */
+    private void moveCard(View card, int to) {
+        if (!isAdded() || !cards.remove(card)) {
+            return;
+        }
+        cards.add(Math.min(to, cards.size() - 1), card);
+        List<String> shown = new ArrayList<>();
+        for (View view : cards.subList(0, cards.size() - 1)) {
+            shown.add((String) view.getTag());
+        }
+        config.setHomeCardOrder(HomeCardOrder.write(
+                HomeCardOrder.merged(shown, HomeCardOrder.parse(config.getHomeCardOrder()))));
+        builtLayout = savedLayout();
+        layoutGrid(true);
+    }
+
+    private void openCustomize() {
+        int[] titles = new int[cardTitles.size()];
+        int[] icons = new int[cardIcons.size()];
+        for (int i = 0; i < titles.length; i++) {
+            titles[i] = cardTitles.get(i);
+            icons[i] = cardIcons.get(i);
+        }
+        startActivity(new Intent(requireContext(), HomeEditActivity.class)
+                .putStringArrayListExtra(HomeEditActivity.EXTRA_IDS, new ArrayList<>(cardIds))
+                .putExtra(HomeEditActivity.EXTRA_TITLES, titles)
+                .putExtra(HomeEditActivity.EXTRA_ICONS, icons)
+                .putExtra(HomeEditActivity.EXTRA_FIRST_BETA, firstBetaCard));
     }
 
     /** Widget column: 30% of the page, 240–360dp. */
@@ -403,14 +489,15 @@ public class HomeFragment extends Fragment {
             onTap.run();
             handler.postDelayed(this::refresh, 300);
         });
-        if (onHold != null) {
-            view.setOnLongClickListener(v -> {
-                com.kooo.evcam.analytics.Analytics.event("home_card", "card", card, "gesture", "hold");
-                onHold.run();
-                return true;
-            });
-        }
+        view.setTag(card);
+        drag.attach(view, onHold == null ? null : () -> {
+            com.kooo.evcam.analytics.Analytics.event("home_card", "card", card, "gesture", "hold");
+            onHold.run();
+        });
         cards.add(view);
+        cardIds.add(card);
+        cardTitles.add(title);
+        cardIcons.add(icon);
         return new Card(view);
     }
 

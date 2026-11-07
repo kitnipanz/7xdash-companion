@@ -48,6 +48,8 @@ public final class GearLight implements Telemetry.Listener {
     /** Switched off: time for the power-off packet to go out before the link closes. */
     private static final long OFF_THEN_CLOSE_MS = 600L;
 
+    private static final int HELD_BRIGHTNESS = 80;
+
     private static GearLight installed;
 
     /** One group's links and what was last shown on them. */
@@ -74,6 +76,9 @@ public final class GearLight implements Telemetry.Listener {
     /** Last pick per group, kept while its links are down too (hysteresis needs it). */
     private final Map<String, String> picked = new HashMap<>();
 
+    /** Colour from an automation, and the rule each group was on when it came: leaving that rule ends it. */
+    private LightLook held;
+    private final Map<String, String> heldAt = new HashMap<>();
     private MoodLightGroups groups;
     private boolean paused;
     private boolean speedHeld;
@@ -144,6 +149,20 @@ public final class GearLight implements Telemetry.Listener {
                 android.widget.Toast.LENGTH_SHORT).show();
     }
 
+    /**
+     * An automation picked a colour: every group shows it until its gear rules pick something else.
+     * Main thread.
+     */
+    public static void holdColor(int rgb) {
+        if (installed == null) {
+            return;
+        }
+        installed.held = new LightLook(rgb, HELD_BRIGHTNESS, LightProtocol.Effect.STATIC, 50);
+        installed.heldAt.clear();
+        installed.heldAt.putAll(installed.picked);
+        installed.update();
+    }
+
     /** The mood light screen wants every link (true) or is done with them (false). */
     public static void pause(boolean on) {
         if (installed == null || installed.paused == on) {
@@ -191,6 +210,11 @@ public final class GearLight implements Telemetry.Listener {
             }
             slot.pickedKey = pick.key;
             LightLook look = pick.look;
+            if (held != null && pick.key != null && pick.key.equals(heldAt.get(group.id))) {
+                look = held;
+            } else {
+                heldAt.remove(group.id);
+            }
             if (steadyRed || Boolean.TRUE.equals(redHalf)) {
                 look = BlindSpotBlink.red(pick.look);
             }

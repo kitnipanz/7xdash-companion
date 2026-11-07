@@ -315,6 +315,14 @@ public class HomeFragment extends Fragment {
             addCard(R.drawable.ic_obd, R.string.obd_title, R.string.home_card_obd_sub,
                     () -> startActivity(new Intent(requireContext(), com.kooo.evcam.obd.ObdActivity.class)), null);
         }
+
+        // Beta: when something happens on the car, do what the person picked
+        if (betaShown) {
+            addCard(R.drawable.ic_automation, R.string.automation_title, R.string.home_card_automation_sub,
+                    () -> startActivity(new Intent(requireContext(), com.kooo.evcam.automation.AutomationActivity.class)), null)
+                    .pill(() -> getString(config.isAutomationOn() ? R.string.home_state_on : R.string.home_state_off),
+                            () -> config.isAutomationOn(), this::toggleAutomation);
+        }
         layoutGrid(true);
         refresh();
     }
@@ -500,6 +508,12 @@ public class HomeFragment extends Fragment {
     private String navLabel() {
         com.kooo.evcam.nav.TripLine trip = com.kooo.evcam.nav.TripLine.now(requireContext());
         return trip == null ? "" : trip.text;
+    }
+
+    private void toggleAutomation() {
+        config.setAutomationOn(!config.isAutomationOn());
+        com.kooo.evcam.automation.Automation.reload();
+        refresh();
     }
 
     private void toggleMacroPad() {

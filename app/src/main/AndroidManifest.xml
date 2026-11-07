@@ -327,6 +327,18 @@
             android:exported="false" />
 
         <activity
+            android:name=".automation.AutomationActivity"
+            android:label="@string/automation_title"
+            android:theme="@style/Theme.Cam"
+            android:screenOrientation="landscape"
+            android:exported="false" />
+        <activity
+            android:name=".automation.AutomationEditActivity"
+            android:label="@string/automation_title"
+            android:theme="@style/Theme.Cam"
+            android:screenOrientation="landscape"
+            android:exported="false" />
+        <activity
             android:name=".input.MacroPadActivity"
             android:label="@string/macro_pad_title"
             android:theme="@style/Theme.Cam"

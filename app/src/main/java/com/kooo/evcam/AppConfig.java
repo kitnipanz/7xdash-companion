@@ -2593,6 +2593,27 @@ public class AppConfig {
 
     // ==================== Macro pad ====================
 
+    private static final String KEY_AUTOMATION = "automation_on";
+    private static final String KEY_AUTOMATION_RULES = "automation_rules";
+
+    /** Beta: run the person's automations (automation.Automation). Off by default: it writes to the car. */
+    public boolean isAutomationOn() {
+        return prefs.getBoolean(KEY_AUTOMATION, false);
+    }
+
+    public void setAutomationOn(boolean on) {
+        prefs.edit().putBoolean(KEY_AUTOMATION, on).apply();
+    }
+
+    /** The automations as JSON ({@link com.kooo.evcam.automation.AutomationRule}), null before the first one. */
+    public String getAutomationRules() {
+        return prefs.getString(KEY_AUTOMATION_RULES, null);
+    }
+
+    public void setAutomationRules(String json) {
+        prefs.edit().putString(KEY_AUTOMATION_RULES, json).apply();
+    }
+
     private static final String KEY_MACRO_PAD = "macro_pad";
     private static final String KEY_MACRO_PAD_SLOTS = "macro_pad_slots";
     private static final String KEY_MACRO_PAD_BOUNDS = "macro_pad_bounds";

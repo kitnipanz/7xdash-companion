@@ -164,6 +164,14 @@ Turn-by-turn navigation on a Google map, with live traffic, spoken turns and the
   Android**, **Routes API** and **Places API (New)** enabled, and internet. The map needs Google Play
   services on the head unit; without it, guidance still works with no map.
 
+### Automation (beta)
+When something happens on the car, 7xDash does what you picked. Turn on Settings → Interface → Beta features, then open the **Automation** card. Off until you turn it on.
+- **When:** the car turns on or off, shift to P, D or R, speed reaches or drops to a number, it gets dark or light, battery drops to a number, outside temperature reaches or drops to a number.
+- **Do**, as many as you like, in order: drive mode (Comfort, Normal, Sport), mood light on or off, mood light colour, car ambient light and its brightness, dim overlay, or any shortcut action.
+- Automations run on a change, not on a state: opening the app in D does not run "Shift to D". A speed has to drop 3 km/h back before it runs again, and a number runs at most once in 30 seconds.
+- Press **Add automation**, or start from an example. Pick When on the left and Do on the right; the line at the bottom reads back what you built. Tap a choice again to take it back.
+- **Try it now** at the bottom runs its actions straight away. A mood light colour stays until the gear rules pick a new look.
+
 ### Settings backup on USB
 Your settings (switches, shortcuts, stickers, lights, speakers, EQ, profiles, announcements and
 recordings) are copied to `7xDash/settings/` on the USB drive a few seconds after any change, and come

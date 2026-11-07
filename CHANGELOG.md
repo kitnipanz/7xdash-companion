@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.7.20-beta] - 2026-11-07
+
+Test build from the develop branch. Not tried on a car yet: tell us what you see.
+
+### Automation (beta)
+- **Automation card, new.** Turn on Settings → Interface → Beta features, then open the card and turn on **Run my automations**. It is off by default: 7xDash changes settings on the car by itself.
+- **Pick when.** The car turns on or off, shift to P, D or R, speed reaches or drops to a number, it gets dark or light, battery drops to a number, outside temperature reaches or drops to a number.
+- **Pick what to do, as many as you like.** Drive mode (Comfort, Normal, Sport), mood light on or off, mood light colour, car ambient light and its brightness, dim overlay, or any shortcut action.
+- **One page.** When on the left, Do on the right, and a line at the bottom that reads back what you built. Tap a choice again to take it back. Five examples are there to start from.
+- **Try it now** runs the actions straight away. Use it while parked first. Setting the drive mode has never been sent to a real car: tell us if the car refuses it.
+- **No flip-flopping.** Automations run on a change, not on a state. A speed has to drop 3 km/h back before it runs again, and a number runs at most once in 30 seconds.
+
 ## [1.7.19-beta] - 2026-11-07
 
 Test build from the develop branch. Not tried with a real Bluetooth LE adapter yet: tell us what you see.

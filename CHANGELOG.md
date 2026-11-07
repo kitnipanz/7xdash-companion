@@ -37,6 +37,7 @@ Changes since 1.7.0 (includes 1.7.1-beta to 1.7.20-beta).
 
 ### Mood light
 - **Red for the blind spot:** steady while a car is there, blinking between red and your colour when you signal towards it. Add Car ambient light to a group to use the car's own light.
+- **The car's ambient light follows the speed as fast as an LED strip.** It takes a new value every 40 ms instead of every 250 ms, and the last colour goes once more when the speed settles, in case the car missed one. Not tried on a car yet: tell us if the colour stutters.
 
 ### Shortcuts and Smart sticker
 - **Play / pause, Next track and Previous track,** new actions for any button, steering-wheel key or Smart sticker.

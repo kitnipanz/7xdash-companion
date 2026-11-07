@@ -17,6 +17,9 @@ final class AutomationExamples {
         out.add(rule(AutomationTrigger.DARK, 0, step(AutomationAction.DIM, "50")));
         out.add(rule(AutomationTrigger.LIGHT, 0, step(AutomationAction.DIM, AutomationAction.OFF)));
         out.add(rule(AutomationTrigger.RAIN_START, 0, step(AutomationAction.AC, AutomationAction.ON)));
+        AutomationRule darkRain = rule(AutomationTrigger.DARK, 0, step(AutomationAction.DRIVE_MODE, "comfort"));
+        darkRain.also.add(new AutomationRule.Condition(AutomationTrigger.RAIN_START.key, 0));
+        out.add(darkRain);
         out.add(rule(AutomationTrigger.CAR_ON, 0, step(AutomationAction.MOOD_LIGHT, AutomationAction.ON)));
         return out;
     }

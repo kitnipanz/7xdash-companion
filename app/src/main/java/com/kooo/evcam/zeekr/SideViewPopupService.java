@@ -318,6 +318,12 @@ public class SideViewPopupService extends Service {
 
     // ================================================================= 窗口
 
+    /** A side view is on screen now, not just waiting hidden: heavy drawing elsewhere should ease off. */
+    public static boolean showing() {
+        SideViewPopupService svc = instance;
+        return svc != null && svc.popup != null && svc.popup.isShowing();
+    }
+
     private void showPopup(int lane) {
         lastLane = lane;
         shownAtMs = SystemClock.uptimeMillis();
@@ -421,6 +427,9 @@ public class SideViewPopupService extends Service {
 
             @Override
             public void onSurfaceTextureUpdated(SurfaceTexture st) {
+                if (popup != null && popup.isShowing()) {
+                    com.kooo.evcam.nav.MapPace.get().videoFrame(SystemClock.uptimeMillis());
+                }
                 onFrame();
             }
         });

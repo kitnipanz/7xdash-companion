@@ -58,12 +58,22 @@ final class AutomationRunner {
                     failed.append(failed.length() == 0 ? "" : ", ").append(why);
                 }
             }
+            // A shortcut says what it did itself: "Sent" would cover that
             String text = failed.length() > 0 ? app.getString(R.string.automation_failed, failed)
-                    : report ? app.getString(R.string.automation_try_done) : null;
+                    : report && !hasShortcut(copy) ? app.getString(R.string.automation_try_done) : null;
             if (text != null) {
                 main.post(() -> Notice.makeText(app, text, Toast.LENGTH_LONG).show());
             }
         });
+    }
+
+    private static boolean hasShortcut(List<AutomationRule.Step> steps) {
+        for (AutomationRule.Step step : steps) {
+            if (AutomationAction.SHORTCUT.key.equals(step.action)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** Returns null when done, else why not. */

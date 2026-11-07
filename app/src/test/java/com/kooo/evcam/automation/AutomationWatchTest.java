@@ -127,6 +127,105 @@ public class AutomationWatchTest {
         return !watch.step(Collections.singletonList(rule), s).isEmpty();
     }
 
+    private static AutomationRule darkAndRainy() {
+        AutomationRule rule = rule(AutomationTrigger.DARK, 0);
+        rule.also.add(new AutomationRule.Condition(AutomationTrigger.RAIN_START.key, 0));
+        return rule;
+    }
+
+    private boolean weather(AutomationRule rule, Integer dayNight, Boolean raining) {
+        AutomationWatch.Sample s = sample();
+        s.dayNight = dayNight;
+        s.rain = raining;
+        return !watch.step(Collections.singletonList(rule), s).isEmpty();
+    }
+
+    @Test
+    public void darkAndRainy_firesWhenTheLastComesTrue_inEitherOrder() {
+        AutomationRule rule = darkAndRainy();
+        weather(rule, Signal.DAY, false);
+        assertFalse("dark alone", weather(rule, Signal.NIGHT, false));
+        assertTrue("then rain", weather(rule, Signal.NIGHT, true));
+        assertFalse("still both", weather(rule, Signal.NIGHT, true));
+
+        AutomationWatch other = new AutomationWatch();
+        AutomationRule second = darkAndRainy();
+        AutomationWatch.Sample s = sample();
+        s.dayNight = Signal.DAY;
+        s.rain = false;
+        other.step(Collections.singletonList(second), s);
+        s = sample();
+        s.dayNight = Signal.DAY;
+        s.rain = true;
+        assertTrue("rain alone", other.step(Collections.singletonList(second), s).isEmpty());
+        s = sample();
+        s.dayNight = Signal.NIGHT;
+        s.rain = true;
+        assertEquals(1, other.step(Collections.singletonList(second), s).size());
+    }
+
+    @Test
+    public void allTrueWhenFirstSeen_doesNotFire() {
+        assertFalse(weather(darkAndRainy(), Signal.NIGHT, true));
+    }
+
+    @Test
+    public void unknownConditionHoldsItBack() {
+        AutomationRule rule = darkAndRainy();
+        weather(rule, Signal.DAY, null);
+        assertFalse(weather(rule, Signal.NIGHT, null));
+    }
+
+    @Test
+    public void firesAgainAfterOneStopped_onceTheGapHasPassed() {
+        AutomationRule rule = darkAndRainy();
+        weather(rule, Signal.NIGHT, false);
+        assertTrue(weather(rule, Signal.NIGHT, true));
+        weather(rule, Signal.NIGHT, false);
+        assertFalse("too soon", weather(rule, Signal.NIGHT, true));
+        weather(rule, Signal.NIGHT, false);
+        now += AutomationWatch.NUMBER_GAP_MS;
+        assertTrue(weather(rule, Signal.NIGHT, true));
+    }
+
+    @Test
+    public void gearAndSpeed_useTheNumberMargin() {
+        AutomationRule rule = rule(AutomationTrigger.GEAR_D, 0);
+        rule.also.add(new AutomationRule.Condition(AutomationTrigger.SPEED_ABOVE.key, 80));
+        AutomationWatch.Sample s = sample();
+        s.gear = "D";
+        s.speedKmh = 50f;
+        assertTrue(watch.step(Collections.singletonList(rule), s).isEmpty());
+        s = sample();
+        s.gear = "D";
+        s.speedKmh = 85f;
+        assertEquals(1, watch.step(Collections.singletonList(rule), s).size());
+        s = sample();
+        s.gear = "D";
+        s.speedKmh = 79f;
+        assertTrue(watch.step(Collections.singletonList(rule), s).isEmpty());
+        now += AutomationWatch.NUMBER_GAP_MS;
+        s = sample();
+        s.gear = "D";
+        s.speedKmh = 85f;
+        assertTrue("stayed within the margin", watch.step(Collections.singletonList(rule), s).isEmpty());
+    }
+
+    @Test
+    public void ruleSavedWithOneCondition_stillReads() {
+        List<AutomationRule> back = AutomationRule.parseAll(
+                "[{\"id\":\"a\",\"enabled\":true,\"trigger\":\"dark\",\"value\":0,\"steps\":[{\"action\":\"dim\",\"choice\":\"50\"}]}]");
+        assertEquals(1, back.get(0).conditions().size());
+        assertEquals(AutomationTrigger.DARK, back.get(0).trigger());
+    }
+
+    @Test
+    public void conditionsComeBackFromSaving() {
+        List<AutomationRule> back = AutomationRule.parseAll(AutomationRule.toJson(Collections.singletonList(darkAndRainy())));
+        assertEquals(2, back.get(0).conditions().size());
+        assertEquals(AutomationTrigger.RAIN_START, back.get(0).conditions().get(1).trigger());
+    }
+
     @Test
     public void rainStart_firesOnTheChange_notWhenAlreadyRaining() {
         AutomationRule start = rule(AutomationTrigger.RAIN_START, 0);

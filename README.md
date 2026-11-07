@@ -158,6 +158,9 @@ Turn-by-turn navigation on a Google map, with live traffic, spoken turns and the
 - While guiding: the banner shows the next turn and how far it is, the map follows the car (move it by
   hand and **Back to the car** returns), and leaving the route finds a new one. Guidance keeps going
   on the HUD and by voice when you leave the screen, until you arrive or tap **End**.
+- A route you pick before Start stays yours for the trip. If you leave it, a new route is found.
+- If the app stops during a trip, the destination comes back when it opens, and guiding goes on if it was on. **End** or arriving clears it.
+- **Navigation** tab in the action picker: **Floating map on / off**, **Map zoom in / out**, and **HUD map zoom** (Furthest, Medium, Close, Adaptive to speed; each press says which), for any button, sticker, Macro pad or automation.
 - **Speak the turns** and **Next turn on the HUD** are on the trip card. Turns are spoken by the head
   unit's voice, or the offline English voice (Announcements) when it has none. Thai needs a Thai voice
   on the head unit.
@@ -168,6 +171,7 @@ Turn-by-turn navigation on a Google map, with live traffic, spoken turns and the
 ### Automation
 When something happens on the car, 7xDash does what you picked. Open the **Automation** card on Home. Off until you turn it on.
 - **When:** the car turns on or off, shift to P, D or R, speed reaches or drops to a number, it gets dark or light, it starts or stops raining, battery drops to a number, outside temperature reaches or drops to a number.
+- Pick several **When** to need them all: "it gets dark" and "it starts raining" runs the moment both are true, in either order.
 - **Do**, as many as you like, in order: drive mode (Comfort, Normal, Sport), mood light on or off, mood light colour, car ambient light and its brightness, dim overlay, AC on or off, temperature zones (synced or dual), open the glovebox (only in P), or any shortcut action.
 - Automations run on a change, not on a state: opening the app in D does not run "Shift to D". A speed has to drop 3 km/h back before it runs again, and a number or rain runs at most once in 30 seconds.
 - Press **Add automation**, or start from an example. Pick When on the left and Do on the right; the line at the bottom reads back what you built. Tap a choice again to take it back.

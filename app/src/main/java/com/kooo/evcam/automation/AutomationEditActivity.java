@@ -34,7 +34,8 @@ import java.util.List;
 /**
  * One automation on one page. Everything to choose from is in view: When on the left, Do on the
  * right, a sentence at the bottom beside Save that reads back what the choices add up to. A tap picks, a second tap
- * on the same choice takes it back. An action holds one choice; shortcuts can be several.
+ * on the same choice takes it back. When can hold one choice per group, all of which must be true;
+ * an action holds one choice; shortcuts can be several.
  */
 public class AutomationEditActivity extends AppCompatActivity {
 
@@ -115,33 +116,61 @@ public class AutomationEditActivity extends AppCompatActivity {
     private void drawWhen() {
         whenPane.removeAllViews();
         whenPane.addView(heading(R.string.automation_when_heading));
-        AutomationTrigger picked = draft.trigger();
+        TextView hint = AutomationActivity.text(this, getString(R.string.automation_when_hint), false);
+        hint.setPadding(0, 0, 0, dp(4));
+        whenPane.addView(hint);
+        List<AutomationRule.Condition> conditions = draft.conditions();
         for (AutomationTrigger.Group group : AutomationTrigger.Group.values()) {
             ChipGroup chips = addSection(whenPane, group.iconRes, getString(group.labelRes));
+            AutomationRule.Condition picked = inGroup(conditions, group);
             for (AutomationTrigger trigger : AutomationTrigger.values()) {
                 if (trigger.group == group) {
-                    chips.addView(chip(getString(trigger.chipRes), trigger == picked, v -> pickTrigger(trigger)));
+                    boolean on = picked != null && picked.trigger() == trigger;
+                    chips.addView(chip(getString(trigger.chipRes), on, v -> pickTrigger(trigger)));
                 }
             }
-            if (picked != null && picked.group == group && picked.measure != null) {
+            if (picked != null && picked.trigger().measure != null) {
                 whenPane.addView(number(picked));
             }
         }
     }
 
-    private void pickTrigger(AutomationTrigger trigger) {
-        boolean sameMeasure = draft.trigger() != null && draft.trigger().measure == trigger.measure;
-        draft.trigger = trigger.key;
-        if (trigger.measure == null) {
-            draft.value = 0;
-        } else if (!sameMeasure) {
-            draft.value = trigger.measure.fallback;
+    private static AutomationRule.Condition inGroup(List<AutomationRule.Condition> conditions,
+                                                    AutomationTrigger.Group group) {
+        for (AutomationRule.Condition condition : conditions) {
+            if (condition.trigger().group == group) {
+                return condition;
+            }
         }
+        return null;
+    }
+
+    /** One choice per group: a tap picks it, another in the group replaces it, the same one again takes it back. */
+    private void pickTrigger(AutomationTrigger trigger) {
+        List<AutomationRule.Condition> conditions = draft.conditions();
+        AutomationRule.Condition old = inGroup(conditions, trigger.group);
+        int at = old == null ? conditions.size() : conditions.indexOf(old);
+        conditions.remove(old);
+        if (old == null || old.trigger() != trigger) {
+            int value = trigger.measure == null ? 0 : old != null ? old.value : trigger.measure.fallback;
+            conditions.add(at, new AutomationRule.Condition(trigger.key, value));
+        }
+        draft.setConditions(conditions);
         draw();
     }
 
+    private void setNumber(AutomationRule.Condition changed, int value) {
+        List<AutomationRule.Condition> conditions = draft.conditions();
+        AutomationRule.Condition now = inGroup(conditions, changed.trigger().group);
+        if (now != null) {
+            now.value = value;
+            draft.setConditions(conditions);
+        }
+    }
+
     /** A slider for the number, with the value in large type over it. */
-    private View number(AutomationTrigger trigger) {
+    private View number(AutomationRule.Condition condition) {
+        AutomationTrigger trigger = condition.trigger();
         AutomationTrigger.Measure m = trigger.measure;
         LinearLayout box = new LinearLayout(this);
         box.setOrientation(LinearLayout.VERTICAL);
@@ -149,11 +178,11 @@ public class AutomationEditActivity extends AppCompatActivity {
         TextView value = new TextView(this);
         value.setTextAppearance(R.style.TextAppearance_Cam_Title);
         value.setTextColor(ContextCompat.getColor(this, R.color.energy));
-        value.setText(getString(trigger.group.unitRes, draft.value));
+        value.setText(getString(trigger.group.unitRes, condition.value));
         box.addView(value);
         SeekBar bar = new SeekBar(this);
         bar.setMax((m.to - m.from) / m.step);
-        bar.setProgress((draft.value - m.from) / m.step);
+        bar.setProgress((condition.value - m.from) / m.step);
         bar.setContentDescription(getString(trigger.group.labelRes));
         ColorStateList energy = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.energy));
         bar.setProgressTintList(energy);
@@ -162,8 +191,9 @@ public class AutomationEditActivity extends AppCompatActivity {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 if (fromUser) {
-                    draft.value = m.from + progress * m.step;
-                    value.setText(getString(trigger.group.unitRes, draft.value));
+                    int number = m.from + progress * m.step;
+                    setNumber(condition, number);
+                    value.setText(getString(trigger.group.unitRes, number));
                     paintSentence();
                 }
             }

@@ -2604,6 +2604,17 @@ public class AppConfig {
         prefs.edit().putBoolean(KEY_NAV_ZOOMED_OUT, out).apply();
     }
 
+    private static final String KEY_NAV_TRIP = "nav_trip";
+
+    /** The trip on now ({@link com.kooo.evcam.nav.SavedTrip}), so it survives a crash; null when none. */
+    public String getNavTrip() {
+        return prefs.getString(KEY_NAV_TRIP, null);
+    }
+
+    public void setNavTrip(String trip) {
+        prefs.edit().putString(KEY_NAV_TRIP, trip).apply();
+    }
+
     private static final String KEY_NAV_HUD_ZOOM = "nav_hud_zoom";
 
     /** The HUD map's distance ({@link com.kooo.evcam.nav.HudMapZoom}); it follows the speed unless changed. */

@@ -2006,6 +2006,7 @@
     <string name="nav_hud_zoom_medium">กลาง</string>
     <string name="nav_hud_zoom_close">ใกล้</string>
     <string name="nav_hud_zoom_adaptive">ปรับตามความเร็ว</string>
+    <string name="nav_trip_back">กลับมาที่เส้นทางไป %1$s แล้ว</string>
     <string name="nav_zoom_far">ซูมออก</string>
     <string name="nav_zoom_near">ซูมเข้า</string>
 </resources>

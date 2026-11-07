@@ -159,6 +159,7 @@ Turn-by-turn navigation on a Google map, with live traffic, spoken turns and the
   hand and **Back to the car** returns), and leaving the route finds a new one. Guidance keeps going
   on the HUD and by voice when you leave the screen, until you arrive or tap **End**.
 - A route you pick before Start stays yours for the trip. If you leave it, a new route is found.
+- If the app stops during a trip, the destination comes back when it opens, and guiding goes on if it was on. **End** or arriving clears it.
 - **Navigation** tab in the action picker: **Floating map on / off**, **Map zoom in / out**, and **HUD map zoom** (Furthest, Medium, Close, Adaptive to speed; each press says which), for any button, sticker, Macro pad or automation.
 - **Speak the turns** and **Next turn on the HUD** are on the trip card. Turns are spoken by the head
   unit's voice, or the offline English voice (Announcements) when it has none. Thai needs a Thai voice

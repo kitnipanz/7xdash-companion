@@ -2031,6 +2031,7 @@ Then reopen this app.</string>
     <string name="nav_hud_zoom_medium">Medium</string>
     <string name="nav_hud_zoom_close">Close</string>
     <string name="nav_hud_zoom_adaptive">Adaptive to speed</string>
+    <string name="nav_trip_back">Back on your trip to %1$s</string>
     <string name="nav_zoom_far">Zoomed out</string>
     <string name="nav_zoom_near">Zoomed in</string>
 </resources>

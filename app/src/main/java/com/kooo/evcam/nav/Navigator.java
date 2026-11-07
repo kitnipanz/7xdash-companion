@@ -36,6 +36,7 @@ public final class Navigator {
     private static final String TAG = "Navigator";
     private static final String TELEMETRY_USER = "navigation";
     private static final long TICK_MS = 1_000L;
+    private static final long TRIP_SAVE_MS = 60_000L;
     /** Not more often than this when off the route (GPS in a car park can wander)... */
     private static final long REROUTE_MS = 10_000L;
     /** ...and this often anyway, for fresh traffic and arrival time. */
@@ -172,6 +173,9 @@ public final class Navigator {
     private boolean pickedByPerson;
     /** A place came from the iPhone while guiding: start guiding to it as soon as its route is in. */
     private boolean startWhenRouted;
+    /** When the trip was last saved, and how often it came back without lasting until the next save. */
+    private long tripSavedAt;
+    private int restoreTries;
     /** The turn card is being placed by hand ({@link #setHudPlacing}). */
     private boolean hudPlacing;
     /** Navigation screens open (the full screen, the floating window): GPS on for the map and the search, even with nothing planned. */
@@ -196,6 +200,38 @@ public final class Navigator {
     public static void install(Context context) {
         Context app = context.getApplicationContext();
         Trip.setSharedListener(place -> get().onShared(app, place));
+        get().bringBack(app);
+    }
+
+    /** The app stopped during a trip: show its destination again, and go on guiding if it was. */
+    private void bringBack(Context context) {
+        if (phase != Phase.IDLE) {
+            return;
+        }
+        AppConfig config = new AppConfig(context);
+        SavedTrip trip = SavedTrip.restore(config.getNavTrip());
+        if (trip == null) {
+            return;
+        }
+        if (!active(context) || !hasKey() || !trip.worthResuming(System.currentTimeMillis())) {
+            config.setNavTrip(null);
+            return;
+        }
+        AppLog.i(TAG, "bringing the trip back" + (trip.guiding ? ", guiding" : ""));
+        preview(context, trip.place);
+        startWhenRouted = trip.guiding;
+        restoreTries = trip.tries + 1;
+        saveTrip();
+        notice(context, context.getString(R.string.nav_trip_back, NavMapPainter.placeName(trip.place)));
+        if (trip.guiding && attached == 0 && OverlayCoordinator.canShowOverlay(context)) {
+            NavFloatWindow.get().show(context);
+        }
+    }
+
+    private void saveTrip() {
+        tripSavedAt = System.currentTimeMillis();
+        new AppConfig(app).setNavTrip(new SavedTrip(destination, phase == Phase.GUIDING || startWhenRouted,
+                restoreTries, tripSavedAt).store());
     }
 
     /**
@@ -229,6 +265,8 @@ public final class Navigator {
     public void attach(Context context) {
         bind(context);
         attached++;
+        // Android can reopen this screen after a crash without going through the main screen
+        bringBack(app);
         keepRunning();
     }
 
@@ -341,6 +379,8 @@ public final class Navigator {
         startWhenRouted = false;
         voicePlan.reset();
         phase = Phase.ROUTING;
+        restoreTries = 0;
+        saveTrip();
         AppLog.i(TAG, "planning" + (place.name.isEmpty() ? "" : " to " + place.name));
         if (wasGuiding) {
             hud.hide();
@@ -369,6 +409,7 @@ public final class Navigator {
             return;
         }
         phase = Phase.GUIDING;
+        saveTrip();
         voicePlan.reset();
         AppLog.i(TAG, "guiding");
         NavRoute r = guidance.route();
@@ -385,6 +426,7 @@ public final class Navigator {
         }
         AppLog.i(TAG, "ended");
         phase = Phase.IDLE;
+        new AppConfig(app).setNavTrip(null);
         destination = null;
         guidance = null;
         progress = null;
@@ -583,6 +625,10 @@ public final class Navigator {
             return;
         }
         long now = System.currentTimeMillis();
+        if (phase != Phase.ARRIVED && now - tripSavedAt >= TRIP_SAVE_MS) {
+            restoreTries = 0;
+            saveTrip();
+        }
         if (guidance == null) {
             // still waiting for a fix to plan from
             if (phase == Phase.ROUTING && routedAt == 0 && carLat != null) {
@@ -622,6 +668,7 @@ public final class Navigator {
         if (progress.arrived) {
             AppLog.i(TAG, "arrived");
             phase = Phase.ARRIVED;
+            new AppConfig(app).setNavTrip(null);
             arrivedAt = now;
             speak(app.getString(R.string.nav_say_arrived));
             showHud();

@@ -1,10 +1,10 @@
 package com.kooo.evcam.announce;
 
 /** 16-bit PCM WAV: reads what text-to-speech writes (down to mono), writes recordings. */
-final class Wav {
+public final class Wav {
 
-    final int rate;
-    final short[] mono;
+    public final int rate;
+    public final short[] mono;
 
     private Wav(int rate, short[] mono) {
         this.rate = rate;

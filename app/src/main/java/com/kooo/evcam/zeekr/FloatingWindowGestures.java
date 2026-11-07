@@ -34,6 +34,8 @@ public final class FloatingWindowGestures {
     private static final int UNDOCK_MIN_PX = 60;
     private static final long GLIDE_MIN_MS = 120L;
     private static final long GLIDE_MAX_MS = 380L;
+    /** Fingers closer than this in one direction do not set the size in that direction. */
+    private static final float FREE_MIN_SPAN_PX = 60f;
 
     public interface Host {
         WindowManager.LayoutParams params();
@@ -54,6 +56,14 @@ public final class FloatingWindowGestures {
         /** A plain tap that was not on a docked strip. */
         default void onTap(MotionEvent up) {
         }
+
+        /**
+         * True (the default) when a pinch keeps the window's shape; false lets the fingers' spread
+         * across and up-down set the width and the height separately (Navigation's floating map).
+         */
+        default boolean keepShape() {
+            return true;
+        }
     }
 
     private final Host host;
@@ -70,6 +80,8 @@ public final class FloatingWindowGestures {
     private boolean pinching;
     private boolean pinchedThisGesture;
     private float pinchStartSpan;
+    private float pinchStartSpanX;
+    private float pinchStartSpanY;
     private int pinchStartWidth;
     private int pinchStartHeight;
     private float pinchAnchorRatioX;
@@ -153,6 +165,8 @@ public final class FloatingWindowGestures {
         pinching = true;
         dragging = false;
         pinchStartSpan = spanOf(event);
+        pinchStartSpanX = Math.abs(event.getX(0) - event.getX(1));
+        pinchStartSpanY = Math.abs(event.getY(0) - event.getY(1));
         pinchStartWidth = p.width;
         pinchStartHeight = p.height;
         float focusX = (event.getX(0) + event.getX(1)) / 2f;
@@ -166,6 +180,10 @@ public final class FloatingWindowGestures {
         if (pinchStartSpan <= 0f || span <= 0f) {
             return;
         }
+        if (!host.keepShape()) {
+            freePinch(event, p, span);
+            return;
+        }
         RearViewTouchModel.PinchResult result = RearViewTouchModel.pinch(
                 p.x, p.y, pinchStartWidth, pinchStartHeight,
                 pinchAnchorRatioX, pinchAnchorRatioY,
@@ -175,6 +193,27 @@ public final class FloatingWindowGestures {
         p.height = result.height;
         p.x = RearViewTouchModel.clampX(result.x, result.width, host.screenWidth(), PEEK_WIDTH_PX);
         p.y = RearViewTouchModel.clampY(result.y, result.height, host.screenHeight());
+        host.apply();
+    }
+
+    /**
+     * Width from the fingers' spread across, height from their spread up and down; a direction the
+     * fingers barely spread in follows the overall pinch. The point between the fingers stays put.
+     */
+    private void freePinch(MotionEvent event, WindowManager.LayoutParams p, float span) {
+        float overall = span / pinchStartSpan;
+        float sx = pinchStartSpanX > FREE_MIN_SPAN_PX
+                ? Math.abs(event.getX(0) - event.getX(1)) / pinchStartSpanX : overall;
+        float sy = pinchStartSpanY > FREE_MIN_SPAN_PX
+                ? Math.abs(event.getY(0) - event.getY(1)) / pinchStartSpanY : overall;
+        int min = host.minSize();
+        int w = Math.max(min, Math.min(host.screenWidth(), Math.round(pinchStartWidth * sx)));
+        int h = Math.max(min, Math.min(host.screenHeight(), Math.round(pinchStartHeight * sy)));
+        p.width = w;
+        p.height = h;
+        p.x = RearViewTouchModel.clampX(Math.round(rawFocusX(event) - pinchAnchorRatioX * w), w,
+                host.screenWidth(), PEEK_WIDTH_PX);
+        p.y = RearViewTouchModel.clampY(Math.round(rawFocusY(event) - pinchAnchorRatioY * h), h, host.screenHeight());
         host.apply();
     }
 

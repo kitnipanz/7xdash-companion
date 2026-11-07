@@ -635,7 +635,7 @@ final class EcarxSource {
     }
 
     /** 代理上其余的方法：Object 的三个照常，别的回个零值。 */
-    private static Object proxyDefault(Object proxy, Method method, Object[] args, String label) {
+    static Object proxyDefault(Object proxy, Method method, Object[] args, String label) {
         String name = method.getName();
         if ("toString".equals(name)) {
             return label;
@@ -1162,7 +1162,7 @@ final class EcarxSource {
     }
 
     /** 调一下算不算成功：没抛异常，而且（返回 boolean 的话）返回 true。 */
-    private static boolean invokeOk(Method m, Object target, Object... args) {
+    static boolean invokeOk(Method m, Object target, Object... args) {
         try {
             Object r = m.invoke(target, args);
             return !(r instanceof Boolean) || (Boolean) r;
@@ -1195,7 +1195,7 @@ final class EcarxSource {
     }
 
     /** 找「(first, 某个接口)」形状的方法：注册 / 注销监听的那种，接口类型从签名上取。 */
-    private static Method findMethodWithInterface(Object target, String name, Class<?> first) {
+    static Method findMethodWithInterface(Object target, String name, Class<?> first) {
         for (Class<?> type : publicInterfaces(target)) {
             for (Method m : type.getMethods()) {
                 Class<?>[] p = m.getParameterTypes();
@@ -1208,7 +1208,7 @@ final class EcarxSource {
     }
 
     /** 找「(某个接口)」形状的方法。 */
-    private static Method findMethodWithInterface(Object target, String name) {
+    static Method findMethodWithInterface(Object target, String name) {
         for (Class<?> type : publicInterfaces(target)) {
             for (Method m : type.getMethods()) {
                 Class<?>[] p = m.getParameterTypes();

@@ -98,6 +98,19 @@ public final class CarLink {
     private Ui ui;
     private WatchListener watchListener;
     private volatile Speaker speaker;
+    /** The last {@code {"t":"nav",…}} sent, so only a change goes out again. */
+    private volatile String lastNav;
+    /** Navigation's state changes on its own (the trip, a place from the iPhone): look this often. */
+    private static final long NAV_CHECK_MS = 5_000L;
+    private final Runnable navCheck = new Runnable() {
+        @Override
+        public void run() {
+            sendNav(socket, false);
+            if (running.get()) {
+                handler.postDelayed(this, NAV_CHECK_MS);
+            }
+        }
+    };
 
     /** A QR code lives 10 min on the hub; swap it before then while nobody is linked. */
     private static final long CODE_REFRESH_MS = 8 * 60 * 1000L;
@@ -162,6 +175,26 @@ public final class CarLink {
         running.set(true);
         dial();
         armCodeRefresh();
+        handler.removeCallbacks(navCheck);
+        handler.postDelayed(navCheck, NAV_CHECK_MS);
+    }
+
+    /**
+     * Tells the hub Navigation's state (beta): whether it takes places from the web, where it is
+     * going, the trip, how the last place went. Only when it changed, unless {@code force}.
+     */
+    private void sendNav(WebSocket ws, boolean force) {
+        if (ws == null) {
+            return;
+        }
+        try {
+            String msg = com.kooo.evcam.nav.NavRemote.status(context).toString();
+            if (force || !msg.equals(lastNav)) {
+                lastNav = msg;
+                ws.send(msg);
+            }
+        } catch (Exception ignored) {
+        }
     }
 
     /** Ask the hub for a new QR code. The old one stops working. */
@@ -190,6 +223,7 @@ public final class CarLink {
         generation.incrementAndGet();
         handler.removeCallbacks(reconnect);
         handler.removeCallbacks(codeRefresh);
+        handler.removeCallbacks(navCheck);
         reconnectPosted.set(false);
         watching.set(false);
         WebSocket ws = socket;
@@ -325,6 +359,7 @@ public final class CarLink {
                 }
                 publish("ONLINE", "", email);
                 sendSpeaker(webSocket);
+                sendNav(webSocket, true);
             }
 
             @Override
@@ -394,6 +429,13 @@ public final class CarLink {
                                     "command", step > 0 ? "volume_up" : "volume_down");
                             com.kooo.evcam.blackbox.BlackBox.note("car-link: volume " + (step > 0 ? "up" : "down"));
                         }
+                    } else if ("place".equals(type)) {
+                        // Navigation (beta): a link or a place name typed on 7xDash web
+                        String place = j.optString("text");
+                        handler.post(() -> com.kooo.evcam.nav.NavRemote.place(context, place,
+                                () -> sendNav(socket, true)));
+                        com.kooo.evcam.analytics.Analytics.event("remote", "command", "place");
+                        com.kooo.evcam.blackbox.BlackBox.note("car-link: place from the web");
                     } else if ("idle".equals(type)) {
                         boolean wasWatching = watching.get();
                         String prevSource = source;

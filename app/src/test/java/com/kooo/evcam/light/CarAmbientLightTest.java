@@ -23,4 +23,10 @@ public class CarAmbientLightTest {
         assertEquals(-1, CarAmbientLight.stale(new Integer[]{5, 5}, 5));
         assertEquals(-1, CarAmbientLight.stale(new Integer[0], 5));
     }
+
+    @Test
+    public void pacedLikeABluetoothLight_withAWaitAfterPowerOn() {
+        assertEquals(40L, CarAmbientLight.gapAfter(false));
+        assertEquals(200L, CarAmbientLight.gapAfter(true));
+    }
 }

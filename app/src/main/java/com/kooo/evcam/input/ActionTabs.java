@@ -23,9 +23,9 @@ import java.util.List;
  * The action picker for buttons and stickers: a row of tabs ({@link ShortcutAction.Group}) and,
  * under it, the actions on the picked tab, two to a row.
  */
-final class ActionTabs {
+public final class ActionTabs {
 
-    interface Pick {
+    public interface Pick {
         void action(ShortcutAction action);
     }
 
@@ -33,15 +33,17 @@ final class ActionTabs {
     private final LinearLayout list;
     private final int rowHeight;
     private final ShortcutAction marked;
+    private final java.util.function.Predicate<ShortcutAction> offered;
     private final Pick pick;
     private ShortcutAction.Group shown;
 
     private ActionTabs(LinearLayout tabs, LinearLayout list, int rowHeightDp,
-                       ShortcutAction marked, Pick pick) {
+                       ShortcutAction marked, java.util.function.Predicate<ShortcutAction> offered, Pick pick) {
         this.tabs = tabs;
         this.list = list;
         this.rowHeight = dp(tabs.getResources(), rowHeightDp);
         this.marked = marked;
+        this.offered = offered;
         this.pick = pick;
     }
 
@@ -51,7 +53,13 @@ final class ActionTabs {
      */
     static void fill(LinearLayout tabs, LinearLayout list, int rowHeightDp,
                      ShortcutAction marked, Pick pick) {
-        ActionTabs view = new ActionTabs(tabs, list, rowHeightDp, marked, pick);
+        fill(tabs, list, rowHeightDp, marked, action -> true, pick);
+    }
+
+    /** As above, listing only the actions {@code offered} lets through. */
+    public static void fill(LinearLayout tabs, LinearLayout list, int rowHeightDp, ShortcutAction marked,
+                            java.util.function.Predicate<ShortcutAction> offered, Pick pick) {
+        ActionTabs view = new ActionTabs(tabs, list, rowHeightDp, marked, offered, pick);
         view.buildTabs();
         view.show(marked == null ? ShortcutAction.Group.values()[0] : marked.group());
     }
@@ -83,6 +91,7 @@ final class ActionTabs {
         Resources res = list.getResources();
         int gap = dp(res, 8);
         List<ShortcutAction> actions = sorted(context, ShortcutAction.in(group));
+        actions.removeIf(offered.negate());
         LinearLayout row = null;
         for (int i = 0; i < actions.size(); i++) {
             if (i % 2 == 0) {

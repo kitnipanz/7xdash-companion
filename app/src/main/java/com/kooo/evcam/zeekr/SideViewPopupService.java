@@ -253,6 +253,8 @@ public class SideViewPopupService extends Service {
         in.overFactoryView = appConfig.isSidePopupOverFactory();
         in.doorCamera = appConfig.isSidePopupOnDoor();
         in.doorsOpen = s.doorsOpen;
+        in.warningCamera = appConfig.isSidePopupOnWarning();
+        in.warnedSides = s.blindSpotWarning;
         in.showing = popup != null && popup.isShowing() ? popup.lane() : SideViewDecision.NONE;
 
         boolean blocked = ScreenState.dark() || RearViewMirrorService.isRunning()
@@ -268,7 +270,10 @@ public class SideViewPopupService extends Service {
             if (want != in.showing) {
                 boolean byDoor = want == SideViewDecision.doorLane(in)
                         && (in.turnSignal == null || in.turnSignal == 0 || Boolean.TRUE.equals(in.hazard));
-                AppLog.i(TAG, (byDoor ? "开门：弹出「" : "转向灯：弹出「") + LaneCycle.labelOf(want) + "」路");
+                boolean byWarning = want == SideViewDecision.warningLane(in)
+                        && (in.turnSignal == null || in.turnSignal == 0 || Boolean.TRUE.equals(in.hazard));
+                AppLog.i(TAG, (byWarning ? "盲区报警：弹出「" : byDoor ? "开门：弹出「" : "转向灯：弹出「")
+                        + LaneCycle.labelOf(want) + "」路");
                 showPopup(want);
                 showWarning(s.blindSpotWarning);
             }

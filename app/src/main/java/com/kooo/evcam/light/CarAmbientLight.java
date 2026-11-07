@@ -20,9 +20,9 @@ import java.util.Locale;
  * car has it; {@link #level}). It can only be on, off or one colour: an animation shows its colour,
  * and brightness 0 or Off turns it off.
  *
- * <p>The car is slower to take a value than a Bluetooth light, and the speed blend sends a new
- * colour every few km/h: the newest look wins and at most one value goes to the car every
- * {@link #WRITE_EVERY_MS}.</p>
+ * <p>Paced like a Bluetooth light ({@link MoodLight}), so both follow the speed together: the
+ * newest look wins, one value goes to the car every {@link #WRITE_EVERY_MS}, a little longer after
+ * power on, and the last state goes once more when writes go quiet, in case the car dropped a value.</p>
  */
 final class CarAmbientLight implements LightLink {
 
@@ -30,7 +30,11 @@ final class CarAmbientLight implements LightLink {
     static final String ADDRESS = "car:ambient";
 
     private static final String TAG = "CarAmbientLight";
-    private static final long WRITE_EVERY_MS = 250L;
+    private static final long WRITE_EVERY_MS = 40L;
+    /** A value sent straight after power on may be lost, so the next one waits. */
+    private static final long AFTER_POWER_MS = 200L;
+    /** Quiet this long after the last write, then the last colour and brightness go once more. */
+    private static final long SETTLE_MS = 500L;
     private static final int OFF = 0;
     private static final int ON = 1;
 
@@ -40,6 +44,7 @@ final class CarAmbientLight implements LightLink {
     private final HandlerThread thread = new HandlerThread("car-ambient-light");
     private final Handler h;
     private final Runnable flush = this::flush;
+    private final Runnable settle = this::settle;
 
     // Worker thread only
     private Integer powerId;
@@ -54,6 +59,9 @@ final class CarAmbientLight implements LightLink {
     private Integer wantPower;
     private Integer wantColor;
     private long lastWrite;
+    private long nextGap = WRITE_EVERY_MS;
+    /** The last state has been sent twice; nothing to repeat until it changes. */
+    private boolean settled;
     private volatile boolean released;
 
     CarAmbientLight(Context context, MoodLight.Listener listener) {
@@ -105,6 +113,7 @@ final class CarAmbientLight implements LightLink {
     public void power(boolean on) {
         h.post(() -> {
             wantPower = on ? ON : OFF;
+            settled = false;
             schedule();
         });
     }
@@ -118,6 +127,7 @@ final class CarAmbientLight implements LightLink {
             } else {
                 wantLevel = level(brightness);
             }
+            settled = false;
             schedule();
         });
     }
@@ -133,6 +143,7 @@ final class CarAmbientLight implements LightLink {
                 wantColor = l.color & 0xFFFFFF;
                 wantLevel = level(l.brightness);
             }
+            settled = false;
             schedule();
         });
     }
@@ -141,6 +152,7 @@ final class CarAmbientLight implements LightLink {
     public void release() {
         h.post(() -> {
             h.removeCallbacks(flush);
+            h.removeCallbacks(settle);
             thread.quitSafely();
         });
         released = true;
@@ -151,7 +163,8 @@ final class CarAmbientLight implements LightLink {
             return;
         }
         h.removeCallbacks(flush);
-        long wait = lastWrite + WRITE_EVERY_MS - SystemClock.uptimeMillis();
+        h.removeCallbacks(settle);
+        long wait = lastWrite + nextGap - SystemClock.uptimeMillis();
         h.postDelayed(flush, Math.max(0, wait));
     }
 
@@ -214,8 +227,12 @@ final class CarAmbientLight implements LightLink {
             sentColor = wantColor;
         }
         if (function == null) {
+            if (!settled) {
+                h.postDelayed(settle, SETTLE_MS);
+            }
             return;
         }
+        nextGap = gapAfter(function.equals(powerId) && value == ON);
         lastWrite = SystemClock.uptimeMillis();
         String failed = CarAmbientLab.write(app, function, value);
         if (failed != null) {
@@ -223,6 +240,22 @@ final class CarAmbientLight implements LightLink {
         }
         // Whatever is still wanted goes in the next turn
         schedule();
+    }
+
+    /** Sends the wanted colour and brightness once more, as if the car had not taken them. */
+    private void settle() {
+        if (released) {
+            return;
+        }
+        settled = true;
+        sentColor = null;
+        java.util.Arrays.fill(sentLevels, null);
+        schedule();
+    }
+
+    /** How long the next value waits after this one. */
+    static long gapAfter(boolean poweredOn) {
+        return poweredOn ? AFTER_POWER_MS : WRITE_EVERY_MS;
     }
 
     /** First brightness function not yet at {@code want}; -1 when all are. */

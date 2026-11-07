@@ -26,6 +26,10 @@ import java.util.regex.Pattern;
  *
  * <p>Off by default ({@link AppConfig#isBlindSpotSnifferEnabled}). The HUD card shows whatever the
  * HUD notifications switch says, because the driver asked for it here.</p>
+ *
+ * <p>Each session also writes a {@link BlindSpotLog} file: every car setting with its value at the
+ * start, then every change of the watched ones and of gear / turn signal / hazard, to send to the
+ * phone from Settings → Side mirror.</p>
  */
 public final class BlindSpotSniffer {
 
@@ -45,6 +49,11 @@ public final class BlindSpotSniffer {
     private final HandlerThread thread = new HandlerThread("blind-spot-sniffer");
     private final Handler work;
     private List<CarAmbientLab.Constant> watched;
+    /** Every function number the car has, for the full dump at the top of the log. */
+    private List<CarAmbientLab.Constant> everything;
+    private BlindSpotLog log;
+    /** Gear, turn signal and hazard as last logged, so the log shows when they change. */
+    private String lastSituation;
     private String[] before;
     private boolean running;
     private final Map<Integer, Long> hudAt = new HashMap<>();
@@ -94,9 +103,15 @@ public final class BlindSpotSniffer {
         running = want;
         work.removeCallbacks(poll);
         before = null;
+        lastSituation = null;
         if (want) {
+            log = BlindSpotLog.start(app);
             work.post(poll);
         } else {
+            if (log != null) {
+                log.section("Stopped");
+                log = null;
+            }
             AppLog.i(TAG, "stopped");
         }
     }
@@ -123,6 +138,7 @@ public final class BlindSpotSniffer {
                 }
                 AppLog.i(TAG, "watching " + watched.size() + ": " + all);
                 BlackBox.note("盲区信号试验：开始看 " + watched.size() + " 个设置：" + all);
+                writeHeader(now);
             } else {
                 for (int i = 0; i < watched.size(); i++) {
                     if (!Objects.equals(before[i], now[i])) {
@@ -131,6 +147,7 @@ public final class BlindSpotSniffer {
                 }
             }
             before = now;
+            noteSituation();
         }
         work.postDelayed(poll, POLL_MS);
     }
@@ -139,6 +156,7 @@ public final class BlindSpotSniffer {
         CarAmbientLab.Scan scan = CarAmbientLab.scan(app);
         List<CarAmbientLab.Constant> out = new ArrayList<>();
         if (scan.carReady) {
+            everything = scan.functions;
             for (CarAmbientLab.Constant k : scan.functions) {
                 if (NAME.matcher(k.name).find()) {
                     out.add(k);
@@ -155,11 +173,50 @@ public final class BlindSpotSniffer {
         String line = k.name + " " + k.hex() + ": " + was + " → " + now;
         AppLog.i(TAG, line + " (turn " + turn + ", " + s.speedKmh + " km/h)");
         BlackBox.noteImportant("盲区信号试验：" + line + "（转向灯 " + turn + "，车速 " + s.speedKmh + "）");
+        if (log != null) {
+            log.line(line + "  | " + BlindSpotLog.context(s));
+        }
         long at = SystemClock.elapsedRealtime();
         Long last = hudAt.get(k.value);
         if (last == null || at - last >= HUD_EVERY_MS) {
             hudAt.put(k.value, at);
             HudNoticeWindow.show(app, "7xDash", "BSD? " + shortName(k.name) + " " + was + "→" + now, k.hex());
+        }
+    }
+
+    /** Top of the log: every car setting and its value, then the watched ones. */
+    private void writeHeader(String[] watchedNow) {
+        if (log == null) {
+            return;
+        }
+        List<CarAmbientLab.Constant> all = everything == null ? new ArrayList<>() : everything;
+        String[] values = all.isEmpty() ? null : CarAmbientLab.readAll(app, all);
+        log.section("All car settings (" + all.size() + ")");
+        for (int i = 0; i < all.size(); i++) {
+            CarAmbientLab.Constant k = all.get(i);
+            log.raw(k.name + " " + k.hex() + " " + k.owner + " = " + (values == null ? "?" : values[i]));
+        }
+        log.section("Watched blind-spot settings (" + watched.size() + ")");
+        for (int i = 0; i < watched.size(); i++) {
+            CarAmbientLab.Constant k = watched.get(i);
+            log.raw(k.name + " " + k.hex() + " " + k.owner + " = " + watchedNow[i]);
+        }
+        log.section("Changes");
+        log.line("start  | " + BlindSpotLog.context(Telemetry.get().latest()));
+    }
+
+    /** A line whenever gear, turn signal or hazard changes, so changes can be read against what the car was doing. */
+    private void noteSituation() {
+        if (log == null) {
+            return;
+        }
+        VehicleState s = Telemetry.get().latest();
+        String now = s == null ? "?" : s.gear + "/" + s.turnSignal + "/" + s.hazard;
+        if (!now.equals(lastSituation)) {
+            if (lastSituation != null) {
+                log.line("car    | " + BlindSpotLog.context(s));
+            }
+            lastSituation = now;
         }
     }
 

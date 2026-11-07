@@ -16,7 +16,8 @@ import java.util.concurrent.Executors;
  * Battery at arrival (beta). The phone shares a place over the car's Wi-Fi
  * ({@link DestinationServer}); this keeps that destination, asks for the road km now and then
  * ({@link RouteLookup}) and turns battery %, range and km left into an {@link Arrival.Estimate}
- * for the Dash panel, the Home card and {@link ArrivalActivity}. CarPlay keeps its route on the
+ * for the Dash panel and the Home card ({@link com.kooo.evcam.nav.TripLine}), and hands the place
+ * to Navigation. CarPlay keeps its route on the
  * phone, so the phone has to tell us where it is going.
  *
  * <p>Runs only while Settings → Beta features is on and the feature's switch is on. While a
@@ -95,10 +96,26 @@ public final class Trip implements Telemetry.Listener {
         get().apply(context);
     }
 
-    /** Is it allowed to run: beta features on and its own switch on. */
+    /**
+     * Is it allowed to run: beta features on and Navigation taking places from the iPhone
+     * ({@link AppConfig#isNavShareEnabled}). Without a Google key the shared place still gets its
+     * battery estimate here, on the Dash panel and the Home card.
+     */
     public static boolean active(Context context) {
         AppConfig config = new AppConfig(context);
-        return config.isBetaFeaturesEnabled() && config.isArrivalEnabled();
+        return config.isBetaFeaturesEnabled() && config.isNavShareEnabled();
+    }
+
+    /** Told on the main thread of each place the phone shares. */
+    public interface SharedListener {
+        void onShared(DestinationLink.Place place);
+    }
+
+    private static volatile SharedListener sharedListener;
+
+    /** Navigation listens here, so a place from the iPhone also opens its route. */
+    public static void setSharedListener(SharedListener listener) {
+        sharedListener = listener;
     }
 
     /** Starts or stops to match the settings. */
@@ -159,22 +176,39 @@ public final class Trip implements Telemetry.Listener {
     }
 
     /**
-     * A place shared from the phone, as the server got it. Blocking (may follow a short link): call
-     * off the main thread. Returns the place set, or null when nothing in it looked like a place.
+     * A place shared from the phone, as the server got it, or sent from 7xDash web. Blocking (may
+     * follow a short link or look a name up): call off the main thread. Returns the place set, or
+     * null when nothing in it looked like a place.
      */
-    DestinationLink.Place receive(String shared) {
+    public DestinationLink.Place receive(String shared) {
         DestinationLink.Place p = DestinationLink.parse(shared);
         if (p == null) {
             String url = DestinationLink.firstUrl(shared);
             if (url != null) {
                 p = route.resolve(url, DestinationLink.nameOf(shared, url));
+            } else if (DestinationLink.looksLikeName(shared)) {
+                // typed on the phone page instead of a link: look the name up
+                String name = shared.trim();
+                DestinationLink.Place found = route.search(name);
+                p = found == null ? null : new DestinationLink.Place(found.lat, found.lng, name);
             }
         }
         if (p == null) {
             AppLog.w(TAG, "no place in what the phone sent (" + (shared == null ? 0 : shared.length()) + " chars)");
+            Context context = app;
+            if (context != null) {
+                // the phone got its answer; the driver should know too
+                main.post(() -> com.kooo.evcam.ui.Notice.makeText(context, com.kooo.evcam.R.string.nav_place_not_found,
+                        android.widget.Toast.LENGTH_LONG).show());
+            }
             return null;
         }
         setDestination(p, true);
+        SharedListener l = sharedListener;
+        if (l != null) {
+            DestinationLink.Place place = p;
+            main.post(() -> l.onShared(place));
+        }
         return p;
     }
 

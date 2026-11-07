@@ -190,6 +190,43 @@ public final class CarAmbientLab {
         }
     }
 
+    /** What the car reads for this function in this zone, or null. Blocking. */
+    public static Integer valueInZone(Context context, int id, int zone) {
+        Object function = carFunction(context);
+        Method get = function == null ? null
+                : EcarxSource.findMethod(function, "getFunctionValue", int.class, int.class);
+        if (get == null) {
+            return null;
+        }
+        try {
+            Object r = get.invoke(function, id, zone);
+            return r instanceof Integer ? (Integer) r : null;
+        } catch (Throwable t) {
+            return null;
+        }
+    }
+
+    /**
+     * Sends one value to one zone, with no fallback: a value meant for a zone must not reach the
+     * whole function. Returns null when sent, else why not. Sent is not done: read it back. Blocking.
+     */
+    public static String writeInZone(Context context, int id, int zone, int value) {
+        Object function = carFunction(context);
+        if (function == null) {
+            return "No car function interface";
+        }
+        Method setter = EcarxSource.findMethod(function, "setFunctionValue", int.class, int.class, int.class);
+        if (setter == null) {
+            return "No zoned setFunctionValue on this car";
+        }
+        try {
+            Object r = setter.invoke(function, id, zone, value);
+            return Boolean.FALSE.equals(r) ? "car said no" : null;
+        } catch (Throwable t) {
+            return "threw " + rootMessage(t);
+        }
+    }
+
     /** Sends one value. Returns null when sent, else why not. Blocking. */
     public static String write(Context context, int id, int value) {
         Object function = carFunction(context);
@@ -488,6 +525,146 @@ public final class CarAmbientLab {
             // some classes refuse reflection
         }
         return new ArrayList<>(out.values());
+    }
+
+    /**
+     * Reads one id three ways: as a car function ({@code getFunctionValue}), as a sensor event
+     * ({@code getSensorEvent}) and as a sensor value ({@code getSensorLatestValue}). For the
+     * all-signals recorder, which does not know which kind each id is. Blocking.
+     */
+    public static final class Reader {
+        public static final int FUNCTION = 0;
+        public static final int SENSOR_EVENT = 1;
+        public static final int SENSOR_VALUE = 2;
+        static final String[] NAMES = {"function", "sensor-event", "sensor-value"};
+
+        private final Object function;
+        private final Object sensor;
+        private final Method getFunction;
+        private final Method getEvent;
+        private final Method getLatest;
+
+        private Reader(Object function, Object sensor) {
+            this.function = function;
+            this.sensor = sensor;
+            getFunction = function == null ? null : EcarxSource.findMethod(function, "getFunctionValue", int.class);
+            getEvent = sensor == null ? null : EcarxSource.findMethod(sensor, "getSensorEvent", int.class);
+            getLatest = sensor == null ? null : EcarxSource.findMethod(sensor, "getSensorLatestValue", int.class);
+        }
+
+        /** Null when the car interface is not there. */
+        public static Reader open(Context context) {
+            Object car = EcarxSource.carForLab(context);
+            if (car == null) {
+                return null;
+            }
+            Reader r = new Reader(invoke(car, "getICarFunction"), invoke(car, "getSensorManager"));
+            return r.getFunction == null && r.getEvent == null && r.getLatest == null ? null : r;
+        }
+
+        public static String name(int way) {
+            return way >= 0 && way < NAMES.length ? NAMES[way] : "?";
+        }
+
+        /** The value read {@code way}, as text ("error ..." when the call failed); null when this head unit has no such call. */
+        public String read(int way, int id) {
+            Method m = way == FUNCTION ? getFunction : way == SENSOR_EVENT ? getEvent : getLatest;
+            Object target = way == FUNCTION ? function : sensor;
+            if (m == null) {
+                return null;
+            }
+            return safe(() -> m.invoke(target, id));
+        }
+
+        /** What the car pushes to {@link #watch}. Called on a car binder thread. */
+        public interface Pushed {
+            /** {@code onFunctionValueChanged(id, zone, value)}. */
+            void value(int id, int zone, Object value);
+
+            /** Any other callback, such as {@code onSupportedFunctionStatusChanged}. */
+            void other(String method, Object[] args);
+        }
+
+        private Object watcher;
+        private int[] watched;
+
+        /**
+         * Asks the car to push every change of {@code ids}, the way {@link EcarxSource} does: all at
+         * once, or one by one when the head unit refuses the list. Some values are only ever pushed
+         * and read 255 when asked. Returns a line for the file.
+         */
+        public String watch(int[] ids, Pushed to) {
+            unwatch();
+            if (function == null) {
+                return "no car function interface";
+            }
+            Method byArray = EcarxSource.findMethodWithInterface(function, "registerFunctionValueWatcher", int[].class);
+            Method byOne = EcarxSource.findMethodWithInterface(function, "registerFunctionValueWatcher", int.class);
+            Method any = byArray != null ? byArray : byOne;
+            if (any == null) {
+                return "no registerFunctionValueWatcher";
+            }
+            Class<?> type = any.getParameterTypes()[1];
+            Object proxy = java.lang.reflect.Proxy.newProxyInstance(Reader.class.getClassLoader(), new Class<?>[]{type},
+                    (p, method, args) -> {
+                        String name = method.getName();
+                        if ("onFunctionValueChanged".equals(name) && args != null && args.length == 3
+                                && args[0] instanceof Integer && args[1] instanceof Integer) {
+                            to.value((Integer) args[0], (Integer) args[1], args[2]);
+                        } else if (!"toString".equals(name) && !"hashCode".equals(name) && !"equals".equals(name)) {
+                            to.other(name, args);
+                        }
+                        return EcarxSource.proxyDefault(p, method, args, "SignalRecorder.watch");
+                    });
+            if (byArray != null && EcarxSource.invokeOk(byArray, function, ids, proxy)) {
+                watcher = proxy;
+                watched = ids;
+                return "watching " + ids.length + " as one list";
+            }
+            if (byOne != null) {
+                int done = 0;
+                for (int id : ids) {
+                    if (EcarxSource.invokeOk(byOne, function, id, proxy)) {
+                        done++;
+                    }
+                }
+                if (done > 0) {
+                    watcher = proxy;
+                    watched = ids;
+                }
+                return "watching " + done + " of " + ids.length + " one by one";
+            }
+            return "the car refused the list";
+        }
+
+        /** Stops {@link #watch}. */
+        public void unwatch() {
+            Object w = watcher;
+            watcher = null;
+            if (w == null || function == null) {
+                return;
+            }
+            try {
+                Method one = EcarxSource.findMethodWithInterface(function, "unregisterFunctionValueWatcher");
+                if (one != null) {
+                    one.invoke(function, w);
+                    return;
+                }
+                Method withIds = EcarxSource.findMethodWithInterface(function, "unregisterFunctionValueWatcher", int[].class);
+                if (withIds != null) {
+                    withIds.invoke(function, watched, w);
+                    return;
+                }
+                Method perId = EcarxSource.findMethodWithInterface(function, "unregisterFunctionValueWatcher", int.class);
+                if (perId != null) {
+                    for (int id : watched) {
+                        perId.invoke(function, id, w);
+                    }
+                }
+            } catch (Throwable t) {
+                AppLog.w(TAG, "unregisterFunctionValueWatcher failed: " + rootMessage(t));
+            }
+        }
     }
 
     private interface Call {

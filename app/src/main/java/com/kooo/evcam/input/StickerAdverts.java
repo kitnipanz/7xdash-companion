@@ -125,6 +125,31 @@ final class StickerAdverts {
         return null;
     }
 
+    /**
+     * Battery percent from a button advert, or -1 when it carries none. Works on both layouts:
+     * {@code 12 02 FF X Y BB ...} and {@code 08 02 FF X Y BB ...}, type 02 or 03. The button
+     * reports steps of 25 and sends 0 when it has no reading, so anything else is not a level.
+     */
+    static int battery(byte[] raw) {
+        if (raw == null) {
+            return -1;
+        }
+        int i = 0;
+        while (i + 1 < raw.length) {
+            int len = raw[i] & 0xFF;
+            if (len == 0 || i + len >= raw.length) {
+                return -1;
+            }
+            int type = raw[i + 1] & 0xFF;
+            if ((type == 0x02 || type == 0x03) && len >= 5 && (raw[i + 2] & 0xFF) == 0xFF) {
+                int level = raw[i + 5] & 0xFF;
+                return level > 0 && level <= 100 && level % 25 == 0 ? level : -1;
+            }
+            i += len + 1;
+        }
+        return -1;
+    }
+
     /** Offset of the FF byte that starts the button data, or -1. */
     private static int buttonData(byte[] raw) {
         if (raw == null) {

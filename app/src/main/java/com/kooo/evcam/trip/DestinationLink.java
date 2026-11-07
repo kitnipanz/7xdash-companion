@@ -69,6 +69,8 @@ public final class DestinationLink {
     private static final Pattern PAIR_IN_TEXT = Pattern.compile("(?<![\\d.])" + NUM + "\\s*,\\s*" + NUM + "(?![\\d.])");
     private static final Pattern URL = Pattern.compile("https?://[^\\s\"'<>]+");
     private static final Pattern GOOGLE_PLACE_NAME = Pattern.compile("/maps/place/([^/@?]+)");
+    private static final Pattern GOOGLE_HOST = Pattern.compile("^https?://([a-z0-9-]+\\.)*(google\\.[a-z.]+|goo\\.gl)(/|$)",
+            Pattern.CASE_INSENSITIVE);
     /** Query keys that hold the destination, best first. */
     private static final String[] COORD_KEYS = {"destination", "daddr", "coordinate", "ll", "q", "query", "sll",
             "center"};
@@ -107,6 +109,15 @@ public final class DestinationLink {
         return null;
     }
 
+    /** A short line that could be a place's name, typed instead of a link ("Siam Paragon"). */
+    public static boolean looksLikeName(String text) {
+        if (text == null) {
+            return false;
+        }
+        String t = text.trim();
+        return t.length() >= 2 && t.length() <= 120 && t.indexOf('\n') < 0 && firstUrl(t) == null;
+    }
+
     /** The first http(s) link in the text, or null. */
     public static String firstUrl(String text) {
         if (text == null) {
@@ -139,6 +150,31 @@ public final class DestinationLink {
         m = AT.matcher(url);
         if (m.find()) {
             return place(m.group(1), m.group(2), name);
+        }
+        return null;
+    }
+
+    /**
+     * What to search for when a Google link names the place but has no coordinates: the iPhone's
+     * share links often end at {@code maps.google.com/?q=Name, Address&ftid=...} or
+     * {@code /maps/place/Name/data=!1s...}. Null for other links or when there is no name.
+     */
+    public static String googleQuery(String url) {
+        if (url == null || !GOOGLE_HOST.matcher(url).find()) {
+            return null;
+        }
+        Matcher m = GOOGLE_PLACE_NAME.matcher(url);
+        if (m.find()) {
+            String n = decode(m.group(1)).trim();
+            if (!n.isEmpty() && !PAIR.matcher(n).find()) {
+                return n;
+            }
+        }
+        for (String key : new String[] {"q", "query", "daddr", "destination"}) {
+            String n = query(url, key);
+            if (n != null && !n.trim().isEmpty() && !PAIR.matcher(n).find()) {
+                return n.trim();
+            }
         }
         return null;
     }

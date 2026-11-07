@@ -50,10 +50,16 @@ public enum ShortcutAction {
     /** The car's main volume one step up or down, as the steering wheel button does ({@link com.kooo.evcam.audio.CarVolume}). */
     VOLUME_UP("volume_up", R.string.shortcut_action_volume_up, R.drawable.ic_volume_up),
     VOLUME_DOWN("volume_down", R.string.shortcut_action_volume_down, R.drawable.ic_volume_down),
+    /** Media keys for whichever app is playing ({@link com.kooo.evcam.audio.MediaKeys}). */
+    MEDIA_PLAY_PAUSE("media_play_pause", R.string.shortcut_action_media_play_pause, R.drawable.ic_media_play_pause),
+    MEDIA_NEXT("media_next", R.string.shortcut_action_media_next, R.drawable.ic_media_next),
+    MEDIA_PREVIOUS("media_previous", R.string.shortcut_action_media_previous, R.drawable.ic_media_previous),
     /** The floating Dash panel on or off (overlay.DashPanelService). */
     DASH_PANEL("toggle_dash_panel", R.string.shortcut_action_dash_panel, R.drawable.ic_dash_panel),
     /** The floating Macro pad on or off (overlay.MacroPadService). */
-    MACRO_PAD("toggle_macro_pad", R.string.shortcut_action_macro_pad, R.drawable.ic_macro_pad);
+    MACRO_PAD("toggle_macro_pad", R.string.shortcut_action_macro_pad, R.drawable.ic_macro_pad),
+    // Navigation's map in a floating window over other apps, on / off
+    NAV_FLOAT("toggle_nav_float", R.string.shortcut_action_nav_float, R.drawable.ic_float_window);
 
     /** The tabs actions are picked from, in tab order. */
     public enum Group {
@@ -107,6 +113,9 @@ public enum ShortcutAction {
             case OUTSIDE_SPEAKER:
             case VOLUME_UP:
             case VOLUME_DOWN:
+            case MEDIA_PLAY_PAUSE:
+            case MEDIA_NEXT:
+            case MEDIA_PREVIOUS:
                 return Group.SOUND;
             case MOOD_LIGHT:
             case DIM:

@@ -69,14 +69,18 @@ android {
         // versionName 会成为 Release 名称与 APK 文件名
         //
         // 7xDash 用自己的 applicationId，可以和 zeekr-shortcut-car 并排装。版本号从 1 重新起。
-        versionCode = 81
-        versionName = "1.7.0"
+        versionCode = 103
+        versionName = "1.8.0"
 
         buildConfigField("String", "DRIVE_CLIENT_ID", gradleStringLiteral(driveCredential("DRIVE_CLIENT_ID")))
         buildConfigField("String", "DRIVE_CLIENT_SECRET", gradleStringLiteral(driveCredential("DRIVE_CLIENT_SECRET")))
         // GA4 Measurement Protocol, same lookup (Action secrets / local.properties). Empty = no usage stats sent
         buildConfigField("String", "GA_MEASUREMENT_ID", gradleStringLiteral(driveCredential("GA_MEASUREMENT_ID")))
         buildConfigField("String", "GA_API_SECRET", gradleStringLiteral(driveCredential("GA_API_SECRET")))
+        // Navigation: one Google Maps Platform key for the map (Maps SDK for Android), the routes
+        // (Routes API) and the search (Places API (New)). Same lookup; empty = Navigation says it has no key
+        val mapsKey = driveCredential("TOMTOM_API_KEY")
+        buildConfigField("String", "TOMTOM_API_KEY", gradleStringLiteral(mapsKey))
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -172,8 +176,13 @@ dependencies {
     // Where did I park: read floor / bay signs from the front and side cameras on the car.
     // Bundled Latin model, so it works offline and without Play services.
     implementation("com.google.mlkit:text-recognition:16.0.1")
+    // Navigation: the Google map (needs Google Play services on the head unit; without it the
+    // Navigation screen still guides, with no map)
+    implementation("org.maplibre.gl:android-sdk:13.6.1")
 
     testImplementation(libs.junit)
+    // the real org.json for the JVM tests (android.jar's is a stub that returns nothing)
+    testImplementation("org.json:json:20240303")
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
 }

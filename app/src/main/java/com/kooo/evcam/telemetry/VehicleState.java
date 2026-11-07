@@ -93,6 +93,10 @@ public final class VehicleState {
     public final Float odometerKm;
     public final Double latitude;
     public final Double longitude;
+    /** 这次定位的误差半径（米），不知道就是 null。 */
+    public final Float positionAccuracyM;
+    /** 这次定位是什么时候测的（SystemClock.elapsedRealtime 毫秒），不知道就是 null。 */
+    public final Long positionAtMs;
     /** 这份快照用的读数（非开发者已滤掉没验证的）：信息条的文字格从这里取值。 */
     public final Readings readings;
 
@@ -129,6 +133,8 @@ public final class VehicleState {
         this.odometerKm = b.odometerKm;
         this.latitude = b.latitude;
         this.longitude = b.longitude;
+        this.positionAccuracyM = b.positionAccuracyM;
+        this.positionAtMs = b.positionAtMs;
         this.readings = b.readings;
     }
 
@@ -191,6 +197,8 @@ public final class VehicleState {
         private Float odometerKm;
         private Double latitude;
         private Double longitude;
+        private Float positionAccuracyM;
+        private Long positionAtMs;
         private Readings readings;
 
         public Builder() {
@@ -229,6 +237,8 @@ public final class VehicleState {
             odometerKm = s.odometerKm;
             latitude = s.latitude;
             longitude = s.longitude;
+            positionAccuracyM = s.positionAccuracyM;
+            positionAtMs = s.positionAtMs;
             readings = s.readings;
         }
 
@@ -261,7 +271,15 @@ public final class VehicleState {
         public Builder readings(Readings v) { readings = v; return this; }
         public Builder sentry(Integer v) { sentry = v; return this; }
         public Builder odometerKm(Float v) { odometerKm = v; return this; }
-        public Builder position(Double lat, Double lon) { latitude = lat; longitude = lon; return this; }
+        public Builder position(Double lat, Double lon) { return position(lat, lon, null, null); }
+        /** 位置连同误差（米）和测到的时间（elapsedRealtime 毫秒）；后两个可以是 null。 */
+        public Builder position(Double lat, Double lon, Float accuracyM, Long atMs) {
+            latitude = lat;
+            longitude = lon;
+            positionAccuracyM = accuracyM;
+            positionAtMs = atMs;
+            return this;
+        }
 
         /** 改一扇门的那一位，其余位不动；之前不知道就从 0 起。 */
         public Builder door(int bit, boolean open) {

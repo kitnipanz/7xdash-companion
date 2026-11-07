@@ -39,6 +39,8 @@ public class AppConfig {
     private static final String KEY_USAGE_STATS_REMEMBERED = "usage_stats_remembered";  // don't ask again on open
     private static final String KEY_CRASH_REPORTS = "crash_reports";  // anonymous crash reports, apart from usage stats
     private static final String KEY_CONSENT_ASKED = "usage_consent_asked";  // version of the question last shown
+    private static final String KEY_OBD_ADAPTER = "obd_adapter";  // OBD2 (beta): Bluetooth address, "ble:" + address, or "wifi"
+    private static final String KEY_OBD_ADAPTER_NAME = "obd_adapter_name";  // Name of a Bluetooth LE adapter: it is not in the paired list
     private static final String KEY_BETA_FEATURES = "beta_features";  // show features still in beta (home cards, automatic triggers)
     private static final String KEY_HUD_NOTICE_LEFT = "hud_notice_left_pct";  // 抬头显示通知离左边多少（%）
     private static final String KEY_HUD_NOTICE_RIGHT = "hud_notice_right_pct";  // 离右边多少（%）  // 别的应用的通知投到抬头显示
@@ -142,7 +144,9 @@ public class AppConfig {
     private static final String KEY_SIDE_POPUP_STRAIGHTEN = "side_popup_straighten";  // 侧视拉直鱼眼
     private static final String KEY_SIDE_POPUP_STYLE = "side_popup_style";
     private static final String KEY_SIDE_POPUP_DOOR = "side_popup_door";
+    private static final String KEY_SIDE_POPUP_WARNING = "side_popup_warning";
     private static final String KEY_BSD_SNIFFER = "bsd_sniffer";
+    private static final String KEY_SIGNAL_RECORDER = "signal_recorder";
     private static final String KEY_BSD_LEFT_ID = "bsd_warn_left_id";
     private static final String KEY_BSD_LEFT_VALUE = "bsd_warn_left_value";
     private static final String KEY_BSD_RIGHT_ID = "bsd_warn_right_id";
@@ -473,6 +477,23 @@ public class AppConfig {
 
     public void setBetaFeaturesEnabled(boolean enabled) {
         prefs.edit().putBoolean(KEY_BETA_FEATURES, enabled).apply();
+    }
+
+    /** OBD2 (beta): the adapter last connected, null before the first time. */
+    public String getObdAdapter() {
+        return prefs.getString(KEY_OBD_ADAPTER, null);
+    }
+
+    public void setObdAdapter(String adapter) {
+        prefs.edit().putString(KEY_OBD_ADAPTER, adapter).apply();
+    }
+
+    public String getObdAdapterName() {
+        return prefs.getString(KEY_OBD_ADAPTER_NAME, null);
+    }
+
+    public void setObdAdapterName(String name) {
+        prefs.edit().putString(KEY_OBD_ADAPTER_NAME, name).apply();
     }
 
     /** Anonymous usage stats (see {@link com.kooo.evcam.analytics.Analytics}): the last answer. Off until one. */
@@ -1989,6 +2010,15 @@ public class AppConfig {
         AppLog.i(TAG, "盲区信号试验: " + (on ? "开" : "关"));
     }
 
+    /** Experimental: write every car signal to the USB drive (telemetry.SignalRecorder). Off by default. */
+    public boolean isSignalRecorderEnabled() {
+        return prefs.getBoolean(KEY_SIGNAL_RECORDER, false);
+    }
+
+    public void setSignalRecorderEnabled(boolean on) {
+        prefs.edit().putBoolean(KEY_SIGNAL_RECORDER, on).apply();
+    }
+
     /** 盲区报警学到的号码（盲区报警查找页）：每一侧一个车辆设置号码和报警时读到的值；0 = 没学。 */
     public com.kooo.evcam.telemetry.BlindSpotWatch.Learned getBlindSpotLearned() {
         return new com.kooo.evcam.telemetry.BlindSpotWatch.Learned(
@@ -2006,6 +2036,15 @@ public class AppConfig {
     }
 
     /** 停着开门时弹那一侧的侧视，看后面来车。默认开。 */
+    /** Show the side the car warns about (blind spot / RCTA), even without a turn signal. On by default. */
+    public boolean isSidePopupOnWarning() {
+        return prefs.getBoolean(KEY_SIDE_POPUP_WARNING, true);
+    }
+
+    public void setSidePopupOnWarning(boolean on) {
+        prefs.edit().putBoolean(KEY_SIDE_POPUP_WARNING, on).apply();
+    }
+
     public boolean isSidePopupOnDoor() {
         return prefs.getBoolean(KEY_SIDE_POPUP_DOOR, true);
     }
@@ -2554,6 +2593,48 @@ public class AppConfig {
 
     // ==================== Macro pad ====================
 
+    private static final String KEY_HOME_CARD_ORDER = "home_card_order";
+    private static final String KEY_HOME_CARDS_HIDDEN = "home_cards_hidden";
+
+    /** Home cards in the person's order ({@link com.kooo.evcam.home.HomeCardOrder}), null for the usual order. */
+    public String getHomeCardOrder() {
+        return prefs.getString(KEY_HOME_CARD_ORDER, null);
+    }
+
+    public void setHomeCardOrder(String ids) {
+        prefs.edit().putString(KEY_HOME_CARD_ORDER, ids).apply();
+    }
+
+    /** Home cards the person removed from the page, null for none. */
+    public String getHomeCardsHidden() {
+        return prefs.getString(KEY_HOME_CARDS_HIDDEN, null);
+    }
+
+    public void setHomeCardsHidden(String ids) {
+        prefs.edit().putString(KEY_HOME_CARDS_HIDDEN, ids).apply();
+    }
+
+    private static final String KEY_AUTOMATION = "automation_on";
+    private static final String KEY_AUTOMATION_RULES = "automation_rules";
+
+    /** Run the person's automations (automation.Automation). Off by default: it writes to the car. */
+    public boolean isAutomationOn() {
+        return prefs.getBoolean(KEY_AUTOMATION, false);
+    }
+
+    public void setAutomationOn(boolean on) {
+        prefs.edit().putBoolean(KEY_AUTOMATION, on).apply();
+    }
+
+    /** The automations as JSON ({@link com.kooo.evcam.automation.AutomationRule}), null before the first one. */
+    public String getAutomationRules() {
+        return prefs.getString(KEY_AUTOMATION_RULES, null);
+    }
+
+    public void setAutomationRules(String json) {
+        prefs.edit().putString(KEY_AUTOMATION_RULES, json).apply();
+    }
+
     private static final String KEY_MACRO_PAD = "macro_pad";
     private static final String KEY_MACRO_PAD_SLOTS = "macro_pad_slots";
     private static final String KEY_MACRO_PAD_BOUNDS = "macro_pad_bounds";
@@ -2596,20 +2677,10 @@ public class AppConfig {
         prefs.edit().putString(KEY_MACRO_PAD_BOUNDS, x + "," + y + "," + width + "," + height).apply();
     }
 
-    // ==================== Battery at arrival (beta) ====================
+    // ==================== Places from the iPhone (trip.Trip, for Navigation) ====================
 
-    private static final String KEY_ARRIVAL = "arrival";
     private static final String KEY_ARRIVAL_TOKEN = "arrival_token";
     private static final String KEY_ARRIVAL_DESTINATION = "arrival_destination";
-
-    /** Battery at arrival (trip.Trip): listen for places shared from the phone. Off by default; beta. */
-    public boolean isArrivalEnabled() {
-        return prefs.getBoolean(KEY_ARRIVAL, false);
-    }
-
-    public void setArrivalEnabled(boolean on) {
-        prefs.edit().putBoolean(KEY_ARRIVAL, on).apply();
-    }
 
     /** The secret part of the phone's address, made once and kept so the iPhone Shortcut keeps working. */
     public String getArrivalToken() {
@@ -2820,6 +2891,27 @@ public class AppConfig {
     public void setMoodLightBlindSpotBlink(boolean on) {
         prefs.edit().putBoolean(KEY_MOOD_LIGHT_BLIND_SPOT_BLINK, on).apply();
     }
+    private static final String KEY_REAR_AC_RESTORE = "rear_ac_restore";
+    private static final String KEY_REAR_AC_WANTED = "rear_ac_wanted";
+
+    /** Turn the rear AC back on after the climate went off and on ({@code climate.RearAc}). Off by default. */
+    public boolean isRearAcRestore() {
+        return prefs.getBoolean(KEY_REAR_AC_RESTORE, false);
+    }
+
+    public void setRearAcRestore(boolean on) {
+        prefs.edit().putBoolean(KEY_REAR_AC_RESTORE, on).apply();
+    }
+
+    /** The rear AC was last set on while the climate ran. */
+    public boolean isRearAcWanted() {
+        return prefs.getBoolean(KEY_REAR_AC_WANTED, false);
+    }
+
+    public void setRearAcWanted(boolean on) {
+        prefs.edit().putBoolean(KEY_REAR_AC_WANTED, on).apply();
+    }
+
     private static final String KEY_MOOD_LIGHT_GROUP_SHOWN = "mood_light_group_shown";
 
     /**
@@ -3021,4 +3113,112 @@ public class AppConfig {
         return value;
     }
 
+
+    // ==================== Navigation (beta) ====================
+
+    private static final String KEY_NAV_VOICE = "nav_voice";
+    private static final String KEY_NAV_HUD = "nav_hud";
+
+    /** Navigation (nav.Navigator): speak the turns in the cabin. On by default. */
+    public boolean isNavVoiceEnabled() {
+        return prefs.getBoolean(KEY_NAV_VOICE, true);
+    }
+
+    public void setNavVoiceEnabled(boolean on) {
+        prefs.edit().putBoolean(KEY_NAV_VOICE, on).apply();
+    }
+
+    /** Navigation: keep the next turn on the HUD while guiding. On by default. */
+    public boolean isNavHudEnabled() {
+        return prefs.getBoolean(KEY_NAV_HUD, true);
+    }
+
+    public void setNavHudEnabled(boolean on) {
+        prefs.edit().putBoolean(KEY_NAV_HUD, on).apply();
+    }
+
+    private static final String KEY_NAV_MAP_SCHEME = "nav_map_scheme";
+    /** The map's colours follow the head unit's day / night. */
+    public static final int NAV_MAP_AUTO = 0;
+    public static final int NAV_MAP_LIGHT = 1;
+    public static final int NAV_MAP_DARK = 2;
+
+    /** Navigation: light or dark map, or following the head unit ({@link #NAV_MAP_AUTO}, the default). */
+    public int getNavMapScheme() {
+        int v = prefs.getInt(KEY_NAV_MAP_SCHEME, NAV_MAP_AUTO);
+        return v == NAV_MAP_LIGHT || v == NAV_MAP_DARK ? v : NAV_MAP_AUTO;
+    }
+
+    public void setNavMapScheme(int scheme) {
+        prefs.edit().putInt(KEY_NAV_MAP_SCHEME, scheme).apply();
+    }
+
+    private static final String KEY_NAV_SHARE = "nav_share";
+
+    /**
+     * Navigation: a place shared from the iPhone (the Battery at arrival receiver) opens Navigation
+     * with its route, and switches to it while guiding. On by default.
+     */
+    public boolean isNavShareEnabled() {
+        return prefs.getBoolean(KEY_NAV_SHARE, true);
+    }
+
+    public void setNavShareEnabled(boolean on) {
+        prefs.edit().putBoolean(KEY_NAV_SHARE, on).apply();
+    }
+
+    private static final String KEY_NAV_HUD_PREVIEW = "nav_hud_preview";
+
+    /** Navigation: show the HUD card over the map too (a sample when nothing is guided). On by default. */
+    public boolean isNavHudPreviewEnabled() {
+        return prefs.getBoolean(KEY_NAV_HUD_PREVIEW, true);
+    }
+
+    public void setNavHudPreviewEnabled(boolean on) {
+        prefs.edit().putBoolean(KEY_NAV_HUD_PREVIEW, on).apply();
+    }
+
+    private static final String KEY_NAV_HUD_PLACE = "nav_hud_place";
+
+    /** Navigation: where the turn card sits on the HUD, "x,y,w,h" as shares of the HUD; empty = like the notice cards. */
+    public String getNavHudPlace() {
+        return prefs.getString(KEY_NAV_HUD_PLACE, "");
+    }
+
+    public void setNavHudPlace(String place) {
+        prefs.edit().putString(KEY_NAV_HUD_PLACE, place == null ? "" : place).apply();
+    }
+
+    private static final String KEY_NAV_HUD_MAP = "nav_hud_map";
+    private static final String KEY_NAV_HUD_MAP_PLACE = "nav_hud_map_place";
+
+    /** Navigation: a live map on the HUD too while guiding. On by default. */
+    public boolean isNavHudMapEnabled() {
+        return prefs.getBoolean(KEY_NAV_HUD_MAP, true);
+    }
+
+    public void setNavHudMapEnabled(boolean on) {
+        prefs.edit().putBoolean(KEY_NAV_HUD_MAP, on).apply();
+    }
+
+    /** Navigation: where the HUD map sits, "x,y,w,h" as shares of the HUD; empty = the right part. */
+    public String getNavHudMapPlace() {
+        return prefs.getString(KEY_NAV_HUD_MAP_PLACE, "");
+    }
+
+    public void setNavHudMapPlace(String place) {
+        prefs.edit().putString(KEY_NAV_HUD_MAP_PLACE, place == null ? "" : place).apply();
+    }
+
+    private static final String KEY_NAV_CAR_COLOR = "nav_car_color";
+
+    /** Navigation: the car's colour on the map, 0 forest green, 1 silver, 2 black, 3 white. */
+    public int getNavCarColor() {
+        int v = prefs.getInt(KEY_NAV_CAR_COLOR, 0);
+        return v >= 0 && v <= 3 ? v : 0;
+    }
+
+    public void setNavCarColor(int color) {
+        prefs.edit().putInt(KEY_NAV_CAR_COLOR, color).apply();
+    }
 }

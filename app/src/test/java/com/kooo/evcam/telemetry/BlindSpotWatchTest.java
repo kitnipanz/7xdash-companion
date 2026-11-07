@@ -1,30 +1,51 @@
 package com.kooo.evcam.telemetry;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
 public class BlindSpotWatchTest {
 
     @Test
-    public void eachSideWarnsOnItsLearnedValue() {
-        BlindSpotWatch.Learned l = new BlindSpotWatch.Learned(0x2808_1700, 1, 0x2808_1800, 1);
-        assertEquals(0, BlindSpotWatch.sides(l, 0, 0));
-        assertEquals(VehicleState.TURN_LEFT, BlindSpotWatch.sides(l, 1, 0));
-        assertEquals(VehicleState.TURN_RIGHT, BlindSpotWatch.sides(l, 0, 1));
-        assertEquals(3, BlindSpotWatch.sides(l, 1, 1));
+    public void mirrorLampWarns() {
+        // nothing taught: the mirror lamp is the built-in signal; 0 quiet, 1 warning, 255 no reading
+        assertFalse(BlindSpotWatch.side(false, 0, null, 0, 255));
+        assertTrue(BlindSpotWatch.side(false, 0, null, 1, 255));
+        assertTrue(BlindSpotWatch.side(false, 0, null, 2, null));
+        assertFalse(BlindSpotWatch.side(false, 0, null, 255, 255));
+        assertFalse(BlindSpotWatch.side(false, 0, null, null, null));
     }
 
     @Test
-    public void oneSettingCanCarryBothSidesByValue() {
-        BlindSpotWatch.Learned l = new BlindSpotWatch.Learned(0x2808_1700, 1, 0x2808_1700, 2);
-        assertEquals(VehicleState.TURN_LEFT, BlindSpotWatch.sides(l, 1, 1));
-        assertEquals(VehicleState.TURN_RIGHT, BlindSpotWatch.sides(l, 2, 2));
+    public void rctaWarnsWhenTheMirrorLampDoesNot() {
+        assertTrue(BlindSpotWatch.side(false, 0, null, 0, 1));
+        assertTrue(BlindSpotWatch.side(false, 0, null, null, 2));
+        assertFalse(BlindSpotWatch.side(false, 0, null, 0, 0));
     }
 
     @Test
-    public void unlearnedOrUnreadableSideNeverWarns() {
-        BlindSpotWatch.Learned l = new BlindSpotWatch.Learned(0x2808_1700, 1, 0, 0);
-        assertEquals(0, BlindSpotWatch.sides(l, null, 1));
+    public void aTaughtSideWarnsOnItsValueOnly() {
+        assertTrue(BlindSpotWatch.side(true, 3, 3, null, null));
+        assertFalse(BlindSpotWatch.side(true, 3, 1, null, null));
+        assertFalse(BlindSpotWatch.side(true, 3, null, null, null));
+        // the built-in signals are not read for a taught side
+        assertFalse(BlindSpotWatch.side(true, 3, 0, 1, 1));
+    }
+
+    @Test
+    public void taughtNoReadingDoesNotCount() {
+        assertTrue(BlindSpotWatch.taught(0x2808_1700, 1));
+        assertFalse(BlindSpotWatch.taught(0x2808_1700, 255));
+        assertFalse(BlindSpotWatch.taught(0, 1));
+    }
+
+    @Test
+    public void builtInWarningRange() {
+        assertFalse(BlindSpotWatch.builtInWarning(null));
+        assertFalse(BlindSpotWatch.builtInWarning(0));
+        assertTrue(BlindSpotWatch.builtInWarning(1));
+        assertTrue(BlindSpotWatch.builtInWarning(254));
+        assertFalse(BlindSpotWatch.builtInWarning(255));
     }
 }

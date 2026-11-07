@@ -13,7 +13,8 @@ Plug in a USB drive before you start: videos, photos and the settings backup go 
 ## Features and how to use them
 
 Most features have a card on the **Home** page and a section in **Settings**. Hold a card to jump to its
-settings. The rail on the left (Home, Record, Dim, Rear, Capture, Megaphone, EQ, AirPlay, Settings) is on
+settings; hold and drag to move it to another card's place. To choose what is on Home, tap **Customize Home**, the last card: drag a card by its dots to move it, × to
+remove, tap a card under More cards to add it back. With Beta features on, Stable and Beta tabs split the cards. The rail on the left (Home, Record, Dim, Rear, Capture, Megaphone, EQ, AirPlay, Settings) is on
 every page.
 
 ### Drive recorder
@@ -132,6 +133,46 @@ a photo in the notification shade and on 7xDash web.
 - Hold the card to scan once by hand: **Scan now** shows the photo, the floor and bay read, what is
   remembered and the raw text, and sends the spot to 7xDash web.
 
+### OBD2 (beta)
+Reads the car through an ELM327 adapter in the OBD socket, while the screen is open.
+- Pair a Bluetooth Classic adapter in the car's Bluetooth settings, or join a Wi-Fi adapter's network.
+  A Bluetooth LE adapter needs no pairing: press **Scan for BLE** on the screen and choose it. Smart
+  stickers drop off during the 10-second search.
+- Turn on Settings → Interface → **Beta features**, tap the **OBD2** card, choose the adapter, press
+  **Connect**.
+- Shows the 12 V battery voltage, the standard values the car reports, and raw bytes read directly
+  from the battery module with the request used on the Zeekr 001. The 7X may answer little: its
+  owners report only the VIN and voltage so far, and the bytes are not decoded yet.
+- **Record all signals** saves everything the adapter can hear to `7xDash/odb_logs` on the USB drive.
+  After a short check at the start it only listens. It stops after 1 hour, or 5 minutes of silence.
+  A floating window lists signals that just changed. Tap **Mark** when something happens: the log
+  notes the moment and what changed. Have a passenger watch it, or read the log later.
+- Read only: it cannot clear codes or change anything. Unplug the adapter when you are done, because
+  many keep drawing from the 12 V battery.
+
+### Navigation (beta)
+Turn-by-turn navigation on a Google map, with live traffic, spoken turns and the next turn on the HUD.
+- Turn on Settings → Interface → **Beta features**, then tap the **Navigation** card.
+- Search for a place, pick the one shared from your iPhone (Battery at arrival), or touch and hold on the
+  map. The route shows its time, distance, arrival time and battery at arrival; tap **Start**.
+- While guiding: the banner shows the next turn and how far it is, the map follows the car (move it by
+  hand and **Back to the car** returns), and leaving the route finds a new one. Guidance keeps going
+  on the HUD and by voice when you leave the screen, until you arrive or tap **End**.
+- **Speak the turns** and **Next turn on the HUD** are on the trip card. Turns are spoken by the head
+  unit's voice, or the offline English voice (Announcements) when it has none. Thai needs a Thai voice
+  on the head unit.
+- Needs a Google Maps Platform key in the build (`MAPS_API_KEY`, see Release) with the **Maps SDK for
+  Android**, **Routes API** and **Places API (New)** enabled, and internet. The map needs Google Play
+  services on the head unit; without it, guidance still works with no map.
+
+### Automation
+When something happens on the car, 7xDash does what you picked. Open the **Automation** card on Home. Off until you turn it on.
+- **When:** the car turns on or off, shift to P, D or R, speed reaches or drops to a number, it gets dark or light, it starts or stops raining, battery drops to a number, outside temperature reaches or drops to a number.
+- **Do**, as many as you like, in order: drive mode (Comfort, Normal, Sport), mood light on or off, mood light colour, car ambient light and its brightness, dim overlay, AC on or off, temperature zones (synced or dual), open the glovebox (only in P), or any shortcut action.
+- Automations run on a change, not on a state: opening the app in D does not run "Shift to D". A speed has to drop 3 km/h back before it runs again, and a number or rain runs at most once in 30 seconds.
+- Press **Add automation**, or start from an example. Pick When on the left and Do on the right; the line at the bottom reads back what you built. Tap a choice again to take it back.
+- **Try it now** at the bottom runs its actions straight away. A mood light colour stays until the gear rules pick a new look.
+
 ### Settings backup on USB
 Your settings (switches, shortcuts, stickers, lights, speakers, EQ, profiles, announcements and
 recordings) are copied to `7xDash/settings/` on the USB drive a few seconds after any change, and come
@@ -160,3 +201,8 @@ details and the other open-source components used.
 
 Bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section to `CHANGELOG.md`,
 then push a tag `v<versionName>`. GitHub Actions builds, tests and publishes the release.
+
+Navigation needs the repository secret `MAPS_API_KEY` (or `MAPS_API_KEY=` in `local.properties` for a local
+build): a Google Maps Platform key with Maps SDK for Android, Routes API and Places API (New) enabled.
+Restrict it to Android apps with package `lab.sevenx.dash` and the release signing certificate's SHA-1;
+7xDash sends both with each Routes and Places call so the restriction also covers them.

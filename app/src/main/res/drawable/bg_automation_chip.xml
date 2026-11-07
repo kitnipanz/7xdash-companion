@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 自动化编辑页的一个选项：没选是下沉的底，选中是实心能量色。选中状态用 activated，和分段开关一样。 -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_activated="true">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/energy" />
+            <corners android:radius="10dp" />
+        </shape>
+    </item>
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@color/sunken" />
+            <corners android:radius="10dp" />
+        </shape>
+    </item>
+</selector>

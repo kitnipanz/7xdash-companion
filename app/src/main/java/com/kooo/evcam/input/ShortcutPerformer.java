@@ -157,11 +157,32 @@ public final class ShortcutPerformer {
                     hud(context, R.string.macro_pad_title, padOn);
                 }
                 return;
+            case NAV_FLOAT:
+                com.kooo.evcam.nav.NavFloatWindow floating = com.kooo.evcam.nav.NavFloatWindow.get();
+                if (floating.isShown()) {
+                    floating.hide();
+                    hud(context, R.string.nav_float, false);
+                } else if (!OverlayCoordinator.canShowOverlay(context)) {
+                    toast(context);
+                } else {
+                    floating.show(context);
+                    hud(context, R.string.nav_float, true);
+                }
+                return;
             case MOOD_LIGHT:
                 com.kooo.evcam.light.GearLight.toggle(context);
                 return;
             case FOG_LAMP:
                 com.kooo.evcam.light.FogLamp.toggle(context);
+                return;
+            case MEDIA_PLAY_PAUSE:
+                com.kooo.evcam.audio.MediaKeys.playPause(context);
+                return;
+            case MEDIA_NEXT:
+                com.kooo.evcam.audio.MediaKeys.next(context);
+                return;
+            case MEDIA_PREVIOUS:
+                com.kooo.evcam.audio.MediaKeys.previous(context);
                 return;
             case VOLUME_UP:
                 com.kooo.evcam.audio.CarVolume.step(context, 1);

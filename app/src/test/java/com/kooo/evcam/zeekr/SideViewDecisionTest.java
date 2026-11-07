@@ -200,4 +200,42 @@ public class SideViewDecisionTest {
         in.turnSignal = 1;
         assertEquals(LaneCycle.RIGHT, SideViewDecision.decide(in));
     }
+
+    @Test
+    public void warningShowsThatSideWithoutSignal() {
+        SideViewDecision.Input in = driving(0);
+        in.warningCamera = true;
+        in.warnedSides = com.kooo.evcam.telemetry.VehicleState.TURN_RIGHT;
+        assertEquals(LaneCycle.RIGHT, SideViewDecision.decide(in));
+        in.warnedSides = 0;
+        assertEquals(SideViewDecision.NONE, SideViewDecision.decide(in));
+    }
+
+    @Test
+    public void signalWinsOverWarning() {
+        SideViewDecision.Input in = driving(1);
+        in.warningCamera = true;
+        in.warnedSides = com.kooo.evcam.telemetry.VehicleState.TURN_RIGHT;
+        assertEquals(LaneCycle.LEFT, SideViewDecision.decide(in));
+    }
+
+    @Test
+    public void warningOffOrInReverseShowsNothing() {
+        SideViewDecision.Input in = driving(0);
+        in.warnedSides = com.kooo.evcam.telemetry.VehicleState.TURN_LEFT;
+        assertEquals(SideViewDecision.NONE, SideViewDecision.decide(in));
+        in.warningCamera = true;
+        in.gear = "R";
+        assertEquals(SideViewDecision.NONE, SideViewDecision.decide(in));
+    }
+
+    @Test
+    public void bothSidesWarningStaysOnTheOneShowing() {
+        SideViewDecision.Input in = driving(0);
+        in.warningCamera = true;
+        in.warnedSides = 3;
+        assertEquals(LaneCycle.LEFT, SideViewDecision.decide(in));
+        in.showing = LaneCycle.RIGHT;
+        assertEquals(LaneCycle.RIGHT, SideViewDecision.decide(in));
+    }
 }

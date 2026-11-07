@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- ic_automation_drive：自动化：驾驶模式。统一图标集（24dp 网格、线宽 1.7、圆头）。 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M12,3a9,9 0,1 0,0 18a9,9 0,1 0,0 -18zM12,10a2,2 0,1 0,0 4a2,2 0,1 0,0 -4zM3.5,10.5l6.6,0.8M20.5,10.5l-6.6,0.8M12,14v7"
+        android:strokeWidth="1.7"
+        android:strokeColor="@color/text_primary"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+</vector>

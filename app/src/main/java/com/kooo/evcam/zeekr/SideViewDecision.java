@@ -17,6 +17,9 @@ import com.kooo.evcam.telemetry.VehicleState;
  *   <li>灯一灭就收。</li>
  *   <li><b>开门看后方</b>（设置开着时）：停着（P 档或车速低于 {@link #DOOR_MAX_KMH}）、没打灯，
  *       哪一侧有门开着就弹那一侧，看后面来的车和自行车；门都关上就收。打灯优先。</li>
+ *   <li><b>Car warns</b> (setting on): no turn signal, and the car warns of a car on one side
+ *       ({@link VehicleState#blindSpotWarning}): show that side. Turn signal first, then the
+ *       warning, then an open door.</li>
  * </ul>
  *
  * <p>纯 Java，不碰 Android，见 {@code SideViewDecisionTest}。</p>
@@ -51,6 +54,10 @@ public final class SideViewDecision {
         public boolean doorCamera;
         /** {@link VehicleState#doorsOpen}：开着的门的位；null 读不到。 */
         public Integer doorsOpen;
+        /** Show the warned side without a turn signal (setting). */
+        public boolean warningCamera;
+        /** {@link VehicleState#blindSpotWarning}: bits TURN_LEFT / TURN_RIGHT; null unknown. */
+        public Integer warnedSides;
         /** 此刻已经弹着的是哪一路（{@link LaneCycle#LEFT} / {@link LaneCycle#RIGHT}），没弹是 {@link #NONE}。 */
         public int showing = NONE;
     }
@@ -62,7 +69,10 @@ public final class SideViewDecision {
         if (factoryViewActive(in)) {
             return NONE;
         }
-        int door = doorLane(in);
+        int door = warningLane(in);
+        if (door == NONE) {
+            door = doorLane(in);
+        }
         if (Boolean.TRUE.equals(in.hazard) || in.turnSignal == null) {
             return door;
         }
@@ -82,6 +92,19 @@ public final class SideViewDecision {
             return door;
         }
         return lane;
+    }
+
+    /** The side the car warns about; both: stay on the one showing, else left. {@link #NONE} when off or no warning. */
+    static int warningLane(Input in) {
+        if (!in.warningCamera || in.warnedSides == null || in.warnedSides == 0 || Boolean.TRUE.equals(in.hazard)) {
+            return NONE;
+        }
+        boolean left = (in.warnedSides & VehicleState.TURN_LEFT) != 0;
+        boolean right = (in.warnedSides & VehicleState.TURN_RIGHT) != 0;
+        if (left && right) {
+            return in.showing == LaneCycle.RIGHT ? LaneCycle.RIGHT : LaneCycle.LEFT;
+        }
+        return left ? LaneCycle.LEFT : LaneCycle.RIGHT;
     }
 
     /** 停着、有门开着时该弹哪一侧；不弹是 {@link #NONE}。两侧都开着时留在已经弹着的那一侧，否则左侧。 */

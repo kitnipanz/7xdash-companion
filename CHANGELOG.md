@@ -1,5 +1,253 @@
 # Changelog
 
+## [1.8.0] - 2026-11-07
+
+Changes since 1.7.0 (includes 1.7.1-beta to 1.7.20-beta).
+
+### Automation (new)
+- **When something happens on the car, 7xDash does what you picked.** Open the **Automation** card on Home and turn on **Run my automations**. It is off by default: 7xDash changes settings on the car by itself.
+- **When:** the car turns on or off, shift to P, D or R, speed reaches or drops to a number, it gets dark or light, it starts or stops raining, battery drops to a number, outside temperature reaches or drops to a number.
+- **Do, as many as you like:** drive mode (Comfort, Normal, Sport), AC on or off, temperature zones (synced or dual), open the glovebox (only in P; close it by hand), mood light on or off and its colour, car ambient light and its brightness, dim overlay, or any shortcut action.
+- **One page.** When on the left, Do on the right, and a line at the bottom that reads back what you built. Tap a choice again to take it back. Examples are there to start from.
+- **Try it now** runs the actions straight away. Use it while parked first.
+- **No flip-flopping.** Automations run on a change, not on a state. A speed has to drop 3 km/h back before it runs again, and a number or rain runs at most once in 30 seconds.
+- Not tried on a car yet. Setting the drive mode and the AC has never been sent to a real car: tell us if the car refuses.
+
+### Customize Home (new)
+- **Move cards where you want them.** Hold a card on Home and drag it to another card's place. Holding and letting go still opens its settings.
+- **Choose what is on Home.** **Customize Home**, the last card, lists the cards on Home: drag by the dots to move, × to remove, tap a hidden card to bring it back. **Reset** puts everything back.
+- With Beta features on, **Stable** and **Beta** tabs split the cards. New cards in later versions appear by themselves.
+
+### Navigation (beta)
+- **Turn-by-turn navigation, new.** Search a place, take one sent from the iPhone or 7xDash web, or hold on the map. Up to three routes with time, distance, traffic and battery at arrival; Start for the turn banner, spoken turns, a new route when you leave it, and the next turn on the HUD.
+- **TomTom map, routes and search.** The map is drawn inside the app, so it looks the same on every head unit. Thai labels, Thai turn instructions, Thai place search, and road works, closures, accidents and jams on the map.
+- **Floating map** over any app, with its own settings window, and a **map on the HUD**. Guiding goes on with Navigation closed.
+- **A Zeekr 7X on the map** in your colour, that stays on the road between GPS fixes and sits above the route. The zoom follows the speed.
+- **Battery at arrival is part of Navigation now.** Its own screen and Home card are gone. Google Maps places, including ones shared by name only, work.
+
+### OBD2 (beta)
+- **OBD2 card, new.** Plug in an ELM327 adapter: Bluetooth Classic, Wi-Fi or Bluetooth LE. Shows the 12 V battery, the standard values the car reports and trouble codes, made for a pure electric car.
+- **Record all signals** to `7xDash/odb_logs` on the USB drive, with a **live signals window** over any app.
+- **Read only.** 7xDash cannot clear codes or change anything through the adapter. Unplug the adapter when you are done: many keep drawing from the 12 V battery. Not tried with a real adapter yet.
+
+### Blind spot
+- **Tells left from right,** from the warning lamps in the mirrors and the cross traffic flags. A signal taught in the finder still wins for its side.
+- **Red blink on the warning side of the video,** like Tesla.
+- **The camera opens on the warning** without the turn signal (on by default). The turn signal still wins, never in R. **Show a test warning** in Settings → Side mirror shows it parked.
+
+### Mood light
+- **Red for the blind spot:** steady while a car is there, blinking between red and your colour when you signal towards it. Add Car ambient light to a group to use the car's own light.
+- **The car's ambient light follows the speed as fast as an LED strip.** It takes a new value every 40 ms instead of every 250 ms, and the last colour goes once more when the speed settles, in case the car missed one. Not tried on a car yet: tell us if the colour stutters.
+
+### Shortcuts and Smart sticker
+- **Play / pause, Next track and Previous track,** new actions for any button, steering-wheel key or Smart sticker.
+- **Battery on the Smart sticker screen,** in steps of 25%.
+
+### Climate (experimental)
+- **Keep rear AC on,** in Settings → System, off by default. Turns the rear AC back on after the car's climate went off and on, if it was on before. Only in P.
+
+### Car signal logs (experimental)
+- **Save or record all car signals** to `7xDash/signals` on the USB drive, in Settings → System, off by default.
+
+### Thai
+- Clearer words on Home, the side rail, Automation and Customize Home. Instant capture now says what it does: it saves a clip.
+
+## [1.7.20-beta] - 2026-11-07
+
+Test build from the develop branch. Not tried on a car yet: tell us what you see.
+
+### Automation (beta)
+- **Automation card, new.** Turn on Settings → Interface → Beta features, then open the card and turn on **Run my automations**. It is off by default: 7xDash changes settings on the car by itself.
+- **Pick when.** The car turns on or off, shift to P, D or R, speed reaches or drops to a number, it gets dark or light, battery drops to a number, outside temperature reaches or drops to a number.
+- **Pick what to do, as many as you like.** Drive mode (Comfort, Normal, Sport), mood light on or off, mood light colour, car ambient light and its brightness, dim overlay, or any shortcut action.
+- **One page.** When on the left, Do on the right, and a line at the bottom that reads back what you built. Tap a choice again to take it back. Five examples are there to start from.
+- **Try it now** runs the actions straight away. Use it while parked first. Setting the drive mode has never been sent to a real car: tell us if the car refuses it.
+- **No flip-flopping.** Automations run on a change, not on a state. A speed has to drop 3 km/h back before it runs again, and a number runs at most once in 30 seconds.
+
+## [1.7.19-beta] - 2026-11-07
+
+Test build from the develop branch. Not tried with a real Bluetooth LE adapter yet: tell us what you see.
+
+### OBD2 (beta)
+- **Bluetooth LE adapters work now.** No pairing: press **Scan for BLE** on the OBD2 screen and choose the adapter. It is remembered for next time. Smart stickers drop off during the 10-second search, then come back.
+- Live values and Record all signals work the same as with other adapters. Bluetooth LE is slower, so a recording on a busy bus may lose more frames than with Bluetooth Classic.
+
+## [1.7.18-beta] - 2026-11-06
+
+Test build from the develop branch. Not tried on a car or with a real adapter yet: tell us what you see.
+
+### OBD2 (beta)
+- **OBD2 card, new.** Turn on Settings → Interface → Beta features, plug an ELM327 adapter into the OBD socket and pair it. Bluetooth Classic and Wi-Fi adapters.
+- **Made for a pure electric car.** Shows the 12 V battery, the standard values the car reports, and trouble codes. No engine values. It also asks the battery module directly, the way the Zeekr 001 and Geely EX5 are read, and shows the raw bytes or the car's refusal. What the bytes mean on the 7X is not known yet.
+- **Record all signals.** Saves everything the adapter can hear to `7xDash/odb_logs` on the USB drive, with the time and the car's gear, speed and turn signal. After a short check at the start it only listens. It stops after 1 hour, at 200 MB, or after 5 minutes of silence. An empty file is a real answer: it means the car keeps that socket quiet.
+- **Live signals window.** Floats over any app while recording and lists bytes that sat still and then changed, so counters stay out of the way. Tap **Mark** when something happens: the log notes the moment and what changed. Have a passenger watch it.
+- **Read only.** 7xDash cannot clear codes or change anything through the adapter. Unplug the adapter when you are done: many keep drawing from the 12 V battery.
+
+## [1.7.17-beta] - 2026-11-05
+
+Test build from the develop branch.
+
+### Shortcuts and Smart sticker
+- **Play / pause, Next track and Previous track**, new actions in the **Sound** tab for any remote button, steering-wheel key or Smart sticker. A sticker in the back seat can now run the music. The key goes to whichever app is playing.
+- **Battery on the Smart sticker screen.** Press a sticker while scanning and its row shows the battery, read from its broadcast with no connection. The level comes in steps of 25%. This is new on the car: tell us if it never moves.
+
+### Climate (experimental)
+- **Keep rear AC on**, in Settings → System, off by default. The car turns the rear AC off when the whole climate system goes off and on. With this on, 7xDash turns it back on if it was on before. It sends one command, only in P and not during maximum front defrost, and leaves the rear off if you turned it off yourself.
+
+## [1.7.16-beta] - 2026-11-04
+
+Test build from the develop branch.
+
+### Navigation (beta)
+- **A new look for the map.** Pale land, white roads, yellow highways, soft green parks and blue water, with a slate version at night. The floating map and the HUD map get the same colours. Buildings are soft blocks instead of dark slabs.
+- **Everything in proportion.** Roads, lanes, buildings, labels and the route line are drawn bigger together, and so is the car, so the map no longer looks small and far away on the wide screen.
+- **The zoom follows the speed in a calmer range.** Closest up to 25 km/h, further out as you speed up, close again before a turn. The floating map and the HUD map sit a little further out with a smaller car, so they show more road ahead.
+- **The controls match the map.** A pill search bar, a green turn banner, round floating buttons and a blue Start. While guiding, the time left is big and green beside a round X that ends the trip. The cards turn dark with the night map.
+
+## [1.7.15-beta] - 2026-11-04
+
+Test build from the develop branch: the TomTom map is back, with the fixes from 1.7.13-beta and 1.7.14-beta.
+
+### Navigation (beta)
+- **The route sits on the road again.** Map and route both come from TomTom, so the line follows the drawn road; on the Google map in 1.7.13-beta and 1.7.14-beta it ran metres beside it, because the head unit draws its own non-Google map.
+- **The car stays on the road between GPS fixes,** moving along the route round bends, and is drawn where it is now rather than where the last fix was.
+- **No jumps from network location,** and fewer false "off the route" with a weak GPS fix (as in 1.7.13-beta).
+
+## [1.7.14-beta] - 2026-11-04
+
+Test build from the develop branch (Google map).
+
+### Navigation (beta)
+- **The car is drawn on top of the route.** On head units the blue line ran over the car; the car is now drawn above the map, so the route always passes under it.
+
+## [1.7.13-beta] - 2026-11-04
+
+Test build from the develop branch: Navigation on the Google map again (the TomTom map of 1.7.10-beta to 1.7.12-beta is not in it).
+
+### Navigation (beta)
+- **The car stays on the road.** Between GPS fixes the car now moves along the route, round bends and corners, the way Google Maps does; before, it slid straight ahead off the road on every curve.
+- **The car is where it is now, not a second ago.** Each GPS fix is timed from when it was measured, not when it reached the map, so at speed the car no longer trails behind.
+- **No more jumps from network location.** Rough positions from cell towers and Wi-Fi are ignored while the GPS has a fix; they pulled the car hundreds of metres away, gave a wrong km left and set off false re-routing.
+- **Fewer false "off the route".** A weak GPS fix (under a roof, between tall buildings) is given its accuracy before the car counts as off the route.
+
+## [1.7.12-beta] - 2026-11-04
+
+Test build from the feature/tomtom-map branch.
+
+### Navigation (beta)
+- **Place names found with TomTom.** A shared Google Maps link without coordinates, or a typed name, is now looked up in TomTom's search instead of Google's search page. Links with coordinates still go straight to the exact pin.
+
+## [1.7.11-beta] - 2026-11-04
+
+Test build from the feature/tomtom-map branch.
+
+### Navigation (beta)
+- **The route sits on the road.** Routes now come from the same TomTom map as the tiles; before, the line ran metres beside the drawn road.
+- **No red left behind the car.** TomTom's jam lines along the roads are hidden while guiding, so the route alone shows the traffic and clears as you drive. They still show before you start, and incident icons stay on.
+- **Guiding goes on with Navigation closed.** The position keeps updating on any screen, which a quiet notification shows during a trip; before, the map and the HUD could freeze.
+- **Closer at low speed.** The map is twice as close up to 25 km/h.
+- **HUD text fits.** The turn card shrinks its text so the arrival time is never cut off.
+
+## [1.7.10-beta] - 2026-11-04
+
+Test build from the feature/tomtom-map branch.
+
+### Navigation (beta)
+- **TomTom map, routes and search instead of Google's.** The map is drawn inside the app with MapLibre, so it looks the same on every head unit and no longer depends on Play services. Thai labels, Thai turn instructions and Thai place search.
+- **Construction and accidents on the map.** Road works, closures, accidents and jams show as icons, with their delay.
+- **Floating settings.** The floating map has a Settings button that opens the settings in their own window beside it, over any app, so the car's screens can't cover them. Place on the HUD, Set up iPhone and the HUD preview stay on the full screen.
+- **The map stays still when parked.** Below 3 km/h the car no longer moves or turns with the GPS wandering, which swung the map under a roof.
+- **The route runs under the car.** The car is drawn above the map, so the line never covers it.
+
+## [1.7.9-beta] - 2026-11-04
+
+### Navigation (beta)
+- **Choose your route.** Before you start, up to three routes show as cards with their time, distance and the road they go by, the recommended one marked Best. Tap a card, or a grey line on the map, to pick one.
+- **Traffic on the route.** The route line itself shows the traffic: blue when clear, orange when slow, red in a jam. Google's traffic layer over the whole map is gone, so the only coloured line is your route.
+- **Smoother driving.** Between GPS fixes the map works out where the car is from its speed and moves it every frame, so the car glides instead of stepping once a second.
+- **The road behind you is gone.** The blue line now starts at the car and is trimmed as you drive, and it no longer comes back when you arrive.
+- **A notice when a place arrives.** A place sent from the iPhone or 7xDash web shows a notice as soon as the car gets it, and another if the place can't be found.
+
+## [1.7.8-beta] - 2026-11-03
+
+### Navigation (beta)
+- **The car sits at the bottom centre.** While guiding, the map faces the way you drive with the car near the bottom and the road ahead filling the screen. The camera now aims ahead of the car instead of using map padding, which head units' MapLibre-based Play services ignore (the car sat in the middle there), and checks where the car landed to correct itself.
+- **A Zeekr 7X instead of the arrow,** drawn from Zeekr's top view: short bonnet, the dark glass roof with its bright trim, the light bar at the front and the red bar at the back. Pick its colour in Settings: forest green, silver, black or white. It always points the way the car goes (the arrow pointed sideways on head units).
+- **Closer, smoother zoom.** The camera now glides every frame instead of jumping once a second. The map stays at its closest up to 25 km/h (side streets and alleys show), eases out as the speed goes up, comes in again before a turn, and comes in quicker when slowing down than it goes out when speeding up. Past the closest Google's map goes, the map is drawn bigger, since the big head unit screen still shows a lot at that.
+- **Settings in one place.** The trip panel keeps a single Settings button; the settings open in three groups: Voice and HUD (spoken turns, the HUD turn card, the HUD map, Place on the HUD), Map (map colours as Follow screen / Light / Dark, the car colour as four swatches, the HUD card on the map), and iPhone (places from the iPhone, Set up iPhone).
+- **Floating map:** resize it freely, by the corner grip (bigger and easier to see now) or by pinching the bar, which sets the width and height separately instead of keeping the shape. The re-centre button is bigger.
+- The three buttons at the bottom right of the full screen are the same size, and the HUD preview no longer repeats the turn banner while guiding.
+
+## [1.7.7-beta] - 2026-11-03
+
+### Navigation (beta)
+- **Send a place from 7xDash web.** For when the iPhone Shortcut is not set up: on 7xDash web, the Navigation card (Beta) takes a Google Maps or Apple Maps link or a typed place name, and the car shows the route, the same as a place shared from the iPhone (the floating map opens if Navigation is closed; while guiding it switches to the new place). The card shows where the car is going and the trip (km left · battery at arrival), and whether the car found the place. Needs the car linked to 7xDash web.
+
+## [1.7.6-beta] - 2026-11-03
+
+### Navigation (beta)
+- **Turn-by-turn on a Google map.** Search a place, take the one sent from the iPhone, or hold on the map; see the route with traffic, its time, distance, arrival time and battery at arrival; Start for the next-turn banner, the map following the car, a new route when you leave it, spoken turns and the next turn on the HUD. Guiding goes on when the screen closes. Needs Google Play services for the map.
+- **Battery at arrival is part of Navigation now.** Its own screen and Home card are gone. The trip, "4.4 km · 23%" (km left · battery at arrival), shows on the Dash panel, the Home card, the floating map and the HUD card; orange when low, red when the range runs out first. A place from the iPhone still gets its battery estimate without a route from Google.
+- **Floating map.** The map in a window over any app: drag its bar to move it or push it to a side to dock it, drag the corner to change the width and height, double-tap the bar for small / large. The bar shows the next turn and the trip, with a battery-at-arrival chip on the map; Start, Full screen and × on the bar. A new shortcut action turns it on and off.
+- **Map like a phone's navigation.** While guiding the car sits centred and low, heading up; the zoom follows the speed (close in when slow so side streets show, further out when fast, close again before a turn), easing instead of jumping. Live traffic shows on the route preview and goes while guiding, so the only coloured line is your route.
+- **Day and night.** The map follows the head unit's day / night as it switches, or stays light or dark (Map: follow the screen / light / dark).
+- **HUD.** The turn card adds the arrival time and battery at arrival. A live map can go on the HUD too (Map on the HUD). Place on the HUD shows the HUD small with the card and the map on it: drag to move, drag the corner to resize, and the HUD follows as you go. A HUD preview over the map shows what the HUD shows (a sample when nothing is guided).
+- **Sending places from the iPhone.** Set up iPhone (in Navigation) shows the QR code. The page it opens takes a pasted Google Maps or Apple Maps link or just a typed place name, so no Shortcut is needed; Add to Home Screen keeps it one tap away. A place sent while guiding switches to it; with Navigation closed, the floating map opens with its route.
+
+## [1.7.5-beta] - 2026-11-03
+
+### Battery at arrival
+- **Google Maps places work.** Sharing a place from Google Maps said "could not find a place in that link" while Apple Maps worked. Google sends its pages without a length, and 7xDash's link reader gave up on them; it now reads them.
+- **Places shared by name only are found.** The iPhone's Google Maps links often end at a link with the place's name but no coordinates (`?q=Name, Address&ftid=...` or `/maps/place/Name/data=...`). 7xDash now looks that name up in Google's map search and takes the first place found.
+- The small map picture on Google's page is no longer taken for the place: its centre is only the area shown, often where the reader is.
+
+## [1.7.4-beta] - 2026-11-03
+
+Same as 1.7.4-alpha, now as a beta so the car's update check offers it.
+
+### Signal recorder
+- **Listens for blind-spot signals the car pushes.** Two drives showed no blind-spot reading changing when asked every few seconds: the mirror lamps (BCM_DOOR_OPEN_WARN_*) stayed 0, RCTA and the blind-spot warnings stayed 255. Some car values are only ever pushed, so the USB recorder now also asks the car to push every change of 58 candidates (blind spot, RCTA, cross traffic, door open warning, lane change, rear collision, turn signal) and writes each push at once with its zone, read as "callback zone N". Other callbacks for them are written as "(callback)".
+- The first line under Changes says whether the car took the request ("watching 58 as one list").
+- The blind-spot warning itself is unchanged; the mirror lamps are likely the door open warning (parked), not the driving blind-spot warning.
+
+## [1.7.4-alpha] - 2026-11-03
+
+### Signal recorder (test build)
+- **Listens for blind-spot signals the car pushes.** Two drives showed no blind-spot reading changing when asked every few seconds: the mirror lamps (BCM_DOOR_OPEN_WARN_*) stayed 0, RCTA and the blind-spot warnings stayed 255. Some car values are only ever pushed, so the USB recorder now also asks the car to push every change of 58 candidates (blind spot, RCTA, cross traffic, door open warning, lane change, rear collision, turn signal) and writes each push at once with its zone, read as "callback zone N". Other callbacks for them are written as "(callback)".
+- The first line under Changes says whether the car took the request ("watching 58 as one list").
+- The blind-spot warning itself is unchanged; the mirror lamps are likely the door open warning (parked), not the driving blind-spot warning.
+
+## [1.7.3-beta] - 2026-11-03
+
+### Mood light
+- **The blind-spot blink keeps your colour.** While the turn signal is on towards a car in the blind spot, the mood lights now blink between red and the colour their gear rules show right now (for example blue in D), instead of red and off. Each group, the car's own ambient light included, follows its own colour.
+- The red uses the lights' current brightness, so the warning matches the cabin; full brightness when the lights are off. Steady red with no turn signal also keeps the brightness.
+
+## [1.7.2-beta] - 2026-11-03
+
+### Blind spot, Tesla style
+- **The mirror warning lamps tell left from right.** 7xDash now reads BCM_DOOR_OPEN_WARN_LEFT_INDCN and RIGHT_INDCN (the warning lamps in the mirrors, found in the all-signals recording) as the built-in warning, with the RCTA flags as a second source: either one warning counts. Every change of them goes to the black box.
+- **Red blink on the warning side of the video.** While the car warns, the side view's edge on that side (left edge for the left camera, right edge for the right) glows red and blinks, like Tesla, instead of a red frame all round. It shows at once, even before the first picture arrives.
+- **The camera opens on the warning** (Show the side when the car warns, on by default), without the turn signal; the turn signal still wins, never in R.
+- **Show a test warning** in Settings → Side mirror → Blind spot: pretends the car warns on the left for 4 seconds, to see it parked.
+- **Removed: the full-screen red edge** from 1.7.1-beta, with its setting and test button.
+- A side taught in the blind-spot finder no longer counts when it was taught 255 (the car's "no reading"); the built-in signals take over for that side.
+
+## [1.7.1-beta] - 2026-11-03
+
+### Blind spot
+- **The car's cross traffic flags tell left from right.** 7xDash now reads PAS_FUNC_RCTA_LEFT_WARNING and PAS_FUNC_RCTA_RIGHT_WARNING (found with the blind-spot finder) as the built-in warning; a signal you taught in the finder still wins for its side. 0 is quiet, 255 is no reading, anything between counts as a warning. Every change of them goes to the black box, to check what the car really sends.
+- **Red screen edge, like Tesla.** While the car warns of a car on one side, that edge of the screen blinks red over any app; touches go through. Settings → Side mirror → **Red screen edge for the blind spot** (on), with **Show a test blink**.
+- **Show the side when the car warns** (new, on): that side's camera opens even without the turn signal. The turn signal still wins; never in R.
+- The red border on the side view now **blinks** instead of staying on.
+- **Mood lights go red** instead of orange: steady red while a car is in the blind spot, blinking red when you signal towards it. Add Car ambient light to a group to use the car's own ambient light, as in Tesla's 2026.14 update.
+
+### Car signal logs (experimental)
+- **Save all car signals to USB now** (Settings → System): one file with every signal the car offers right now and its value, read as a car setting, a sensor event and a sensor value, plus whether the car supports it. Works parked.
+- **Record all car signals to USB:** while the screen is on and a USB drive is in, writes all signals and then every change, with the time, gear, speed and turn signal. Off by default; turn it off when done.
+- Both write tab-separated text to 7xDash/signals on the USB drive.
+- **Report blind-spot signals** also writes a log file (all car settings at the start, then each change of the blind-spot ones), with **Send blind-spot log to phone** in Settings → Side mirror.
+
 ## [1.7.0] - 2026-10-31
 
 Changes since 1.6.0 (includes 1.6.1-beta to 1.6.13-beta).

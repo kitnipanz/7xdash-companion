@@ -81,8 +81,10 @@ final class NavMapPainter {
     private static final float BEARING_S = 0.5f;
     private static final float ZOOM_IN_S = 0.9f;
     private static final float ZOOM_OUT_S = 2.2f;
-    /** About 30 camera moves a second: smooth, and light on the head unit (and the HUD). */
-    private static final float FRAME_MIN_S = 0.03f;
+    /** Longest step a frame takes, in seconds, so a hitch does not throw the camera. */
+    private static final float FRAME_MAX_S = 0.25f;
+    /** How much further out the map sits with the Map zoom action. */
+    private static final float ZOOM_FAR_BIAS = -1.5f;
 
     private final MapLibreMap map;
     private final View mapView;
@@ -121,6 +123,8 @@ final class NavMapPainter {
     private boolean placed;
     /** The camera follows the car until the map is moved by hand. */
     boolean following = true;
+    /** This map is the one on the HUD: it goes by the HUD map zoom action ({@link HudMapZoom}). */
+    boolean hud;
 
     NavMapPainter(Context context, MapLibreMap map, View mapView, int cardsLeft, int cardsTop) {
         this.map = map;
@@ -336,7 +340,7 @@ final class NavMapPainter {
         goalRoute = onRoute ? s.route : null;
         goalAlong = onRoute ? s.progress.along : 0;
         goalBearing = bearing;
-        goalZoom = guiding ? zoomFor(s.carSpeedKmh, s.progress == null ? null : s.progress.toNext) + windowZoom(width) : 15;
+        goalZoom = guiding ? guidingZoom(s) + windowZoom(width) : 15;
         this.guiding = guiding;
         if (!placed) {
             // straight to the car the first time, not a fly-in from the whole world
@@ -387,8 +391,8 @@ final class NavMapPainter {
             if (!ticking) {
                 return;
             }
-            float dt = lastFrameNanos == 0 ? 0.016f : Math.min(0.1f, (now - lastFrameNanos) / 1e9f);
-            if (lastFrameNanos == 0 || dt >= FRAME_MIN_S) {
+            float dt = lastFrameNanos == 0 ? 0.016f : Math.min(FRAME_MAX_S, (now - lastFrameNanos) / 1e9f);
+            if (lastFrameNanos == 0 || dt >= frameGap()) {
                 lastFrameNanos = now;
                 step(dt);
             }
@@ -569,6 +573,24 @@ final class NavMapPainter {
         map.moveCamera(CameraUpdateFactory.newCameraPosition(new CameraPosition.Builder()
                 .target(at).bearing(guiding ? bearing : 0).tilt(guiding ? TILT : 0).zoom(zoom - ZOOM_SHIFT)
                 .padding(0, 0, 0, 0).build()));
+    }
+
+    /** Shortest time between camera moves. The HUD map always runs at full pace; centre-screen maps ease off for a side view. */
+    private float frameGap() {
+        return hud ? MapPace.FULL_S : MapPace.get().gap(
+                com.kooo.evcam.zeekr.SideViewPopupService.showing(), android.os.SystemClock.uptimeMillis());
+    }
+
+    private float guidingZoom(Navigator.Snapshot s) {
+        com.kooo.evcam.AppConfig config = new com.kooo.evcam.AppConfig(mapView.getContext());
+        float adaptive = zoomFor(s.carSpeedKmh, s.progress == null ? null : s.progress.toNext)
+                + zoomBias(config.isNavZoomedOut());
+        return hud ? HudMapZoom.zoom(config.getNavHudZoom(), adaptive) : adaptive;
+    }
+
+    /** What the Map zoom action adds to the zoom. */
+    static float zoomBias(boolean zoomedOut) {
+        return zoomedOut ? ZOOM_FAR_BIAS : 0f;
     }
 
     /** How much further out a narrow window sits: enough road ahead shows in the floating window and on the HUD. */

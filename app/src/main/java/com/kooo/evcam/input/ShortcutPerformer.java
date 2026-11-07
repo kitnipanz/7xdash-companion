@@ -169,6 +169,18 @@ public final class ShortcutPerformer {
                     hud(context, R.string.nav_float, true);
                 }
                 return;
+            case NAV_ZOOM:
+                AppConfig zoom = new AppConfig(context);
+                boolean far = !zoom.isNavZoomedOut();
+                zoom.setNavZoomedOut(far);
+                mapNotice(context, R.string.shortcut_action_nav_zoom, far ? R.string.nav_zoom_far : R.string.nav_zoom_near);
+                return;
+            case NAV_HUD_ZOOM:
+                AppConfig hudZoom = new AppConfig(context);
+                int mode = com.kooo.evcam.nav.HudMapZoom.next(hudZoom.getNavHudZoom());
+                hudZoom.setNavHudZoom(mode);
+                mapNotice(context, R.string.shortcut_action_nav_hud_zoom, com.kooo.evcam.nav.HudMapZoom.labelRes(mode));
+                return;
             case MOOD_LIGHT:
                 com.kooo.evcam.light.GearLight.toggle(context);
                 return;
@@ -236,6 +248,14 @@ public final class ShortcutPerformer {
         com.kooo.evcam.ui.Notice.makeText(context,
                 on ? R.string.shortcut_drive_upload_on : R.string.shortcut_drive_upload_off,
                 Toast.LENGTH_SHORT).show();
+    }
+
+    /** A map zoom just changed: says so on the screen and on the HUD, whatever the HUD notifications switch says. */
+    private static void mapNotice(Context context, int title, int state) {
+        String name = context.getString(title);
+        String value = context.getString(state);
+        com.kooo.evcam.ui.Notice.makeText(context, name + ": " + value, Toast.LENGTH_SHORT).show();
+        com.kooo.evcam.hud.HudNotice.postAlways(context, name, value);
     }
 
     /** Open the super mirror on the HUD; if it is already there, close it. */

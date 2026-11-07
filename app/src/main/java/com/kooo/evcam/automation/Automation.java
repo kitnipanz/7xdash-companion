@@ -115,9 +115,10 @@ public final class Automation implements Telemetry.Listener {
 
     private boolean wantsFloats() {
         for (AutomationRule rule : rules) {
-            AutomationTrigger trigger = rule.trigger();
-            if (rule.enabled && trigger != null && trigger.measure != null) {
-                return true;
+            for (AutomationRule.Condition condition : rule.conditions()) {
+                if (rule.enabled && condition.trigger().measure != null) {
+                    return true;
+                }
             }
         }
         return false;

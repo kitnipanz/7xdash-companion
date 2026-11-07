@@ -18,6 +18,9 @@ import java.util.Set;
  * is the car coming on right after the head unit started: the head unit wakes with the car, so
  * the first reading is the only one there is. An unknown reading (null) never counts as a change.</p>
  *
+ * <p>A rule with several conditions fires the moment the last of them comes true, in any order, and
+ * can fire again once one has stopped being true. It uses the same gap as a number.</p>
+ *
  * <p>A number has to come back by {@link AutomationTrigger.Measure#hysteresis} before it can fire
  * again, and at least {@link #NUMBER_GAP_MS} passes between two runs, so driving around 80 km/h
  * does not flip the drive mode over and over. Rain gets the same gap.</p>
@@ -49,6 +52,8 @@ final class AutomationWatch {
     /** Per rule and number: past the number now. */
     private final Map<String, Boolean> past = new HashMap<>();
     private final Map<String, Long> lastRun = new HashMap<>();
+    /** Per rule and its set of conditions: all true at the last reading. */
+    private final Map<String, Boolean> together = new HashMap<>();
 
     /** The rules to run now, in list order. Call with no rules to keep up while nothing should run. */
     List<AutomationRule> step(List<AutomationRule> rules, Sample s) {
@@ -59,7 +64,9 @@ final class AutomationWatch {
             if (!rule.enabled || trigger == null || rule.steps.isEmpty()) {
                 continue;
             }
-            boolean fires = trigger.measure == null
+            List<AutomationRule.Condition> conditions = rule.conditions();
+            boolean fires = conditions.size() > 1 ? allCameTrue(rule, conditions, s)
+                    : trigger.measure == null
                     ? events.contains(trigger) && settled(rule, trigger, s.at)
                     : crossed(rule, trigger, reading(trigger.measure, s), s.at);
             if (fires) {
@@ -104,6 +111,70 @@ final class AutomationWatch {
             rain = s.rain;
         }
         return events;
+    }
+
+    private boolean allCameTrue(AutomationRule rule, List<AutomationRule.Condition> conditions, Sample s) {
+        StringBuilder key = new StringBuilder(rule.id);
+        Boolean all = Boolean.TRUE;
+        for (AutomationRule.Condition condition : conditions) {
+            key.append('|').append(condition.trigger).append(':').append(condition.value);
+            Boolean now = holds(rule, condition, s);
+            if (now == null) {
+                all = null;
+            } else if (!now && all != null) {
+                all = Boolean.FALSE;
+            }
+        }
+        if (all == null) {
+            return false;
+        }
+        String id = key.toString();
+        Boolean was = together.get(id);
+        if (was == null || !all || was) {
+            together.put(id, all);
+            return false;
+        }
+        Long last = lastRun.get(rule.id);
+        if (last != null && s.at - last < NUMBER_GAP_MS) {
+            return false;
+        }
+        together.put(id, true);
+        lastRun.put(rule.id, s.at);
+        return true;
+    }
+
+    /** Whether a condition is true now; null while the car has not said. */
+    private Boolean holds(AutomationRule rule, AutomationRule.Condition condition, Sample s) {
+        AutomationTrigger trigger = condition.trigger();
+        switch (trigger) {
+            case CAR_ON: return carOn;
+            case CAR_OFF: return carOn == null ? null : !carOn;
+            case GEAR_P: return gear == null ? null : "P".equals(gear);
+            case GEAR_D: return gear == null ? null : "D".equals(gear);
+            case GEAR_R: return gear == null ? null : "R".equals(gear);
+            case DARK: return dayNight == null ? null : dayNight == Signal.NIGHT;
+            case LIGHT: return dayNight == null ? null : dayNight != Signal.NIGHT;
+            case RAIN_START: return rain;
+            case RAIN_STOP: return rain == null ? null : !rain;
+            default: return past(rule, condition, reading(trigger.measure, s));
+        }
+    }
+
+    /** Whether a number is past its limit, with the same margin as {@link #crossed}. */
+    private Boolean past(AutomationRule rule, AutomationRule.Condition condition, Float reading) {
+        AutomationTrigger trigger = condition.trigger();
+        String key = rule.id + ":" + condition.trigger + ":" + condition.value;
+        Boolean was = past.get(key);
+        if (reading == null) {
+            return was;
+        }
+        float limit = condition.value;
+        boolean beyond = trigger.rising ? reading >= limit : reading <= limit;
+        float back = trigger.measure.hysteresis;
+        boolean now = was == null || !was ? beyond
+                : !(trigger.rising ? reading <= limit - back : reading >= limit + back);
+        past.put(key, now);
+        return now;
     }
 
     /** Light rain can read on and off every few seconds: rain gets the same gap between runs as a number. */

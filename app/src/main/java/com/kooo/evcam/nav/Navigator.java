@@ -168,6 +168,8 @@ public final class Navigator {
     private boolean telemetryHeld;
     /** The routes to choose from before starting (TomTom's pick first); the chosen one is {@link #guidance}'s. */
     private List<NavRoute> choices = new ArrayList<>();
+    /** The person picked a route other than TomTom's first: the timed refresh must not swap it back. */
+    private boolean pickedByPerson;
     /** A place came from the iPhone while guiding: start guiding to it as soon as its route is in. */
     private boolean startWhenRouted;
     /** The turn card is being placed by hand ({@link #setHudPlacing}). */
@@ -335,6 +337,7 @@ public final class Navigator {
         guidance = null;
         progress = null;
         choices = new ArrayList<>();
+        pickedByPerson = false;
         startWhenRouted = false;
         voicePlan.reset();
         phase = Phase.ROUTING;
@@ -355,6 +358,7 @@ public final class Navigator {
             return;
         }
         guidance = new Guidance(route);
+        pickedByPerson = route != choices.get(0);
         AppLog.i(TAG, String.format(Locale.US, "chose the route %.1f km, %.0f min", route.meters / 1000, route.seconds / 60));
         onTick();
     }
@@ -507,6 +511,7 @@ public final class Navigator {
         AppLog.i(TAG, String.format(Locale.US, "route: %.1f km, %.0f min, %d steps%s", route.meters / 1000,
                 route.seconds / 60, route.steps.size(), reroute ? " (rerouted)" : ""));
         guidance = new Guidance(route);
+        pickedByPerson = false;
         choices = phase == Phase.GUIDING ? new ArrayList<>(java.util.Collections.singletonList(route)) : all;
         voicePlan.reset();
         error = 0;
@@ -608,6 +613,11 @@ public final class Navigator {
         changed();
     }
 
+    /** A timed refresh takes TomTom's first route, so it never runs on a route the person picked. */
+    static boolean refreshDue(boolean pickedByPerson, long sinceRouted) {
+        return !pickedByPerson && sinceRouted > REFRESH_MS;
+    }
+
     private void guide(VehicleState s, long now) {
         if (progress.arrived) {
             AppLog.i(TAG, "arrived");
@@ -620,7 +630,7 @@ public final class Navigator {
         if (progress.offRoute && !rerouting && now - routedAt > REROUTE_MS) {
             AppLog.i(TAG, String.format(Locale.US, "off the route by %.0f m: rerouting", progress.offMeters));
             askRoute(true);
-        } else if (!rerouting && now - routedAt > REFRESH_MS) {
+        } else if (!rerouting && refreshDue(pickedByPerson, now - routedAt)) {
             askRoute(true);
         }
         NavRoute route = guidance.route();

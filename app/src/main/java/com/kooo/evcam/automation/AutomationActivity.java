@@ -160,9 +160,14 @@ public class AutomationActivity extends AppCompatActivity {
     }
 
     static String whenText(Context context, AutomationRule rule) {
-        AutomationTrigger trigger = rule.trigger();
-        return trigger.measure == null ? context.getString(trigger.labelRes)
-                : context.getString(trigger.labelRes, rule.value);
+        StringBuilder out = new StringBuilder();
+        for (AutomationRule.Condition condition : rule.conditions()) {
+            AutomationTrigger trigger = condition.trigger();
+            out.append(out.length() == 0 ? "" : context.getString(R.string.automation_and))
+                    .append(trigger.measure == null ? context.getString(trigger.labelRes)
+                            : context.getString(trigger.labelRes, condition.value));
+        }
+        return out.toString();
     }
 
     static TextView text(Context context, String value, boolean main) {

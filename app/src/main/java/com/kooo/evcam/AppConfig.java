@@ -2593,6 +2593,28 @@ public class AppConfig {
 
     // ==================== Macro pad ====================
 
+    private static final String KEY_NAV_ZOOMED_OUT = "nav_zoomed_out";
+
+    /** The Map zoom action: the map sits further out while guiding. */
+    public boolean isNavZoomedOut() {
+        return prefs.getBoolean(KEY_NAV_ZOOMED_OUT, false);
+    }
+
+    public void setNavZoomedOut(boolean out) {
+        prefs.edit().putBoolean(KEY_NAV_ZOOMED_OUT, out).apply();
+    }
+
+    private static final String KEY_NAV_HUD_ZOOM = "nav_hud_zoom";
+
+    /** The HUD map's distance ({@link com.kooo.evcam.nav.HudMapZoom}); it follows the speed unless changed. */
+    public int getNavHudZoom() {
+        return prefs.getInt(KEY_NAV_HUD_ZOOM, com.kooo.evcam.nav.HudMapZoom.ADAPTIVE);
+    }
+
+    public void setNavHudZoom(int mode) {
+        prefs.edit().putInt(KEY_NAV_HUD_ZOOM, mode).apply();
+    }
+
     private static final String KEY_HOME_CARD_ORDER = "home_card_order";
     private static final String KEY_HOME_CARDS_HIDDEN = "home_cards_hidden";
 

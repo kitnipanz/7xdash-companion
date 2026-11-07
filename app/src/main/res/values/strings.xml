@@ -1929,7 +1929,9 @@ Then reopen this app.</string>
     <string name="automation_paused">Off. Nothing below runs until you turn this on.</string>
     <string name="automation_examples">Start from an example, or press Add automation</string>
     <string name="automation_new_title">New automation</string>
-    <string name="automation_when_heading">1. When this happens</string>
+    <string name="automation_when_heading">1. When all of these</string>
+    <string name="automation_when_hint">Pick one or more. It runs the moment all of them are true.</string>
+    <string name="automation_and">" and "</string>
     <string name="automation_do_heading">2. Do this</string>
     <string name="automation_do_hint">Pick as many as you like. Tap a choice again to take it back.</string>
     <string name="automation_add_shortcut">Add</string>
@@ -2020,4 +2022,15 @@ Then reopen this app.</string>
     <string name="home_edit_tab_beta">Beta (%1$d)</string>
     <string name="home_edit_drag">Move</string>
     <string name="home_edit_done">Done</string>
+
+    <!-- Map actions -->
+    <string name="shortcut_group_nav">Navigation</string>
+    <string name="shortcut_action_nav_zoom">Map zoom in / out</string>
+    <string name="shortcut_action_nav_hud_zoom">HUD map zoom</string>
+    <string name="nav_hud_zoom_furthest">Furthest</string>
+    <string name="nav_hud_zoom_medium">Medium</string>
+    <string name="nav_hud_zoom_close">Close</string>
+    <string name="nav_hud_zoom_adaptive">Adaptive to speed</string>
+    <string name="nav_zoom_far">Zoomed out</string>
+    <string name="nav_zoom_near">Zoomed in</string>
 </resources>

@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.8.1-beta] - 2026-11-07
+
+### Navigation
+- **Blind spot and the map share the head unit better.** While a side view is on screen, the full-screen and floating maps slow down only if the camera picture falls behind, one step at a time, and go back up when it keeps time. The HUD map never slows. Not tried on a car yet.
+- **The route you pick stays yours.** The 10-minute route refresh no longer swaps it. If you leave the route, a new one is found.
+- **Floating map:** a second resize grip at the top left, and arrival time above the battery while guiding.
+- **Navigation tab in the action picker**, for any button, sticker, Macro pad or automation: **Floating map on / off**, **Map zoom in / out**, and **HUD map zoom** (Furthest, Medium, Close, Adaptive to speed). Each change shows a notice, on the HUD too.
+
+### Automation
+- **Several conditions on the left.** Pick more than one **When** to need them all: "it gets dark" and "it starts raining" runs when both are true, in either order. Only one choice per group. Old automations keep working.
+- **Try it now** no longer covers a shortcut's own notice with "Sent".
+
 ## [1.8.0] - 2026-11-07
 
 Changes since 1.7.0 (includes 1.7.1-beta to 1.7.20-beta).

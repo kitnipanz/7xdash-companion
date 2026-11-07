@@ -1904,7 +1904,9 @@
     <string name="automation_paused">ปิดอยู่ รายการด้านล่างจะยังไม่ทำงานจนกว่าจะเปิดสวิตช์นี้</string>
     <string name="automation_examples">เริ่มจากตัวอย่าง หรือกดเพิ่มรายการ</string>
     <string name="automation_new_title">รายการใหม่</string>
-    <string name="automation_when_heading">1. เมื่อ</string>
+    <string name="automation_when_heading">1. เมื่อครบทุกข้อนี้</string>
+    <string name="automation_when_hint">เลือกได้หลายข้อ จะทำงานทันทีที่ครบทุกข้อ</string>
+    <string name="automation_and">" และ "</string>
     <string name="automation_do_heading">2. ให้ทำ</string>
     <string name="automation_do_hint">เลือกได้หลายอย่าง แตะตัวเลือกเดิมอีกครั้งเพื่อยกเลิก</string>
     <string name="automation_add_shortcut">เพิ่ม</string>
@@ -1995,4 +1997,15 @@
     <string name="home_edit_tab_beta">เบต้า (%1$d)</string>
     <string name="home_edit_drag">ย้าย</string>
     <string name="home_edit_done">เสร็จ</string>
+
+    <!-- Map actions -->
+    <string name="shortcut_group_nav">นำทาง</string>
+    <string name="shortcut_action_nav_zoom">ซูมแผนที่เข้า / ออก</string>
+    <string name="shortcut_action_nav_hud_zoom">ซูมแผนที่บน HUD</string>
+    <string name="nav_hud_zoom_furthest">ไกลสุด</string>
+    <string name="nav_hud_zoom_medium">กลาง</string>
+    <string name="nav_hud_zoom_close">ใกล้</string>
+    <string name="nav_hud_zoom_adaptive">ปรับตามความเร็ว</string>
+    <string name="nav_zoom_far">ซูมออก</string>
+    <string name="nav_zoom_near">ซูมเข้า</string>
 </resources>

@@ -39,7 +39,8 @@ public class AppConfig {
     private static final String KEY_USAGE_STATS_REMEMBERED = "usage_stats_remembered";  // don't ask again on open
     private static final String KEY_CRASH_REPORTS = "crash_reports";  // anonymous crash reports, apart from usage stats
     private static final String KEY_CONSENT_ASKED = "usage_consent_asked";  // version of the question last shown
-    private static final String KEY_OBD_ADAPTER = "obd_adapter";  // OBD2 (beta): Bluetooth address, or "wifi"
+    private static final String KEY_OBD_ADAPTER = "obd_adapter";  // OBD2 (beta): Bluetooth address, "ble:" + address, or "wifi"
+    private static final String KEY_OBD_ADAPTER_NAME = "obd_adapter_name";  // Name of a Bluetooth LE adapter: it is not in the paired list
     private static final String KEY_BETA_FEATURES = "beta_features";  // show features still in beta (home cards, automatic triggers)
     private static final String KEY_HUD_NOTICE_LEFT = "hud_notice_left_pct";  // 抬头显示通知离左边多少（%）
     private static final String KEY_HUD_NOTICE_RIGHT = "hud_notice_right_pct";  // 离右边多少（%）  // 别的应用的通知投到抬头显示
@@ -485,6 +486,14 @@ public class AppConfig {
 
     public void setObdAdapter(String adapter) {
         prefs.edit().putString(KEY_OBD_ADAPTER, adapter).apply();
+    }
+
+    public String getObdAdapterName() {
+        return prefs.getString(KEY_OBD_ADAPTER_NAME, null);
+    }
+
+    public void setObdAdapterName(String name) {
+        prefs.edit().putString(KEY_OBD_ADAPTER_NAME, name).apply();
     }
 
     /** Anonymous usage stats (see {@link com.kooo.evcam.analytics.Analytics}): the last answer. Off until one. */

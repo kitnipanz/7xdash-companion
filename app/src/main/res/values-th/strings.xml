@@ -1832,7 +1832,7 @@
     <string name="obd_searching">พบอะแดปเตอร์แล้ว กำลังหารถ อาจใช้เวลา 15 วินาที…</string>
     <string name="obd_no_car">อะแดปเตอร์ทำงาน แต่รถไม่ตอบ รถติดอยู่หรือเปล่า กำลังลองใหม่</string>
     <string name="obd_live">%1$s · %2$s</string>
-    <string name="obd_cannot_open">เชื่อมต่อไม่ได้ ตรวจสอบว่าเสียบอะแดปเตอร์แล้ว จับคู่แล้ว และไม่ได้เชื่อมกับโทรศัพท์อยู่</string>
+    <string name="obd_cannot_open">เชื่อมต่อไม่ได้ ตรวจสอบว่าเสียบอะแดปเตอร์แล้ว อยู่ใกล้ๆ และไม่ได้เชื่อมกับโทรศัพท์อยู่</string>
     <string name="obd_not_elm">อุปกรณ์นี้ไม่ตอบแบบอะแดปเตอร์ ELM327</string>
     <string name="obd_lost">อะแดปเตอร์หยุดตอบ</string>
     <string name="obd_pick_adapter">เลือกอะแดปเตอร์ก่อน</string>
@@ -1840,7 +1840,7 @@
     <string name="obd_selected">เลือกแล้ว</string>
     <string name="obd_wifi_adapter">อะแดปเตอร์ Wi-Fi (192.168.0.10)</string>
     <string name="obd_needs_permission">กดเชื่อมต่อเพื่ออนุญาต Bluetooth และแสดงอะแดปเตอร์ที่จับคู่ไว้</string>
-    <string name="obd_pair_hint">จับคู่อะแดปเตอร์ Bluetooth ในการตั้งค่า Bluetooth ของรถก่อน (PIN มักเป็น 1234) ถ้าเป็นอะแดปเตอร์ Wi-Fi ให้เข้าเครือข่ายของมันก่อน ยังไม่รองรับอะแดปเตอร์ Bluetooth LE</string>
+    <string name="obd_pair_hint">จับคู่อะแดปเตอร์ Bluetooth ในการตั้งค่า Bluetooth ของรถก่อน (PIN มักเป็น 1234) ถ้าเป็นอะแดปเตอร์ Wi-Fi ให้เข้าเครือข่ายของมันก่อน อะแดปเตอร์ Bluetooth LE ไม่ต้องจับคู่ กดสแกน BLE แล้วเลือก</string>
     <string name="obd_values">ค่าปัจจุบัน</string>
     <string name="obd_12v_battery">แบต 12 V (ที่ช่อง OBD)</string>
     <string name="obd_codes">รหัสปัญหา</string>
@@ -1865,6 +1865,12 @@
     <string name="obd_live_mark">มาร์ก</string>
     <string name="obd_live_marked">มาร์ก %1$d</string>
     <string name="obd_live_waiting">รอสัญญาณที่นิ่งอยู่เปลี่ยนค่า…</string>
+    <string name="obd_scan">สแกน BLE</string>
+    <string name="obd_scan_stop">หยุดสแกน</string>
+    <string name="obd_scanning">กำลังหาอะแดปเตอร์ Bluetooth LE 10 วินาที ระหว่างนี้สติกเกอร์อัจฉริยะจะหลุดชั่วคราว</string>
+    <string name="obd_scan_failed">ค้นหา Bluetooth LE ไม่สำเร็จ (%1$d) ลองอีกครั้ง</string>
+    <string name="obd_bluetooth_off">Bluetooth ปิดอยู่ หรือไม่ได้รับอนุญาตให้ค้นหา</string>
+    <string name="obd_ble_adapter">%1$s (BLE %2$s)</string>
     <string name="obd_zeekr">โมดูลแบตเตอรี่ อ่านตรง (ไบต์ดิบ)</string>
     <string name="obd_zeekr_note">คำขอเดียวกับ Zeekr 001 และ Geely EX5 ยังไม่รู้ว่าไบต์เหล่านี้หมายถึงอะไรใน 7X จึงแสดงตามที่ได้รับ</string>
     <string name="obd_zeekr_none">ไม่ตอบ</string>

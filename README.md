@@ -135,7 +135,8 @@ a photo in the notification shade and on 7xDash web.
 ### OBD2 (beta)
 Reads the car through an ELM327 adapter in the OBD socket, while the screen is open.
 - Pair a Bluetooth Classic adapter in the car's Bluetooth settings, or join a Wi-Fi adapter's network.
-  Bluetooth LE adapters are not supported yet.
+  A Bluetooth LE adapter needs no pairing: press **Scan for BLE** on the screen and choose it. Smart
+  stickers drop off during the 10-second search.
 - Turn on Settings → Interface → **Beta features**, tap the **OBD2** card, choose the adapter, press
   **Connect**.
 - Shows the 12 V battery voltage, the standard values the car reports, and raw bytes read directly

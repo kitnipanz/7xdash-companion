@@ -43,7 +43,10 @@ public class ObdActivity extends AppCompatActivity {
 
     private static final String TAG = "OBD";
     private static final String WIFI = "wifi";
+    private static final String BLE = "ble:";
     private static final int ASK = 49;
+    private static final int ASK_SCAN = 50;
+    private static final int MAX_BLE_ROWS = 12;
     private static final int LABEL_DP = 300;
     private static final String LOG_DIR = "7xDash/odb_logs";
     private static final long TICK_MS = 1_000L;
@@ -58,6 +61,9 @@ public class ObdActivity extends AppCompatActivity {
     private View readCodesButton;
     private TextView recordButton;
     private View liveButton;
+    private TextView scanButton;
+    private ObdBleScanner scanner;
+    private int scanError;
     private final android.os.Handler main = new android.os.Handler(android.os.Looper.getMainLooper());
     private final Runnable tick = new Runnable() {
         @Override
@@ -70,6 +76,7 @@ public class ObdActivity extends AppCompatActivity {
     };
     private AppConfig config;
     private String chosen;
+    private String chosenName;
     private ObdClient client;
     /** Counts runs: a stopped client's last snapshots must not touch the next one. */
     private int run;
@@ -97,6 +104,14 @@ public class ObdActivity extends AppCompatActivity {
                 capture.stop();
             } else if (ensurePermission()) {
                 startCapture();
+            }
+        });
+        scanButton = findViewById(R.id.obd_scan);
+        scanButton.setOnClickListener(v -> {
+            if (scanner != null && scanner.isRunning()) {
+                scanner.stop();
+            } else if (ensureScanPermission()) {
+                startScan();
             }
         });
         liveButton = findViewById(R.id.obd_live_window);
@@ -127,6 +142,60 @@ public class ObdActivity extends AppCompatActivity {
         super.onStop();
         main.removeCallbacks(tick);
         stopClient();
+        if (scanner != null) {
+            scanner.stop();
+        }
+    }
+
+    private void startScan() {
+        BluetoothAdapter radio = radio();
+        if (radio == null || !radio.isEnabled()) {
+            scanError = -2;
+            render();
+            return;
+        }
+        scanError = 0;
+        scanner = new ObdBleScanner(this, radio, new ObdBleScanner.Listener() {
+            @Override
+            public void onFound() {
+                render();
+            }
+
+            @Override
+            public void onDone(int errorCode) {
+                scanError = errorCode > 0 || errorCode == -2 ? errorCode : 0;
+                render();
+            }
+        });
+        scanner.start();
+        render();
+    }
+
+    private String[] scanPermissions() {
+        return Build.VERSION.SDK_INT >= 31
+                ? new String[]{Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT}
+                : new String[]{Manifest.permission.ACCESS_FINE_LOCATION};
+    }
+
+    private boolean ensureScanPermission() {
+        List<String> missing = new ArrayList<>();
+        for (String permission : scanPermissions()) {
+            if (ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
+                missing.add(permission);
+            }
+        }
+        if (missing.isEmpty()) {
+            return true;
+        }
+        requestPermissions(missing.toArray(new String[0]), ASK_SCAN);
+        return false;
+    }
+
+    private void rememberAdapter() {
+        config.setObdAdapter(chosen);
+        if (chosen != null && chosen.startsWith(BLE) && chosenName != null) {
+            config.setObdAdapterName(chosenName);
+        }
     }
 
     private void showLiveWindow() {
@@ -159,7 +228,7 @@ public class ObdActivity extends AppCompatActivity {
             status.setText(R.string.obd_record_no_usb);
             return;
         }
-        config.setObdAdapter(chosen);
+        rememberAdapter();
         captureFile = log.file;
         capture = new ObdCapture(link, log, () -> BlindSpotLog.context(Telemetry.get().latest()));
         capture.start();
@@ -183,7 +252,7 @@ public class ObdActivity extends AppCompatActivity {
             status.setText(R.string.obd_pick_adapter);
             return;
         }
-        config.setObdAdapter(chosen);
+        rememberAdapter();
         last = null;
         final int thisRun = ++run;
         client = new ObdClient(link, new ObdClient.Listener() {
@@ -208,6 +277,9 @@ public class ObdActivity extends AppCompatActivity {
         BluetoothAdapter radio = radio();
         if (key == null || radio == null) {
             return null;
+        }
+        if (key.startsWith(BLE)) {
+            return new BleObdLink(this, radio.getRemoteDevice(key.substring(BLE.length())));
         }
         for (BluetoothDevice device : bonded(radio)) {
             if (key.equals(device.getAddress())) {
@@ -259,7 +331,18 @@ public class ObdActivity extends AppCompatActivity {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == ASK) {
             render();
+        } else if (requestCode == ASK_SCAN && ensureScanPermissionSilently()) {
+            startScan();
         }
+    }
+
+    private boolean ensureScanPermissionSilently() {
+        for (String permission : scanPermissions()) {
+            if (ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private void show(int fromRun, ObdSnapshot snapshot) {
@@ -276,12 +359,24 @@ public class ObdActivity extends AppCompatActivity {
     private void render() {
         ObdCapture.Progress recording = capture == null ? null : capture.progress();
         boolean running = recording != null && recording.ended == ObdCapture.Ended.RUNNING;
+        boolean scanning = scanner != null && scanner.isRunning();
+        scanButton.setText(scanning ? R.string.obd_scan_stop : R.string.obd_scan);
+        scanButton.setVisibility(client == null && !running ? View.VISIBLE : View.GONE);
         recordButton.setText(running ? R.string.obd_record_stop : R.string.obd_record);
         recordButton.setVisibility(client == null ? View.VISIBLE : View.GONE);
         connectButton.setVisibility(running ? View.GONE : View.VISIBLE);
         liveButton.setVisibility(running && !ObdSnifferWindow.isShown() ? View.VISIBLE : View.GONE);
         connectButton.setText(client == null ? R.string.obd_connect : R.string.obd_disconnect);
-        status.setText(recording == null ? statusText() : recordingText(recording));
+        if (recording != null) {
+            status.setText(recordingText(recording));
+        } else if (scanning) {
+            status.setText(R.string.obd_scanning);
+        } else if (scanError != 0) {
+            status.setText(scanError == -2 ? getString(R.string.obd_bluetooth_off)
+                    : getString(R.string.obd_scan_failed, scanError));
+        } else {
+            status.setText(statusText());
+        }
         readCodesButton.setVisibility(last != null && last.state == ObdSnapshot.State.LIVE
                 && !last.supported.isEmpty() ? View.VISIBLE : View.GONE);
         list.removeAllViews();
@@ -375,18 +470,49 @@ public class ObdActivity extends AppCompatActivity {
         } else if (radio != null) {
             addNote(R.string.obd_needs_permission);
         }
+        renderBleAdapters();
         addChoice(getString(R.string.obd_wifi_adapter), WIFI);
         addNote(R.string.obd_pair_hint);
         addNote(R.string.obd_record_note);
     }
 
-    private void addChoice(String label, String key) {
+    private void renderBleAdapters() {
+        List<String> shown = new ArrayList<>();
+        if (scanner != null) {
+            for (Map.Entry<String, String> entry : scanner.found()) {
+                if (shown.size() == MAX_BLE_ROWS) {
+                    break;
+                }
+                String key = BLE + entry.getKey();
+                shown.add(key);
+                addBleChoice(entry.getValue(), key);
+            }
+        }
+        // The adapter used last time, without scanning for it again
+        if (chosen != null && chosen.startsWith(BLE) && !shown.contains(chosen)) {
+            String name = chosenName != null ? chosenName : config.getObdAdapterName();
+            addBleChoice(name == null ? chosen.substring(BLE.length()) : name, chosen);
+        }
+    }
+
+    private void addBleChoice(String name, String key) {
+        // Two adapters can share a name; the end of the address tells them apart
+        View row = addChoice(getString(R.string.obd_ble_adapter, name, key.substring(key.length() - 5)), key);
+        row.setOnClickListener(v -> {
+            chosen = key;
+            chosenName = name;
+            render();
+        });
+    }
+
+    private View addChoice(String label, String key) {
         boolean on = key.equals(chosen);
         View row = addRow(label, on ? getString(R.string.obd_selected) : "");
         row.setOnClickListener(v -> {
             chosen = key;
             render();
         });
+        return row;
     }
 
     private void renderValues(ObdSnapshot snapshot) {

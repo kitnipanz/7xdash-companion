@@ -1857,7 +1857,7 @@ Then reopen this app.</string>
     <string name="obd_searching">Adapter found. Looking for the car, this can take 15 seconds…</string>
     <string name="obd_no_car">The adapter works but the car does not answer. Is the car on? Trying again.</string>
     <string name="obd_live">%1$s · %2$s</string>
-    <string name="obd_cannot_open">Could not connect. Check that the adapter is plugged in, paired and not in use by a phone.</string>
+    <string name="obd_cannot_open">Could not connect. Check that the adapter is plugged in, close by and not in use by a phone.</string>
     <string name="obd_not_elm">That device did not answer like an ELM327 adapter.</string>
     <string name="obd_lost">The adapter stopped answering.</string>
     <string name="obd_pick_adapter">Choose an adapter first</string>
@@ -1865,7 +1865,7 @@ Then reopen this app.</string>
     <string name="obd_selected">Selected</string>
     <string name="obd_wifi_adapter">Wi-Fi adapter (192.168.0.10)</string>
     <string name="obd_needs_permission">Press Connect to allow Bluetooth and list paired adapters.</string>
-    <string name="obd_pair_hint">Pair a Bluetooth adapter in the car\'s Bluetooth settings first (PIN is usually 1234). For a Wi-Fi adapter, join its network first. Bluetooth LE adapters are not supported yet.</string>
+    <string name="obd_pair_hint">Pair a Bluetooth adapter in the car\'s Bluetooth settings first (PIN is usually 1234). For a Wi-Fi adapter, join its network first. A Bluetooth LE adapter needs no pairing: press Scan for BLE and choose it.</string>
     <string name="obd_values">Live values</string>
     <string name="obd_12v_battery">12 V battery (at the socket)</string>
     <string name="obd_codes">Trouble codes</string>
@@ -1890,6 +1890,12 @@ Then reopen this app.</string>
     <string name="obd_live_mark">Mark</string>
     <string name="obd_live_marked">Mark %1$d</string>
     <string name="obd_live_waiting">Waiting for a steady signal to change…</string>
+    <string name="obd_scan">Scan for BLE</string>
+    <string name="obd_scan_stop">Stop scan</string>
+    <string name="obd_scanning">Looking for Bluetooth LE adapters for 10 seconds. Smart stickers drop off during the search.</string>
+    <string name="obd_scan_failed">Bluetooth LE search failed (%1$d). Try again.</string>
+    <string name="obd_bluetooth_off">Bluetooth is off, or the search is not allowed.</string>
+    <string name="obd_ble_adapter">%1$s (BLE %2$s)</string>
     <string name="obd_zeekr">Battery module, direct (raw bytes)</string>
     <string name="obd_zeekr_note">Same request as the Zeekr 001 and Geely EX5. What these bytes mean on the 7X is not known yet, so they are shown as they come.</string>
     <string name="obd_zeekr_none">No answer</string>

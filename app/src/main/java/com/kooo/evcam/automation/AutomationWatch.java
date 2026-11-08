@@ -1,8 +1,11 @@
 package com.kooo.evcam.automation;
 
+import com.kooo.evcam.nav.Geo;
+import com.kooo.evcam.nav.SavedPlaces;
 import com.kooo.evcam.telemetry.Signal;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
@@ -39,9 +42,21 @@ final class AutomationWatch {
         /** The head unit started moments ago. */
         boolean justBooted;
         long at;
+        /** The wall clock; -1 until it is given. */
+        int minuteOfDay = -1;
+        /** Today as {@link AutomationClock#dayBit}. */
+        int dayBit;
+        Double lat;
+        Double lng;
+        /** The saved places, by id. */
+        Map<Integer, SavedPlaces.Place> places = Collections.emptyMap();
     }
 
     static final long NUMBER_GAP_MS = 30_000L;
+    /** Inside a place within this of it. */
+    static final double PLACE_RADIUS_M = 150;
+    /** Outside again only this much further on, so GPS wander at the edge is not leaving and arriving. */
+    static final double PLACE_MARGIN_M = 100;
     /** {@link com.kooo.evcam.screen.VehicleScreen}: codes from here up to ACC are "off or lower". */
     private static final int IGNITION_LOW_MIN = 0x00200100;
 
@@ -54,6 +69,8 @@ final class AutomationWatch {
     private final Map<String, Long> lastRun = new HashMap<>();
     /** Per rule and its set of conditions: all true at the last reading. */
     private final Map<String, Boolean> together = new HashMap<>();
+    /** Per saved place: the car is inside it. */
+    private final Map<Integer, Boolean> inside = new HashMap<>();
 
     /** The rules to run now, in list order. Call with no rules to keep up while nothing should run. */
     List<AutomationRule> step(List<AutomationRule> rules, Sample s) {
@@ -65,7 +82,8 @@ final class AutomationWatch {
                 continue;
             }
             List<AutomationRule.Condition> conditions = rule.conditions();
-            boolean fires = conditions.size() > 1 ? allCameTrue(rule, conditions, s)
+            boolean fires = conditions.size() > 1 || trigger.polled()
+                    ? allCameTrue(rule, conditions, s, events.contains(AutomationTrigger.CAR_ON))
                     : trigger.measure == null
                     ? events.contains(trigger) && settled(rule, trigger, s.at)
                     : crossed(rule, trigger, reading(trigger.measure, s), s.at);
@@ -113,11 +131,14 @@ final class AutomationWatch {
         return events;
     }
 
-    private boolean allCameTrue(AutomationRule rule, List<AutomationRule.Condition> conditions, Sample s) {
+    private boolean allCameTrue(AutomationRule rule, List<AutomationRule.Condition> conditions, Sample s,
+                                boolean carCameOn) {
         StringBuilder key = new StringBuilder(rule.id);
         Boolean all = Boolean.TRUE;
+        boolean wantsCarOn = false;
         for (AutomationRule.Condition condition : conditions) {
             key.append('|').append(condition.trigger).append(':').append(condition.value);
+            wantsCarOn |= condition.trigger() == AutomationTrigger.CAR_ON;
             Boolean now = holds(rule, condition, s);
             if (now == null) {
                 all = null;
@@ -130,6 +151,10 @@ final class AutomationWatch {
         }
         String id = key.toString();
         Boolean was = together.get(id);
+        if (was == null && carCameOn && wantsCarOn) {
+            // The head unit wakes with the car: this first reading is the car coming on
+            was = Boolean.FALSE;
+        }
         if (was == null || !all || was) {
             together.put(id, all);
             return false;
@@ -156,8 +181,32 @@ final class AutomationWatch {
             case LIGHT: return dayNight == null ? null : dayNight != Signal.NIGHT;
             case RAIN_START: return rain;
             case RAIN_STOP: return rain == null ? null : !rain;
+            case TIME_AT: return s.minuteOfDay < 0 ? null : s.minuteOfDay == condition.value;
+            case TIME_BETWEEN:
+                return s.minuteOfDay < 0 ? null : AutomationClock.within(s.minuteOfDay, condition.value);
+            case DAYS: return s.minuteOfDay < 0 ? null : (condition.value & s.dayBit) != 0;
+            case PLACE_ARRIVE: return inside(condition.value, s);
+            case PLACE_LEAVE:
+                Boolean in = inside(condition.value, s);
+                return in == null ? null : !in;
             default: return past(rule, condition, reading(trigger.measure, s));
         }
+    }
+
+    /** Whether the car is at a saved place; null for a deleted place, or before the first fix. */
+    private Boolean inside(int placeId, Sample s) {
+        SavedPlaces.Place place = s.places.get(placeId);
+        if (place == null) {
+            return null;
+        }
+        Boolean was = inside.get(placeId);
+        if (s.lat == null || s.lng == null) {
+            return was;
+        }
+        double meters = Geo.meters(s.lat, s.lng, place.lat, place.lng);
+        boolean now = meters <= (Boolean.TRUE.equals(was) ? PLACE_RADIUS_M + PLACE_MARGIN_M : PLACE_RADIUS_M);
+        inside.put(placeId, now);
+        return now;
     }
 
     /** Whether a number is past its limit, with the same margin as {@link #crossed}. */

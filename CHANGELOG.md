@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.8.3-beta] - 2026-11-08
+
+### Automation
+- **Run history.** The history button at the top right of the Automation page shows the last 50 runs, what each did, and why a step failed. "Sent, no error" means the car did not refuse; it is not proof the change happened.
+- **Time and day conditions.** **At a time**, **Between two times**, and **Days** (weekdays, weekend, every day, or chosen days). Time rules cannot run while the head unit is asleep; **Between** still runs when you start the car inside that window.
+- **Place conditions.** **Arrive at** or **Leave** a saved place (inside means within 150 m). While a place rule is on, location keeps running in the background, so the Navigation notice stays.
+- **Navigate action.** Starts guiding to a saved place. A trip already on is left alone.
+- **More examples**, always shown under your rules, plus two more once you save a place.
+- **Speak notifications.** A row on the Automation page reads every 7xDash notification aloud on the speaker you pick, at its own volume. Off by default. Pick the driver headrest from the list and press **Test**. Thai may stay silent if the car has no Thai voice.
+- Car on together with another condition now runs when the head unit starts with the car.
+
+### Navigation (beta)
+- **Save place** on the route card, and **Save this spot** in Automation. Saved places show at the top when you tap search. Hold a place in Automation to delete it; rules that use it stop running.
+- The search list opens on tap even when the box already has focus.
+
 ## [1.8.2] - 2026-11-07
 
 Changes since 1.8.0 (includes 1.8.1-beta).

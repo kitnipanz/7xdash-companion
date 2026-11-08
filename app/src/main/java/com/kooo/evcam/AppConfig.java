@@ -2604,6 +2604,57 @@ public class AppConfig {
         prefs.edit().putBoolean(KEY_NAV_ZOOMED_OUT, out).apply();
     }
 
+    private static final String KEY_SAVED_PLACES = "saved_places";
+    private static final String KEY_AUTOMATION_HISTORY = "automation_history";
+    private static final String KEY_NOTICE_SPEAK = "notice_speak";
+    private static final String KEY_NOTICE_SPEAKER = "notice_speaker";
+    private static final String KEY_NOTICE_VOLUME = "notice_speak_volume";
+
+    /** Places the person named, as JSON ({@link com.kooo.evcam.nav.SavedPlaces}). */
+    public String getSavedPlaces() {
+        return prefs.getString(KEY_SAVED_PLACES, null);
+    }
+
+    public void setSavedPlaces(String json) {
+        prefs.edit().putString(KEY_SAVED_PLACES, json).apply();
+    }
+
+    /** What automations did lately, as JSON ({@code automation.AutomationHistory}). */
+    public String getAutomationHistory() {
+        return prefs.getString(KEY_AUTOMATION_HISTORY, null);
+    }
+
+    public void setAutomationHistory(String json) {
+        prefs.edit().putString(KEY_AUTOMATION_HISTORY, json).apply();
+    }
+
+    /** Say notifications aloud on {@link #getNoticeSpeaker}. Off by default. */
+    public boolean isNoticeSpeakOn() {
+        return prefs.getBoolean(KEY_NOTICE_SPEAK, false);
+    }
+
+    public void setNoticeSpeakOn(boolean on) {
+        prefs.edit().putBoolean(KEY_NOTICE_SPEAK, on).apply();
+    }
+
+    /** The speaker's address, empty before one is picked. */
+    public String getNoticeSpeaker() {
+        return prefs.getString(KEY_NOTICE_SPEAKER, "");
+    }
+
+    public void setNoticeSpeaker(String address) {
+        prefs.edit().putString(KEY_NOTICE_SPEAKER, address).apply();
+    }
+
+    /** 10 to 100. Its own volume: the megaphone's is far too loud beside the driver's head. */
+    public int getNoticeVolume() {
+        return prefs.getInt(KEY_NOTICE_VOLUME, 40);
+    }
+
+    public void setNoticeVolume(int percent) {
+        prefs.edit().putInt(KEY_NOTICE_VOLUME, percent).apply();
+    }
+
     private static final String KEY_NAV_TRIP = "nav_trip";
 
     /** The trip on now ({@link com.kooo.evcam.nav.SavedTrip}), so it survives a crash; null when none. */

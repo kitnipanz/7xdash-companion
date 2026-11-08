@@ -180,8 +180,9 @@ public final class Navigator {
     private boolean hudPlacing;
     /** Navigation screens open (the full screen, the floating window): GPS on for the map and the search, even with nothing planned. */
     private int attached;
-    /** {@link NavGuideService} is on: there is a trip. */
+    /** {@link NavGuideService} is on: there is a trip, or a rule waits for a place. */
     private boolean guideService;
+    private boolean gpsHeld;
 
     private Navigator() {
     }
@@ -327,7 +328,7 @@ public final class Navigator {
     /** Telemetry held and the tick going while {@link #running}, released and stopped when not. */
     private void keepRunning() {
         main.removeCallbacks(tick);
-        if (app != null && (phase != Phase.IDLE) != guideService) {
+        if (app != null && (phase != Phase.IDLE || gpsHeld) != guideService) {
             guideService = !guideService;
             if (guideService) {
                 NavGuideService.start(app);
@@ -401,6 +402,30 @@ public final class Navigator {
         pickedByPerson = route != choices.get(0);
         AppLog.i(TAG, String.format(Locale.US, "chose the route %.1f km, %.0f min", route.meters / 1000, route.seconds / 60));
         onTick();
+    }
+
+    /**
+     * An automation wants this trip: guide there as soon as the route is in. False when a trip is on
+     * already, which it leaves alone: the person chose that one.
+     */
+    public boolean guideTo(Context context, DestinationLink.Place place) {
+        if (phase == Phase.GUIDING || startWhenRouted) {
+            return false;
+        }
+        preview(context, place);
+        startWhenRouted = true;
+        saveTrip();
+        if (attached == 0 && OverlayCoordinator.canShowOverlay(context)) {
+            NavFloatWindow.get().show(context);
+        }
+        return true;
+    }
+
+    /** Keeps the GPS allowed in the background with no trip on: a rule is waiting for a place. */
+    public void holdGps(Context context, boolean on) {
+        bind(context);
+        gpsHeld = on;
+        keepRunning();
     }
 
     /** Starts guiding along the route shown. */

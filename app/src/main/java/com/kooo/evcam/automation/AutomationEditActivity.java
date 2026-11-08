@@ -8,6 +8,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.NumberPicker;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -24,12 +25,21 @@ import com.kooo.evcam.R;
 import com.kooo.evcam.announce.AnnouncePick;
 import com.kooo.evcam.input.ActionTabs;
 import com.kooo.evcam.input.ShortcutAction;
+import com.kooo.evcam.nav.Navigator;
+import com.kooo.evcam.nav.SavePlaceDialog;
+import com.kooo.evcam.nav.SavedPlaces;
+import com.kooo.evcam.telemetry.Telemetry;
+import com.kooo.evcam.telemetry.VehicleState;
 import com.kooo.evcam.ui.CamDialogs;
 import com.kooo.evcam.ui.Notice;
 
+import java.text.DateFormatSymbols;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
+import java.util.function.Consumer;
+import java.util.function.IntConsumer;
 
 /**
  * One automation on one page. Everything to choose from is in view: When on the left, Do on the
@@ -46,6 +56,10 @@ public class AutomationEditActivity extends AppCompatActivity {
 
     private static final String KEPT_DRAFT = "draft";
     private static final String KEPT_START = "started_as";
+    /** Registered while this page shows, so "Save this spot" has a position. */
+    private static final String TELEMETRY_USER = "automation_edit";
+    private static final int DEFAULT_TIME = 8 * 60;
+    private static final int DEFAULT_SPAN = AutomationClock.span(7 * 60, 9 * 60);
 
     private AutomationRule draft;
     private String startedAs;
@@ -93,6 +107,18 @@ public class AutomationEditActivity extends AppCompatActivity {
         draw();
     }
 
+    @Override
+    protected void onStart() {
+        super.onStart();
+        Telemetry.get().acquire(this, TELEMETRY_USER);
+    }
+
+    @Override
+    protected void onStop() {
+        Telemetry.get().release(TELEMETRY_USER);
+        super.onStop();
+    }
+
     /** The screen is rebuilt when the car's day or night theme changes: keep what was picked. */
     @Override
     protected void onSaveInstanceState(Bundle out) {
@@ -123,6 +149,10 @@ public class AutomationEditActivity extends AppCompatActivity {
         for (AutomationTrigger.Group group : AutomationTrigger.Group.values()) {
             ChipGroup chips = addSection(whenPane, group.iconRes, getString(group.labelRes));
             AutomationRule.Condition picked = inGroup(conditions, group);
+            if (group == AutomationTrigger.Group.DAYS) {
+                drawDays(chips, picked);
+                continue;
+            }
             for (AutomationTrigger trigger : AutomationTrigger.values()) {
                 if (trigger.group == group) {
                     boolean on = picked != null && picked.trigger() == trigger;
@@ -132,7 +162,150 @@ public class AutomationEditActivity extends AppCompatActivity {
             if (picked != null && picked.trigger().measure != null) {
                 whenPane.addView(number(picked));
             }
+            if (group == AutomationTrigger.Group.TIME && picked != null) {
+                drawTimes(chips, picked);
+            }
+            if (group == AutomationTrigger.Group.PLACE) {
+                drawPlaces(picked);
+            }
         }
+    }
+
+    private void drawDays(ChipGroup chips, AutomationRule.Condition picked) {
+        int days = picked == null ? 0 : picked.value;
+        chips.addView(chip(getString(R.string.automation_days_weekdays), days == AutomationClock.WEEKDAYS,
+                v -> setDays(days == AutomationClock.WEEKDAYS ? 0 : AutomationClock.WEEKDAYS)));
+        chips.addView(chip(getString(R.string.automation_days_weekend), days == AutomationClock.WEEKEND,
+                v -> setDays(days == AutomationClock.WEEKEND ? 0 : AutomationClock.WEEKEND)));
+        String[] names = DateFormatSymbols.getInstance(locale()).getShortWeekdays();
+        for (int day : AutomationClock.WEEK) {
+            int bit = AutomationClock.dayBit(day);
+            chips.addView(chip(names[day], (days & bit) != 0, v -> setDays(days ^ bit)));
+        }
+    }
+
+    private Locale locale() {
+        return getResources().getConfiguration().getLocales().get(0);
+    }
+
+    /** No days left takes the condition away. */
+    private void setDays(int days) {
+        List<AutomationRule.Condition> conditions = draft.conditions();
+        AutomationRule.Condition old = inGroup(conditions, AutomationTrigger.Group.DAYS);
+        if (days == 0) {
+            conditions.remove(old);
+        } else if (old != null) {
+            old.value = days;
+        } else {
+            conditions.add(new AutomationRule.Condition(AutomationTrigger.DAYS.key, days));
+        }
+        draft.setConditions(conditions);
+        draw();
+    }
+
+    /** The times picked, as chips of their own: a tap changes one. */
+    private void drawTimes(ChipGroup chips, AutomationRule.Condition picked) {
+        if (picked.trigger() == AutomationTrigger.TIME_AT) {
+            chips.addView(chip(AutomationClock.time(picked.value), true,
+                    v -> askTime(picked.value, time -> setValue(picked, time))));
+            return;
+        }
+        int from = AutomationClock.from(picked.value);
+        int to = AutomationClock.to(picked.value);
+        chips.addView(chip(AutomationClock.time(from), true,
+                v -> askTime(from, time -> setValue(picked, AutomationClock.span(time, to)))));
+        chips.addView(chip(AutomationClock.time(to), true,
+                v -> askTime(to, time -> setValue(picked, AutomationClock.span(from, time)))));
+    }
+
+    private void askTime(int minutes, IntConsumer done) {
+        NumberPicker hour = wheel(23, minutes / 60);
+        NumberPicker minute = wheel(59, minutes % 60);
+        LinearLayout box = new LinearLayout(this);
+        box.setGravity(Gravity.CENTER);
+        box.addView(hour);
+        box.addView(minute);
+        CamDialogs.show(new MaterialAlertDialogBuilder(this, R.style.Theme_Cam_MaterialAlertDialog)
+                .setTitle(R.string.automation_pick_time)
+                .setView(box)
+                .setPositiveButton(android.R.string.ok,
+                        (dialog, which) -> done.accept(hour.getValue() * 60 + minute.getValue()))
+                .setNegativeButton(android.R.string.cancel, null));
+    }
+
+    private NumberPicker wheel(int max, int value) {
+        NumberPicker wheel = new NumberPicker(this);
+        wheel.setMinValue(0);
+        wheel.setMaxValue(max);
+        wheel.setFormatter(number -> String.format(Locale.US, "%02d", number));
+        wheel.setValue(value);
+        return wheel;
+    }
+
+    /** The saved places under Arrive and Leave; hold one to delete it. */
+    private void drawPlaces(AutomationRule.Condition picked) {
+        ChipGroup chips = chipRow(whenPane);
+        chips.setPaddingRelative(dp(34), dp(8), 0, 0);
+        for (SavedPlaces.Place place : SavedPlaces.load(this)) {
+            TextView row = chip(place.name, picked != null && picked.value == place.id, v -> {
+                if (picked == null) {
+                    addCondition(AutomationTrigger.PLACE_ARRIVE, place.id);
+                } else {
+                    setValue(picked, place.id);
+                }
+            });
+            row.setOnLongClickListener(v -> {
+                askDeletePlace(place);
+                return true;
+            });
+            chips.addView(row);
+        }
+        chips.addView(saveSpotChip(place -> { }));
+    }
+
+    private void askDeletePlace(SavedPlaces.Place place) {
+        CamDialogs.show(new MaterialAlertDialogBuilder(this, R.style.Theme_Cam_MaterialAlertDialog)
+                .setTitle(getString(R.string.place_delete_title, place.name))
+                .setMessage(R.string.place_delete_message)
+                .setPositiveButton(R.string.action_delete, (dialog, which) -> {
+                    List<SavedPlaces.Place> places = SavedPlaces.load(this);
+                    places.removeIf(other -> other.id == place.id);
+                    SavedPlaces.save(this, places);
+                    Automation.reload();
+                    draw();
+                })
+                .setNegativeButton(android.R.string.cancel, null));
+    }
+
+    private TextView saveSpotChip(Consumer<SavedPlaces.Place> saved) {
+        TextView add = chip(getString(R.string.place_save_here), false, v -> askSaveSpot(saved));
+        add.setCompoundDrawablesRelativeWithIntrinsicBounds(R.drawable.ic_add, 0, 0, 0);
+        add.setCompoundDrawablePadding(dp(8));
+        return add;
+    }
+
+    private void askSaveSpot(Consumer<SavedPlaces.Place> saved) {
+        VehicleState car = Telemetry.get().latest();
+        if (car == null || car.latitude == null || car.longitude == null) {
+            Notice.makeText(this, R.string.place_no_fix, Toast.LENGTH_LONG).show();
+            return;
+        }
+        SavePlaceDialog.ask(this, car.latitude, car.longitude, "", place -> {
+            saved.accept(place);
+            draw();
+        });
+    }
+
+    private void addCondition(AutomationTrigger trigger, int value) {
+        List<AutomationRule.Condition> conditions = draft.conditions();
+        conditions.add(new AutomationRule.Condition(trigger.key, value));
+        draft.setConditions(conditions);
+        draw();
+    }
+
+    private void setValue(AutomationRule.Condition changed, int value) {
+        setNumber(changed, value);
+        draw();
     }
 
     private static AutomationRule.Condition inGroup(List<AutomationRule.Condition> conditions,
@@ -149,14 +322,34 @@ public class AutomationEditActivity extends AppCompatActivity {
     private void pickTrigger(AutomationTrigger trigger) {
         List<AutomationRule.Condition> conditions = draft.conditions();
         AutomationRule.Condition old = inGroup(conditions, trigger.group);
+        if (old == null && trigger.group == AutomationTrigger.Group.PLACE) {
+            List<SavedPlaces.Place> places = SavedPlaces.load(this);
+            if (places.isEmpty()) {
+                askSaveSpot(place -> addCondition(trigger, place.id));
+            } else {
+                addCondition(trigger, places.get(0).id);
+            }
+            return;
+        }
         int at = old == null ? conditions.size() : conditions.indexOf(old);
         conditions.remove(old);
         if (old == null || old.trigger() != trigger) {
-            int value = trigger.measure == null ? 0 : old != null ? old.value : trigger.measure.fallback;
-            conditions.add(at, new AutomationRule.Condition(trigger.key, value));
+            conditions.add(at, new AutomationRule.Condition(trigger.key, startingValue(trigger, old)));
         }
         draft.setConditions(conditions);
         draw();
+    }
+
+    private static int startingValue(AutomationTrigger trigger, AutomationRule.Condition old) {
+        switch (trigger) {
+            case TIME_AT: return DEFAULT_TIME;
+            case TIME_BETWEEN: return DEFAULT_SPAN;
+            default:
+                if (old != null) {
+                    return old.value;
+                }
+                return trigger.measure == null ? 0 : trigger.measure.fallback;
+        }
     }
 
     private void setNumber(AutomationRule.Condition changed, int value) {
@@ -219,11 +412,16 @@ public class AutomationEditActivity extends AppCompatActivity {
         hint.setPadding(0, 0, 0, dp(4));
         doPane.addView(hint);
         for (AutomationAction action : AutomationAction.values()) {
-            if (action != AutomationAction.SHORTCUT) {
+            if (action != AutomationAction.SHORTCUT && offered(action)) {
                 drawAction(action);
             }
         }
         drawShortcuts();
+    }
+
+    /** Navigation is a beta feature and needs the TomTom key. */
+    private boolean offered(AutomationAction action) {
+        return action != AutomationAction.NAVIGATE || (Navigator.active(this) && Navigator.hasKey());
     }
 
     private void drawAction(AutomationAction action) {
@@ -236,6 +434,9 @@ public class AutomationEditActivity extends AppCompatActivity {
                 draw();
             };
             chips.addView(option.color < 0 ? chip(option.label, on, tap) : swatch(option, on, tap));
+        }
+        if (action == AutomationAction.NAVIGATE) {
+            chips.addView(saveSpotChip(place -> setChoice(action, Integer.toString(place.id))));
         }
     }
 
@@ -429,6 +630,10 @@ public class AutomationEditActivity extends AppCompatActivity {
         labelParams.setMarginStart(dp(10));
         title.addView(label, labelParams);
         pane.addView(title);
+        return chipRow(pane);
+    }
+
+    private ChipGroup chipRow(LinearLayout pane) {
         ChipGroup chips = new ChipGroup(this);
         chips.setChipSpacingHorizontal(dp(8));
         chips.setChipSpacingVertical(dp(8));

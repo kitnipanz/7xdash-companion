@@ -236,7 +236,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
-            android:orientation="vertical">
+            android:orientation="horizontal">
             <!-- everything else (voice, HUD, map and car colours, iPhone) is in the settings dialog -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/nav_settings"
@@ -246,6 +246,16 @@
                 android:text="@string/nav_settings_button"
                 app:cornerRadius="28dp"
                 app:icon="@drawable/ic_settings" />
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/nav_save_place"
+                style="@style/Widget.Material3.Button.TonalButton"
+                android:layout_width="wrap_content"
+                android:layout_height="56dp"
+                android:layout_marginStart="10dp"
+                android:text="@string/place_save"
+                android:visibility="gone"
+                app:cornerRadius="28dp"
+                app:icon="@drawable/ic_automation_place" />
         </LinearLayout>
         <!-- before starting: the routes to choose from, Google's pick first; filled in by NavigationActivity -->
         <LinearLayout

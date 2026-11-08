@@ -11,6 +11,8 @@ import com.kooo.evcam.R;
 import com.kooo.evcam.blackbox.BlackBox;
 import com.kooo.evcam.input.ShortcutPerformer;
 import com.kooo.evcam.light.GearLight;
+import com.kooo.evcam.nav.Navigator;
+import com.kooo.evcam.nav.SavedPlaces;
 import com.kooo.evcam.overlay.DimOverlayService;
 import com.kooo.evcam.overlay.OverlayCoordinator;
 import com.kooo.evcam.telemetry.CarAmbientLab;
@@ -18,6 +20,9 @@ import com.kooo.evcam.ui.Notice;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.FutureTask;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 /**
  * Carries out the steps of an automation, one after the other, on its own thread: writes to the
@@ -28,6 +33,7 @@ final class AutomationRunner {
 
     /** The car drops a value sent straight after power on ({@code CarAmbientLight}). */
     private static final long AFTER_POWER_MS = 250L;
+    private static final long MAIN_WAIT_S = 3L;
 
     private final Context app;
     private final Handler main = new Handler(Looper.getMainLooper());
@@ -40,8 +46,11 @@ final class AutomationRunner {
         worker = new Handler(thread.getLooper());
     }
 
-    /** With {@code report}, a person pressed Try: say it finished as well as what failed. */
-    void run(List<AutomationRule.Step> steps, boolean report) {
+    /**
+     * With {@code report}, a person pressed Try: say it finished as well as what failed. {@code done}
+     * gets why steps failed, empty when none said so, on the main thread.
+     */
+    void run(List<AutomationRule.Step> steps, boolean report, Consumer<String> done) {
         List<AutomationRule.Step> copy = new ArrayList<>(steps);
         worker.post(() -> {
             StringBuilder failed = new StringBuilder();
@@ -64,6 +73,8 @@ final class AutomationRunner {
             if (text != null) {
                 main.post(() -> Notice.makeText(app, text, Toast.LENGTH_LONG).show());
             }
+            String why = failed.toString();
+            main.post(() -> done.accept(why));
         });
     }
 
@@ -106,6 +117,8 @@ final class AutomationRunner {
                 return CarControls.tempZones(app, AutomationAction.DUAL.equals(step.choice));
             case GLOVEBOX:
                 return CarControls.openGlovebox(app);
+            case NAVIGATE:
+                return navigate(step.choice);
             case SHORTCUT:
                 main.post(() -> ShortcutPerformer.perform(app, step.choice, "automation", null));
                 return null;
@@ -134,6 +147,27 @@ final class AutomationRunner {
             Thread.currentThread().interrupt();
         }
         return CarAmbientLab.write(app, colorId, color);
+    }
+
+    /** Worker thread: waits for Navigator on the main thread, to say if it refused. */
+    private String navigate(String choice) {
+        SavedPlaces.Place place = SavedPlaces.find(SavedPlaces.load(app), Integer.parseInt(choice));
+        if (place == null) {
+            return app.getString(R.string.automation_no_place);
+        }
+        if (!Navigator.active(app) || !Navigator.hasKey()) {
+            return app.getString(R.string.automation_no_navigation);
+        }
+        FutureTask<Boolean> task = new FutureTask<>(() -> Navigator.get().guideTo(app, place.destination()));
+        main.post(task);
+        try {
+            return task.get(MAIN_WAIT_S, TimeUnit.SECONDS) ? null : app.getString(R.string.automation_already_guiding);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return e.toString();
+        } catch (java.util.concurrent.ExecutionException | java.util.concurrent.TimeoutException e) {
+            return e.toString();
+        }
     }
 
     private String carAmbientLevel(String choice) {

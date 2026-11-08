@@ -38,6 +38,8 @@ public final class DashPanelView extends View {
     public static final int ROW = 4;
     /** {@link #buttonAt} for the record button, the first of the column. */
     public static final int RECORD = ROW;
+    /** {@link #buttonAt} for the dim button: tap turns it on or off, slide sets how dark. */
+    public static final int DIM_BUTTON = ROW + 1;
     /** Width of the right-hand card, in hundredths of the height. */
     private static final float COLUMN_U = 30f;
     /** See-through gap between the panel and the right-hand card. */

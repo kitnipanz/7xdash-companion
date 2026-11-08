@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.8.6] - 2026-11-08
+
+### Navigation
+- **No more freezes while guiding.** The map drew as fast as the head unit could, and the whole screen waited on it, freezing for up to a second at a time. Now each map (screen, floating, HUD) draws at most 15 pictures a second, moves again only once the last picture is drawn, and draws nothing while the car stands still. Not tried on a car yet.
+
+### Dash panel
+- **Drag on Dim to set how dark**, like the moon on the floating button: right or down darker, left or up lighter. A tap still turns the dim on or off.
+- The panel stays above the dim, so its buttons still work at full dark.
+
 ## [1.8.5] - 2026-11-08
 
 ### Navigation

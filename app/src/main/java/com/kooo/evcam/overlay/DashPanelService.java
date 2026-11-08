@@ -49,6 +49,37 @@ public class DashPanelService extends Service implements Telemetry.Listener {
             ShortcutAction.MIRROR, ShortcutAction.APP, ShortcutAction.RECORD, ShortcutAction.DIM, ShortcutAction.QUIT};
 
     private static volatile boolean showing;
+    private static volatile DashPanelService instance;
+
+    /**
+     * The dim was put on top: put the panel back above it, so its buttons (Dim among them) still
+     * work at full dark. Waits while a finger is on the panel: taking the window off would end the slide.
+     */
+    public static void raiseAboveShade() {
+        DashPanelService svc = instance;
+        if (svc != null) {
+            svc.main.post(svc::raise);
+        }
+    }
+
+    private boolean raiseWhenLifted;
+
+    private void raise() {
+        if (view == null || !view.isAttachedToWindow() || params == null) {
+            return;
+        }
+        if (onDim) {
+            raiseWhenLifted = true;
+            return;
+        }
+        raiseWhenLifted = false;
+        try {
+            windowManager.removeViewImmediate(view);
+            windowManager.addView(view, params);
+        } catch (Exception e) {
+            AppLog.w(TAG, "raise above the dim: " + e.getMessage());
+        }
+    }
 
     /** Is the panel up: the floating button then stays on it instead of on its own. */
     public static boolean showing() {
@@ -93,6 +124,7 @@ public class DashPanelService extends Service implements Telemetry.Listener {
         super.onCreate();
         windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
         config = new AppConfig(this);
+        instance = this;
     }
 
     @Override
@@ -165,7 +197,7 @@ public class DashPanelService extends Service implements Telemetry.Listener {
                 press(view.buttonAt(up));
             }
         });
-        view.setOnTouchListener((v, event) -> gestures.onTouch(event));
+        view.setOnTouchListener((v, event) -> dimTouch(event) || gestures.onTouch(event));
         try {
             windowManager.addView(view, params);
         } catch (Exception e) {
@@ -188,6 +220,77 @@ public class DashPanelService extends Service implements Telemetry.Listener {
         }
         ShortcutPerformer.perform(this, ACTIONS[button].key, "dash_panel", null);
         main.postDelayed(this::refresh, 300);
+    }
+
+    /** Finger went down on the dim button: it stays with it until lifted, the panel does not move. */
+    private boolean onDim;
+    private boolean dimSliding;
+    private float dimDownX;
+    private float dimDownY;
+    private int dimOrigin;
+    private int dimShown;
+    private static final int DIM_MIN = 10;
+    private static final int DIM_MAX = 100;
+
+    /**
+     * The dim button, like on the floating button: a tap turns the dim on or off, sliding from it
+     * sets how dark (right or down darker, left or up lighter), turning it on if it was off.
+     */
+    private boolean dimTouch(MotionEvent event) {
+        switch (event.getActionMasked()) {
+            case MotionEvent.ACTION_DOWN:
+                onDim = view != null && view.buttonAt(event) == DashPanelView.DIM_BUTTON;
+                if (onDim) {
+                    dimSliding = false;
+                    dimDownX = event.getRawX();
+                    dimDownY = event.getRawY();
+                    dimOrigin = config.getDimOpacity();
+                    dimShown = -1;
+                }
+                return onDim;
+            case MotionEvent.ACTION_MOVE:
+                if (!onDim) {
+                    return false;
+                }
+                float dx = event.getRawX() - dimDownX;
+                float dy = event.getRawY() - dimDownY;
+                if (dimSliding || Math.abs(dx) > dp(10) || Math.abs(dy) > dp(10)) {
+                    dimSliding = true;
+                    setDim(dimOrigin + Math.round((dx + dy) / Math.max(1, dp(6))));
+                }
+                return true;
+            case MotionEvent.ACTION_UP:
+                if (!onDim) {
+                    return false;
+                }
+                onDim = false;
+                if (!dimSliding) {
+                    press(DashPanelView.DIM_BUTTON);
+                }
+                if (raiseWhenLifted) {
+                    main.post(this::raise);
+                }
+                return true;
+            case MotionEvent.ACTION_CANCEL:
+                boolean was = onDim;
+                onDim = false;
+                return was;
+            default:
+                return onDim;
+        }
+    }
+
+    private void setDim(int level) {
+        level = Math.max(DIM_MIN, Math.min(DIM_MAX, level));
+        if (level == dimShown) {
+            return;
+        }
+        dimShown = level;
+        if (!config.isDimOverlayEnabled() && !OverlayCoordinator.setDimOverlayEnabled(this, true)) {
+            return;
+        }
+        config.setDimOpacity(level);
+        DimOverlayService.apply(this);
     }
 
     private void floating(String action) {
@@ -232,6 +335,7 @@ public class DashPanelService extends Service implements Telemetry.Listener {
 
     @Override
     public void onDestroy() {
+        instance = null;
         main.removeCallbacksAndMessages(null);
         if (showing) {
             showing = false;

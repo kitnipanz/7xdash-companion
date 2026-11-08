@@ -23,7 +23,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
- * Turn-by-turn navigation (beta): a route with traffic from the car's GPS to
+ * Turn-by-turn navigation: a route with traffic from the car's GPS to
  * a place ({@link TomTomApi}), followed fix by fix ({@link Guidance}), with the turns spoken in the
  * cabin ({@link VoicePlan}, {@link NavVoice}) and kept on the HUD ({@link HudTurnWindow}). Leaving
  * the route asks for a new one. Keeps going when the Navigation screen is closed, until the
@@ -180,15 +180,11 @@ public final class Navigator {
     private boolean hudPlacing;
     /** Navigation screens open (the full screen, the floating window): GPS on for the map and the search, even with nothing planned. */
     private int attached;
-    /** {@link NavGuideService} is on: there is a trip. */
+    /** {@link NavGuideService} is on: there is a trip, or a rule waits for a place. */
     private boolean guideService;
+    private boolean gpsHeld;
 
     private Navigator() {
-    }
-
-    /** Is the feature allowed: beta features on. */
-    public static boolean active(Context context) {
-        return new AppConfig(context).isBetaFeaturesEnabled();
     }
 
     /** True when the build has a TomTom key. */
@@ -213,7 +209,7 @@ public final class Navigator {
         if (trip == null) {
             return;
         }
-        if (!active(context) || !hasKey() || !trip.worthResuming(System.currentTimeMillis())) {
+        if (!hasKey() || !trip.worthResuming(System.currentTimeMillis())) {
             config.setNavTrip(null);
             return;
         }
@@ -240,7 +236,7 @@ public final class Navigator {
      */
     private void onShared(Context context, DestinationLink.Place place) {
         String name = NavMapPainter.placeName(place);
-        if (!active(context) || !hasKey() || !new AppConfig(context).isNavShareEnabled()) {
+        if (!hasKey() || !new AppConfig(context).isNavShareEnabled()) {
             // no route here, but the place is in: battery at arrival on the Dash panel and Home
             notice(context, context.getString(R.string.nav_place_received_plain, name));
             return;
@@ -327,7 +323,7 @@ public final class Navigator {
     /** Telemetry held and the tick going while {@link #running}, released and stopped when not. */
     private void keepRunning() {
         main.removeCallbacks(tick);
-        if (app != null && (phase != Phase.IDLE) != guideService) {
+        if (app != null && (phase != Phase.IDLE || gpsHeld) != guideService) {
             guideService = !guideService;
             if (guideService) {
                 NavGuideService.start(app);
@@ -401,6 +397,30 @@ public final class Navigator {
         pickedByPerson = route != choices.get(0);
         AppLog.i(TAG, String.format(Locale.US, "chose the route %.1f km, %.0f min", route.meters / 1000, route.seconds / 60));
         onTick();
+    }
+
+    /**
+     * An automation wants this trip: guide there as soon as the route is in. False when a trip is on
+     * already, which it leaves alone: the person chose that one.
+     */
+    public boolean guideTo(Context context, DestinationLink.Place place) {
+        if (phase == Phase.GUIDING || startWhenRouted) {
+            return false;
+        }
+        preview(context, place);
+        startWhenRouted = true;
+        saveTrip();
+        if (attached == 0 && OverlayCoordinator.canShowOverlay(context)) {
+            NavFloatWindow.get().show(context);
+        }
+        return true;
+    }
+
+    /** Keeps the GPS allowed in the background with no trip on: a rule is waiting for a place. */
+    public void holdGps(Context context, boolean on) {
+        bind(context);
+        gpsHeld = on;
+        keepRunning();
     }
 
     /** Starts guiding along the route shown. */

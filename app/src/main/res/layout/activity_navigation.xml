@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Navigation (beta): the Google map full screen; over it, top left the search bar (or the
+<!-- Navigation: the Google map full screen; over it, top left the search bar (or the
      next-turn banner while guiding), bottom left the trip card, bottom right re-centre and voice. -->
 <FrameLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
@@ -30,7 +30,7 @@
         android:layout_margin="16dp"
         android:orientation="vertical">
 
-        <!-- search bar: back, the box, BETA -->
+        <!-- search bar: back, the box -->
         <LinearLayout
             android:id="@+id/nav_search_bar"
             android:layout_width="match_parent"
@@ -65,19 +65,6 @@
                 android:textAppearance="@style/TextAppearance.Cam.Row"
                 android:textColor="@color/text_primary"
                 android:textColorHint="@color/text_hint" />
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:background="@drawable/bg_segment"
-                android:paddingStart="10dp"
-                android:paddingTop="2dp"
-                android:paddingEnd="10dp"
-                android:paddingBottom="2dp"
-                android:text="@string/nav_beta"
-                android:textAppearance="@style/TextAppearance.Cam.Caption"
-                android:textColor="@color/energy_text"
-                android:textStyle="bold" />
         </LinearLayout>
 
         <!-- search results and the place shared from the iPhone -->
@@ -236,7 +223,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
-            android:orientation="vertical">
+            android:orientation="horizontal">
             <!-- everything else (voice, HUD, map and car colours, iPhone) is in the settings dialog -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/nav_settings"
@@ -246,6 +233,16 @@
                 android:text="@string/nav_settings_button"
                 app:cornerRadius="28dp"
                 app:icon="@drawable/ic_settings" />
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/nav_save_place"
+                style="@style/Widget.Material3.Button.TonalButton"
+                android:layout_width="wrap_content"
+                android:layout_height="56dp"
+                android:layout_marginStart="10dp"
+                android:text="@string/place_save"
+                android:visibility="gone"
+                app:cornerRadius="28dp"
+                app:icon="@drawable/ic_automation_place" />
         </LinearLayout>
         <!-- before starting: the routes to choose from, Google's pick first; filled in by NavigationActivity -->
         <LinearLayout

@@ -278,6 +278,21 @@
             android:exported="false" />
 
         <activity
+            android:name=".nav.PlacePickActivity"
+            android:label="@string/place_pick_title"
+            android:theme="@style/Theme.Cam"
+            android:screenOrientation="landscape"
+            android:exported="false" />
+
+        <activity
+            android:name=".telemetry.CarSignalsActivity"
+            android:label="@string/car_signals_title"
+            android:theme="@style/Theme.Cam"
+            android:screenOrientation="landscape"
+            android:windowSoftInputMode="adjustResize|stateHidden"
+            android:exported="false" />
+
+        <activity
             android:name=".zeekr.BlindSpotFinderActivity"
             android:label="@string/bsd_finder_title"
             android:theme="@style/Theme.Cam"

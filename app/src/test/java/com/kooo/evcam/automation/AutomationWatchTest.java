@@ -334,4 +334,134 @@ public class AutomationWatchTest {
         assertTrue(AutomationRule.parseAll("{not json").isEmpty());
         assertTrue(AutomationRule.parseAll("[{\"id\":\"a\",\"trigger\":\"nope\",\"steps\":[]}]").isEmpty());
     }
+
+    // ---- time, days, places
+
+    private boolean at(AutomationRule rule, int minute, int dayBit) {
+        AutomationWatch.Sample s = sample();
+        s.minuteOfDay = minute;
+        s.dayBit = dayBit;
+        return !watch.step(Collections.singletonList(rule), s).isEmpty();
+    }
+
+    private static final int MONDAY = AutomationClock.dayBit(java.util.Calendar.MONDAY);
+    private static final int SATURDAY = AutomationClock.dayBit(java.util.Calendar.SATURDAY);
+
+    private static AutomationRule rule(AutomationTrigger first, int value, AutomationTrigger second, int secondValue) {
+        AutomationRule rule = rule(first, value);
+        rule.also.add(new AutomationRule.Condition(second.key, secondValue));
+        return rule;
+    }
+
+    @Test
+    public void aTimeRunsOnceWhenItComes() {
+        AutomationRule rule = rule(AutomationTrigger.TIME_AT, 480);
+        assertFalse(at(rule, 479, MONDAY));
+        now += 60_000L;
+        assertTrue(at(rule, 480, MONDAY));
+        now += 15_000L;
+        assertFalse(at(rule, 480, MONDAY));
+        now += 60_000L;
+        assertFalse(at(rule, 481, MONDAY));
+    }
+
+    @Test
+    public void openingTheAppAtTheTimeDoesNotRunIt() {
+        assertFalse(at(rule(AutomationTrigger.TIME_AT, 480), 480, MONDAY));
+    }
+
+    @Test
+    public void aRuleWithDaysWaitsForTheRightDay() {
+        AutomationRule rule = rule(AutomationTrigger.TIME_AT, 480, AutomationTrigger.DAYS, AutomationClock.WEEKDAYS);
+        assertFalse(at(rule, 479, SATURDAY));
+        now += 60_000L;
+        assertFalse(at(rule, 480, SATURDAY));
+        now += 60_000L;
+        assertFalse(at(rule, 481, MONDAY));
+        now += 60_000L;
+        assertFalse(at(rule, 479, MONDAY));
+        now += 60_000L;
+        assertTrue(at(rule, 480, MONDAY));
+    }
+
+    @Test
+    public void aGearInsideTheHoursRuns_outsideTheyDoNot() {
+        AutomationRule rule = rule(AutomationTrigger.GEAR_D, 0, AutomationTrigger.TIME_BETWEEN,
+                AutomationClock.span(420, 540));
+        AutomationWatch.Sample s = sample();
+        s.gear = "P";
+        s.minuteOfDay = 600;
+        s.dayBit = MONDAY;
+        assertTrue(watch.step(Collections.singletonList(rule), s).isEmpty());
+        s = sample();
+        s.gear = "P";
+        s.minuteOfDay = 500;
+        s.dayBit = MONDAY;
+        assertTrue(watch.step(Collections.singletonList(rule), s).isEmpty());
+        s = sample();
+        s.gear = "D";
+        s.minuteOfDay = 501;
+        s.dayBit = MONDAY;
+        assertEquals(1, watch.step(Collections.singletonList(rule), s).size());
+    }
+
+    @Test
+    public void theCarComingOnAtBootCountsWithOtherConditions() {
+        AutomationRule rule = rule(AutomationTrigger.CAR_ON, 0, AutomationTrigger.DAYS, AutomationClock.WEEKDAYS);
+        AutomationWatch.Sample s = sample();
+        s.ignition = Signal.IGNITION_ON;
+        s.justBooted = true;
+        s.minuteOfDay = 480;
+        s.dayBit = MONDAY;
+        assertEquals(1, watch.step(Collections.singletonList(rule), s).size());
+    }
+
+    private static final com.kooo.evcam.nav.SavedPlaces.Place HOME = home();
+
+    private static com.kooo.evcam.nav.SavedPlaces.Place home() {
+        return com.kooo.evcam.nav.SavedPlaces.add(new java.util.ArrayList<>(), "Home", 13.7, 100.5);
+    }
+
+    /** Metres north of home. */
+    private boolean near(AutomationRule rule, Double metres) {
+        AutomationWatch.Sample s = sample();
+        s.lat = metres == null ? null : 13.7 + metres / 111_195.0;
+        s.lng = metres == null ? null : 100.5;
+        s.places = Collections.singletonMap(HOME.id, HOME);
+        now += 60_000L;
+        return !watch.step(Collections.singletonList(rule), s).isEmpty();
+    }
+
+    @Test
+    public void arrivingRunsOnce_wanderAtTheEdgeDoesNotRepeatIt() {
+        AutomationRule rule = rule(AutomationTrigger.PLACE_ARRIVE, HOME.id);
+        assertFalse(near(rule, 2_000.0));
+        assertTrue(near(rule, 100.0));
+        assertFalse(near(rule, 200.0));
+        assertFalse(near(rule, 100.0));
+        assertFalse(near(rule, 2_000.0));
+        assertTrue(near(rule, 100.0));
+    }
+
+    @Test
+    public void leavingRunsWhenClearOfThePlace() {
+        AutomationRule rule = rule(AutomationTrigger.PLACE_LEAVE, HOME.id);
+        assertFalse(near(rule, 50.0));
+        assertFalse(near(rule, 200.0));
+        assertTrue(near(rule, 300.0));
+    }
+
+    @Test
+    public void startingInsideAPlaceIsNotArriving() {
+        assertFalse(near(rule(AutomationTrigger.PLACE_ARRIVE, HOME.id), 50.0));
+    }
+
+    @Test
+    public void noFixOrADeletedPlaceNeverRuns() {
+        AutomationRule rule = rule(AutomationTrigger.PLACE_ARRIVE, HOME.id);
+        assertFalse(near(rule, null));
+        AutomationRule gone = rule(AutomationTrigger.PLACE_ARRIVE, 99);
+        assertFalse(near(gone, 2_000.0));
+        assertFalse(near(gone, 50.0));
+    }
 }

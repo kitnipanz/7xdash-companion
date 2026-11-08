@@ -325,16 +325,14 @@ public class HomeFragment extends Fragment {
                 .pill(() -> getString(config.isAutomationOn() ? R.string.home_state_on : R.string.home_state_off),
                         () -> config.isAutomationOn(), this::toggleAutomation);
 
+        // Navigation: turn-by-turn on TomTom's map, with battery at arrival. Tap opens it; the state
+        // shows the trip (km left · battery at arrival) while there is one
+        addCard(R.drawable.ic_navigation, R.string.nav_title, R.string.home_card_nav_sub,
+                () -> startActivity(new Intent(requireContext(), com.kooo.evcam.nav.NavigationActivity.class)), null)
+                .state(this::navLabel, () -> com.kooo.evcam.nav.TripLine.now(requireContext()) != null);
+
         // Stable cards stop here. Every card added below is a beta one: the Customize page tabs go by this
         firstBetaCard = cardIds.size();
-
-        // Beta: turn-by-turn navigation on a Google map, with battery at arrival. Tap opens it; the
-        // state shows the trip (km left · battery at arrival) while there is one
-        if (betaShown) {
-            addCard(R.drawable.ic_navigation, R.string.nav_title, R.string.home_card_nav_sub,
-                    () -> startActivity(new Intent(requireContext(), com.kooo.evcam.nav.NavigationActivity.class)), null)
-                    .state(this::navLabel, () -> com.kooo.evcam.nav.TripLine.now(requireContext()) != null);
-        }
 
         // Beta: 停在哪。点卡片当场读一次，长按开扫描窗（手动扫一次、看读到什么）；胶囊开关决定挂 P 时自动读，另一颗决定 3 km/h 以下边开边读柱子上的牌
         if (betaShown) {

@@ -64,6 +64,7 @@ public final class Notice {
             return;
         }
         HudNotice.post(context, text);
+        com.kooo.evcam.announce.NoticeVoice.say(context, text.toString());
         MAIN.post(() -> showNow(context, text.toString(), duration == Toast.LENGTH_LONG ? LONG_MS : SHORT_MS));
     }
 

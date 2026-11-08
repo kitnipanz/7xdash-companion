@@ -32,7 +32,7 @@ import org.maplibre.android.maps.MapLibreMap;
 import org.maplibre.android.maps.SupportMapFragment;
 
 /**
- * Navigation (beta): search a place (or take the one shared from the iPhone, or hold on the map),
+ * Navigation: search a place (or take the one shared from the iPhone, or hold on the map),
  * see the route with its time, distance and battery at arrival, then Start for turn-by-turn.
  * The map is Google's (Maps SDK, needs Google Play services); without it the screen still
  * guides, just with no map. The guiding itself is {@link Navigator}'s and goes on when this closes.
@@ -74,6 +74,7 @@ public class NavigationActivity extends AppCompatActivity implements Navigator.L
     /** Null until the map is ready (and stays null without one). */
     private NavMapPainter painter;
     private Navigator.Phase shownPhase;
+    private View savePlace;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -114,6 +115,8 @@ public class NavigationActivity extends AppCompatActivity implements Navigator.L
             }
             return false;
         });
+        // the box can already hold the focus when the screen opens: a tap then changes nothing
+        search.setOnClickListener(v -> showSharedPlace());
         search.setOnFocusChangeListener((v, focused) -> {
             if (focused) {
                 showSharedPlace();
@@ -145,6 +148,13 @@ public class NavigationActivity extends AppCompatActivity implements Navigator.L
         });
         findViewById(R.id.nav_float).setOnClickListener(v -> openFloating());
         findViewById(R.id.nav_settings).setOnClickListener(v -> openSettings());
+        savePlace = findViewById(R.id.nav_save_place);
+        savePlace.setOnClickListener(v -> {
+            DestinationLink.Place to = Navigator.get().snapshot().destination;
+            if (to != null) {
+                SavePlaceDialog.ask(this, to.lat, to.lng, placeName(to), place -> { });
+            }
+        });
 
         setUpMap();
     }
@@ -455,6 +465,7 @@ public class NavigationActivity extends AppCompatActivity implements Navigator.L
         banner.setVisibility(guiding ? View.VISIBLE : View.GONE);
         options.setVisibility(s.phase == Navigator.Phase.IDLE || s.phase == Navigator.Phase.PREVIEW
                 ? View.VISIBLE : View.GONE);
+        savePlace.setVisibility(s.phase == Navigator.Phase.PREVIEW ? View.VISIBLE : View.GONE);
         mute.setIconResource(s.muted ? R.drawable.ic_voice_off : R.drawable.ic_voice_on);
         mute.setVisibility(guiding ? View.VISIBLE : View.GONE);
         showBanner(s);
@@ -533,8 +544,7 @@ public class NavigationActivity extends AppCompatActivity implements Navigator.L
             case IDLE:
                 place.setText(R.string.nav_title);
                 summary.setText("");
-                status.setText(!Navigator.active(this) ? R.string.nav_need_beta
-                        : !Navigator.hasKey() ? R.string.nav_error_no_key : R.string.nav_idle_hint);
+                status.setText(!Navigator.hasKey() ? R.string.nav_error_no_key : R.string.nav_idle_hint);
                 return;
             case ROUTING:
                 place.setText(placeName(s.destination));
@@ -636,12 +646,18 @@ public class NavigationActivity extends AppCompatActivity implements Navigator.L
             return;
         }
         DestinationLink.Place shared = Trip.get().status().destination;
-        if (shared == null) {
+        java.util.List<SavedPlaces.Place> places = SavedPlaces.load(this);
+        if (shared == null && places.isEmpty()) {
             return;
         }
         results.removeAllViews();
-        results.addView(row(getString(R.string.nav_shared, placeName(shared)), getString(R.string.nav_shared_sub),
-                () -> choose(shared)));
+        if (shared != null) {
+            results.addView(row(getString(R.string.nav_shared, placeName(shared)), getString(R.string.nav_shared_sub),
+                    () -> choose(shared)));
+        }
+        for (SavedPlaces.Place place : places) {
+            results.addView(row(place.name, getString(R.string.place_saved_sub), () -> choose(place.destination())));
+        }
         results.setVisibility(View.VISIBLE);
     }
 

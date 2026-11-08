@@ -81,8 +81,8 @@ final class NavMapPainter {
     private static final float BEARING_S = 0.5f;
     private static final float ZOOM_IN_S = 0.9f;
     private static final float ZOOM_OUT_S = 2.2f;
-    /** Longest step a frame takes, in seconds, so a hitch does not throw the camera. */
-    private static final float FRAME_MAX_S = 0.25f;
+    /** About 30 camera moves a second: smooth, and light on the head unit (and the HUD). */
+    private static final float FRAME_MIN_S = 0.03f;
     /** How much further out the map sits with the Map zoom action. */
     private static final float ZOOM_FAR_BIAS = -1.5f;
 
@@ -137,44 +137,6 @@ final class NavMapPainter {
         // moved by hand: keep the car pointing the right way on screen
         map.addOnCameraMoveListener(this::placeCar);
         map.addOnMapClickListener(this::tapRoute);
-        org.maplibre.android.maps.MapView view = findMapView(mapView);
-        if (view != null) {
-            view.setMaximumFps(MAX_FPS);
-            view.addOnDidFinishRenderingFrameListener((fully, encoding, rendering) -> drawnAt = android.os.SystemClock.uptimeMillis());
-        }
-    }
-
-    /**
-     * Most map pictures a second. Unlimited, the map drew as fast as the head unit could, and the
-     * screen waited on it: everything else on it froze for a second at a time while guiding.
-     */
-    static final int MAX_FPS = 15;
-    /** Waiting this long for the last move to be drawn is enough: move again anyway. */
-    private static final long DRAW_WAIT_MS = 600L;
-    /** When the camera was last moved and when the map last finished a picture (uptime). */
-    private long movedAt;
-    private volatile long drawnAt;
-
-    /** The map's own view: {@code view} itself, or inside it (a fragment's container). */
-    private static org.maplibre.android.maps.MapView findMapView(View view) {
-        if (view instanceof org.maplibre.android.maps.MapView) {
-            return (org.maplibre.android.maps.MapView) view;
-        }
-        if (view instanceof ViewGroup) {
-            ViewGroup group = (ViewGroup) view;
-            for (int i = 0; i < group.getChildCount(); i++) {
-                org.maplibre.android.maps.MapView found = findMapView(group.getChildAt(i));
-                if (found != null) {
-                    return found;
-                }
-            }
-        }
-        return null;
-    }
-
-    /** The last camera move is still being drawn: a new one now would only pile up behind it. */
-    static boolean stillDrawing(long movedAt, long drawnAt, long now) {
-        return movedAt > drawnAt && now - movedAt < DRAW_WAIT_MS;
     }
 
     /** A tap near a grey route chooses it. */
@@ -429,9 +391,8 @@ final class NavMapPainter {
             if (!ticking) {
                 return;
             }
-            float dt = lastFrameNanos == 0 ? 0.016f : Math.min(FRAME_MAX_S, (now - lastFrameNanos) / 1e9f);
-            if (lastFrameNanos == 0 || (dt >= frameGap()
-                    && !stillDrawing(movedAt, drawnAt, android.os.SystemClock.uptimeMillis()))) {
+            float dt = lastFrameNanos == 0 ? 0.016f : Math.min(0.1f, (now - lastFrameNanos) / 1e9f);
+            if (lastFrameNanos == 0 || dt >= FRAME_MIN_S) {
                 lastFrameNanos = now;
                 step(dt);
             }
@@ -442,7 +403,6 @@ final class NavMapPainter {
     private void startFollowing() {
         if (!ticking) {
             ticking = true;
-            sentLat = Double.NaN;
             lastFrameNanos = 0;
             android.view.Choreographer.getInstance().postFrameCallback(frame);
         }
@@ -556,11 +516,6 @@ final class NavMapPainter {
         float carAt = carAtInView(scale);
         double ahead = h <= 0 ? 0 : aheadMeters(curLat, camZoom, h / (density * NavMap.SCALE), carAt) * aheadScale;
         double[] target = Geo.offset(curLat, curLng, curBearing, ahead);
-        if (sameCamera(target[0], target[1], curBearing, camZoom)) {
-            // standing still: nothing new to draw
-            return;
-        }
-        movedAt = android.os.SystemClock.uptimeMillis();
         map.moveCamera(CameraUpdateFactory.newCameraPosition(new CameraPosition.Builder()
                 .target(new LatLng(target[0], target[1])).bearing(curBearing).tilt(TILT).zoom(camZoom - ZOOM_SHIFT)
                 .padding(0, 0, 0, 0).build()));
@@ -568,29 +523,6 @@ final class NavMapPainter {
         lineToCar();
         learnAhead(h, carAt);
     }
-
-    private double sentLat = Double.NaN;
-    private double sentLng;
-    private float sentBearing;
-    private float sentZoom;
-
-    /** Is this camera where the last one was, to the eye? If not, it becomes the last one. */
-    private boolean sameCamera(double lat, double lng, float bearing, float zoom) {
-        boolean same = !Double.isNaN(sentLat) && Math.abs(lat - sentLat) < SAME_DEG && Math.abs(lng - sentLng) < SAME_DEG
-                && Math.abs(((bearing - sentBearing) % 360 + 540) % 360 - 180) < SAME_BEARING && Math.abs(zoom - sentZoom) < SAME_ZOOM;
-        if (!same) {
-            sentLat = lat;
-            sentLng = lng;
-            sentBearing = bearing;
-            sentZoom = zoom;
-        }
-        return same;
-    }
-
-    /** Less than this between two camera moves does not show: about 5 cm, a twentieth of a degree, a thousandth of a zoom step. */
-    private static final double SAME_DEG = 5e-7;
-    private static final float SAME_BEARING = 0.05f;
-    private static final float SAME_ZOOM = 0.001f;
 
     /** Where the car is drawn now, turned to its heading as the screen shows it. */
     private void placeCar() {
@@ -638,20 +570,13 @@ final class NavMapPainter {
         curLng = at.getLongitude();
         curBearing = bearing;
         curZoom = zoom;
-        sentLat = Double.NaN;
         map.moveCamera(CameraUpdateFactory.newCameraPosition(new CameraPosition.Builder()
                 .target(at).bearing(guiding ? bearing : 0).tilt(guiding ? TILT : 0).zoom(zoom - ZOOM_SHIFT)
                 .padding(0, 0, 0, 0).build()));
     }
 
-    /** Shortest time between camera moves. The HUD map always runs at full pace; centre-screen maps ease off for a side view. */
-    private float frameGap() {
-        return hud ? MapPace.FULL_S : MapPace.get().gap(
-                com.kooo.evcam.zeekr.SideViewPopupService.showing(), android.os.SystemClock.uptimeMillis());
-    }
-
     private float guidingZoom(Navigator.Snapshot s) {
-        com.kooo.evcam.AppConfig config = new com.kooo.evcam.AppConfig(mapView.getContext());
+        AppConfig config = new AppConfig(mapView.getContext());
         float adaptive = zoomFor(s.carSpeedKmh, s.progress == null ? null : s.progress.toNext)
                 + zoomBias(config.isNavZoomedOut());
         return hud ? HudMapZoom.zoom(config.getNavHudZoom(), adaptive) : adaptive;

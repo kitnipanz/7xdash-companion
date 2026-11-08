@@ -196,6 +196,10 @@ public final class Navigator {
     public static void install(Context context) {
         Context app = context.getApplicationContext();
         Trip.setSharedListener(place -> get().onShared(app, place));
+        // the first look for the HUD is slow: done now, off the main thread, not when guiding starts
+        Thread look = new Thread(() -> com.kooo.evcam.zeekr.HudDisplay.find(app), "hud-look");
+        look.setDaemon(true);
+        look.start();
         get().bringBack(app);
     }
 

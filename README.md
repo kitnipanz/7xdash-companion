@@ -121,7 +121,7 @@ Watch the cameras and control the car from your phone.
   volumes, and which speakers play.
 
 ### Google Drive
-Uploads instant captures and clips. Open the **Google Drive** card and sign in on your phone.
+Uploads instant captures and clips. Open the **Google Drive** card and sign in on your phone. The **On / Off** button on the card turns uploading on or off (it needs you signed in).
 
 ### Where I parked (beta)
 When the car shifts into P, reads the floor and bay signs from the cameras, offline, and shows them with

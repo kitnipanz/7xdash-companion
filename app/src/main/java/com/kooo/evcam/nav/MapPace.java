@@ -4,15 +4,18 @@ import com.kooo.evcam.blackbox.BlackBox;
 
 /**
  * How often the centre-screen maps move, so a side view's camera picture and the map can both stay
- * smooth. The HUD map is never slowed: the driver reads it while looking ahead. The maps run at
+ * smooth. The HUD map is never slowed further: the driver reads it while looking ahead. The maps run at
  * full pace until the picture actually falls behind, then slow one step at a time, and go back up
  * once it has kept time for a while. Each slowdown goes to the black box: that is the only way to
  * see what the car can really do. Main thread only.
  */
 public final class MapPace {
 
-    /** Seconds between camera moves, fastest first: about 33, 20, 12 and 8 a second. */
-    private static final float[] GAPS_S = {0.03f, 0.05f, 0.08f, 0.125f};
+    /**
+     * Seconds between camera moves, fastest first: 10, about 7, 5 and 4 a second. 30 a second
+     * made the head unit lag; the camera eases between moves, so 10 still follows the car well.
+     */
+    private static final float[] GAPS_S = {0.1f, 0.15f, 0.2f, 0.25f};
     /** The full pace, in seconds between camera moves. */
     static final float FULL_S = GAPS_S[0];
     /** A camera picture this long after the last one is late. Side cameras run at 25 to 30 a second. */

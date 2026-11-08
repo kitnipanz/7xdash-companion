@@ -22,17 +22,26 @@ import java.util.Locale;
 /**
  * The Dash panel's picture, drawn to scale so a pinch makes everything bigger or smaller together:
  * clock and recording dot on top, speed with the turn arrows either side and the gear in the middle,
- * and a row of four buttons at the bottom ({@link #buttonAt}).
+ * a row of four buttons at the bottom ({@link #buttonAt}). On the right, a card of its own with the
+ * floating button's three (record, dim, quit), one above the other.
  *
  * <p>Always dark, like an instrument cluster, whatever the app's day / night theme.</p>
  */
 public final class DashPanelView extends View {
 
-    /** Width : height of the panel. */
-    public static final float ASPECT = 2f;
-    /** The four buttons, left to right. */
+    /** Width : height of the whole window: the 2 : 1 panel, the gap and the right-hand card. */
+    public static final float ASPECT = 2.34f;
+    /** The four buttons along the bottom, left to right, then the column on the right, top to bottom. */
     public static final int[] ICONS = {R.drawable.ic_surround, R.drawable.ic_flash, R.drawable.ic_rearview,
-            R.drawable.ic_home};
+            R.drawable.ic_home, R.drawable.ic_record, R.drawable.ic_dim, R.drawable.ic_power};
+    /** Buttons in the bottom row; the rest are the column. */
+    public static final int ROW = 4;
+    /** {@link #buttonAt} for the record button, the first of the column. */
+    public static final int RECORD = ROW;
+    /** Width of the right-hand card, in hundredths of the height. */
+    private static final float COLUMN_U = 30f;
+    /** See-through gap between the panel and the right-hand card. */
+    private static final float GAP_U = 4f;
 
     private static final int BG = 0xE6141518;
     private static final int TEXT = 0xFFFFFFFF;
@@ -110,18 +119,33 @@ public final class DashPanelView extends View {
         float u = unit();
         float pad = 5 * u;
         float gap = 3 * u;
-        float w = (getWidth() - 2 * pad - gap * (ICONS.length - 1)) / ICONS.length;
+        if (i >= ROW) {
+            int count = ICONS.length - ROW;
+            float h = (getHeight() - 2 * pad - gap * (count - 1)) / count;
+            float top = pad + (i - ROW) * (h + gap);
+            out.set(getWidth() - COLUMN_U * u + pad, top, getWidth() - pad, top + h);
+            return;
+        }
+        float right = contentWidth();
+        float w = (right - 2 * pad - gap * (ROW - 1)) / ROW;
         float top = getHeight() - pad - 24 * u;
         float left = pad + i * (w + gap);
         out.set(left, top, left + w, getHeight() - pad);
     }
 
+    /** The panel itself, left of the gap and the right-hand card. */
+    private float contentWidth() {
+        return getWidth() - (COLUMN_U + GAP_U) * unit();
+    }
+
     @Override
     protected void onDraw(Canvas canvas) {
         float u = unit();
-        float w = getWidth();
+        float w = contentWidth();
         fill.setColor(BG);
         rect.set(0, 0, w, getHeight());
+        canvas.drawRoundRect(rect, 8 * u, 8 * u, fill);
+        rect.set(getWidth() - COLUMN_U * u, 0, getWidth(), getHeight());
         canvas.drawRoundRect(rect, 8 * u, 8 * u, fill);
 
         // top: clock left, recording right
@@ -188,7 +212,13 @@ public final class DashPanelView extends View {
             fill.setColor(BUTTON);
             canvas.drawRoundRect(rect, 5 * u, 5 * u, fill);
             Drawable d = icons[i];
-            if (d != null) {
+            if (i == RECORD && rec) {
+                // recording: a red stop square instead of the record dot
+                fill.setColor(recording);
+                float half = 6 * u;
+                canvas.drawRoundRect(rect.centerX() - half, rect.centerY() - half, rect.centerX() + half, rect.centerY() + half,
+                        2 * u, 2 * u, fill);
+            } else if (d != null) {
                 int size = Math.round(13 * u);
                 int l = Math.round(rect.centerX() - size / 2f);
                 int t = Math.round(rect.centerY() - size / 2f);

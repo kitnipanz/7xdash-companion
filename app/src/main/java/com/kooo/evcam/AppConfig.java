@@ -2605,6 +2605,7 @@ public class AppConfig {
     }
 
     private static final String KEY_SAVED_PLACES = "saved_places";
+    private static final String KEY_RECENT_PLACES = "nav_recent_places";
     private static final String KEY_AUTOMATION_HISTORY = "automation_history";
     private static final String KEY_NOTICE_SPEAK = "notice_speak";
     private static final String KEY_NOTICE_SPEAKER = "notice_speaker";
@@ -2617,6 +2618,15 @@ public class AppConfig {
 
     public void setSavedPlaces(String json) {
         prefs.edit().putString(KEY_SAVED_PLACES, json).apply();
+    }
+
+    /** Places looked for or sent from the phone, as JSON ({@link com.kooo.evcam.nav.RecentPlaces}). */
+    public String getRecentPlaces() {
+        return prefs.getString(KEY_RECENT_PLACES, null);
+    }
+
+    public void setRecentPlaces(String json) {
+        prefs.edit().putString(KEY_RECENT_PLACES, json).apply();
     }
 
     /** What automations did lately, as JSON ({@code automation.AutomationHistory}). */

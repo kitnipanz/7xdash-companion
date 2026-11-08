@@ -231,25 +231,25 @@ public final class Navigator {
     }
 
     /**
-     * The iPhone shared a place: show its route, or switch to it while guiding. With no Navigation
-     * screen open, the floating window opens so the head unit shows it at once.
+     * The iPhone shared a place: it goes on top of the recent places, for the driver to pick on the
+     * Navigation screen. Nothing is routed on its own, and a trip being guided carries on.
      */
     private void onShared(Context context, DestinationLink.Place place) {
         String name = NavMapPainter.placeName(place);
-        if (!hasKey() || !new AppConfig(context).isNavShareEnabled()) {
-            // no route here, but the place is in: battery at arrival on the Dash panel and Home
-            notice(context, context.getString(R.string.nav_place_received_plain, name));
-            return;
-        }
-        boolean wasGuiding = phase == Phase.GUIDING;
-        AppLog.i(TAG, "place shared from the phone" + (wasGuiding ? " while guiding" : ""));
-        notice(context, context.getString(wasGuiding ? R.string.nav_place_received_switch
-                : R.string.nav_place_received, name));
-        preview(context, place);
-        startWhenRouted = wasGuiding;
-        if (attached == 0 && OverlayCoordinator.canShowOverlay(context)) {
-            NavFloatWindow.get().show(context);
-        }
+        RecentPlaces.add(context, place, true);
+        sharedCount++;
+        AppLog.i(TAG, "place shared from the phone: in recent places");
+        boolean pick = hasKey() && new AppConfig(context).isNavShareEnabled();
+        notice(context, pick ? context.getString(R.string.nav_place_received, name)
+                : context.getString(R.string.nav_place_received_plain, name));
+        changed();
+    }
+
+    private int sharedCount;
+
+    /** Goes up with each place the phone sends: an open Navigation screen then shows the recent places. */
+    public int sharedCount() {
+        return sharedCount;
     }
 
     /** The pop-up on the head unit (and on the HUD when HUD notices are on): a place came in from the phone. */

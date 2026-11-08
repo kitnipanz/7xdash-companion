@@ -153,8 +153,9 @@ Reads the car through an ELM327 adapter in the OBD socket, while the screen is o
 ### Navigation
 Turn-by-turn navigation on TomTom's map, with live traffic, spoken turns and the next turn on the HUD.
 - Tap the **Navigation** card on Home.
-- Search for a place, pick the one shared from your iPhone (Battery at arrival), or touch and hold on the
-  map. The route shows its time, distance, arrival time and battery at arrival; tap **Start**.
+- Search for a place, pick one from **Recent** (places you looked for and places shared from your
+  iPhone), or touch and hold on the map. A place from the iPhone waits in Recent: nothing is routed
+  until you pick it. The route shows its time, distance, arrival time and battery at arrival; tap **Start**.
 - While guiding: the banner shows the next turn and how far it is, the map follows the car (move it by
   hand and **Back to the car** returns), and leaving the route finds a new one. Guidance keeps going
   on the HUD and by voice when you leave the screen, until you arrive or tap **End**.

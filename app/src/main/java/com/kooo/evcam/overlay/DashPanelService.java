@@ -27,7 +27,8 @@ import com.kooo.evcam.zeekr.FloatingWindowGestures;
 /**
  * Dash panel: a small floating card over any app (maps, music, AirPlay) with speed, gear, turn
  * signals, the clock and whether 7xDash is recording, plus four buttons: surround photo, instant
- * capture, Super mirror and open 7xDash. Head units rarely allow real split screen for normal apps
+ * capture, Super mirror and open 7xDash, and on the right the floating button's three: record, dim
+ * and quit. While the panel is up the free-standing floating button hides. Head units rarely allow real split screen for normal apps
  * ({@link com.kooo.evcam.screen.MultiWindowProbe}); this is the part of 7xDash that can sit next to
  * another app anyway.
  *
@@ -43,9 +44,16 @@ public class DashPanelService extends Service implements Telemetry.Listener {
     private static final int DEFAULT_HEIGHT_DP = 220;
     private static final int MIN_HEIGHT_DP = 90;
     private static final long TICK_MS = 500L;
-    /** Buttons, in the order {@link DashPanelView#ICONS} draws them. */
+    /** Buttons, in the order {@link DashPanelView#ICONS} draws them: the bottom row, then the column. */
     private static final ShortcutAction[] ACTIONS = {ShortcutAction.PHOTO_SURROUND, ShortcutAction.INSTANT_CAPTURE,
-            ShortcutAction.MIRROR, ShortcutAction.APP};
+            ShortcutAction.MIRROR, ShortcutAction.APP, ShortcutAction.RECORD, ShortcutAction.DIM, ShortcutAction.QUIT};
+
+    private static volatile boolean showing;
+
+    /** Is the panel up: the floating button then stays on it instead of on its own. */
+    public static boolean showing() {
+        return showing;
+    }
 
     private final Handler main = new Handler(Looper.getMainLooper());
     private WindowManager windowManager;
@@ -166,6 +174,8 @@ public class DashPanelService extends Service implements Telemetry.Listener {
             stopSelf();
             return;
         }
+        showing = true;
+        floating(com.kooo.evcam.service.RecordingFloatingService.ACTION_HIDE);
         Telemetry.get().acquire(this, TELEMETRY_USER);
         Telemetry.get().addListener(this);
         main.post(tick);
@@ -178,6 +188,14 @@ public class DashPanelService extends Service implements Telemetry.Listener {
         }
         ShortcutPerformer.perform(this, ACTIONS[button].key, "dash_panel", null);
         main.postDelayed(this::refresh, 300);
+    }
+
+    private void floating(String action) {
+        try {
+            startService(new Intent(this, com.kooo.evcam.service.RecordingFloatingService.class).setAction(action));
+        } catch (Exception e) {
+            AppLog.w(TAG, "floating button: " + e.getMessage());
+        }
     }
 
     @Override
@@ -215,6 +233,13 @@ public class DashPanelService extends Service implements Telemetry.Listener {
     @Override
     public void onDestroy() {
         main.removeCallbacksAndMessages(null);
+        if (showing) {
+            showing = false;
+            if (config.isRecordingFloatingEnabled() && OverlayCoordinator.canShowOverlay(this)) {
+                // the floating button goes back on its own
+                floating(com.kooo.evcam.service.RecordingFloatingService.ACTION_SHOW);
+            }
+        }
         Telemetry.get().removeListener(this);
         Telemetry.get().release(TELEMETRY_USER);
         if (view != null) {

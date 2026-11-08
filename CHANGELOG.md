@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.8.7] - 2026-11-08
+
+### Navigation
+- **Back to the 1.8.0 map engine.** 1.8.6 still froze after picking a route, so the map follows the car the way it did in 1.8.0 again. Gone: the map slowing down while a side view is on screen (1.8.1), and the 1.8.6 limit on map pictures. Map zoom and HUD map zoom stay.
+- **No freeze when guiding starts.** Showing the turn card on the HUD looked at every screen to find the HUD, which can take seconds, and the screen froze meanwhile. 7xDash now finds the HUD once in the background at start and remembers it.
+
+### Home
+- **Google Drive card: On / Off button** for uploading captures and clips, the same as the Google Drive upload shortcut. Tap the card for its settings.
+
 ## [1.8.6] - 2026-11-08
 
 ### Navigation

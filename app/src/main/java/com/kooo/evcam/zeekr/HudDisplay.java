@@ -66,11 +66,35 @@ public final class HudDisplay {
         return byId >= 0 ? byId : bySize;
     }
 
+    /** The HUD's id from the last full look, so the next look is one call; -1 before or when none. */
+    private static volatile int lastId = -1;
+
+    /**
+     * The HUD, or null. Looking at every screen takes up to 2 seconds on some head units, and it
+     * ran on the main thread each time guiding started: the screen froze. Once found, the same
+     * screen is asked for directly; only if it went away are all screens looked at again.
+     */
     public static Display find(Context context) {
         DisplayManager manager = (DisplayManager) context.getSystemService(Context.DISPLAY_SERVICE);
         if (manager == null) {
             return null;
         }
+        int known = lastId;
+        if (known >= 0) {
+            Display display = manager.getDisplay(known);
+            if (display != null && display.isValid()) {
+                return display;
+            }
+            lastId = -1;
+        }
+        Display found = lookEverywhere(manager);
+        if (found != null) {
+            lastId = found.getDisplayId();
+        }
+        return found;
+    }
+
+    private static Display lookEverywhere(DisplayManager manager) {
         java.util.Map<Integer, Display> open = new java.util.LinkedHashMap<>();
         addAll(open, manager.getDisplays());
         addAll(open, manager.getDisplays(DisplayManager.DISPLAY_CATEGORY_PRESENTATION));

@@ -276,8 +276,11 @@ public class HomeFragment extends Fragment {
                 .onOff(MegaphoneService::isOpen);
 
         // Google 云端硬盘、智能贴、快捷键、抬头显示通知
+        // Google Drive: tap opens its settings; the pill turns uploading on or off, same as the shortcut
         addCard(R.drawable.ic_drive, R.string.home_card_drive,
-                R.string.home_card_drive_sub, () -> page(MainActivity.PAGE_SETTINGS_PREFIX + "screen_drive"), null);
+                R.string.home_card_drive_sub, () -> page(MainActivity.PAGE_SETTINGS_PREFIX + "screen_drive"), null)
+                .pill(() -> getString(driveUploading() ? R.string.home_state_on : R.string.home_state_off),
+                        this::driveUploading, () -> perform(ShortcutAction.DRIVE_UPLOAD));
         addCard(R.drawable.ic_sticker, R.string.home_card_sticker,
                 R.string.home_card_sticker_sub, () -> startActivity(new Intent(requireContext(),
                         com.kooo.evcam.input.StickerActivity.class)), null);
@@ -620,6 +623,11 @@ public class HomeFragment extends Fragment {
     private boolean recording() {
         Context context = getContext();
         return context != null && RecordingCoordinator.get(context).isRecordingOrResuming();
+    }
+
+    /** Captures go up to Google Drive: switched on and signed in. */
+    private boolean driveUploading() {
+        return config.isSaveMomentDrive() && config.hasDriveClient() && config.hasDriveRefreshToken();
     }
 
     private void perform(ShortcutAction action) {

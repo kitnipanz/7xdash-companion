@@ -26,7 +26,6 @@ import com.kooo.evcam.R;
 import com.kooo.evcam.overlay.OverlayCoordinator;
 import com.kooo.evcam.trip.Arrival;
 import com.kooo.evcam.trip.DestinationLink;
-import com.kooo.evcam.trip.Trip;
 
 import org.maplibre.android.maps.MapLibreMap;
 import org.maplibre.android.maps.SupportMapFragment;
@@ -116,10 +115,10 @@ public class NavigationActivity extends AppCompatActivity implements Navigator.L
             return false;
         });
         // the box can already hold the focus when the screen opens: a tap then changes nothing
-        search.setOnClickListener(v -> showSharedPlace());
+        search.setOnClickListener(v -> showRecent(false));
         search.setOnFocusChangeListener((v, focused) -> {
             if (focused) {
-                showSharedPlace();
+                showRecent(false);
             }
         });
         go.setOnClickListener(v -> {
@@ -450,9 +449,17 @@ public class NavigationActivity extends AppCompatActivity implements Navigator.L
         super.onStop();
     }
 
+    /** The phone's places already shown: a new one opens the list once, here or on the next open. */
+    private static int sharedSeen;
+
     @Override
     public void onNavChanged(Navigator.Snapshot s) {
         boolean guiding = s.phase == Navigator.Phase.GUIDING || s.phase == Navigator.Phase.ARRIVED;
+        int shared = Navigator.get().sharedCount();
+        if (shared != sharedSeen && !guiding) {
+            sharedSeen = shared;
+            showRecent(true);
+        }
         if (guiding) {
             getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         } else {
@@ -635,25 +642,32 @@ public class NavigationActivity extends AppCompatActivity implements Navigator.L
             }
             for (int i = 0; i < Math.min(6, found.size()); i++) {
                 TomTomJson.Found f = found.get(i);
-                results.addView(row(f.place.name, f.address, () -> choose(f.place)));
+                results.addView(row(f.place.name, f.address, () -> {
+                    RecentPlaces.add(this, f.place, false);
+                    choose(f.place);
+                }));
             }
         });
     }
 
-    /** Offers the place last shared from the iPhone (Battery at arrival), if there is one. */
-    private void showSharedPlace() {
-        if (Navigator.get().isGuiding() || results.getVisibility() == View.VISIBLE) {
+    /** Recent places (the phone's newest on top), then saved ones, for the driver to pick. */
+    private void showRecent(boolean fresh) {
+        if (Navigator.get().isGuiding() || (!fresh && results.getVisibility() == View.VISIBLE)) {
             return;
         }
-        DestinationLink.Place shared = Trip.get().status().destination;
+        java.util.List<RecentPlaces.Place> recent = RecentPlaces.load(this);
         java.util.List<SavedPlaces.Place> places = SavedPlaces.load(this);
-        if (shared == null && places.isEmpty()) {
+        if (recent.isEmpty() && places.isEmpty()) {
             return;
         }
         results.removeAllViews();
-        if (shared != null) {
-            results.addView(row(getString(R.string.nav_shared, placeName(shared)), getString(R.string.nav_shared_sub),
-                    () -> choose(shared)));
+        for (RecentPlaces.Place place : recent) {
+            DestinationLink.Place p = place.destination();
+            results.addView(row(placeName(p), getString(place.shared ? R.string.nav_shared_sub : R.string.nav_recent_sub),
+                    () -> {
+                        RecentPlaces.add(this, p, place.shared);
+                        choose(p);
+                    }));
         }
         for (SavedPlaces.Place place : places) {
             results.addView(row(place.name, getString(R.string.place_saved_sub), () -> choose(place.destination())));

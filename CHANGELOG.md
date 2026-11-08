@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.8.5] - 2026-11-08
+
+### Navigation
+- **Smoother head unit.** The map moves about 10 times a second instead of 30. The camera still eases between moves.
+- **Recent places.** A place shared from the iPhone no longer opens a route or the floating map by itself, and no longer switches a trip being guided. It goes on top of **Recent** under the search box (the list opens when it comes in), with places you searched for. Pick one to see its route.
+
+### Dash panel
+- **Record, Dim and Quit** on a card of their own to the right of the panel, one above the other: the same three as the floating button. The four buttons along the bottom stay as they were. While the Dash panel is up the floating button hides, and comes back when the panel closes.
+
 ## [1.8.4] - 2026-11-08
 
 Changes since 1.8.2 (includes 1.8.3-beta).

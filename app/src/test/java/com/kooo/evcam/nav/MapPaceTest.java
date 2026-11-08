@@ -7,7 +7,7 @@ import org.junit.Test;
 
 public class MapPaceTest {
 
-    private static final float FULL = 0.03f;
+    private static final float FULL = MapPace.FULL_S;
     private final MapPace pace = new MapPace();
     private long now = 10_000L;
 

@@ -399,6 +399,9 @@ public class RecordingFloatingService extends Service {
                 }
             } else if (ACTION_TOGGLE_RECORDING.equals(action)) {
                 mainHandler.post(this::toggleRecording);
+            } else if (com.kooo.evcam.overlay.DashPanelService.showing()) {
+                // its buttons are on the Dash panel while it is up
+                hideFloatingWindow();
             } else if (ACTION_RESET_POSITION.equals(action)) {
                 // 同上：没显示就不管，下次显示时自然落在默认位置
                 if (floatingContainer != null) {

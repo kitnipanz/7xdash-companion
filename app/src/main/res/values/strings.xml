@@ -1715,7 +1715,7 @@ Then reopen this app.</string>
     <string name="nav_web_title">Send a place to 7xDash</string>
     <string name="nav_web_home_hint">Tip: Share → Add to Home Screen keeps this page one tap away. Works while the phone is on the car\'s Wi-Fi (wireless CarPlay).</string>
     <string name="arrival_web_send">Send to 7xDash</string>
-    <string name="arrival_web_set">7xDash: going to %1$s</string>
+    <string name="arrival_web_set">7xDash: got %1$s · pick it in Navigation on the car</string>
     <string name="arrival_web_nothing">7xDash: nothing was sent</string>
     <string name="arrival_web_no_place">7xDash: could not find that place</string>
     <string name="arrival_web_shortcut_title">Faster: Send to 7xDash in the share sheet (optional)</string>
@@ -1744,7 +1744,7 @@ Then reopen this app.</string>
     <string name="nav_search_hint">Search places</string>
     <string name="nav_searching">Searching…</string>
     <string name="nav_no_results">Nothing found</string>
-    <string name="nav_shared">Go to %1$s</string>
+    <string name="nav_recent_sub">Recent</string>
     <string name="nav_shared_sub">Shared from your iPhone</string>
     <string name="nav_dropped_pin">Dropped pin</string>
     <string name="nav_idle_hint">Search for a place, or touch and hold on the map</string>
@@ -1824,8 +1824,7 @@ Then reopen this app.</string>
     <string name="nav_route_time">%1$s · %2$s</string>
     <string name="nav_route_best">Best</string>
     <string name="nav_route_via">via %1$s</string>
-    <string name="nav_place_received">Place from your phone: %1$s · showing the route</string>
-    <string name="nav_place_received_switch">New place from your phone: %1$s · switching to it</string>
+    <string name="nav_place_received">Place from your phone: %1$s · pick it in Navigation</string>
     <string name="nav_place_received_plain">Place from your phone: %1$s</string>
     <string name="nav_place_not_found">The phone sent something, but no place was found in it</string>
     <string name="nav_share_off">Turn on Go to places shared from the iPhone first</string>

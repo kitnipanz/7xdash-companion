@@ -1691,7 +1691,7 @@
     <string name="nav_web_title">ส่งที่หมายไป 7xDash</string>
     <string name="nav_web_home_hint">เคล็ดลับ: แชร์ → เพิ่มไปยังหน้าจอโฮม เปิดหน้านี้ได้ในแตะเดียว ใช้ได้ตอนโทรศัพท์ต่อ Wi-Fi ของรถ (CarPlay ไร้สาย)</string>
     <string name="arrival_web_send">ส่งไป 7xDash</string>
-    <string name="arrival_web_set">7xDash: ไปที่ %1$s</string>
+    <string name="arrival_web_set">7xDash: ได้รับ %1$s · เลือกได้ในหน้านำทางบนรถ</string>
     <string name="arrival_web_nothing">7xDash: ไม่มีอะไรส่งมา</string>
     <string name="arrival_web_no_place">7xDash: หาสถานที่นี้ไม่เจอ</string>
     <string name="arrival_web_shortcut_title">เร็วกว่า: ส่งไป 7xDash จากเมนูแชร์ (ไม่บังคับ)</string>
@@ -1720,7 +1720,7 @@
     <string name="nav_search_hint">ค้นหาสถานที่</string>
     <string name="nav_searching">กำลังค้นหา…</string>
     <string name="nav_no_results">ไม่พบสถานที่</string>
-    <string name="nav_shared">ไปที่ %1$s</string>
+    <string name="nav_recent_sub">ล่าสุด</string>
     <string name="nav_shared_sub">ส่งมาจาก iPhone</string>
     <string name="nav_dropped_pin">หมุดที่ปักไว้</string>
     <string name="nav_idle_hint">ค้นหาสถานที่ หรือแตะค้างบนแผนที่</string>
@@ -1799,8 +1799,7 @@
     <string name="nav_route_time">%1$s · %2$s</string>
     <string name="nav_route_best">แนะนำ</string>
     <string name="nav_route_via">ผ่าน %1$s</string>
-    <string name="nav_place_received">ได้รับที่หมายจากโทรศัพท์: %1$s · กำลังแสดงเส้นทาง</string>
-    <string name="nav_place_received_switch">ที่หมายใหม่จากโทรศัพท์: %1$s · เปลี่ยนไปที่นี่</string>
+    <string name="nav_place_received">ได้รับที่หมายจากโทรศัพท์: %1$s · เลือกได้ในหน้านำทาง</string>
     <string name="nav_place_received_plain">ได้รับที่หมายจากโทรศัพท์: %1$s</string>
     <string name="nav_place_not_found">ได้รับข้อมูลจากโทรศัพท์ แต่หาสถานที่ไม่เจอ</string>
     <string name="nav_share_off">เปิด นำทางไปที่ที่แชร์จาก iPhone ก่อน</string>

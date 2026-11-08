@@ -52,8 +52,8 @@ Open it with its shortcut; size it in Settings → System → Cabin passenger.
 ### Dim overlay
 Covers the whole screen with an adjustable veil so maps are less bright at night; touches still reach
 the app underneath.
-- **Dim** on the rail or the moon on the floating button turns it on or off. Drag on the moon to make
-  it darker or lighter.
+- **Dim** on the rail, the moon on the floating button or Dim on the Dash panel turns it on or off.
+  Drag on the moon or on the panel's Dim to make it darker or lighter.
 - Settings → Dim overlay: opacity, brightness, warmth, pass touches through, reset.
 
 ### Floating button

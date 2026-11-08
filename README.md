@@ -150,24 +150,23 @@ Reads the car through an ELM327 adapter in the OBD socket, while the screen is o
 - Read only: it cannot clear codes or change anything. Unplug the adapter when you are done, because
   many keep drawing from the 12 V battery.
 
-### Navigation (beta)
-Turn-by-turn navigation on a Google map, with live traffic, spoken turns and the next turn on the HUD.
-- Turn on Settings → Interface → **Beta features**, then tap the **Navigation** card.
+### Navigation
+Turn-by-turn navigation on TomTom's map, with live traffic, spoken turns and the next turn on the HUD.
+- Tap the **Navigation** card on Home.
 - Search for a place, pick the one shared from your iPhone (Battery at arrival), or touch and hold on the
   map. The route shows its time, distance, arrival time and battery at arrival; tap **Start**.
 - While guiding: the banner shows the next turn and how far it is, the map follows the car (move it by
   hand and **Back to the car** returns), and leaving the route finds a new one. Guidance keeps going
   on the HUD and by voice when you leave the screen, until you arrive or tap **End**.
 - A route you pick before Start stays yours for the trip. If you leave it, a new route is found.
-- **Save place** on a route, or **Save this spot** in Automation. Saved places show when you tap the search box.
+- **Save place** on a route, **Save this spot** or **Pick on map** in Automation. Saved places show when you tap the search box.
 - If the app stops during a trip, the destination comes back when it opens, and guiding goes on if it was on. **End** or arriving clears it.
 - **Navigation** tab in the action picker: **Floating map on / off**, **Map zoom in / out**, and **HUD map zoom** (Furthest, Medium, Close, Adaptive to speed; each press says which), for any button, sticker, Macro pad or automation.
 - **Speak the turns** and **Next turn on the HUD** are on the trip card. Turns are spoken by the head
   unit's voice, or the offline English voice (Announcements) when it has none. Thai needs a Thai voice
   on the head unit.
-- Needs a Google Maps Platform key in the build (`MAPS_API_KEY`, see Release) with the **Maps SDK for
-  Android**, **Routes API** and **Places API (New)** enabled, and internet. The map needs Google Play
-  services on the head unit; without it, guidance still works with no map.
+- Needs a TomTom key in the build (`TOMTOM_API_KEY`, see Release) and internet. The map is drawn by
+  the app itself, so it works without Google Play services.
 
 ### Automation
 When something happens on the car, 7xDash does what you picked. Open the **Automation** card on Home. Off until you turn it on.
@@ -175,6 +174,7 @@ When something happens on the car, 7xDash does what you picked. Open the **Autom
 - Pick several **When** to need them all: "it gets dark" and "it starts raining" runs the moment both are true, in either order.
 - **Time, days and place** count as When too: at a time, between two times, weekdays or chosen days, arriving at or leaving a saved place. Places need Location on. Nothing runs while the head unit is asleep.
 - **Navigate to** a saved place as an action. A trip already on is left alone.
+- **Pick on map** under Place and Navigate to: move the map until the pin is on the place, then **Save place**.
 - **History** (top right) lists what ran and what failed. "Sent, no error" means the car did not refuse, not that it was seen to change.
 - **Speak notifications** says every 7xDash notification on a speaker you pick, with its own volume. Pick the driver's headrest and press **Test**.
 - **Do**, as many as you like, in order: drive mode (Comfort, Normal, Sport), mood light on or off, mood light colour, car ambient light and its brightness, dim overlay, AC on or off, temperature zones (synced or dual), open the glovebox (only in P), or any shortcut action.
@@ -211,7 +211,5 @@ details and the other open-source components used.
 Bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section to `CHANGELOG.md`,
 then push a tag `v<versionName>`. GitHub Actions builds, tests and publishes the release.
 
-Navigation needs the repository secret `MAPS_API_KEY` (or `MAPS_API_KEY=` in `local.properties` for a local
-build): a Google Maps Platform key with Maps SDK for Android, Routes API and Places API (New) enabled.
-Restrict it to Android apps with package `lab.sevenx.dash` and the release signing certificate's SHA-1;
-7xDash sends both with each Routes and Places call so the restriction also covers them.
+Navigation needs the repository secret `TOMTOM_API_KEY` (or `TOMTOM_API_KEY=` in `local.properties` for a
+local build): a TomTom key with the Map Display, Routing and Search APIs.

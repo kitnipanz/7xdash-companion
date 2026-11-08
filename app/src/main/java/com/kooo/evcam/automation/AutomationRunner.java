@@ -155,7 +155,7 @@ final class AutomationRunner {
         if (place == null) {
             return app.getString(R.string.automation_no_place);
         }
-        if (!Navigator.active(app) || !Navigator.hasKey()) {
+        if (!Navigator.hasKey()) {
             return app.getString(R.string.automation_no_navigation);
         }
         FutureTask<Boolean> task = new FutureTask<>(() -> Navigator.get().guideTo(app, place.destination()));

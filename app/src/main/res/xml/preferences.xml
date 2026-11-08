@@ -738,6 +738,11 @@
             android:title="@string/usb_settings_restore_title"
             android:summary="@string/usb_settings_restore_summary" />
 
+        <Preference
+            android:key="pref_car_signals"
+            android:title="@string/set_car_signals_title"
+            android:summary="@string/set_car_signals_summary" />
+
         <SwitchPreferenceCompat
             android:key="pref_signal_recorder"
             android:title="@string/set_signal_recorder_title"

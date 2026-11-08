@@ -23,7 +23,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
- * Turn-by-turn navigation (beta): a route with traffic from the car's GPS to
+ * Turn-by-turn navigation: a route with traffic from the car's GPS to
  * a place ({@link TomTomApi}), followed fix by fix ({@link Guidance}), with the turns spoken in the
  * cabin ({@link VoicePlan}, {@link NavVoice}) and kept on the HUD ({@link HudTurnWindow}). Leaving
  * the route asks for a new one. Keeps going when the Navigation screen is closed, until the
@@ -187,11 +187,6 @@ public final class Navigator {
     private Navigator() {
     }
 
-    /** Is the feature allowed: beta features on. */
-    public static boolean active(Context context) {
-        return new AppConfig(context).isBetaFeaturesEnabled();
-    }
-
     /** True when the build has a TomTom key. */
     public static boolean hasKey() {
         return TomTomApi.hasKey();
@@ -214,7 +209,7 @@ public final class Navigator {
         if (trip == null) {
             return;
         }
-        if (!active(context) || !hasKey() || !trip.worthResuming(System.currentTimeMillis())) {
+        if (!hasKey() || !trip.worthResuming(System.currentTimeMillis())) {
             config.setNavTrip(null);
             return;
         }
@@ -241,7 +236,7 @@ public final class Navigator {
      */
     private void onShared(Context context, DestinationLink.Place place) {
         String name = NavMapPainter.placeName(place);
-        if (!active(context) || !hasKey() || !new AppConfig(context).isNavShareEnabled()) {
+        if (!hasKey() || !new AppConfig(context).isNavShareEnabled()) {
             // no route here, but the place is in: battery at arrival on the Dash panel and Home
             notice(context, context.getString(R.string.nav_place_received_plain, name));
             return;

@@ -14,6 +14,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.OnBackPressedCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
@@ -26,6 +28,7 @@ import com.kooo.evcam.announce.AnnouncePick;
 import com.kooo.evcam.input.ActionTabs;
 import com.kooo.evcam.input.ShortcutAction;
 import com.kooo.evcam.nav.Navigator;
+import com.kooo.evcam.nav.PlacePickActivity;
 import com.kooo.evcam.nav.SavePlaceDialog;
 import com.kooo.evcam.nav.SavedPlaces;
 import com.kooo.evcam.telemetry.Telemetry;
@@ -56,6 +59,7 @@ public class AutomationEditActivity extends AppCompatActivity {
 
     private static final String KEPT_DRAFT = "draft";
     private static final String KEPT_START = "started_as";
+    private static final String KEPT_PICK_FOR = "pick_for";
     /** Registered while this page shows, so "Save this spot" has a position. */
     private static final String TELEMETRY_USER = "automation_edit";
     private static final int DEFAULT_TIME = 8 * 60;
@@ -69,6 +73,14 @@ public class AutomationEditActivity extends AppCompatActivity {
     private TextView sentence;
     private View tryButton;
     private View saveButton;
+    /**
+     * What a place picked on the map is for: "add:" and a trigger key, "set" for the place
+     * condition already there, "nav" for the Navigate action, "" to just save it. Kept with the draft.
+     */
+    private String pickFor = "";
+    private final ActivityResultLauncher<android.content.Intent> pickPlace = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            result -> placePicked(PlacePickActivity.placeId(result.getResultCode(), result.getData())));
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -79,6 +91,7 @@ public class AutomationEditActivity extends AppCompatActivity {
         if (savedInstanceState != null) {
             draft = AutomationRule.fromDraft(savedInstanceState.getString(KEPT_DRAFT));
             startedAs = savedInstanceState.getString(KEPT_START);
+            pickFor = savedInstanceState.getString(KEPT_PICK_FOR, "");
         } else {
             // A blank new rule has no trigger yet, so parseAll drops it and this starts a fresh one
             List<AutomationRule> read = AutomationRule.parseAll(json);
@@ -125,6 +138,7 @@ public class AutomationEditActivity extends AppCompatActivity {
         super.onSaveInstanceState(out);
         out.putString(KEPT_DRAFT, draft.toDraft());
         out.putString(KEPT_START, startedAs);
+        out.putString(KEPT_PICK_FOR, pickFor);
     }
 
     private String state() {
@@ -261,6 +275,46 @@ public class AutomationEditActivity extends AppCompatActivity {
             chips.addView(row);
         }
         chips.addView(saveSpotChip(place -> { }));
+        if (PlacePickActivity.available()) {
+            chips.addView(pickOnMapChip(picked == null ? "" : "set"));
+        }
+    }
+
+    private TextView pickOnMapChip(String forWhat) {
+        TextView pick = chip(getString(R.string.place_pick_on_map), false, v -> openPicker(forWhat));
+        pick.setCompoundDrawablesRelativeWithIntrinsicBounds(R.drawable.ic_automation_place, 0, 0, 0);
+        pick.setCompoundDrawablePadding(dp(8));
+        return pick;
+    }
+
+    private void openPicker(String forWhat) {
+        pickFor = forWhat;
+        pickPlace.launch(PlacePickActivity.intent(this));
+    }
+
+    /** Back from the map with a saved place (or -1): use it for what the map was opened for. */
+    private void placePicked(int id) {
+        String forWhat = pickFor;
+        pickFor = "";
+        if (id < 0) {
+            return;
+        }
+        if (forWhat.startsWith("add:")) {
+            AutomationTrigger trigger = AutomationTrigger.fromKey(forWhat.substring(4));
+            if (trigger != null) {
+                addCondition(trigger, id);
+                return;
+            }
+        } else if (forWhat.equals("set")) {
+            AutomationRule.Condition place = inGroup(draft.conditions(), AutomationTrigger.Group.PLACE);
+            if (place != null) {
+                setValue(place, id);
+                return;
+            }
+        } else if (forWhat.equals("nav")) {
+            setChoice(AutomationAction.NAVIGATE, Integer.toString(id));
+        }
+        draw();
     }
 
     private void askDeletePlace(SavedPlaces.Place place) {
@@ -324,7 +378,9 @@ public class AutomationEditActivity extends AppCompatActivity {
         AutomationRule.Condition old = inGroup(conditions, trigger.group);
         if (old == null && trigger.group == AutomationTrigger.Group.PLACE) {
             List<SavedPlaces.Place> places = SavedPlaces.load(this);
-            if (places.isEmpty()) {
+            if (places.isEmpty() && PlacePickActivity.available()) {
+                openPicker("add:" + trigger.key);
+            } else if (places.isEmpty()) {
                 askSaveSpot(place -> addCondition(trigger, place.id));
             } else {
                 addCondition(trigger, places.get(0).id);
@@ -419,9 +475,9 @@ public class AutomationEditActivity extends AppCompatActivity {
         drawShortcuts();
     }
 
-    /** Navigation is a beta feature and needs the TomTom key. */
+    /** Navigation needs the TomTom key. */
     private boolean offered(AutomationAction action) {
-        return action != AutomationAction.NAVIGATE || (Navigator.active(this) && Navigator.hasKey());
+        return action != AutomationAction.NAVIGATE || Navigator.hasKey();
     }
 
     private void drawAction(AutomationAction action) {
@@ -437,6 +493,7 @@ public class AutomationEditActivity extends AppCompatActivity {
         }
         if (action == AutomationAction.NAVIGATE) {
             chips.addView(saveSpotChip(place -> setChoice(action, Integer.toString(place.id))));
+            chips.addView(pickOnMapChip("nav"));
         }
     }
 

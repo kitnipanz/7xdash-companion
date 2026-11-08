@@ -9,40 +9,6 @@ import org.junit.Test;
 public class NavZoomTest {
 
     @Test
-    public void zoomActionOnlyEverMovesTheMapOut() {
-        assertEquals(0f, NavMapPainter.zoomBias(false), 0f);
-        assertTrue(NavMapPainter.zoomBias(true) < 0f);
-    }
-
-    @Test
-    public void hudZoomCyclesThroughAllFour_thenRoundAgain() {
-        int mode = HudMapZoom.ADAPTIVE;
-        mode = HudMapZoom.next(mode);
-        assertEquals(HudMapZoom.FURTHEST, mode);
-        mode = HudMapZoom.next(mode);
-        assertEquals(HudMapZoom.MEDIUM, mode);
-        mode = HudMapZoom.next(mode);
-        assertEquals(HudMapZoom.CLOSE, mode);
-        assertEquals(HudMapZoom.ADAPTIVE, HudMapZoom.next(mode));
-    }
-
-    @Test
-    public void hudFixedDistancesIgnoreTheSpeed_adaptiveFollowsIt() {
-        assertEquals(19f, HudMapZoom.zoom(HudMapZoom.ADAPTIVE, 19f), 0f);
-        assertEquals(HudMapZoom.zoom(HudMapZoom.CLOSE, 18f), HudMapZoom.zoom(HudMapZoom.CLOSE, 20f), 0f);
-        assertTrue(HudMapZoom.zoom(HudMapZoom.FURTHEST, 0f) < HudMapZoom.zoom(HudMapZoom.MEDIUM, 0f));
-        assertTrue(HudMapZoom.zoom(HudMapZoom.MEDIUM, 0f) < HudMapZoom.zoom(HudMapZoom.CLOSE, 0f));
-    }
-
-    @Test
-    public void timedRefreshLeavesAPickedRouteAlone() {
-        long late = 11 * 60_000L;
-        assertTrue(Navigator.refreshDue(false, late));
-        assertFalse(Navigator.refreshDue(false, 60_000L));
-        assertFalse("the person's route stays", Navigator.refreshDue(true, late));
-    }
-
-    @Test
     public void slowIsCloseFastIsFar() {
         assertEquals(20.5f, NavMapPainter.zoomFor(0f, 1_500.0), 1e-4);
         assertEquals(20.5f, NavMapPainter.zoomFor(10f, 1_500.0), 1e-4);

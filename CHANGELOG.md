@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.8] - 2026-11-08
+
+### Back to 1.8.0
+- **1.8.8 is the 1.8.0 app.** 1.8.1 to 1.8.7 could freeze when a route started; 1.8.0 never did. It installs over 1.8.7 and keeps your settings.
+- Gone for now, to come back one at a time: recent places, picking a place on the map, live car signals, Automation conditions (time, days, places, several at once), map buttons, Dash panel buttons and drag to dim, the Google Drive On / Off button.
+- An automation with more than one condition runs on its first condition only. One that starts with time, days or a place is not shown.
+
 ## [1.8.7] - 2026-11-08
 
 ### Navigation

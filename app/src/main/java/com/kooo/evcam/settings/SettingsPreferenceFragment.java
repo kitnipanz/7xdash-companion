@@ -1283,8 +1283,6 @@ public class SettingsPreferenceFragment extends PreferenceFragmentCompat {
                         .setPositiveButton(R.string.usb_settings_restore_go,
                                 (d, w) -> UsbSettings.restoreNow(requireContext()))
                         .setNegativeButton(android.R.string.cancel, null)));
-        onClick("pref_car_signals", pref ->
-                startActivity(new Intent(getContext(), com.kooo.evcam.telemetry.CarSignalsActivity.class)));
         bindSwitch("pref_signal_recorder", appConfig.isSignalRecorderEnabled(), value -> {
             appConfig.setSignalRecorderEnabled(value);
             com.kooo.evcam.telemetry.SignalRecorder.applyConfig();

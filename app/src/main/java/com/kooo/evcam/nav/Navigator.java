@@ -23,7 +23,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
- * Turn-by-turn navigation: a route with traffic from the car's GPS to
+ * Turn-by-turn navigation (beta): a route with traffic from the car's GPS to
  * a place ({@link TomTomApi}), followed fix by fix ({@link Guidance}), with the turns spoken in the
  * cabin ({@link VoicePlan}, {@link NavVoice}) and kept on the HUD ({@link HudTurnWindow}). Leaving
  * the route asks for a new one. Keeps going when the Navigation screen is closed, until the
@@ -36,7 +36,6 @@ public final class Navigator {
     private static final String TAG = "Navigator";
     private static final String TELEMETRY_USER = "navigation";
     private static final long TICK_MS = 1_000L;
-    private static final long TRIP_SAVE_MS = 60_000L;
     /** Not more often than this when off the route (GPS in a car park can wander)... */
     private static final long REROUTE_MS = 10_000L;
     /** ...and this often anyway, for fresh traffic and arrival time. */
@@ -169,22 +168,21 @@ public final class Navigator {
     private boolean telemetryHeld;
     /** The routes to choose from before starting (TomTom's pick first); the chosen one is {@link #guidance}'s. */
     private List<NavRoute> choices = new ArrayList<>();
-    /** The person picked a route other than TomTom's first: the timed refresh must not swap it back. */
-    private boolean pickedByPerson;
     /** A place came from the iPhone while guiding: start guiding to it as soon as its route is in. */
     private boolean startWhenRouted;
-    /** When the trip was last saved, and how often it came back without lasting until the next save. */
-    private long tripSavedAt;
-    private int restoreTries;
     /** The turn card is being placed by hand ({@link #setHudPlacing}). */
     private boolean hudPlacing;
     /** Navigation screens open (the full screen, the floating window): GPS on for the map and the search, even with nothing planned. */
     private int attached;
-    /** {@link NavGuideService} is on: there is a trip, or a rule waits for a place. */
+    /** {@link NavGuideService} is on: there is a trip. */
     private boolean guideService;
-    private boolean gpsHeld;
 
     private Navigator() {
+    }
+
+    /** Is the feature allowed: beta features on. */
+    public static boolean active(Context context) {
+        return new AppConfig(context).isBetaFeaturesEnabled();
     }
 
     /** True when the build has a TomTom key. */
@@ -196,64 +194,28 @@ public final class Navigator {
     public static void install(Context context) {
         Context app = context.getApplicationContext();
         Trip.setSharedListener(place -> get().onShared(app, place));
-        // the first look for the HUD is slow: done now, off the main thread, not when guiding starts
-        Thread look = new Thread(() -> com.kooo.evcam.zeekr.HudDisplay.find(app), "hud-look");
-        look.setDaemon(true);
-        look.start();
-        get().bringBack(app);
-    }
-
-    /** The app stopped during a trip: show its destination again, and go on guiding if it was. */
-    private void bringBack(Context context) {
-        if (phase != Phase.IDLE) {
-            return;
-        }
-        AppConfig config = new AppConfig(context);
-        SavedTrip trip = SavedTrip.restore(config.getNavTrip());
-        if (trip == null) {
-            return;
-        }
-        if (!hasKey() || !trip.worthResuming(System.currentTimeMillis())) {
-            config.setNavTrip(null);
-            return;
-        }
-        AppLog.i(TAG, "bringing the trip back" + (trip.guiding ? ", guiding" : ""));
-        preview(context, trip.place);
-        startWhenRouted = trip.guiding;
-        restoreTries = trip.tries + 1;
-        saveTrip();
-        notice(context, context.getString(R.string.nav_trip_back, NavMapPainter.placeName(trip.place)));
-        if (trip.guiding && attached == 0 && OverlayCoordinator.canShowOverlay(context)) {
-            NavFloatWindow.get().show(context);
-        }
-    }
-
-    private void saveTrip() {
-        tripSavedAt = System.currentTimeMillis();
-        new AppConfig(app).setNavTrip(new SavedTrip(destination, phase == Phase.GUIDING || startWhenRouted,
-                restoreTries, tripSavedAt).store());
     }
 
     /**
-     * The iPhone shared a place: it goes on top of the recent places, for the driver to pick on the
-     * Navigation screen. Nothing is routed on its own, and a trip being guided carries on.
+     * The iPhone shared a place: show its route, or switch to it while guiding. With no Navigation
+     * screen open, the floating window opens so the head unit shows it at once.
      */
     private void onShared(Context context, DestinationLink.Place place) {
         String name = NavMapPainter.placeName(place);
-        RecentPlaces.add(context, place, true);
-        sharedCount++;
-        AppLog.i(TAG, "place shared from the phone: in recent places");
-        boolean pick = hasKey() && new AppConfig(context).isNavShareEnabled();
-        notice(context, pick ? context.getString(R.string.nav_place_received, name)
-                : context.getString(R.string.nav_place_received_plain, name));
-        changed();
-    }
-
-    private int sharedCount;
-
-    /** Goes up with each place the phone sends: an open Navigation screen then shows the recent places. */
-    public int sharedCount() {
-        return sharedCount;
+        if (!active(context) || !hasKey() || !new AppConfig(context).isNavShareEnabled()) {
+            // no route here, but the place is in: battery at arrival on the Dash panel and Home
+            notice(context, context.getString(R.string.nav_place_received_plain, name));
+            return;
+        }
+        boolean wasGuiding = phase == Phase.GUIDING;
+        AppLog.i(TAG, "place shared from the phone" + (wasGuiding ? " while guiding" : ""));
+        notice(context, context.getString(wasGuiding ? R.string.nav_place_received_switch
+                : R.string.nav_place_received, name));
+        preview(context, place);
+        startWhenRouted = wasGuiding;
+        if (attached == 0 && OverlayCoordinator.canShowOverlay(context)) {
+            NavFloatWindow.get().show(context);
+        }
     }
 
     /** The pop-up on the head unit (and on the HUD when HUD notices are on): a place came in from the phone. */
@@ -265,8 +227,6 @@ public final class Navigator {
     public void attach(Context context) {
         bind(context);
         attached++;
-        // Android can reopen this screen after a crash without going through the main screen
-        bringBack(app);
         keepRunning();
     }
 
@@ -327,7 +287,7 @@ public final class Navigator {
     /** Telemetry held and the tick going while {@link #running}, released and stopped when not. */
     private void keepRunning() {
         main.removeCallbacks(tick);
-        if (app != null && (phase != Phase.IDLE || gpsHeld) != guideService) {
+        if (app != null && (phase != Phase.IDLE) != guideService) {
             guideService = !guideService;
             if (guideService) {
                 NavGuideService.start(app);
@@ -375,12 +335,9 @@ public final class Navigator {
         guidance = null;
         progress = null;
         choices = new ArrayList<>();
-        pickedByPerson = false;
         startWhenRouted = false;
         voicePlan.reset();
         phase = Phase.ROUTING;
-        restoreTries = 0;
-        saveTrip();
         AppLog.i(TAG, "planning" + (place.name.isEmpty() ? "" : " to " + place.name));
         if (wasGuiding) {
             hud.hide();
@@ -398,33 +355,8 @@ public final class Navigator {
             return;
         }
         guidance = new Guidance(route);
-        pickedByPerson = route != choices.get(0);
         AppLog.i(TAG, String.format(Locale.US, "chose the route %.1f km, %.0f min", route.meters / 1000, route.seconds / 60));
         onTick();
-    }
-
-    /**
-     * An automation wants this trip: guide there as soon as the route is in. False when a trip is on
-     * already, which it leaves alone: the person chose that one.
-     */
-    public boolean guideTo(Context context, DestinationLink.Place place) {
-        if (phase == Phase.GUIDING || startWhenRouted) {
-            return false;
-        }
-        preview(context, place);
-        startWhenRouted = true;
-        saveTrip();
-        if (attached == 0 && OverlayCoordinator.canShowOverlay(context)) {
-            NavFloatWindow.get().show(context);
-        }
-        return true;
-    }
-
-    /** Keeps the GPS allowed in the background with no trip on: a rule is waiting for a place. */
-    public void holdGps(Context context, boolean on) {
-        bind(context);
-        gpsHeld = on;
-        keepRunning();
     }
 
     /** Starts guiding along the route shown. */
@@ -433,7 +365,6 @@ public final class Navigator {
             return;
         }
         phase = Phase.GUIDING;
-        saveTrip();
         voicePlan.reset();
         AppLog.i(TAG, "guiding");
         NavRoute r = guidance.route();
@@ -450,7 +381,6 @@ public final class Navigator {
         }
         AppLog.i(TAG, "ended");
         phase = Phase.IDLE;
-        new AppConfig(app).setNavTrip(null);
         destination = null;
         guidance = null;
         progress = null;
@@ -577,7 +507,6 @@ public final class Navigator {
         AppLog.i(TAG, String.format(Locale.US, "route: %.1f km, %.0f min, %d steps%s", route.meters / 1000,
                 route.seconds / 60, route.steps.size(), reroute ? " (rerouted)" : ""));
         guidance = new Guidance(route);
-        pickedByPerson = false;
         choices = phase == Phase.GUIDING ? new ArrayList<>(java.util.Collections.singletonList(route)) : all;
         voicePlan.reset();
         error = 0;
@@ -649,10 +578,6 @@ public final class Navigator {
             return;
         }
         long now = System.currentTimeMillis();
-        if (phase != Phase.ARRIVED && now - tripSavedAt >= TRIP_SAVE_MS) {
-            restoreTries = 0;
-            saveTrip();
-        }
         if (guidance == null) {
             // still waiting for a fix to plan from
             if (phase == Phase.ROUTING && routedAt == 0 && carLat != null) {
@@ -683,16 +608,10 @@ public final class Navigator {
         changed();
     }
 
-    /** A timed refresh takes TomTom's first route, so it never runs on a route the person picked. */
-    static boolean refreshDue(boolean pickedByPerson, long sinceRouted) {
-        return !pickedByPerson && sinceRouted > REFRESH_MS;
-    }
-
     private void guide(VehicleState s, long now) {
         if (progress.arrived) {
             AppLog.i(TAG, "arrived");
             phase = Phase.ARRIVED;
-            new AppConfig(app).setNavTrip(null);
             arrivedAt = now;
             speak(app.getString(R.string.nav_say_arrived));
             showHud();
@@ -701,7 +620,7 @@ public final class Navigator {
         if (progress.offRoute && !rerouting && now - routedAt > REROUTE_MS) {
             AppLog.i(TAG, String.format(Locale.US, "off the route by %.0f m: rerouting", progress.offMeters));
             askRoute(true);
-        } else if (!rerouting && refreshDue(pickedByPerson, now - routedAt)) {
+        } else if (!rerouting && now - routedAt > REFRESH_MS) {
             askRoute(true);
         }
         NavRoute route = guidance.route();

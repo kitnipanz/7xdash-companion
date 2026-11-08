@@ -90,7 +90,6 @@ final class HudMapWindow implements Navigator.Listener {
                     return;
                 }
                 painter = new NavMapPainter(window, map, mapView, 0, 0);
-                painter.hud = true;
                 painter.applyScheme(AppConfig.NAV_MAP_DARK);
                 map.getUiSettings().setAllGesturesEnabled(false);
                 map.getUiSettings().setCompassEnabled(false);

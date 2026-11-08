@@ -174,8 +174,6 @@ public class DimOverlayService extends Service {
 
     /** The record button was added first, so this window would cover it. Put the button back on top. */
     private void raiseFloatingButton() {
-        // the Dash panel holds the floating button's buttons while it is up
-        DashPanelService.raiseAboveShade();
         if (!new AppConfig(this).isRecordingFloatingEnabled()) {
             return;
         }

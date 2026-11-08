@@ -13,14 +13,14 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
- * Battery at arrival. The phone shares a place over the car's Wi-Fi
+ * Battery at arrival (beta). The phone shares a place over the car's Wi-Fi
  * ({@link DestinationServer}); this keeps that destination, asks for the road km now and then
  * ({@link RouteLookup}) and turns battery %, range and km left into an {@link Arrival.Estimate}
  * for the Dash panel and the Home card ({@link com.kooo.evcam.nav.TripLine}), and hands the place
  * to Navigation. CarPlay keeps its route on the
  * phone, so the phone has to tell us where it is going.
  *
- * <p>Runs only while the feature's switch is on. While a
+ * <p>Runs only while Settings → Beta features is on and the feature's switch is on. While a
  * destination is set it keeps the full telemetry (GPS and float sensors) running.</p>
  */
 public final class Trip implements Telemetry.Listener {
@@ -97,12 +97,13 @@ public final class Trip implements Telemetry.Listener {
     }
 
     /**
-     * Is it allowed to run: Navigation taking places from the iPhone
+     * Is it allowed to run: beta features on and Navigation taking places from the iPhone
      * ({@link AppConfig#isNavShareEnabled}). Without a Google key the shared place still gets its
      * battery estimate here, on the Dash panel and the Home card.
      */
     public static boolean active(Context context) {
-        return new AppConfig(context).isNavShareEnabled();
+        AppConfig config = new AppConfig(context);
+        return config.isBetaFeaturesEnabled() && config.isNavShareEnabled();
     }
 
     /** Told on the main thread of each place the phone shares. */

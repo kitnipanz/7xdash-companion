@@ -31,13 +31,6 @@
             android:textAppearance="@style/TextAppearance.Cam.Title"
             android:textColor="@color/text_primary"
             android:textStyle="bold" />
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/automation_history"
-            style="@style/Widget.Cam.IconButton"
-            android:layout_width="@dimen/icon_button_size"
-            android:layout_height="@dimen/icon_button_size"
-            android:contentDescription="@string/automation_history"
-            app:icon="@drawable/ic_history" />
     </LinearLayout>
     <LinearLayout
         android:layout_width="match_parent"
@@ -60,31 +53,6 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="2dp"
             android:maxWidth="@dimen/pref_summary_max_width"
-            android:textAppearance="@style/TextAppearance.Cam.Body"
-            android:textColor="@color/text_secondary" />
-    </LinearLayout>
-    <LinearLayout
-        android:id="@+id/automation_voice"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:background="@drawable/bg_surface_card"
-        android:clickable="true"
-        android:focusable="true"
-        android:orientation="vertical"
-        android:paddingHorizontal="24dp"
-        android:paddingVertical="14dp">
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/notice_speak_title"
-            android:textAppearance="@style/TextAppearance.Cam.Row"
-            android:textColor="@color/text_primary" />
-        <TextView
-            android:id="@+id/automation_voice_state"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
             android:textAppearance="@style/TextAppearance.Cam.Body"
             android:textColor="@color/text_secondary" />
     </LinearLayout>

@@ -5,7 +5,6 @@ import android.content.Context;
 import com.kooo.evcam.R;
 import com.kooo.evcam.announce.AnnouncePick;
 import com.kooo.evcam.input.ShortcutAction;
-import com.kooo.evcam.nav.SavedPlaces;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,8 +26,6 @@ public enum AutomationAction {
     TEMP_ZONES("temp_zones", R.string.automation_do_temp_zones, R.drawable.ic_automation_temp_zones),
     /** Only in P ({@link CarControls#openGlovebox}). */
     GLOVEBOX("glovebox", R.string.automation_do_glovebox, R.drawable.ic_automation_glovebox),
-    /** Start guiding to a saved place; the choice is its id. Leaves a trip already on alone. */
-    NAVIGATE("navigate", R.string.automation_do_navigate, R.drawable.ic_navigation),
     /** Any shortcut action, by its stored key. */
     SHORTCUT("shortcut", R.string.automation_do_shortcut, R.drawable.ic_shortcut);
 
@@ -99,11 +96,6 @@ public enum AutomationAction {
                 break;
             case MOOD_COLOR:
                 addColors(context, out);
-                break;
-            case NAVIGATE:
-                for (SavedPlaces.Place place : SavedPlaces.load(context)) {
-                    out.add(new Option(Integer.toString(place.id), place.name, -1));
-                }
                 break;
             case CAR_AMBIENT:
                 addOnOff(context, out);

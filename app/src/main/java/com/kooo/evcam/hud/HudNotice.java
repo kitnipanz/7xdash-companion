@@ -35,13 +35,6 @@ public final class HudNotice {
                 clip(detail, Integer.MAX_VALUE));
     }
 
-    /** For a change the person just made and has to see: shows even with HUD notifications off. */
-    public static void postAlways(Context context, CharSequence title, CharSequence detail) {
-        if (context != null && !isBlank(title)) {
-            HudNoticeWindow.show(context, "7xDash", clip(title, Integer.MAX_VALUE), clip(detail, Integer.MAX_VALUE));
-        }
-    }
-
     public static String clip(CharSequence value, int max) {
         if (value == null) {
             return "";

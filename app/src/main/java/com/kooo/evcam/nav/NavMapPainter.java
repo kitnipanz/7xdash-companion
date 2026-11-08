@@ -83,8 +83,6 @@ final class NavMapPainter {
     private static final float ZOOM_OUT_S = 2.2f;
     /** About 30 camera moves a second: smooth, and light on the head unit (and the HUD). */
     private static final float FRAME_MIN_S = 0.03f;
-    /** How much further out the map sits with the Map zoom action. */
-    private static final float ZOOM_FAR_BIAS = -1.5f;
 
     private final MapLibreMap map;
     private final View mapView;
@@ -123,8 +121,6 @@ final class NavMapPainter {
     private boolean placed;
     /** The camera follows the car until the map is moved by hand. */
     boolean following = true;
-    /** This map is the one on the HUD: it goes by the HUD map zoom action ({@link HudMapZoom}). */
-    boolean hud;
 
     NavMapPainter(Context context, MapLibreMap map, View mapView, int cardsLeft, int cardsTop) {
         this.map = map;
@@ -340,7 +336,7 @@ final class NavMapPainter {
         goalRoute = onRoute ? s.route : null;
         goalAlong = onRoute ? s.progress.along : 0;
         goalBearing = bearing;
-        goalZoom = guiding ? guidingZoom(s) + windowZoom(width) : 15;
+        goalZoom = guiding ? zoomFor(s.carSpeedKmh, s.progress == null ? null : s.progress.toNext) + windowZoom(width) : 15;
         this.guiding = guiding;
         if (!placed) {
             // straight to the car the first time, not a fly-in from the whole world
@@ -573,18 +569,6 @@ final class NavMapPainter {
         map.moveCamera(CameraUpdateFactory.newCameraPosition(new CameraPosition.Builder()
                 .target(at).bearing(guiding ? bearing : 0).tilt(guiding ? TILT : 0).zoom(zoom - ZOOM_SHIFT)
                 .padding(0, 0, 0, 0).build()));
-    }
-
-    private float guidingZoom(Navigator.Snapshot s) {
-        AppConfig config = new AppConfig(mapView.getContext());
-        float adaptive = zoomFor(s.carSpeedKmh, s.progress == null ? null : s.progress.toNext)
-                + zoomBias(config.isNavZoomedOut());
-        return hud ? HudMapZoom.zoom(config.getNavHudZoom(), adaptive) : adaptive;
-    }
-
-    /** What the Map zoom action adds to the zoom. */
-    static float zoomBias(boolean zoomedOut) {
-        return zoomedOut ? ZOOM_FAR_BIAS : 0f;
     }
 
     /** How much further out a narrow window sits: enough road ahead shows in the floating window and on the HUD. */

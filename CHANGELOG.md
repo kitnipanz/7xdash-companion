@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.8-beta] - 2026-11-09
+
+### Test build: find the route-start freeze
+- **1.8.7 with the floating map from 1.8.0.** 1.8.0 never froze when a route started and 1.8.1 did; the floating map changed in 1.8.1. If this build does not freeze, that change is the cause.
+- Gone in this build only: the floating map's top-left resize grip and the arrival time above the battery.
+- A later stable 1.8.8 replaces it.
+
 ## [1.8.7] - 2026-11-08
 
 ### Navigation

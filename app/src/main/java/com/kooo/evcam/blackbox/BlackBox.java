@@ -197,7 +197,7 @@ public final class BlackBox {
                     + " screenOffKeepRecording=" + onOff(c.isScreenOffKeepRecording())
                     + " rearViewMirror=" + onOff(c.isRearViewEnabled())
                     + " buttonMode=" + onOff(c.isRearViewButtonMode())
-                    + " recordFloatingButton=" + onOff(c.isRecordingFloatingEnabled());
+                    + " dashPanel=" + onOff(c.isDashPanelEnabled());
         } catch (Throwable t) {
             return "(reading switches failed: " + t + ")";
         }

@@ -19,12 +19,11 @@ import com.kooo.evcam.AppConfig;
 import com.kooo.evcam.AppLog;
 import com.kooo.evcam.UserExit;
 import com.kooo.evcam.WakeUpHelper;
-import com.kooo.evcam.service.RecordingFloatingService;
 
 /**
  * Full-screen dim that sits on top of other apps the same way Super mirror does:
  * a {@code TYPE_APPLICATION_OVERLAY} window. Touches pass through by default so
- * maps still works. The floating button is raised back above this window.
+ * maps still works. The Dash panel is raised back above this window.
  */
 public class DimOverlayService extends Service {
 
@@ -103,7 +102,7 @@ public class DimOverlayService extends Service {
         }
         if (shade == null) {
             attach(config);
-            raiseFloatingButton();
+            raiseDashPanel();
         } else {
             paint(config);
         }
@@ -133,7 +132,7 @@ public class DimOverlayService extends Service {
             com.kooo.evcam.zeekr.SideViewPopupService.raiseAboveShade();
             com.kooo.evcam.zeekr.BothMirrorsService.raiseAboveShade();
             if (!DimShade.passTouches(config.isDimPassThrough(), config.getDimOpacity())) {
-                raiseFloatingButton();
+                raiseDashPanel();
             }
         } catch (Exception e) {
             AppLog.e(TAG, "屏幕遮罩添加失败", e);
@@ -153,7 +152,7 @@ public class DimOverlayService extends Service {
         try {
             windowManager.updateViewLayout(shade, layoutParams);
             if (!DimShade.passTouches(config.isDimPassThrough(), config.getDimOpacity())) {
-                raiseFloatingButton();
+                raiseDashPanel();
             }
         } catch (Exception e) {
             AppLog.e(TAG, "屏幕遮罩更新失败", e);
@@ -172,18 +171,9 @@ public class DimOverlayService extends Service {
         layoutParams = null;
     }
 
-    /** The record button was added first, so this window would cover it. Put the button back on top. */
-    private void raiseFloatingButton() {
-        if (!new AppConfig(this).isRecordingFloatingEnabled()) {
-            return;
-        }
-        Intent raise = new Intent(this, RecordingFloatingService.class);
-        raise.setAction(RecordingFloatingService.ACTION_RAISE);
-        try {
-            startService(raise);
-        } catch (Exception e) {
-            AppLog.e(TAG, "悬浮按钮置顶失败", e);
-        }
+    /** The Dash panel was added first, so this window would cover it. Put the panel back on top. */
+    private void raiseDashPanel() {
+        DashPanelService.raiseAboveShade();
     }
 
     private int color(AppConfig config) {

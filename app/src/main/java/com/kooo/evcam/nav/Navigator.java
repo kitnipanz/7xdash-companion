@@ -647,6 +647,7 @@ public final class Navigator {
         }
         HudLine line = hudLine(app, snapshot());
         AppConfig config = new AppConfig(app);
+        long t0 = android.os.SystemClock.uptimeMillis();
         if (hudPlacing) {
             hud.show(app, line != null ? line : sampleHudLine(app));
         } else if (line != null && config.isNavHudEnabled()) {
@@ -654,11 +655,14 @@ public final class Navigator {
         } else {
             hud.hide();
         }
+        long t1 = android.os.SystemClock.uptimeMillis();
         if ((hudPlacing || line != null) && config.isNavHudMapEnabled()) {
             hudMap.show(app);
         } else {
             hudMap.hide();
         }
+        com.kooo.evcam.blackbox.SlowStep.check("HUD turn card", t0, t1);
+        com.kooo.evcam.blackbox.SlowStep.check("HUD map", t1, android.os.SystemClock.uptimeMillis());
     }
 
     /** The turn card is being placed by hand: keep it on the real HUD, a sample when nothing is guided. */

@@ -30,8 +30,7 @@ import java.util.Objects;
  * <p>Drives every light in a group alike ({@link LightGroup}). Holds a group's connections while
  * the gear is known (the car is awake) and its rules are on; lets go when the gear goes unknown.
  * The mood light screen takes every link for itself ({@link #pause}) and hands them back when it
- * closes. While the turn signal is on towards a side the blind-spot assist warns about, every
- * group goes red instead ({@link BlindSpotBlink}). Gear is a core signal, read for as long as the process lives; speed is a float sensor,
+ * closes. While a side the car warns about alerts, every group blinks red ({@link BlindSpotBlink}). Gear is a core signal, read for as long as the process lives; speed is a float sensor,
  * so this registers as a full telemetry user only while a D rule of some group needs it.</p>
  *
  * <p>Main thread only.</p>
@@ -185,9 +184,9 @@ public final class GearLight implements Telemetry.Listener {
         boolean running = !paused && state.gear != null && config.isMoodLightOn() && canConnect();
         boolean warn = config.isMoodLightBlindSpotBlink();
         // null: no blink; else whether this is the red half (the other half is each group's usual colour)
-        Boolean redHalf = blink(running && BlindSpotBlink.active(warn, state));
-        boolean steadyRed = redHalf == null && running && BlindSpotBlink.steady(warn, state);
-        boolean wantsSpeed = false;
+        Boolean redHalf = blink(running && BlindSpotBlink.active(warn, state, config.getSidePopupWarningMinSpeed()));
+        // the warning alone blinks only from a speed: keep speed fresh while the car warns
+        boolean wantsSpeed = running && warn && state.blindSpotWarning != null && state.blindSpotWarning != 0;
         for (MoodLightGroups.Group group : groups.groups) {
             GearLightRules.Pick pick = group.rules.pick(state.gear, state.speedKmh, picked.get(group.id));
             wantsSpeed |= pick.wantsSpeed;
@@ -215,7 +214,7 @@ public final class GearLight implements Telemetry.Listener {
             } else {
                 heldAt.remove(group.id);
             }
-            if (steadyRed || Boolean.TRUE.equals(redHalf)) {
+            if (Boolean.TRUE.equals(redHalf)) {
                 look = BlindSpotBlink.red(pick.look);
             }
             apply(slot, look);

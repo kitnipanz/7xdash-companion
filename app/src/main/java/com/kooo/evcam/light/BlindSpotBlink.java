@@ -1,20 +1,22 @@
 package com.kooo.evcam.light;
 
+import com.kooo.evcam.telemetry.BlindSpotWatch;
 import com.kooo.evcam.telemetry.VehicleState;
 
 /**
- * The mood lights (and the car's own ambient light, when it is in a group) go red for a car in the
- * blind spot, like Tesla ({@link GearLight}): steady red while the car warns of a car on either
- * side, and while the turn signal is on towards a warned side they blink between red and their
- * usual colour. Hazards on, or the warning
+ * The mood lights (and the car's own ambient light, when it is in a group) blink red for a car in
+ * the blind spot, like Tesla ({@link GearLight}), in the same rhythm as the side view's red edge
+ * ({@link BlindSpotWatch#BLINK_HALF_MS}): red, then their usual colour, and so on. They blink while a
+ * warned side alerts ({@link BlindSpotWatch#alertSides}): the turn signal points at it, at any speed,
+ * or the car goes at least the warning speed (Settings, default 60 km/h). Hazards on, or the warning
  * gone: the lights go back to what their gear rules show.
  *
  * <p>Pure, tested in {@code BlindSpotBlinkTest}.</p>
  */
 final class BlindSpotBlink {
 
-    /** Half a blink: red this long, the usual colour this long. */
-    static final long HALF_MS = 400L;
+    /** Half a blink: red this long, the usual colour this long. Same as the red edge. */
+    static final long HALF_MS = BlindSpotWatch.BLINK_HALF_MS;
 
     static final int RED_RGB = 0xFF0000;
 
@@ -26,28 +28,16 @@ final class BlindSpotBlink {
      * @param turnSignal  {@link VehicleState#TURN_NONE} / {@code TURN_LEFT} / {@code TURN_RIGHT}; null = unknown
      * @param hazard      hazards on; null = unknown
      * @param warnedSides {@link VehicleState#blindSpotWarning}: bit {@code TURN_LEFT} and / or {@code TURN_RIGHT}; null = unknown
+     * @param speedKmh    null = unknown (does not block)
+     * @param minSpeedKmh the warning alone blinks only from this speed; 0 = any speed
      */
-    static boolean active(boolean enabled, Integer turnSignal, Boolean hazard, Integer warnedSides) {
-        if (!enabled || turnSignal == null || warnedSides == null || Boolean.TRUE.equals(hazard)) {
-            return false;
-        }
-        if (turnSignal != VehicleState.TURN_LEFT && turnSignal != VehicleState.TURN_RIGHT) {
-            return false;
-        }
-        return (warnedSides & turnSignal) != 0;
+    static boolean active(boolean enabled, Integer turnSignal, Boolean hazard, Integer warnedSides,
+                          Float speedKmh, int minSpeedKmh) {
+        return enabled && BlindSpotWatch.alertSides(warnedSides, turnSignal, hazard, speedKmh, minSpeedKmh) != 0;
     }
 
-    static boolean active(boolean enabled, VehicleState s) {
-        return active(enabled, s.turnSignal, s.hazard, s.blindSpotWarning);
-    }
-
-    /** A car on either side, hazards off: the lights stay red (they blink instead when {@link #active}). */
-    static boolean steady(boolean enabled, Boolean hazard, Integer warnedSides) {
-        return enabled && warnedSides != null && warnedSides != 0 && !Boolean.TRUE.equals(hazard);
-    }
-
-    static boolean steady(boolean enabled, VehicleState s) {
-        return steady(enabled, s.hazard, s.blindSpotWarning);
+    static boolean active(boolean enabled, VehicleState s, int minSpeedKmh) {
+        return active(enabled, s.turnSignal, s.hazard, s.blindSpotWarning, s.speedKmh, minSpeedKmh);
     }
 
     /** Red in the brightness the lights have now (full when they are off), so the warning matches the cabin. */

@@ -357,7 +357,7 @@ public class SideViewPopupView extends ViewGroup {
     /** The glow at the edge: the warning red, mostly opaque. */
     private static final int WARN_GLOW = 0xD9E53935;
     /** Half a blink of the red border. */
-    private static final long WARN_BLINK_MS = 350L;
+    private static final long WARN_BLINK_MS = com.kooo.evcam.telemetry.BlindSpotWatch.BLINK_HALF_MS;
     private static final int WARN_COLOR = 0xFFE53935;
     private static final float SLIDE_DP = 56f;
     private static final long SLIDE_MS = 220L;

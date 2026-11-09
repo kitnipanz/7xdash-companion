@@ -13,7 +13,7 @@
     <string name="set_section_recording">การบันทึก</string>
     <string name="set_section_storage">ที่เก็บข้อมูล</string>
     <string name="set_section_rearview">กระจกมองหลังอัจฉริยะ</string>
-    <string name="set_section_floating">ปุ่มลอย</string>
+    <string name="set_section_floating">หน้าต่างลอย</string>
     <string name="set_section_dim">หรี่หน้าจอ</string>
     <string name="set_section_side_mirror">กระจกข้าง</string>
     <string name="set_section_sticker">สติกเกอร์อัจฉริยะ</string>
@@ -87,26 +87,12 @@
     <string name="mirror_resume_failed">เปิดกล้องไม่ได้: %1$s</string>
     <string name="mirror_dock_label">กระจกมองหลังอัจฉริยะ</string>
     <string name="rearview_guide_page">หน้าคู่มือ %1$d จาก %2$d</string>
-    <string name="set_floating_alpha_title">ความทึบของปุ่ม</string>
-    <string name="set_recording_floating_summary">แสดงสถานะการบันทึกในปุ่มลอย ตั้งค่าการแตะและการกดค้างได้ด้านล่าง</string>
-    <string name="set_button_size_title">ขนาดปุ่ม</string>
-    <string name="set_button_text_size_title">ขนาดตัวอักษรเวลา</string>
-    <string name="set_floating_tap_title">แตะ</string>
-    <string name="set_floating_long_press_title">กดค้าง</string>
-    <string name="set_floating_lock_title">ล็อกตำแหน่ง</string>
-    <string name="set_floating_lock_summary">ล็อกปุ่มไว้ที่ตำแหน่งปัจจุบัน การแตะและกดค้างยังใช้ได้</string>
-    <string name="set_floating_duration_title">แสดงเวลาบันทึก</string>
-    <string name="set_floating_duration_summary">แสดงเวลาที่ผ่านไปข้างปุ่มขณะบันทึก</string>
-    <string name="floating_action_open_app">เปิดแอป</string>
-    <string name="floating_action_toggle_recording">เริ่ม / หยุดบันทึก</string>
-    <string name="floating_action_take_photo">ถ่ายภาพ</string>
-    <string name="floating_action_toggle_mirror">เปิด / ปิดกระจกมองหลังอัจฉริยะ</string>
     <string name="set_recording_stats_title">แสดงสถานะการบันทึก</string>
     <string name="set_recording_stats_summary">แสดงเวลาที่ผ่านไปและหมายเลขคลิปปัจจุบันที่มุมจอขณะบันทึก</string>
-    <string name="set_reset_floating_title">รีเซ็ตปุ่มลอย</string>
-    <string name="set_reset_floating_summary">คืนค่าตำแหน่ง ขนาดปุ่ม และขนาดตัวอักษรเวลาเป็นค่าเริ่มต้น</string>
+    <string name="set_reset_floating_title">รีเซ็ตหน้าปัดลอย</string>
+    <string name="set_reset_floating_summary">คืนขนาดและตำแหน่งของหน้าปัดลอยเป็นค่าเริ่มต้น</string>
     <string name="set_auto_start_title">เริ่มเมื่อเปิดเครื่อง</string>
-    <string name="set_auto_start_summary">ให้แอปทำงานอยู่เบื้องหลัง หลังหัวเครื่องรีสตาร์ทหรือระบบปิดแอป จะเปิดแอปใหม่และคืนค่ากระจกมองหลังอัจฉริยะ ปุ่มลอย และการบันทึกอัตโนมัติถ้าเคยเปิดไว้ เมื่อปิด จะไม่เปิดแอปใหม่</string>
+    <string name="set_auto_start_summary">ให้แอปทำงานอยู่เบื้องหลัง หลังหัวเครื่องรีสตาร์ทหรือระบบปิดแอป จะเปิดแอปใหม่และคืนค่ากระจกมองหลังอัจฉริยะ หน้าปัดลอย และการบันทึกอัตโนมัติถ้าเคยเปิดไว้ เมื่อปิด จะไม่เปิดแอปใหม่</string>
     <string name="set_auto_record_title">บันทึกเมื่อเปิดแอป</string>
     <string name="set_auto_record_summary">เริ่มบันทึกเมื่อเปิดแอป และบันทึกต่อเมื่อจอเปิดหากหยุดไปเพราะจอดับ จะไม่เริ่มใหม่ถ้าคุณหยุดเอง</string>
     <string name="set_screen_off_title">บันทึกขณะจอดับ (กันเครื่องหลับ)</string>
@@ -299,7 +285,7 @@
     <string name="set_mood_light_title">ไฟบรรยากาศ</string>
     <string name="set_mood_light_summary">ตั้งสีไฟ RGB บลูทูธราคาถูก เช่น รุ่น ELK-BLEDOM หรือ Happy Lighting</string>
     <string name="set_mood_light_blind_spot_title">ไฟเป็นสีแดงเมื่อมีรถในจุดบอด</string>
-    <string name="set_mood_light_blind_spot_summary">แบบ Tesla: เมื่อรถเตือนว่ามีรถอยู่ในจุดบอด ไฟบรรยากาศจะเป็นสีแดง เมื่อเปิดไฟเลี้ยวไปทางนั้นจะกะพริบสลับระหว่างสีแดงกับสีเดิมของไฟ แล้วกลับเป็นสีเดิมเมื่อหมดเตือน ใส่ ไฟบรรยากาศในรถ ไว้ในกลุ่มเพื่อให้ไฟในรถเปลี่ยนด้วย</string>
+    <string name="set_mood_light_blind_spot_summary">แบบ Tesla: เมื่อรถเตือนว่ามีรถอยู่ในจุดบอด ไฟบรรยากาศจะกะพริบสลับระหว่างสีแดงกับสีเดิมของไฟ จังหวะเดียวกับขอบสีแดงของภาพด้านข้าง ถ้ามีแค่การเตือนจะกะพริบตั้งแต่ความเร็วที่ตั้งไว้ในกระจกข้าง (ค่าเริ่มต้น 60 กม./ชม.) ถ้าเปิดไฟเลี้ยวไปทางนั้นจะกะพริบทุกความเร็ว ใส่ ไฟบรรยากาศในรถ ไว้ในกลุ่มเพื่อให้ไฟในรถเปลี่ยนด้วย</string>
     <string name="mood_light_subtitle">ปิดแอปมือถือของไฟก่อน ไฟเชื่อมต่อได้ทีละเครื่อง</string>
     <string name="mood_light_pick">สแกน แล้วแตะเชื่อมต่อที่ไฟของคุณ</string>
     <string name="mood_light_none">ยังไม่มีไฟ\n1. เสียบไฟ และปิดแอปมือถือของไฟ\n2. แตะสแกน\n3. แตะเชื่อมต่อที่ไฟของคุณ</string>
@@ -696,7 +682,7 @@
     <string name="set_side_popup_size_summary">ได้สูงสุดครึ่งความกว้างจอ ฝั่งขวาขึ้นชิดขอบขวา ฝั่งซ้ายขึ้นแถวกลางจอ</string>
     <string name="set_side_popup_vertical_title">ความสูงบนจอ (%)</string>
     <string name="set_side_popup_vertical_summary">0 คือด้านบน 100 คือด้านล่าง</string>
-    <string name="msg_floating_reset">รีเซ็ตปุ่มลอยแล้ว</string>
+    <string name="msg_floating_reset">รีเซ็ตหน้าปัดลอยแล้ว</string>
     <string name="msg_adjust_opened">เปิดหน้าต่างปรับภาพแล้ว กลับไปหน้าจอหลักเพื่อดูผล</string>
     <string name="msg_adjust_reset">รีเซ็ตการตั้งค่าภาพเป็นค่าเริ่มต้นแล้ว</string>
     <string name="info_mapping_manual">ตั้งการจับคู่กล้องเอง</string>
@@ -1351,7 +1337,7 @@
     <string name="dev_perm_all_files">เข้าถึงไฟล์ทั้งหมด</string>
     <string name="dev_perm_all_files_why">ใช้อ่านและเขียนไฟล์บนไดรฟ์ USB</string>
     <string name="dev_perm_overlay">แสดงทับแอปอื่น</string>
-    <string name="dev_perm_overlay_why">ใช้โดยกระจกมองหลังอัจฉริยะ ปุ่มลอย และหน้าต่างปรับภาพ</string>
+    <string name="dev_perm_overlay_why">ใช้โดยกระจกมองหลังอัจฉริยะ หน้าปัดลอย และหน้าต่างปรับภาพ</string>
     <string name="dev_perm_accessibility">บริการการช่วยเหลือพิเศษ</string>
     <string name="dev_perm_accessibility_why">ใช้โดย เริ่มเมื่อเปิดเครื่อง</string>
     <string name="dev_perm_usage_access">สิทธิ์เข้าถึงการใช้งาน</string>
@@ -1678,7 +1664,7 @@
     <string name="whats_new_none">ไม่มีบันทึกสำหรับเวอร์ชันนี้</string>
     <string name="home_card_dash_panel">หน้าปัดลอย</string>
     <string name="home_card_dash_panel_sub">ความเร็ว เกียร์ และปุ่ม ลอยเหนือทุกแอป</string>
-    <string name="set_dash_panel_summary">การ์ดเล็กที่ลอยเหนือแผนที่ เพลง หรือแอปอื่น: ความเร็ว เกียร์ ไฟเลี้ยว นาฬิกา และสถานะการบันทึกของ 7xDash พร้อมปุ่มถ่ายรูปรอบคัน บันทึกคลิปทันที กระจกมองหลัง และเปิด 7xDash ลากเพื่อย้าย บีบเพื่อปรับขนาด ดันไปขอบเพื่อเก็บ</string>
+    <string name="set_dash_panel_summary">การ์ดเล็กที่ลอยเหนือแผนที่ เพลง หรือแอปอื่น: ความเร็ว เกียร์ ไฟเลี้ยว นาฬิกา และสถานะการบันทึกของ 7xDash พร้อมปุ่มถ่ายรูปรอบคัน บันทึกคลิปทันที กระจกมองหลัง และเปิด 7xDash ด้านขวามีปุ่มบันทึก ปุ่มหรี่จอ (แตะเพื่อเปิดหรือปิด เลื่อนเพื่อปรับความมืด) และปุ่มปิดแอป (แตะสองครั้ง) ลากเพื่อย้าย บีบเพื่อปรับขนาด ดันไปขอบเพื่อเก็บ</string>
     <string name="dash_panel_need_overlay">อนุญาตให้ 7xDash แสดงทับแอปอื่นก่อน</string>
     <string name="shortcut_action_dash_panel">เปิด / ปิดหน้าปัดลอย</string>
     <!-- Battery at arrival (beta) -->
@@ -1809,7 +1795,9 @@
     <string name="set_bsd_log_send_title">ส่งล็อกจุดบอดเข้ามือถือ</string>
     <string name="set_bsd_log_send_summary">ส่งไฟล์ล็อกล่าสุดจาก แจ้งสัญญาณจุดบอด เป็นไฟล์ข้อความผ่าน Wi-Fi ด้วย QR เปิดการแจ้งไว้ ขับให้มีรถผ่านทั้งสองฝั่ง แล้วค่อยส่ง</string>
     <string name="set_side_popup_warning_title">แสดงภาพด้านข้างเมื่อรถเตือน</string>
-    <string name="set_side_popup_warning_summary">เมื่อไฟเตือนที่กระจกมองข้างติด (หรือมีเตือนรถตัดผ่าน) ภาพกล้องด้านนั้นจะขึ้นเอง และขอบภาพฝั่งนั้นจะกะพริบสีแดงแบบ Tesla แม้ไม่ได้เปิดไฟเลี้ยว ถ้าเปิดไฟเลี้ยวจะยึดตามไฟเลี้ยว ไม่ทำงานในเกียร์ R</string>
+    <string name="set_side_popup_warning_summary">เมื่อไฟเตือนที่กระจกมองข้างติด (หรือมีเตือนรถตัดผ่าน) ภาพกล้องด้านนั้นจะขึ้นเอง และขอบภาพฝั่งนั้นจะกะพริบสีแดงแบบ Tesla แม้ไม่ได้เปิดไฟเลี้ยว ตั้งแต่ความเร็วด้านล่าง ถ้าเปิดไฟเลี้ยวไปทางฝั่งที่มีเตือนจะแสดงทุกความเร็ว ถ้าเปิดไฟเลี้ยวจะยึดตามไฟเลี้ยว ไม่ทำงานในเกียร์ R</string>
+    <string name="set_side_popup_warning_speed_title">เตือนตั้งแต่ความเร็ว (กม./ชม.)</string>
+    <string name="set_side_popup_warning_speed_summary">ต่ำกว่านี้ การเตือนอย่างเดียวจะไม่เปิดภาพด้านข้างและไม่กะพริบไฟ เพื่อไม่ให้เตือนบ่อยในเมือง ถ้าเปิดไฟเลี้ยวไปทางฝั่งที่มีเตือนจะแสดงเสมอ 0 = ทุกความเร็ว</string>
     <string name="set_signal_recorder_title">บันทึกสัญญาณรถทั้งหมดลง USB (ทดลอง)</string>
     <string name="set_signal_recorder_summary">ขณะหน้าจอเปิดและเสียบแฟลชไดรฟ์อยู่ จะเขียนทุกสัญญาณที่รถให้มาลงโฟลเดอร์ 7xDash/signals ในแฟลชไดรฟ์ ตอนเริ่มจดทุกสัญญาณพร้อมค่า แล้วจดทุกครั้งที่ค่าเปลี่ยนพร้อมเวลา เกียร์ ความเร็ว และไฟเลี้ยว เปิดจอแต่ละครั้งได้ไฟล์ใหม่ ใช้เสร็จแล้วปิดด้วย เพราะทำให้ระบบรถทำงานหนักขึ้น</string>
     <string name="set_signal_snapshot_title">บันทึกสัญญาณรถทั้งหมดลง USB ตอนนี้</string>

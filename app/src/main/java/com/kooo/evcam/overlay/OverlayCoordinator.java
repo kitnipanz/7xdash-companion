@@ -1,20 +1,18 @@
 package com.kooo.evcam.overlay;
 
 import android.content.Context;
-import android.content.Intent;
 import android.os.Handler;
 import android.os.Looper;
 
 import com.kooo.evcam.AppConfig;
 import com.kooo.evcam.AppLog;
 import com.kooo.evcam.WakeUpHelper;
-import com.kooo.evcam.service.RecordingFloatingService;
 import com.kooo.evcam.zeekr.BothMirrorsService;
 import com.kooo.evcam.zeekr.RearViewMirrorService;
 import com.kooo.evcam.zeekr.SideViewPopupService;
 
 /**
- * 两个悬浮窗（超级后视镜、录制悬浮按钮）「该不该开、能不能开、什么时候开」。
+ * 悬浮窗（超级后视镜、Dash panel 等）「该不该开、能不能开、什么时候开」。
  *
  * <h3>为什么要有这么个地方</h3>
  *
@@ -50,9 +48,7 @@ public final class OverlayCoordinator {
     /**
      * 按设置把该开的悬浮窗都开起来。
      *
-     * <p>悬浮按钮的录制状态不从这里推：它显示出来时自己问 {@code RecordingCoordinator}，之后听协调器的广播。
-     * 以前这里隔 500 ms 推一次主界面记的状态 —— 主界面刚重建、还没对上录制状态时推的是「没在录」，
-     * 录着像按钮却是灰的（2.10.0 实车，2026-10-08）。</p>
+     * <p>Dash panel 的录制状态不从这里推：它每半秒自己问 {@code RecordingCoordinator}。</p>
      */
     public static void restoreOnLaunch(Context context) {
         AppConfig config = new AppConfig(context);
@@ -95,6 +91,14 @@ public final class OverlayCoordinator {
             }, REAR_VIEW_DELAY_MS);
         }
 
+        if (config.isRecordingFloatingEnabled()) {
+            // 1.9: the floating button is gone, its buttons are on the Dash panel. Whoever had the
+            // floating button on gets the Dash panel instead, once.
+            config.setRecordingFloatingEnabled(false);
+            config.setDashPanelEnabled(true);
+            AppLog.i(TAG, "Floating button setting moved to the Dash panel");
+        }
+
         if (config.isDashPanelEnabled() && allowed) {
             DashPanelService.show(context);
             AppLog.d(TAG, "Dash panel shown from settings");
@@ -104,39 +108,16 @@ public final class OverlayCoordinator {
             MacroPadService.show(context);
             AppLog.d(TAG, "Macro pad shown from settings");
         }
-
-        if (config.isRecordingFloatingEnabled() && allowed) {
-            sendToRecordingFloating(context, RecordingFloatingService.ACTION_SHOW);
-            AppLog.d(TAG, "悬浮按钮已启动");
-        }
     }
 
     // ------------------------------------------------------------------ 开关
 
     /**
-     * 开 / 关悬浮按钮。
-     *
-     * <p>0.45 起只有这一个按钮：原来那个只管「打开应用」的已经并进来，
-     * 成了它默认的单击动作。</p>
+     * Dash panel on / off. It also carries what the floating button had (record, dim, quit).
      *
      * @return 是否真的按要求生效；没有悬浮窗权限时返回 {@code false}，
      *         调用方应当把开关保持在原位而不是拨上去
      */
-    public static boolean setRecordButtonEnabled(Context context, boolean enabled) {
-        if (enabled && !canShowOverlay(context)) {
-            return false;
-        }
-        new AppConfig(context).setRecordingFloatingEnabled(enabled);
-        sendToRecordingFloating(context, enabled
-                ? RecordingFloatingService.ACTION_SHOW
-                : RecordingFloatingService.ACTION_HIDE);
-        return true;
-    }
-
-    /**
-     * 开 / 关全屏遮罩。返回值含义同 {@link #setRecordButtonEnabled}。
-     */
-    /** Dash panel on / off. Same return value as {@link #setRecordButtonEnabled}. */
     public static boolean setDashPanelEnabled(Context context, boolean enabled) {
         if (enabled && !canShowOverlay(context)) {
             return false;
@@ -150,7 +131,7 @@ public final class OverlayCoordinator {
         return true;
     }
 
-    /** Macro pad on / off. Same return value as {@link #setRecordButtonEnabled}. */
+    /** Macro pad on / off. Same return value as {@link #setDashPanelEnabled}. */
     public static boolean setMacroPadEnabled(Context context, boolean enabled) {
         if (enabled && !canShowOverlay(context)) {
             return false;
@@ -164,6 +145,7 @@ public final class OverlayCoordinator {
         return true;
     }
 
+    /** 开 / 关全屏遮罩。返回值含义同 {@link #setDashPanelEnabled}。Dash panel 的月亮自己每半秒读一次。 */
     public static boolean setDimOverlayEnabled(Context context, boolean enabled) {
         if (enabled && !canShowOverlay(context)) {
             return false;
@@ -175,21 +157,11 @@ public final class OverlayCoordinator {
         } else {
             DimOverlayService.hide(context);
         }
-        // 快捷键、设置页也会开关遮罩：让月亮按钮跟着变
-        if (config.isRecordingFloatingEnabled()) {
-            Intent refresh = new Intent(context, RecordingFloatingService.class);
-            refresh.setAction(RecordingFloatingService.ACTION_UPDATE_STYLE);
-            try {
-                context.startService(refresh);
-            } catch (Exception e) {
-                AppLog.e("OverlayCoordinator", "月亮按钮刷新失败", e);
-            }
-        }
         return true;
     }
 
     /**
-     * 开 / 关超级后视镜。返回值含义同 {@link #setRecordButtonEnabled}。
+     * 开 / 关超级后视镜。返回值含义同 {@link #setDashPanelEnabled}。
      *
      * <p>这里的权限检查是补上的 —— 原来没有，没授权时开关会拨上去而窗口不出现。</p>
      */
@@ -210,7 +182,7 @@ public final class OverlayCoordinator {
     }
 
     /**
-     * 开 / 关左右侧视。返回值含义同 {@link #setRecordButtonEnabled}。
+     * 开 / 关左右侧视。返回值含义同 {@link #setDashPanelEnabled}。
      *
      * <p>和超级后视镜共用一路相机输出，开这边就关掉后视镜。</p>
      */
@@ -232,7 +204,7 @@ public final class OverlayCoordinator {
     }
 
     /**
-     * 开 / 关座舱乘客悬浮窗。返回值含义同 {@link #setRecordButtonEnabled}。
+     * 开 / 关座舱乘客悬浮窗。返回值含义同 {@link #setDashPanelEnabled}。
      *
      * <p>画面是前座舱，窗口和超级后视镜同一类：可拖、可改大小。用的是前座舱自己的附加输出。</p>
      */
@@ -253,7 +225,7 @@ public final class OverlayCoordinator {
         return true;
     }
 
-    /** 开 / 关打转向灯弹侧视。返回值含义同 {@link #setRecordButtonEnabled}。 */
+    /** 开 / 关打转向灯弹侧视。返回值含义同 {@link #setDashPanelEnabled}。 */
     public static boolean setSidePopupEnabled(Context context, boolean enabled) {
         if (enabled && !canShowOverlay(context)) {
             return false;
@@ -270,7 +242,7 @@ public final class OverlayCoordinator {
     /**
      * 主界面销毁时的清理。
      *
-     * <p>什么都不用停：后视镜和悬浮按钮是<b>脱离主界面用的</b>，
+     * <p>什么都不用停：后视镜和 Dash panel 是<b>脱离主界面用的</b>，
      * 主界面没了它们还该在 —— 那本来就是它们存在的理由。</p>
      */
     public static void onActivityDestroyed(Context context) {
@@ -278,12 +250,6 @@ public final class OverlayCoordinator {
     }
 
     // ------------------------------------------------------------------
-
-    private static void sendToRecordingFloating(Context context, String action) {
-        Intent intent = new Intent(context, RecordingFloatingService.class);
-        intent.setAction(action);
-        context.startService(intent);
-    }
 
     private static Handler main() {
         return new Handler(Looper.getMainLooper());

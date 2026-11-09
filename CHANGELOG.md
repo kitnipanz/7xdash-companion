@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.8.10-beta] - 2026-11-09
+
+A test build to find the navigation freeze. The freeze is in 1.8.0 too (1.8.9-beta is the 1.8.0 app), so this build records what the screen is stuck on. After a freeze, send the black box export.
+
+### Navigation
+- **Freeze tracing.** When the screen is stuck for more than 2 seconds, the black box records the code it is stuck in. At start it also saves Android's own report if the app was closed for not responding. Showing the HUD turn card, the HUD map and drawing the map are timed; anything over 150 ms is written down with the route size.
+- **No HUD search when guiding starts.** Finding the HUD screen can take 2 seconds. It is done once in the background when the app starts, then remembered.
+
+### Blind spot
+- **Warning alone from 60 km/h.** Without a turn signal, the car's warning opens the side camera and blinks the lights only from 60 km/h, so city traffic stops setting it off. Change the speed in Settings → Side mirror.
+- **Signalling toward a warned side always shows it**, at any speed, with the red edge blinking.
+- **The mood lights blink in the same rhythm as the red edge**, whenever the warning shows, instead of staying steady red.
+
+### Dash panel
+- **The floating button is now part of the Dash panel.** Record, the dim moon (tap to turn on or off, slide to change darkness) and Quit (tap twice) sit in a column on the panel's right edge.
+
 ## [1.8.9-beta] - 2026-11-09
 
 ### Blind spot

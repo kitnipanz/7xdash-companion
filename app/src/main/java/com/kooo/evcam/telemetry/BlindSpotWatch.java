@@ -22,6 +22,28 @@ import com.kooo.evcam.blackbox.BlackBox;
 public final class BlindSpotWatch implements Telemetry.Listener {
 
     static final long POLL_MS = 200L;
+    /** Half a blink of every blind-spot alert: the side view's red edge and the lights, so they blink together. */
+    public static final long BLINK_HALF_MS = 350L;
+
+    /**
+     * Warned sides that alert now (bits {@link VehicleState#TURN_LEFT} / {@link VehicleState#TURN_RIGHT}).
+     * Hazards on: none. A side alerts when the turn signal points at it, at any speed, or when the car
+     * goes at least {@code minSpeedKmh} (0 = any speed; an unknown speed does not block), so city
+     * traffic alone does not keep warning. Pure, see the test.
+     */
+    public static int alertSides(Integer warned, Integer turnSignal, Boolean hazard, Float speedKmh, int minSpeedKmh) {
+        if (warned == null || warned == 0 || Boolean.TRUE.equals(hazard)) {
+            return 0;
+        }
+        int sides = warned & (VehicleState.TURN_LEFT | VehicleState.TURN_RIGHT);
+        boolean fastEnough = minSpeedKmh <= 0 || speedKmh == null || speedKmh >= minSpeedKmh;
+        if (fastEnough) {
+            return sides;
+        }
+        boolean signalling = turnSignal != null
+                && (turnSignal == VehicleState.TURN_LEFT || turnSignal == VehicleState.TURN_RIGHT);
+        return signalling ? sides & turnSignal : 0;
+    }
     /** BCM_DOOR_OPEN_WARN_LEFT_INDCN / RIGHT_INDCN (IDoor): the warning lamps in the mirrors. Read 0 at rest (2026-11-02 recording). */
     public static final int MIRROR_LEFT = 0xA0005002;
     public static final int MIRROR_RIGHT = 0xA0005003;

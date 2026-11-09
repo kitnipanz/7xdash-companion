@@ -145,6 +145,10 @@ public class AppConfig {
     private static final String KEY_SIDE_POPUP_STYLE = "side_popup_style";
     private static final String KEY_SIDE_POPUP_DOOR = "side_popup_door";
     private static final String KEY_SIDE_POPUP_WARNING = "side_popup_warning";
+    private static final String KEY_SIDE_POPUP_WARNING_MIN_SPEED = "side_popup_warning_min_speed";
+    /** The car's warning alone (no turn signal) shows the side and blinks the lights only from this speed, km/h. */
+    public static final int SIDE_POPUP_DEFAULT_WARNING_MIN_SPEED = 60;
+    public static final int SIDE_POPUP_MAX_WARNING_MIN_SPEED = 120;
     private static final String KEY_BSD_SNIFFER = "bsd_sniffer";
     private static final String KEY_SIGNAL_RECORDER = "signal_recorder";
     private static final String KEY_BSD_LEFT_ID = "bsd_warn_left_id";
@@ -2043,6 +2047,17 @@ public class AppConfig {
 
     public void setSidePopupOnWarning(boolean on) {
         prefs.edit().putBoolean(KEY_SIDE_POPUP_WARNING, on).apply();
+    }
+
+    /** Below this speed (km/h) the car's warning alone does not show the side or blink the lights; 0 = any speed. */
+    public int getSidePopupWarningMinSpeed() {
+        int v = prefs.getInt(KEY_SIDE_POPUP_WARNING_MIN_SPEED, SIDE_POPUP_DEFAULT_WARNING_MIN_SPEED);
+        return Math.max(0, Math.min(SIDE_POPUP_MAX_WARNING_MIN_SPEED, v));
+    }
+
+    public void setSidePopupWarningMinSpeed(int kmh) {
+        prefs.edit().putInt(KEY_SIDE_POPUP_WARNING_MIN_SPEED,
+                Math.max(0, Math.min(SIDE_POPUP_MAX_WARNING_MIN_SPEED, kmh))).apply();
     }
 
     public boolean isSidePopupOnDoor() {

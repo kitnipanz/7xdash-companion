@@ -41,6 +41,10 @@ public class ZeekrShortcutApp extends Application {
         com.kooo.evcam.analytics.Analytics.start(this);
         // Memory every 5 min (app storage + USB), for spotting a leak over days
         com.kooo.evcam.blackbox.MemoryLog.start(this);
+        // Screen freezes: the main thread's stack to the black box when it is stuck over 2 s
+        com.kooo.evcam.blackbox.MainThreadWatch.install(this);
+        // The first look for the HUD can take 2 s: done now off the main thread, not when guiding starts
+        com.kooo.evcam.zeekr.HudDisplay.warmUp(this);
         com.kooo.evcam.settings.DeveloperMode.init(this);
         // U 盘挂上、卸下、异常掉线进黑匣子（2026-09-26 录像盘掉线，系统那边发生了什么一行都没记下）
         com.kooo.evcam.blackbox.VolumeEvents.register(this);

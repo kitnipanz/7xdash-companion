@@ -1,5 +1,6 @@
 package com.kooo.evcam.telemetry;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -56,5 +57,24 @@ public class BlindSpotWatchTest {
         assertTrue(BlindSpotWatch.lcmaWarns(VehicleState.TURN_LEFT, VehicleState.TURN_LEFT));
         assertFalse(BlindSpotWatch.lcmaWarns(VehicleState.TURN_LEFT, VehicleState.TURN_RIGHT));
         assertTrue(BlindSpotWatch.lcmaWarns(VehicleState.TURN_LEFT | VehicleState.TURN_RIGHT, VehicleState.TURN_RIGHT));
+    }
+
+    @Test
+    public void alertSidesNeedSpeedOrSignal() {
+        int L = VehicleState.TURN_LEFT, R = VehicleState.TURN_RIGHT;
+        // fast enough: every warned side
+        assertEquals(L | R, BlindSpotWatch.alertSides(L | R, 0, false, 70f, 60));
+        // slow, no signal: none
+        assertEquals(0, BlindSpotWatch.alertSides(L, 0, false, 30f, 60));
+        // slow, signalling toward it: that side only
+        assertEquals(R, BlindSpotWatch.alertSides(L | R, R, false, 30f, 60));
+        assertEquals(0, BlindSpotWatch.alertSides(L, R, false, 30f, 60));
+        // unknown speed or min 0 does not block
+        assertEquals(L, BlindSpotWatch.alertSides(L, 0, false, null, 60));
+        assertEquals(L, BlindSpotWatch.alertSides(L, 0, false, 5f, 0));
+        // hazards or nothing warned
+        assertEquals(0, BlindSpotWatch.alertSides(L, L, true, 70f, 60));
+        assertEquals(0, BlindSpotWatch.alertSides(null, L, false, 70f, 60));
+        assertEquals(0, BlindSpotWatch.alertSides(0, L, false, 70f, 60));
     }
 }

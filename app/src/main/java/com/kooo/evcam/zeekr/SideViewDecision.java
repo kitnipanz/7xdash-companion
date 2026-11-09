@@ -13,12 +13,14 @@ import com.kooo.evcam.telemetry.VehicleState;
  *       泊车辅助开着，任何一样成立都不弹；已经弹着的立刻收。设置「盖在原厂画面上」（默认开）
  *       时只有 R 档拦。</li>
  *   <li>车速低于设定值不弹（默认 30 km/h：再慢原厂自己会弹侧方小窗）；车速读不到不拦。
+ *       Signalling toward a side the car warns about shows it at any speed.
  *       只在「还没弹」时看车速 —— 弹出来之后减速不收，免得在门槛上来回闪。</li>
  *   <li>灯一灭就收。</li>
  *   <li><b>开门看后方</b>（设置开着时）：停着（P 档或车速低于 {@link #DOOR_MAX_KMH}）、没打灯，
  *       哪一侧有门开着就弹那一侧，看后面来的车和自行车；门都关上就收。打灯优先。</li>
  *   <li><b>Car warns</b> (setting on): no turn signal, and the car warns of a car on one side
- *       ({@link VehicleState#blindSpotWarning}): show that side. Turn signal first, then the
+ *       ({@link VehicleState#blindSpotWarning}): show that side, from {@link Input#warningMinSpeedKmh}
+ *       (default 60 km/h) so city traffic does not keep opening it. Turn signal first, then the
  *       warning, then an open door.</li>
  * </ul>
  *
@@ -56,6 +58,8 @@ public final class SideViewDecision {
         public Integer doorsOpen;
         /** Show the warned side without a turn signal (setting). */
         public boolean warningCamera;
+        /** The warning alone shows a side only from this speed, km/h; 0 = any speed. Unknown speed does not block. */
+        public int warningMinSpeedKmh;
         /** {@link VehicleState#blindSpotWarning}: bits TURN_LEFT / TURN_RIGHT; null unknown. */
         public Integer warnedSides;
         /** 此刻已经弹着的是哪一路（{@link LaneCycle#LEFT} / {@link LaneCycle#RIGHT}），没弹是 {@link #NONE}。 */
@@ -88,6 +92,11 @@ public final class SideViewDecision {
             // 已经弹着同一边：不再看车速
             return lane;
         }
+        // Signalling toward a side the car warns about: show it at any speed
+        int bit = lane == LaneCycle.LEFT ? VehicleState.TURN_LEFT : VehicleState.TURN_RIGHT;
+        if (in.warnedSides != null && (in.warnedSides & bit) != 0) {
+            return lane;
+        }
         if (in.minSpeedKmh > 0 && in.speedKmh != null && in.speedKmh < in.minSpeedKmh) {
             return door;
         }
@@ -101,10 +110,19 @@ public final class SideViewDecision {
         }
         boolean left = (in.warnedSides & VehicleState.TURN_LEFT) != 0;
         boolean right = (in.warnedSides & VehicleState.TURN_RIGHT) != 0;
+        int lane;
         if (left && right) {
-            return in.showing == LaneCycle.RIGHT ? LaneCycle.RIGHT : LaneCycle.LEFT;
+            lane = in.showing == LaneCycle.RIGHT ? LaneCycle.RIGHT : LaneCycle.LEFT;
+        } else {
+            lane = left ? LaneCycle.LEFT : LaneCycle.RIGHT;
         }
-        return left ? LaneCycle.LEFT : LaneCycle.RIGHT;
+        // Too slow (city traffic): no pop-up for the warning alone. Already showing that side: keep it,
+        // so it does not flicker around the threshold.
+        if (in.showing != lane && in.warningMinSpeedKmh > 0 && in.speedKmh != null
+                && in.speedKmh < in.warningMinSpeedKmh) {
+            return NONE;
+        }
+        return lane;
     }
 
     /** 停着、有门开着时该弹哪一侧；不弹是 {@link #NONE}。两侧都开着时留在已经弹着的那一侧，否则左侧。 */

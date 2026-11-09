@@ -66,11 +66,48 @@ public final class HudDisplay {
         return byId >= 0 ? byId : bySize;
     }
 
+    /** The HUD's id from the last full look, so the next look is one call; -1 before or when none. */
+    private static volatile int lastId = -1;
+
+    /**
+     * The HUD, or null. Looking at every screen takes up to 2 seconds on some head units, and it
+     * ran on the main thread when guiding started: the screen froze. Once found, the same screen is
+     * asked for directly; only if it went away are all screens looked at again.
+     */
     public static Display find(Context context) {
         DisplayManager manager = (DisplayManager) context.getSystemService(Context.DISPLAY_SERVICE);
         if (manager == null) {
             return null;
         }
+        int known = lastId;
+        if (known >= 0) {
+            Display display = manager.getDisplay(known);
+            if (display != null && display.isValid()) {
+                return display;
+            }
+            lastId = -1;
+        }
+        Display found = lookEverywhere(manager);
+        if (found != null) {
+            lastId = found.getDisplayId();
+        }
+        return found;
+    }
+
+    /** App start: the first, slow look, on its own thread, so nothing on the main thread waits for it later. */
+    public static void warmUp(Context context) {
+        Context app = context.getApplicationContext();
+        Thread look = new Thread(() -> {
+            long t0 = android.os.SystemClock.uptimeMillis();
+            Display d = find(app);
+            com.kooo.evcam.blackbox.BlackBox.note("HUD look: " + (d == null ? "none" : "display " + d.getDisplayId())
+                    + " in " + (android.os.SystemClock.uptimeMillis() - t0) + " ms");
+        }, "hud-look");
+        look.setDaemon(true);
+        look.start();
+    }
+
+    private static Display lookEverywhere(DisplayManager manager) {
         java.util.Map<Integer, Display> open = new java.util.LinkedHashMap<>();
         addAll(open, manager.getDisplays());
         addAll(open, manager.getDisplays(DisplayManager.DISPLAY_CATEGORY_PRESENTATION));

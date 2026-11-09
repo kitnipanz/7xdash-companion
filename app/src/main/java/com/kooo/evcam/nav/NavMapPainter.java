@@ -264,6 +264,13 @@ final class NavMapPainter {
     }
 
     void draw(Navigator.Snapshot s) {
+        long t0 = android.os.SystemClock.uptimeMillis();
+        drawTimed(s);
+        com.kooo.evcam.blackbox.SlowStep.check("map draw (" + s.phase + ", "
+                + (s.route == null ? 0 : s.route.pointCount()) + " route points)", t0, android.os.SystemClock.uptimeMillis());
+    }
+
+    private void drawTimed(Navigator.Snapshot s) {
         last = s;
         if (style == null) {
             return;

@@ -28,8 +28,6 @@ import com.kooo.evcam.StorageHelper;
 import com.kooo.evcam.WakeUpHelper;
 import com.kooo.evcam.overlay.DimOverlayService;
 import com.kooo.evcam.overlay.OverlayCoordinator;
-import com.kooo.evcam.overlay.FloatingAction;
-import com.kooo.evcam.service.RecordingFloatingService;
 import com.kooo.evcam.input.ControllerProbeActivity;
 import com.kooo.evcam.zeekr.DiagnosticsActivity;
 import com.kooo.evcam.zeekr.RearViewMirrorService;
@@ -767,6 +765,12 @@ public class SettingsPreferenceFragment extends PreferenceFragmentCompat {
                     appConfig.setSidePopupMinSpeed(value);
                     com.kooo.evcam.zeekr.SideViewPopupService.applyConfig();
                 });
+        bindSlider("pref_side_popup_warning_min_speed", 0, AppConfig.SIDE_POPUP_MAX_WARNING_MIN_SPEED,
+                appConfig.getSidePopupWarningMinSpeed(), "km/h", value -> {
+                    appConfig.setSidePopupWarningMinSpeed(value);
+                    com.kooo.evcam.zeekr.SideViewPopupService.applyConfig();
+                    com.kooo.evcam.light.GearLight.reload();
+                });
         bindSwitch("pref_side_popup_straighten", appConfig.isSidePopupStraighten(), value -> {
             appConfig.setSidePopupStraighten(value);
             com.kooo.evcam.zeekr.SideViewPopupService.applyConfig();
@@ -950,154 +954,18 @@ public class SettingsPreferenceFragment extends PreferenceFragmentCompat {
     // ------------------------------------------------------------------ 悬浮窗
 
     private void bindFloating() {
-        // 按钮显示出来时自己问协调器在不在录，这里不用再推状态
-        bindOverlaySwitch("pref_recording_floating", appConfig.isRecordingFloatingEnabled(),
-                OverlayCoordinator::setRecordButtonEnabled, null);
+        // 1.9: the floating button is folded into the Dash panel (record, dim, quit on its right edge),
+        // so its own switch and look settings are gone
         bindOverlaySwitch("pref_dash_panel", appConfig.isDashPanelEnabled(),
                 OverlayCoordinator::setDashPanelEnabled, null);
         bindOverlaySwitch("pref_macro_pad", appConfig.isMacroPadEnabled(),
                 OverlayCoordinator::setMacroPadEnabled, null);
 
-        // 整档上移 50%（原来 32–100）：最小的也要比原来的最小大一半
-        bindSlider("pref_button_size", 48, 150,
-                appConfig.getRecordingFloatingButtonSizeDp(), " dp",
-                value -> {
-                    appConfig.setRecordingFloatingButtonSizeDp(value);
-                    pushFloatingStyle();
-                });
-        bindSlider("pref_floating_alpha", 20, 100, appConfig.getFloatingWindowAlpha(), "%",
-                value -> {
-                    appConfig.setFloatingWindowAlpha(value);
-                    pushFloatingStyle();
-                });
-
-        bindFloatingAction("pref_floating_tap", appConfig.getFloatingTapAction(),
-                value -> appConfig.setFloatingTapAction(value));
-        bindFloatingAction("pref_floating_long_press", appConfig.getFloatingLongPressAction(),
-                value -> appConfig.setFloatingLongPressAction(value));
-
-        bindSwitch("pref_floating_lock", appConfig.isFloatingPositionLocked(),
-                value -> appConfig.setFloatingPositionLocked(value));
-
-        bindSwitch("pref_floating_duration", appConfig.isFloatingDurationVisible(), value -> {
-            appConfig.setFloatingDurationVisible(value);
-            pushFloatingStyle();
-        });
-        bindSlider("pref_button_text_size", 8, 24,
-                appConfig.getRecordingFloatingTimeTextSizeSp(), " sp",
-                value -> {
-                    appConfig.setRecordingFloatingTimeTextSizeSp(value);
-                    pushFloatingStyle();
-                });
-
-        bindFloatingReset();
-
-    }
-
-    /**
-     * 单击 / 长按能选哪几件事。
-     *
-     * <p>选项文字在 strings.xml，存下去的是 {@link FloatingAction} 里那几个 key，
-     * 两边靠同一个数组下标对上 —— 所以这里必须一起写，不能一边加一边忘。</p>
-     */
-    private void bindFloatingAction(String key, String current, StringSetter onPick) {
-        Preference pref = findPreference(key);
-        if (!(pref instanceof ListPreference)) {
-            return;
-        }
-        ListPreference list = (ListPreference) pref;
-        FloatingAction[] actions = FloatingAction.values();
-        String[] values = new String[actions.length];
-        String[] labels = new String[actions.length];
-        for (int i = 0; i < actions.length; i++) {
-            values[i] = actions[i].key;
-            labels[i] = getString(labelOf(actions[i]));
-        }
-        list.setEntries(labels);
-        list.setEntryValues(values);
-        list.setValue(FloatingAction.fromKey(current).key);
-        list.setSummaryProvider(p -> ((ListPreference) p).getEntry());
-        list.setOnPreferenceChangeListener((p, value) -> {
-            onPick.set(String.valueOf(value));
-            return true;
-        });
-    }
-
-    /**
-     * 每个动作在界面上叫什么。
-     *
-     * <p>两个数组从 {@link FloatingAction#values()} 一起长出来，所以数量不会对不上；
-     * 新增一个动作时，忘了在这里加分支的后果是它显示成「打开主界面」——
-     * 不会崩，但会说谎，所以新增时两处一起改。</p>
-     */
-    private static int labelOf(FloatingAction action) {
-        switch (action) {
-            case TOGGLE_RECORDING:
-                return R.string.floating_action_toggle_recording;
-            case TAKE_PHOTO:
-                return R.string.floating_action_take_photo;
-            case TOGGLE_MIRROR:
-                return R.string.floating_action_toggle_mirror;
-            case OPEN_APP:
-            default:
-                return R.string.floating_action_open_app;
-        }
-    }
-
-
-    /**
-     * 外观改了，让按钮就地重读一遍配置。
-     *
-     * <p>以前这里发的是 {@code ACTION_UPDATE_SIZE} 加两个 extra，而服务那边
-     * 是用<b>广播</b>接收器在等这个 action —— 这边却是 {@code startService}。
-     * 两条路对不上，所以两个滑块一直没有任何反应。现在服务在 onStartCommand
-     * 里认这条指令，参数它自己读，不用带。</p>
-     */
-    private void pushFloatingStyle() {
-        sendToRecordingFloating(RecordingFloatingService.ACTION_UPDATE_STYLE, null);
-    }
-
-    /**
-     * 给录制悬浮按钮的服务发个指令。
-     *
-     * <p>放到后台线程：{@code startService} 会同步走到服务的 onStartCommand，
-     * 悬浮窗那边要建视图，在主线程上做容易卡住。</p>
-     */
-    private void sendToRecordingFloating(String action, Intent extras) {
-        if (getContext() == null) {
-            return;
-        }
-        final Context context = getContext().getApplicationContext();
-        new Thread(() -> {
-            try {
-                Intent intent = new Intent(context, RecordingFloatingService.class);
-                intent.setAction(action);
-                if (extras != null) {
-                    intent.putExtras(extras);
-                }
-                context.startService(intent);
-            } catch (Exception e) {
-                AppLog.e(TAG, "录制悬浮服务指令失败: " + action, e);
-            }
-        }, "recording-floating-cmd").start();
-    }
-
-    private void bindFloatingReset() {
         onClick("pref_reset_floating", pref -> {
-            // 以前清的是旧「主屏悬浮窗」那几个键，合并后的按钮根本不读它们 ——
-            // 点了提示「已重置」，按钮纹丝不动。现在清按钮自己的位置、大小、字号，
-            // 并让它当场挪回默认位置（右上角）
-            appConfig.resetRecordingFloatingLayout();
-            sendToRecordingFloating(RecordingFloatingService.ACTION_RESET_POSITION, null);
-            // 两个滑块跟着回去，否则界面上还写着重置之前的数
-            SeekBarPreference size = findPreference("pref_button_size");
-            if (size != null) {
-                size.setValue(appConfig.getRecordingFloatingButtonSizeDp());
+            if (getContext() == null) {
+                return;
             }
-            SeekBarPreference textSize = findPreference("pref_button_text_size");
-            if (textSize != null) {
-                textSize.setValue(appConfig.getRecordingFloatingTimeTextSizeSp());
-            }
+            com.kooo.evcam.overlay.DashPanelService.resetPosition(getContext());
             toast(getString(R.string.msg_floating_reset));
         });
     }
@@ -1106,7 +974,7 @@ public class SettingsPreferenceFragment extends PreferenceFragmentCompat {
 
     private void bindDim() {
         bindOverlaySwitch("pref_dim", appConfig.isDimOverlayEnabled(),
-                OverlayCoordinator::setDimOverlayEnabled, on -> pushFloatingStyle());
+                OverlayCoordinator::setDimOverlayEnabled, null);
 
         bindSlider("pref_dim_opacity", 10, 100, appConfig.getDimOpacity(), "%", value -> {
             appConfig.setDimOpacity(value);

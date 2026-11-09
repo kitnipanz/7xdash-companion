@@ -1,5 +1,62 @@
 # Changelog
 
+## [1.8.13] - 2026-11-10
+
+### Navigation
+- **The freeze is fixed.** When a route started, Navigation said the first turn. The head unit's speech engine failed while starting, and 7xDash kept asking for it again in a loop: the screen froze for about 7 seconds, then the app closed and restarted. This was in every version since 1.8.0.
+- **No spoken turns any more.** The voice and its mute button are gone; turns stay on screen and on the HUD.
+- **Saved places are back.** **Save place** on the route card, named as you like.
+
+### Automation
+- **Place conditions are back.** **Arrive at** or **Leave** a saved place (inside means within 150 m), and **Save this spot** right in the rule. **Navigate to** a saved place as an action.
+
+### Dash panel
+- **Minimize.** The orange arrows at the top of the right-hand buttons shrink the panel to a speed pill with the turn arrows; the expand button brings it back. It remembers which you chose.
+- **Macro pad docks under the panel** when both are on, the same width, and moves with it. Minimized, it spans the pill and its buttons. Without the macro pad, the minimized buttons sit under the pill.
+
+## [1.8.12-beta] - 2026-11-09
+
+### Navigation
+- **A place from your phone opens the full Navigation screen**, no longer the floating map. You can still float it with its button.
+- **No window update when guiding starts.** The floating map keeps the screen on from the moment it opens, instead of switching that on at Start. The full Navigation screen switched it on or off at every update, about once a second, which made the window lay itself out again with the map in it; now it does that only when guiding starts or ends.
+- Floating map updates over 150 ms are written to the black box, like the other map steps.
+
+## [1.8.11-beta] - 2026-11-09
+
+### Blind-spot log
+- **Every value, every change.** With **Report blind-spot signals** on, the log now writes each change of every value in the car's settings service and of every ECARX signal, not only the blind-spot-looking ones. Settings-service values are also read once a second, since some are never sent by the car.
+- **LCMA marker.** Each change of the blind spot lamp (`ID_SETTING_FUNC_LCMA_INDCN_DATA`) gets a `##### LCMA LEFT / RIGHT #####` line, so what changed around it is easy to find.
+- **On the USB drive too.** The log is also written to `7xDash/bsd-log/` on the USB drive. A drive put in later is picked up within 30 seconds with everything so far. Send blind-spot log to phone still works.
+
+## [1.8.10-beta] - 2026-11-09
+
+A test build to find the navigation freeze. The freeze is in 1.8.0 too (1.8.9-beta is the 1.8.0 app), so this build records what the screen is stuck on. After a freeze, send the black box export.
+
+### Navigation
+- **Freeze tracing.** When the screen is stuck for more than 2 seconds, the black box records the code it is stuck in. At start it also saves Android's own report if the app was closed for not responding. Showing the HUD turn card, the HUD map and drawing the map are timed; anything over 150 ms is written down with the route size.
+- **No HUD search when guiding starts.** Finding the HUD screen can take 2 seconds. It is done once in the background when the app starts, then remembered.
+
+### Blind spot
+- **Warning alone from 60 km/h.** Without a turn signal, the car's warning opens the side camera and blinks the lights only from 60 km/h, so city traffic stops setting it off. Change the speed in Settings → Side mirror.
+- **Signalling toward a warned side always shows it**, at any speed, with the red edge blinking.
+- **The mood lights blink in the same rhythm as the red edge**, whenever the warning shows, instead of staying steady red.
+
+### Dash panel
+- **The floating button is now part of the Dash panel.** Record, the dim moon (tap to turn on or off, slide to change darkness) and Quit (tap twice) sit in a column on the panel's right edge.
+
+## [1.8.9-beta] - 2026-11-09
+
+### Blind spot
+- **The car's own blind spot lamp counts as a warning.** 7xDash now also reads the blind spot lamp in the mirrors from the car's settings service (`ID_SETTING_FUNC_LCMA_INDCN_DATA`, left and right). Like the mirror lamp and rear cross traffic alert, it puts the red edge on that side of the side view, blinking while you signal toward it, and turns the mood lights red. Not yet checked on a car; left and right may be swapped.
+- **The blind-spot log captures more.** With **Report blind-spot signals** on, the log you send to your phone now also lists every value in the car's settings service at the start, then each one that changes, with gear, speed and turn signal. Blind spot, door open warning, cross traffic and lane change values are written on every change; the rest at most once a second.
+
+## [1.8.8] - 2026-11-08
+
+### Back to 1.8.0
+- **1.8.8 is the 1.8.0 app.** 1.8.1 to 1.8.7 could freeze when a route started; 1.8.0 never did. It installs over 1.8.7 and keeps your settings.
+- Gone for now, to come back one at a time: recent places, picking a place on the map, live car signals, Automation conditions (time, days, places, several at once), map buttons, Dash panel buttons and drag to dim, the Google Drive On / Off button.
+- An automation with more than one condition runs on its first condition only. One that starts with time, days or a place is not shown.
+
 ## [1.8.7] - 2026-11-08
 
 ### Navigation

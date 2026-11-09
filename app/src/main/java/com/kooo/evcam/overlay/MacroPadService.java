@@ -17,11 +17,17 @@ import com.kooo.evcam.AppLog;
 import com.kooo.evcam.UserExit;
 import com.kooo.evcam.input.ShortcutPerformer;
 import com.kooo.evcam.zeekr.FloatingWindowGestures;
+import com.kooo.evcam.zeekr.RearViewTouchModel;
 
 /**
  * Macro pad: a small floating grid of buttons over any app, like the floating buttons, where each
  * button runs the action the driver picked for it ({@link com.kooo.evcam.input.MacroPadActivity}).
  * An empty button opens that screen. Moves, pinches and docks like the Dash panel.
+ *
+ * <p>While the Dash panel is up the pad hangs right under it ({@link MacroPadDock}): as wide as the
+ * panel's window (the whole panel, or the minimized pill with its buttons), and it follows the panel around. Dragging it
+ * then does nothing (drag the panel); a pinch still sets its height. When the panel closes it goes
+ * back to where it floated before.</p>
  */
 public class MacroPadService extends Service {
 
@@ -32,6 +38,31 @@ public class MacroPadService extends Service {
     /** Default and smallest height, in dp. */
     private static final int DEFAULT_HEIGHT_DP = 170;
     private static final int MIN_HEIGHT_DP = 80;
+    /** Space between the Dash panel and the pad docked under it, in dp. */
+    private static final int DOCK_GAP_DP = 6;
+
+    private static volatile MacroPadService instance;
+
+    /** The Dash panel moved, resized, minimized, opened or closed: dock to it, follow it, or float again. */
+    static void followDashPanel() {
+        MacroPadService svc = instance;
+        if (svc != null) {
+            svc.main.post(svc::follow);
+        }
+    }
+
+    /** True while the pad's window is up. Main thread. */
+    static boolean isUp() {
+        MacroPadService svc = instance;
+        return svc != null && svc.view != null;
+    }
+
+    private final android.os.Handler main = new android.os.Handler(android.os.Looper.getMainLooper());
+    /** Hanging under the Dash panel. */
+    private boolean docked;
+    /** Where the pad floats on its own, kept while it is docked. */
+    private int floatX;
+    private int floatY;
 
     private WindowManager windowManager;
     private MacroPadView view;
@@ -67,6 +98,7 @@ public class MacroPadService extends Service {
         super.onCreate();
         windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
         config = new AppConfig(this);
+        instance = this;
     }
 
     @Override
@@ -109,6 +141,10 @@ public class MacroPadService extends Service {
         params.width = Math.round(params.height * MacroPadView.ASPECT);
         params.x = saved[2] > 0 ? saved[0] : screenWidth() - params.width - dp(24);
         params.y = saved[2] > 0 ? saved[1] : screenHeight() - params.height - dp(96);
+        floatX = params.x;
+        floatY = params.y;
+        docked = false;
+        snapToPanel();
         FloatingWindowGestures gestures = new FloatingWindowGestures(this, new FloatingWindowGestures.Host() {
             @Override
             public WindowManager.LayoutParams params() {
@@ -133,13 +169,20 @@ public class MacroPadService extends Service {
             @Override
             public void apply() {
                 if (view != null && view.isAttachedToWindow()) {
+                    // docked, a drag is undone here: the pad stays under the panel
+                    snapToPanel();
                     windowManager.updateViewLayout(view, params);
                 }
             }
 
             @Override
             public void save() {
-                config.setMacroPadBounds(params.x, params.y, params.width, params.height);
+                if (!docked) {
+                    floatX = params.x;
+                    floatY = params.y;
+                }
+                config.setMacroPadBounds(floatX, floatY, Math.round(params.height * MacroPadView.ASPECT),
+                        params.height);
             }
 
             @Override
@@ -156,7 +199,52 @@ public class MacroPadService extends Service {
             stopSelf();
             return;
         }
+        // a minimized Dash panel moves its buttons beside the pill, so the pad docks under one strip
+        DashPanelService.macroPadChanged();
         AppLog.i(TAG, "shown");
+    }
+
+    /**
+     * Puts the pad under the Dash panel if it is up, or back where it floated if it just closed.
+     * Only changes {@link #params}. Returns whether anything changed.
+     */
+    private boolean snapToPanel() {
+        if (params == null) {
+            return false;
+        }
+        int[] panel = DashPanelService.windowBounds();
+        int x = params.x;
+        int y = params.y;
+        int w = params.width;
+        if (panel != null) {
+            docked = true;
+            // as wide as the panel's window: the whole panel, or the pill and its row of buttons
+            params.width = panel[2];
+            int[] at = MacroPadDock.place(panel, params.width, params.height, screenHeight(), dp(DOCK_GAP_DP));
+            params.x = at[0];
+            params.y = at[1];
+        } else if (docked) {
+            docked = false;
+            params.width = Math.round(params.height * MacroPadView.ASPECT);
+            params.x = RearViewTouchModel.clampX(floatX, params.width, screenWidth(),
+                    FloatingWindowGestures.PEEK_WIDTH_PX);
+            params.y = RearViewTouchModel.clampY(floatY, params.height, screenHeight());
+        }
+        return x != params.x || y != params.y || w != params.width;
+    }
+
+    private void follow() {
+        // getParent(), not isAttachedToWindow(): set by addView at once, not a frame later
+        if (view == null || view.getParent() == null) {
+            return;
+        }
+        if (snapToPanel()) {
+            try {
+                windowManager.updateViewLayout(view, params);
+            } catch (Exception e) {
+                AppLog.w(TAG, "follow the Dash panel: " + e.getMessage());
+            }
+        }
     }
 
     private void press(int button) {
@@ -191,6 +279,8 @@ public class MacroPadService extends Service {
 
     @Override
     public void onDestroy() {
+        instance = null;
+        main.removeCallbacksAndMessages(null);
         if (view != null) {
             try {
                 windowManager.removeView(view);
@@ -198,6 +288,7 @@ public class MacroPadService extends Service {
             }
             view = null;
         }
+        DashPanelService.macroPadChanged();
         AppLog.i(TAG, "hidden");
         super.onDestroy();
     }

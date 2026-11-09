@@ -59,11 +59,7 @@ public enum ShortcutAction {
     /** The floating Macro pad on or off (overlay.MacroPadService). */
     MACRO_PAD("toggle_macro_pad", R.string.shortcut_action_macro_pad, R.drawable.ic_macro_pad),
     // Navigation's map in a floating window over other apps, on / off
-    NAV_FLOAT("toggle_nav_float", R.string.shortcut_action_nav_float, R.drawable.ic_float_window),
-    /** The guiding map nearer or further out, on every map: full screen, floating and HUD. */
-    NAV_ZOOM("toggle_nav_zoom", R.string.shortcut_action_nav_zoom, R.drawable.ic_zoom),
-    /** Next distance for the HUD map: furthest, medium, close, adaptive ({@link com.kooo.evcam.nav.HudMapZoom}). */
-    NAV_HUD_ZOOM("cycle_nav_hud_zoom", R.string.shortcut_action_nav_hud_zoom, R.drawable.ic_zoom);
+    NAV_FLOAT("toggle_nav_float", R.string.shortcut_action_nav_float, R.drawable.ic_float_window);
 
     /** The tabs actions are picked from, in tab order. */
     public enum Group {
@@ -71,7 +67,6 @@ public enum ShortcutAction {
         CAMERA(R.string.shortcut_group_camera, R.drawable.ic_camera),
         SOUND(R.string.shortcut_group_sound, R.drawable.ic_speaker),
         LIGHTS(R.string.shortcut_group_lights, R.drawable.ic_light),
-        NAVIGATION(R.string.shortcut_group_nav, R.drawable.ic_navigation),
         CAR(R.string.shortcut_group_car, R.drawable.ic_home);
 
         public final int labelRes;
@@ -126,10 +121,6 @@ public enum ShortcutAction {
             case DIM:
             case FOG_LAMP:
                 return Group.LIGHTS;
-            case NAV_FLOAT:
-            case NAV_ZOOM:
-            case NAV_HUD_ZOOM:
-                return Group.NAVIGATION;
             default:
                 return Group.CAR;
         }

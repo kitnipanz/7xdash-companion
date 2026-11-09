@@ -70,38 +70,14 @@ public final class Announcer {
         int mine = ++generation;
         WORKER.execute(() -> {
             Process.setThreadPriority(Process.THREAD_PRIORITY_URGENT_AUDIO);
-            AppConfig config = new AppConfig(app);
-            int failure = run(app, announcement, why, mine, config.getSpeakSpeakers(), config.getSpeakVolume(), false);
+            int failure = run(app, announcement, why, mine);
             if (failure != 0) {
                 MAIN.post(() -> com.kooo.evcam.ui.Notice.makeText(app, failure, Toast.LENGTH_SHORT).show());
             }
         });
     }
 
-    /**
-     * Says {@code text} on one speaker at its own volume, for what the app tells the driver. An
-     * announcement already playing carries on and this is dropped. With {@code failed} a person is
-     * waiting, so it gets the string saying why; a notice must not raise a notice about itself.
-     */
-    public static void say(Context context, String text, String speaker, int volume,
-                           java.util.function.IntConsumer failed) {
-        if (context == null || playing) {
-            return;
-        }
-        Context app = context.getApplicationContext();
-        int mine = ++generation;
-        WORKER.execute(() -> {
-            Process.setThreadPriority(Process.THREAD_PRIORITY_URGENT_AUDIO);
-            int failure = run(app, Announcement.phrase("notice", text), "notice", mine,
-                    java.util.Collections.singletonList(speaker), volume, true);
-            if (failure != 0 && failed != null) {
-                MAIN.post(() -> failed.accept(failure));
-            }
-        });
-    }
-
-    private static int run(Context context, Announcement a, String why, int mine, List<String> speakers,
-                           int volume, boolean anyThaiVoice) {
+    private static int run(Context context, Announcement a, String why, int mine) {
         int rate;
         short[] pcm;
         if (a.isSound()) {
@@ -112,7 +88,7 @@ public final class Announcer {
             Wav wav = store.hasRecording(a.id) ? read(store.recording(a.id))
                     : !a.isThai() && OfflineVoice.isReady(context) ? OfflineVoice.speak(context, a.text) : null;
             if (wav == null) {
-                wav = speak(context, a, anyThaiVoice);
+                wav = speak(context, a);
             }
             if (wav == null) {
                 return a.isThai() ? R.string.announce_record_needed : R.string.announce_no_voice;
@@ -123,7 +99,9 @@ public final class Announcer {
         if (pcm == null || mine != generation) {
             return 0;
         }
-        List<AudioDeviceInfo> devices = SpeakerSet.find(context.getSystemService(AudioManager.class), speakers);
+        AppConfig config = new AppConfig(context);
+        List<AudioDeviceInfo> devices = SpeakerSet.find(context.getSystemService(AudioManager.class),
+                config.getSpeakSpeakers());
         if (devices.isEmpty()) {
             return R.string.megaphone_no_speaker;
         }
@@ -136,7 +114,7 @@ public final class Announcer {
         }
         playing = true;
         try {
-            out.setVolume(anyThaiVoice ? volume / 100f : SpeakPlan.volume(volume) / 100f);
+            out.setVolume(SpeakPlan.volume(config.getSpeakVolume()) / 100f);
             for (int at = 0; at < pcm.length && mine == generation; at += CHUNK) {
                 int n = Math.min(CHUNK, pcm.length - at);
                 short[] chunk = new short[n];
@@ -159,7 +137,7 @@ public final class Announcer {
     }
 
     /** Worker thread. The phrase as a WAV from the first speech engine with a voice for it, or null. */
-    private static Wav speak(Context context, Announcement a, boolean anyThaiVoice) {
+    private static Wav speak(Context context, Announcement a) {
         File cache = new File(context.getCacheDir(), "announce");
         if (!cache.isDirectory() && !cache.mkdirs()) {
             return null;
@@ -169,12 +147,12 @@ public final class Announcer {
         if (file.isFile() && file.length() > 44) {
             return read(file);
         }
-        if (a.isThai() && !anyThaiVoice) {
+        if (a.isThai()) {
             // No voice reads Thai on this car: Thai plays only when recorded
             BlackBox.note("Announcement: Thai phrase not recorded: \"" + a.text + "\"");
             return null;
         }
-        Locale[] wanted = a.isThai() ? THAI : ENGLISH;
+        Locale[] wanted = ENGLISH;
         StringBuilder tried = new StringBuilder();
         for (String engine : engines(context)) {
             TextToSpeech engineTts = engine(context, engine);
@@ -197,7 +175,6 @@ public final class Announcer {
         return null;
     }
 
-    private static final Locale[] THAI = {new Locale("th", "TH"), new Locale("th")};
     private static final Locale[] ENGLISH = {Locale.US, Locale.UK, Locale.ENGLISH, new Locale("en", "AU")};
 
     /** First locale the engine can speak, noting each answer (1+ yes, -1 missing data, -2 unsupported). */

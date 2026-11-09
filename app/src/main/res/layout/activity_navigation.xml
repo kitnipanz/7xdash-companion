@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Navigation: the Google map full screen; over it, top left the search bar (or the
+<!-- Navigation (beta): the Google map full screen; over it, top left the search bar (or the
      next-turn banner while guiding), bottom left the trip card, bottom right re-centre and voice. -->
 <FrameLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
@@ -30,7 +30,7 @@
         android:layout_margin="16dp"
         android:orientation="vertical">
 
-        <!-- search bar: back, the box -->
+        <!-- search bar: back, the box, BETA -->
         <LinearLayout
             android:id="@+id/nav_search_bar"
             android:layout_width="match_parent"
@@ -65,6 +65,19 @@
                 android:textAppearance="@style/TextAppearance.Cam.Row"
                 android:textColor="@color/text_primary"
                 android:textColorHint="@color/text_hint" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:background="@drawable/bg_segment"
+                android:paddingStart="10dp"
+                android:paddingTop="2dp"
+                android:paddingEnd="10dp"
+                android:paddingBottom="2dp"
+                android:text="@string/nav_beta"
+                android:textAppearance="@style/TextAppearance.Cam.Caption"
+                android:textColor="@color/energy_text"
+                android:textStyle="bold" />
         </LinearLayout>
 
         <!-- search results and the place shared from the iPhone -->
@@ -224,7 +237,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
             android:orientation="horizontal">
-            <!-- everything else (voice, HUD, map and car colours, iPhone) is in the settings dialog -->
+            <!-- everything else (HUD, map and car colours, iPhone) is in the settings dialog -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/nav_settings"
                 style="@style/Widget.Material3.Button.TonalButton"
@@ -233,6 +246,7 @@
                 android:text="@string/nav_settings_button"
                 app:cornerRadius="28dp"
                 app:icon="@drawable/ic_settings" />
+            <!-- with a route shown: keep its place for search and Automation -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/nav_save_place"
                 style="@style/Widget.Material3.Button.TonalButton"
@@ -301,19 +315,6 @@
             app:backgroundTint="@color/surface"
             app:cornerRadius="36dp"
             app:icon="@drawable/ic_float_window"
-            app:iconSize="30dp" />
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/nav_mute"
-            style="@style/Widget.Cam.IconButton"
-            android:layout_width="72dp"
-            android:layout_height="72dp"
-            android:layout_gravity="end"
-            android:contentDescription="@string/nav_mute"
-            android:elevation="6dp"
-            android:stateListAnimator="@null"
-            app:backgroundTint="@color/surface"
-            app:cornerRadius="36dp"
-            app:icon="@drawable/ic_voice_on"
             app:iconSize="30dp" />
         <!-- the map was moved by hand: back to the car -->
         <com.google.android.material.button.MaterialButton

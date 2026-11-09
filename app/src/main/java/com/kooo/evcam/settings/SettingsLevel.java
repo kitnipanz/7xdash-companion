@@ -52,12 +52,6 @@ public final class SettingsLevel {
             "pref_side_popup_close_delay_ms",
             "pref_side_popup_size",
             "pref_side_popup_vertical",
-            // 悬浮按钮的外观
-            "pref_button_size",
-            "pref_floating_alpha",
-            "pref_floating_lock",
-            "pref_floating_duration",
-            "pref_button_text_size",
             // 调暗的细调
             "pref_dim_brightness",
             "pref_dim_warmth",

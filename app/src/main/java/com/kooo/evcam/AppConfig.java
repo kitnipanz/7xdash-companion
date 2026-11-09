@@ -145,6 +145,10 @@ public class AppConfig {
     private static final String KEY_SIDE_POPUP_STYLE = "side_popup_style";
     private static final String KEY_SIDE_POPUP_DOOR = "side_popup_door";
     private static final String KEY_SIDE_POPUP_WARNING = "side_popup_warning";
+    private static final String KEY_SIDE_POPUP_WARNING_MIN_SPEED = "side_popup_warning_min_speed";
+    /** The car's warning alone (no turn signal) shows the side and blinks the lights only from this speed, km/h. */
+    public static final int SIDE_POPUP_DEFAULT_WARNING_MIN_SPEED = 60;
+    public static final int SIDE_POPUP_MAX_WARNING_MIN_SPEED = 120;
     private static final String KEY_BSD_SNIFFER = "bsd_sniffer";
     private static final String KEY_SIGNAL_RECORDER = "signal_recorder";
     private static final String KEY_BSD_LEFT_ID = "bsd_warn_left_id";
@@ -2045,6 +2049,17 @@ public class AppConfig {
         prefs.edit().putBoolean(KEY_SIDE_POPUP_WARNING, on).apply();
     }
 
+    /** Below this speed (km/h) the car's warning alone does not show the side or blink the lights; 0 = any speed. */
+    public int getSidePopupWarningMinSpeed() {
+        int v = prefs.getInt(KEY_SIDE_POPUP_WARNING_MIN_SPEED, SIDE_POPUP_DEFAULT_WARNING_MIN_SPEED);
+        return Math.max(0, Math.min(SIDE_POPUP_MAX_WARNING_MIN_SPEED, v));
+    }
+
+    public void setSidePopupWarningMinSpeed(int kmh) {
+        prefs.edit().putInt(KEY_SIDE_POPUP_WARNING_MIN_SPEED,
+                Math.max(0, Math.min(SIDE_POPUP_MAX_WARNING_MIN_SPEED, kmh))).apply();
+    }
+
     public boolean isSidePopupOnDoor() {
         return prefs.getBoolean(KEY_SIDE_POPUP_DOOR, true);
     }
@@ -2591,101 +2606,18 @@ public class AppConfig {
         prefs.edit().putString(KEY_DASH_PANEL_BOUNDS, x + "," + y + "," + width + "," + height).apply();
     }
 
+    private static final String KEY_DASH_PANEL_MINIMIZED = "dash_panel_minimized";
+
+    /** Dash panel shown as its small pill (speed and gear) instead of the whole panel. */
+    public boolean isDashPanelMinimized() {
+        return prefs.getBoolean(KEY_DASH_PANEL_MINIMIZED, false);
+    }
+
+    public void setDashPanelMinimized(boolean minimized) {
+        prefs.edit().putBoolean(KEY_DASH_PANEL_MINIMIZED, minimized).apply();
+    }
+
     // ==================== Macro pad ====================
-
-    private static final String KEY_NAV_ZOOMED_OUT = "nav_zoomed_out";
-
-    /** The Map zoom action: the map sits further out while guiding. */
-    public boolean isNavZoomedOut() {
-        return prefs.getBoolean(KEY_NAV_ZOOMED_OUT, false);
-    }
-
-    public void setNavZoomedOut(boolean out) {
-        prefs.edit().putBoolean(KEY_NAV_ZOOMED_OUT, out).apply();
-    }
-
-    private static final String KEY_SAVED_PLACES = "saved_places";
-    private static final String KEY_RECENT_PLACES = "nav_recent_places";
-    private static final String KEY_AUTOMATION_HISTORY = "automation_history";
-    private static final String KEY_NOTICE_SPEAK = "notice_speak";
-    private static final String KEY_NOTICE_SPEAKER = "notice_speaker";
-    private static final String KEY_NOTICE_VOLUME = "notice_speak_volume";
-
-    /** Places the person named, as JSON ({@link com.kooo.evcam.nav.SavedPlaces}). */
-    public String getSavedPlaces() {
-        return prefs.getString(KEY_SAVED_PLACES, null);
-    }
-
-    public void setSavedPlaces(String json) {
-        prefs.edit().putString(KEY_SAVED_PLACES, json).apply();
-    }
-
-    /** Places looked for or sent from the phone, as JSON ({@link com.kooo.evcam.nav.RecentPlaces}). */
-    public String getRecentPlaces() {
-        return prefs.getString(KEY_RECENT_PLACES, null);
-    }
-
-    public void setRecentPlaces(String json) {
-        prefs.edit().putString(KEY_RECENT_PLACES, json).apply();
-    }
-
-    /** What automations did lately, as JSON ({@code automation.AutomationHistory}). */
-    public String getAutomationHistory() {
-        return prefs.getString(KEY_AUTOMATION_HISTORY, null);
-    }
-
-    public void setAutomationHistory(String json) {
-        prefs.edit().putString(KEY_AUTOMATION_HISTORY, json).apply();
-    }
-
-    /** Say notifications aloud on {@link #getNoticeSpeaker}. Off by default. */
-    public boolean isNoticeSpeakOn() {
-        return prefs.getBoolean(KEY_NOTICE_SPEAK, false);
-    }
-
-    public void setNoticeSpeakOn(boolean on) {
-        prefs.edit().putBoolean(KEY_NOTICE_SPEAK, on).apply();
-    }
-
-    /** The speaker's address, empty before one is picked. */
-    public String getNoticeSpeaker() {
-        return prefs.getString(KEY_NOTICE_SPEAKER, "");
-    }
-
-    public void setNoticeSpeaker(String address) {
-        prefs.edit().putString(KEY_NOTICE_SPEAKER, address).apply();
-    }
-
-    /** 10 to 100. Its own volume: the megaphone's is far too loud beside the driver's head. */
-    public int getNoticeVolume() {
-        return prefs.getInt(KEY_NOTICE_VOLUME, 40);
-    }
-
-    public void setNoticeVolume(int percent) {
-        prefs.edit().putInt(KEY_NOTICE_VOLUME, percent).apply();
-    }
-
-    private static final String KEY_NAV_TRIP = "nav_trip";
-
-    /** The trip on now ({@link com.kooo.evcam.nav.SavedTrip}), so it survives a crash; null when none. */
-    public String getNavTrip() {
-        return prefs.getString(KEY_NAV_TRIP, null);
-    }
-
-    public void setNavTrip(String trip) {
-        prefs.edit().putString(KEY_NAV_TRIP, trip).apply();
-    }
-
-    private static final String KEY_NAV_HUD_ZOOM = "nav_hud_zoom";
-
-    /** The HUD map's distance ({@link com.kooo.evcam.nav.HudMapZoom}); it follows the speed unless changed. */
-    public int getNavHudZoom() {
-        return prefs.getInt(KEY_NAV_HUD_ZOOM, com.kooo.evcam.nav.HudMapZoom.ADAPTIVE);
-    }
-
-    public void setNavHudZoom(int mode) {
-        prefs.edit().putInt(KEY_NAV_HUD_ZOOM, mode).apply();
-    }
 
     private static final String KEY_HOME_CARD_ORDER = "home_card_order";
     private static final String KEY_HOME_CARDS_HIDDEN = "home_cards_hidden";
@@ -2706,6 +2638,17 @@ public class AppConfig {
 
     public void setHomeCardsHidden(String ids) {
         prefs.edit().putString(KEY_HOME_CARDS_HIDDEN, ids).apply();
+    }
+
+    private static final String KEY_SAVED_PLACES = "saved_places";
+
+    /** Places the person named, as JSON ({@link com.kooo.evcam.nav.SavedPlaces}). */
+    public String getSavedPlaces() {
+        return prefs.getString(KEY_SAVED_PLACES, null);
+    }
+
+    public void setSavedPlaces(String json) {
+        prefs.edit().putString(KEY_SAVED_PLACES, json).apply();
     }
 
     private static final String KEY_AUTOMATION = "automation_on";

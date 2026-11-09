@@ -17,7 +17,6 @@ import com.kooo.evcam.telemetry.Telemetry;
 import com.kooo.evcam.telemetry.VehicleState;
 
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -32,13 +31,17 @@ import java.util.Map;
  * Speed, battery and temperature are float sensors, so this registers as a full telemetry user
  * only while a rule that is on needs one. Installed after {@code GearLight}, so a colour set when
  * the gear changes lands on top of what the gear picks. Main thread only.</p>
+ *
+ * <p>Arriving at or leaving a saved place needs the GPS: while such a rule is on, telemetry is held,
+ * {@link Navigator#holdGps} keeps the position coming in the background, and the position is
+ * looked at every {@link #LOOK_MS} as well as on every change of the car's readings.</p>
  */
 public final class Automation implements Telemetry.Listener {
 
     private static final String USER = "automation";
     /** The first ignition reading counts as the car coming on this soon after the head unit started. */
     private static final long BOOT_MS = 5 * 60_000L;
-    /** Time and place change without the car saying so: look this often while a rule needs them. */
+    /** The car's position changes without the car saying so: look this often while a rule needs it. */
     private static final long LOOK_MS = 15_000L;
 
     private static Automation installed;
@@ -97,9 +100,7 @@ public final class Automation implements Telemetry.Listener {
     /** The Try button: run these steps now, whatever the car is doing. */
     public static void tryNow(List<AutomationRule.Step> steps) {
         if (installed != null) {
-            Automation me = installed;
-            String what = AutomationAction.describeAll(me.app, steps);
-            me.runner.run(steps, true, failed -> me.remember("", what, failed, true));
+            installed.runner.run(steps, true);
         }
     }
 
@@ -111,15 +112,14 @@ public final class Automation implements Telemetry.Listener {
     @Override
     public void onReadingsChanged(Readings readings) {
         boolean active = config.isAutomationOn();
-        boolean polled = active && wants(false);
-        boolean gps = active && wants(true);
+        boolean gps = active && wantsPlace();
         holdFloats(active && (gps || wantsFloats()));
         holdGps(gps);
-        if (polled && !looking) {
+        if (gps && !looking) {
             looking = true;
             main.postDelayed(look, LOOK_MS);
         }
-        List<AutomationRule> fired = watch.step(active ? rules : Collections.emptyList(), sample(readings, polled));
+        List<AutomationRule> fired = watch.step(active ? rules : Collections.emptyList(), sample(readings, gps));
         if (fired.isEmpty() || UserExit.isExited(app)) {
             return;
         }
@@ -127,18 +127,11 @@ public final class Automation implements Telemetry.Listener {
             BlackBox.note("Automation: " + rule.trigger + " " + rule.value + " ran " + rule.steps.size() + " steps");
             Analytics.event("automation_ran", "trigger", rule.trigger);
             ranAt.put(rule.id, System.currentTimeMillis());
-            String when = AutomationActivity.whenText(app, rule);
-            String what = AutomationAction.describeAll(app, rule.steps);
-            runner.run(rule.steps, false, failed -> remember(when, what, failed, false));
+            runner.run(rule.steps, false);
         }
     }
 
-    private void remember(String when, String what, String failed, boolean tried) {
-        config.setAutomationHistory(AutomationHistory.add(config.getAutomationHistory(),
-                new AutomationHistory.Entry(System.currentTimeMillis(), when, what, failed, tried)));
-    }
-
-    private AutomationWatch.Sample sample(Readings readings, boolean polled) {
+    private AutomationWatch.Sample sample(Readings readings, boolean located) {
         VehicleState car = Telemetry.get().latest();
         AutomationWatch.Sample s = new AutomationWatch.Sample();
         s.ignition = readings.code(Signal.IGNITION);
@@ -150,10 +143,7 @@ public final class Automation implements Telemetry.Listener {
         s.rain = readings.bool(Signal.RAIN);
         s.at = SystemClock.elapsedRealtime();
         s.justBooted = s.at < BOOT_MS;
-        if (polled) {
-            Calendar now = Calendar.getInstance();
-            s.minuteOfDay = now.get(Calendar.HOUR_OF_DAY) * 60 + now.get(Calendar.MINUTE);
-            s.dayBit = AutomationClock.dayBit(now.get(Calendar.DAY_OF_WEEK));
+        if (located) {
             s.lat = car.latitude;
             s.lng = car.longitude;
             s.places = places;
@@ -161,14 +151,12 @@ public final class Automation implements Telemetry.Listener {
         return s;
     }
 
-    /** Does a rule that is on need the clock, or with {@code placeOnly} the GPS? */
-    private boolean wants(boolean placeOnly) {
+    /** Does a rule that is on wait to arrive at or leave a place? */
+    private boolean wantsPlace() {
         for (AutomationRule rule : rules) {
-            for (AutomationRule.Condition condition : rule.conditions()) {
-                AutomationTrigger trigger = condition.trigger();
-                if (rule.enabled && (placeOnly ? trigger.group == AutomationTrigger.Group.PLACE : trigger.polled())) {
-                    return true;
-                }
+            AutomationTrigger trigger = rule.trigger();
+            if (rule.enabled && trigger != null && trigger.isPlace()) {
+                return true;
             }
         }
         return false;
@@ -183,10 +171,9 @@ public final class Automation implements Telemetry.Listener {
 
     private boolean wantsFloats() {
         for (AutomationRule rule : rules) {
-            for (AutomationRule.Condition condition : rule.conditions()) {
-                if (rule.enabled && condition.trigger().measure != null) {
-                    return true;
-                }
+            AutomationTrigger trigger = rule.trigger();
+            if (rule.enabled && trigger != null && trigger.measure != null) {
+                return true;
             }
         }
         return false;

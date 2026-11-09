@@ -47,9 +47,6 @@ final class NavSettings {
     static View build(Context context, Host host) {
         AppConfig config = new AppConfig(context);
         View box = LayoutInflater.from(context).inflate(R.layout.dialog_nav_settings, null);
-        SwitchMaterial voice = box.findViewById(R.id.nav_voice_switch);
-        voice.setChecked(config.isNavVoiceEnabled());
-        voice.setOnCheckedChangeListener((b, on) -> config.setNavVoiceEnabled(on));
         SwitchMaterial hud = box.findViewById(R.id.nav_hud_switch);
         hud.setChecked(config.isNavHudEnabled());
         hud.setOnCheckedChangeListener((b, on) -> {

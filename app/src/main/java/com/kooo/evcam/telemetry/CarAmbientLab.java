@@ -110,17 +110,14 @@ public final class CarAmbientLab {
         public final List<Constant> neighbours;
         /** Every function number in every class, once each: what Watch reads. */
         public final List<Constant> functions;
-        /** Every int constant of every class, for naming the values a function takes ({@link #optionsFor}). */
-        public final List<Constant> all;
         public final boolean carReady;
 
         Scan(String status, List<Constant> found, List<Constant> neighbours, List<Constant> functions,
-                List<Constant> all, boolean carReady) {
+                boolean carReady) {
             this.status = status;
             this.found = found;
             this.neighbours = neighbours;
             this.functions = functions;
-            this.all = all;
             this.carReady = carReady;
         }
     }
@@ -364,7 +361,6 @@ public final class CarAmbientLab {
         }
         List<Constant> found = new ArrayList<>();
         List<Constant> neighbours = new ArrayList<>();
-        List<Constant> all = new ArrayList<>();
         Map<Integer, Constant> functions = new LinkedHashMap<>();
         int loaded = 0;
         for (String name : classes) {
@@ -399,11 +395,10 @@ public final class CarAmbientLab {
             if (any) {
                 neighbours.addAll(mine);
             }
-            all.addAll(mine);
         }
         if (loaded == 0) {
             return new Scan("This head unit has no ECARX car interface", found, neighbours,
-                    new ArrayList<>(functions.values()), all, false);
+                    new ArrayList<>(functions.values()), false);
         }
         Object car = EcarxSource.carForLab(context);
         Object function = car == null ? null : invoke(car, "getICarFunction");
@@ -424,7 +419,7 @@ public final class CarAmbientLab {
         }
         BlackBox.note(log.toString());
         AppLog.i(TAG, log.toString());
-        return new Scan(status, found, neighbours, new ArrayList<>(functions.values()), all, function != null);
+        return new Scan(status, found, neighbours, new ArrayList<>(functions.values()), function != null);
     }
 
     /** Reads one function number back into {@code k}. */

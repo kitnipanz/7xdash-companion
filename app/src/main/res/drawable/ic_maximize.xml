@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ic_maximize: same set as ic_minimize (24dp grid, stroke 1.7, round caps). Two arrows out to opposite
+  corners: open back out to full size. On the minimized Dash panel, in the minimize button's place.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="@color/text_primary"
+        android:strokeWidth="1.7"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M14,4.5H19.5V10M19.5,4.5L13.5,10.5M10,19.5H4.5V14M4.5,19.5L10.5,13.5" />
+</vector>

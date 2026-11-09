@@ -50,7 +50,7 @@
                 android:id="@+id/nav_floating_button"
                 android:checkable="false"
                 android:icon="@drawable/ic_floating"
-                android:title="@string/set_section_floating"
+                android:title="@string/home_card_dash_panel"
                 app:actionLayout="@layout/nav_switch" />
         </menu>
     </item>

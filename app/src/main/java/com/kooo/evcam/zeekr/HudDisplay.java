@@ -71,8 +71,8 @@ public final class HudDisplay {
 
     /**
      * The HUD, or null. Looking at every screen takes up to 2 seconds on some head units, and it
-     * ran on the main thread each time guiding started: the screen froze. Once found, the same
-     * screen is asked for directly; only if it went away are all screens looked at again.
+     * ran on the main thread when guiding started: the screen froze. Once found, the same screen is
+     * asked for directly; only if it went away are all screens looked at again.
      */
     public static Display find(Context context) {
         DisplayManager manager = (DisplayManager) context.getSystemService(Context.DISPLAY_SERVICE);
@@ -92,6 +92,19 @@ public final class HudDisplay {
             lastId = found.getDisplayId();
         }
         return found;
+    }
+
+    /** App start: the first, slow look, on its own thread, so nothing on the main thread waits for it later. */
+    public static void warmUp(Context context) {
+        Context app = context.getApplicationContext();
+        Thread look = new Thread(() -> {
+            long t0 = android.os.SystemClock.uptimeMillis();
+            Display d = find(app);
+            com.kooo.evcam.blackbox.BlackBox.note("HUD look: " + (d == null ? "none" : "display " + d.getDisplayId())
+                    + " in " + (android.os.SystemClock.uptimeMillis() - t0) + " ms");
+        }, "hud-look");
+        look.setDaemon(true);
+        look.start();
     }
 
     private static Display lookEverywhere(DisplayManager manager) {

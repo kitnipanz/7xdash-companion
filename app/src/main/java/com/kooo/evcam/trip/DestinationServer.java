@@ -124,7 +124,7 @@ final class DestinationServer extends NanoHTTPD {
                 + "<title>7xDash</title><style>"
                 + "body{margin:0;padding:20px 16px;background:#141518;color:#fff;"
                 + "font-family:system-ui,-apple-system,sans-serif;line-height:1.5}"
-                + "h1{font-size:20px;margin:0 0 4px}"
+                + "h1{font-size:20px;margin:0 0 4px}.beta{color:#ff7a1a;font-size:13px;font-weight:600}"
                 + ".msg{margin:16px 0;padding:12px 14px;background:#24262b;border-radius:10px}"
                 + "textarea{width:100%;box-sizing:border-box;height:90px;border-radius:10px;border:0;padding:10px;"
                 + "font-size:16px;font-family:inherit;background:#24262b;color:#fff}"
@@ -136,6 +136,7 @@ final class DestinationServer extends NanoHTTPD {
                 + ".hint{color:#8e9096;font-size:13px}"
                 + "</style></head><body>"
                 + "<h1>" + escape(context.getString(R.string.nav_web_title)) + "</h1>"
+                + "<div class=\"beta\">BETA</div>"
                 + (message == null ? "" : "<div class=\"msg\">" + escape(message) + "</div>")
                 + "<form method=\"post\" action=\"" + send + "\"><input type=\"hidden\" name=\"from\" value=\"page\">"
                 + "<textarea name=\"link\" placeholder=\"" + escape(context.getString(R.string.arrival_web_paste))

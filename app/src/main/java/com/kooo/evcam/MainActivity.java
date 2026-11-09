@@ -4212,10 +4212,10 @@ public class MainActivity extends AppCompatActivity {
         syncRearViewSwitch();
     }
 
-    /** 抽屉里的悬浮按钮开关，和后视镜那一行表现一致。 */
+    /** 抽屉里的 Dash panel 开关（原来的悬浮按钮那一行），和后视镜那一行表现一致。 */
     private void toggleFloatingButtonFromDrawer() {
-        boolean on = !appConfig.isRecordingFloatingEnabled();
-        if (!OverlayCoordinator.setRecordButtonEnabled(this, on)) {
+        boolean on = !appConfig.isDashPanelEnabled();
+        if (!OverlayCoordinator.setDashPanelEnabled(this, on)) {
             com.kooo.evcam.ui.Notice.makeText(this, R.string.msg_need_overlay, Toast.LENGTH_SHORT).show();
             WakeUpHelper.requestOverlayPermission(this);
         }
@@ -4228,7 +4228,7 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
         syncNavSwitch(R.id.nav_rearview, appConfig.isRearViewEnabled());
-        syncNavSwitch(R.id.nav_floating_button, appConfig.isRecordingFloatingEnabled());
+        syncNavSwitch(R.id.nav_floating_button, appConfig.isDashPanelEnabled());
     }
 
     private void syncNavSwitch(int itemId, boolean on) {

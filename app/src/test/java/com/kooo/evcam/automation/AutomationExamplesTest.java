@@ -49,13 +49,4 @@ public class AutomationExamplesTest {
             assertNotNull(trigger.group);
         }
     }
-
-    @Test
-    public void withAPlaceThereAreExamplesAboutIt() {
-        java.util.List<com.kooo.evcam.nav.SavedPlaces.Place> places = new java.util.ArrayList<>();
-        com.kooo.evcam.nav.SavedPlaces.add(places, "Home", 13.7, 100.5);
-        List<AutomationRule> examples = AutomationExamples.all(places);
-        assertEquals(AutomationExamples.all().size() + 2, examples.size());
-        assertEquals(examples.size(), AutomationRule.parseAll(AutomationRule.toJson(examples)).size());
-    }
 }

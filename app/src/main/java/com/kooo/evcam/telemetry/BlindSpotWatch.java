@@ -22,6 +22,28 @@ import com.kooo.evcam.blackbox.BlackBox;
 public final class BlindSpotWatch implements Telemetry.Listener {
 
     static final long POLL_MS = 200L;
+    /** Half a blink of every blind-spot alert: the side view's red edge and the lights, so they blink together. */
+    public static final long BLINK_HALF_MS = 350L;
+
+    /**
+     * Warned sides that alert now (bits {@link VehicleState#TURN_LEFT} / {@link VehicleState#TURN_RIGHT}).
+     * Hazards on: none. A side alerts when the turn signal points at it, at any speed, or when the car
+     * goes at least {@code minSpeedKmh} (0 = any speed; an unknown speed does not block), so city
+     * traffic alone does not keep warning. Pure, see the test.
+     */
+    public static int alertSides(Integer warned, Integer turnSignal, Boolean hazard, Float speedKmh, int minSpeedKmh) {
+        if (warned == null || warned == 0 || Boolean.TRUE.equals(hazard)) {
+            return 0;
+        }
+        int sides = warned & (VehicleState.TURN_LEFT | VehicleState.TURN_RIGHT);
+        boolean fastEnough = minSpeedKmh <= 0 || speedKmh == null || speedKmh >= minSpeedKmh;
+        if (fastEnough) {
+            return sides;
+        }
+        boolean signalling = turnSignal != null
+                && (turnSignal == VehicleState.TURN_LEFT || turnSignal == VehicleState.TURN_RIGHT);
+        return signalling ? sides & turnSignal : 0;
+    }
     /** BCM_DOOR_OPEN_WARN_LEFT_INDCN / RIGHT_INDCN (IDoor): the warning lamps in the mirrors. Read 0 at rest (2026-11-02 recording). */
     public static final int MIRROR_LEFT = 0xA0005002;
     public static final int MIRROR_RIGHT = 0xA0005003;
@@ -126,18 +148,27 @@ public final class BlindSpotWatch implements Telemetry.Listener {
         Integer mirrorRight = taughtRight ? null : raw("mirror right", MIRROR_RIGHT);
         Integer rctaLeft = taughtLeft ? null : raw("RCTA left", RCTA_LEFT);
         Integer rctaRight = taughtRight ? null : raw("RCTA right", RCTA_RIGHT);
+        // LCMA blind spot lamp from the settings service: bits, null when not readable
+        Integer lcma = SettingZeekrWatch.lcmaSides();
         if (learnedLeft == null && learnedRight == null && mirrorLeft == null && mirrorRight == null
-                && rctaLeft == null && rctaRight == null) {
+                && rctaLeft == null && rctaRight == null && lcma == null) {
             return null;
         }
         int out = 0;
-        if (side(taughtLeft, l.leftValue, learnedLeft, mirrorLeft, rctaLeft)) {
+        if (side(taughtLeft, l.leftValue, learnedLeft, mirrorLeft, rctaLeft)
+                || lcmaWarns(lcma, VehicleState.TURN_LEFT)) {
             out |= VehicleState.TURN_LEFT;
         }
-        if (side(taughtRight, l.rightValue, learnedRight, mirrorRight, rctaRight)) {
+        if (side(taughtRight, l.rightValue, learnedRight, mirrorRight, rctaRight)
+                || lcmaWarns(lcma, VehicleState.TURN_RIGHT)) {
             out |= VehicleState.TURN_RIGHT;
         }
         return out;
+    }
+
+    /** The car's own blind spot lamp (LCMA) is lit on that side. It always counts, taught or not: it is the car's own warning. */
+    public static boolean lcmaWarns(Integer lcmaSides, int bit) {
+        return lcmaSides != null && (lcmaSides & bit) != 0;
     }
 
     /** Reads a built-in signal; every change goes to the black box, since what the car really sends is still being checked. */

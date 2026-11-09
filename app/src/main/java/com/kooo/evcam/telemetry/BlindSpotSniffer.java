@@ -103,13 +103,16 @@ public final class BlindSpotSniffer {
         running = want;
         work.removeCallbacks(poll);
         before = null;
+        allBefore = null;
         lastSituation = null;
         if (want) {
             log = BlindSpotLog.start(app);
             work.post(poll);
         } else {
+            BlindSpotLog.setCurrent(null);
             if (log != null) {
                 log.section("Stopped");
+                log.close();
                 log = null;
             }
             AppLog.i(TAG, "stopped");
@@ -149,7 +152,48 @@ public final class BlindSpotSniffer {
             before = now;
             noteSituation();
         }
+        allValues();
         work.postDelayed(poll, POLL_MS);
+    }
+
+    /** Every ECARX function, not only the blind-spot-looking ones: read about once a second, each change logged. */
+    static final long ALL_EVERY_MS = 1_000L;
+    private String[] allBefore;
+    private long allAt;
+    private long allGap = ALL_EVERY_MS;
+
+    private void allValues() {
+        if (log == null || everything == null || everything.isEmpty()) {
+            return;
+        }
+        long t0 = SystemClock.uptimeMillis();
+        if (t0 - allAt < allGap) {
+            return;
+        }
+        allAt = t0;
+        String[] now = CarAmbientLab.readAll(app, everything);
+        if (now == null) {
+            return;
+        }
+        if (allBefore != null) {
+            String context = BlindSpotLog.context(Telemetry.get().latest());
+            java.util.Set<Integer> fast = new java.util.HashSet<>();
+            if (watched != null) {
+                for (CarAmbientLab.Constant w : watched) {
+                    fast.add(w.value);
+                }
+            }
+            for (int i = 0; i < everything.size(); i++) {
+                CarAmbientLab.Constant k = everything.get(i);
+                // the blind-spot-looking ones are already logged every POLL_MS
+                if (!fast.contains(k.value) && !Objects.equals(allBefore[i], now[i])) {
+                    log.line("[ecarx] " + k.name + " " + k.hex() + ": " + allBefore[i] + " → " + now[i] + "  | " + context);
+                }
+            }
+        }
+        allBefore = now;
+        // a slow pass waits twice as long, so the car interface is never kept busy
+        allGap = Math.max(ALL_EVERY_MS, (SystemClock.uptimeMillis() - t0) * 2);
     }
 
     private List<CarAmbientLab.Constant> find() {
@@ -201,8 +245,16 @@ public final class BlindSpotSniffer {
             CarAmbientLab.Constant k = watched.get(i);
             log.raw(k.name + " " + k.hex() + " " + k.owner + " = " + watchedNow[i]);
         }
+        log.raw("");
+        log.raw("Mirror lamp (ECARX) now: " + SettingZeekrWatch.hex(BlindSpotWatch.MIRROR_LEFT) + "/" + SettingZeekrWatch.hex(BlindSpotWatch.MIRROR_RIGHT)
+                + " = " + CarAmbientLab.value(app, BlindSpotWatch.MIRROR_LEFT) + "/" + CarAmbientLab.value(app, BlindSpotWatch.MIRROR_RIGHT)
+                + ", RCTA = " + CarAmbientLab.value(app, BlindSpotWatch.RCTA_LEFT) + "/" + CarAmbientLab.value(app, BlindSpotWatch.RCTA_RIGHT)
+                + "; LCMA (setting_zeekr) sides = " + SettingZeekrWatch.lcmaSides());
         log.section("Changes");
         log.line("start  | " + BlindSpotLog.context(Telemetry.get().latest()));
+        // the settings service writes its own full list next, then its changes as [setting] lines
+        BlindSpotLog.setCurrent(log);
+        SettingZeekrWatch.dumpInto(log);
     }
 
     /** A line whenever gear, turn signal or hazard changes, so changes can be read against what the car was doing. */

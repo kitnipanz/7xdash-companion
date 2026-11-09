@@ -19,13 +19,7 @@ public enum AutomationTrigger {
     BATTERY_BELOW("battery_below", R.string.automation_when_battery_below, R.string.automation_chip_drops, Group.BATTERY, Measure.BATTERY, false),
     OUTSIDE_ABOVE("outside_above", R.string.automation_when_outside_above, R.string.automation_chip_reaches, Group.OUTSIDE, Measure.OUTSIDE, true),
     OUTSIDE_BELOW("outside_below", R.string.automation_when_outside_below, R.string.automation_chip_drops, Group.OUTSIDE, Measure.OUTSIDE, false),
-    /** Value: minutes from midnight ({@link AutomationClock}). */
-    TIME_AT("time_at", R.string.automation_when_time_at, R.string.automation_chip_time_at, Group.TIME, null, false),
-    /** Value: {@link AutomationClock#span}. */
-    TIME_BETWEEN("time_between", R.string.automation_when_time_between, R.string.automation_chip_time_between, Group.TIME, null, false),
-    /** Value: days as bits ({@link AutomationClock}). */
-    DAYS("days", R.string.automation_when_days, R.string.automation_group_days, Group.DAYS, null, false),
-    /** Value: a saved place's id. */
+    /** Value: a saved place's id ({@link com.kooo.evcam.nav.SavedPlaces}). */
     PLACE_ARRIVE("place_arrive", R.string.automation_when_place_arrive, R.string.automation_chip_place_arrive, Group.PLACE, null, false),
     PLACE_LEAVE("place_leave", R.string.automation_when_place_leave, R.string.automation_chip_place_leave, Group.PLACE, null, false);
 
@@ -38,8 +32,6 @@ public enum AutomationTrigger {
         RAIN(R.string.automation_group_rain, R.drawable.ic_automation_rain, 0),
         BATTERY(R.string.automation_group_battery, R.drawable.ic_automation_battery, R.string.automation_percent),
         OUTSIDE(R.string.automation_group_outside, R.drawable.ic_automation_temp, R.string.automation_unit_temp),
-        TIME(R.string.automation_group_time, R.drawable.ic_automation_time, 0),
-        DAYS(R.string.automation_group_days, R.drawable.ic_automation_days, 0),
         PLACE(R.string.automation_group_place, R.drawable.ic_automation_place, 0);
 
         public final int labelRes;
@@ -95,9 +87,9 @@ public enum AutomationTrigger {
         this.rising = rising;
     }
 
-    /** True for what is only ever a state: nothing on the car says it changed, so the clock has to look. */
-    public boolean polled() {
-        return group == Group.TIME || group == Group.DAYS || group == Group.PLACE;
+    /** Arriving and leaving: nothing on the car says the place changed, so the GPS has to be looked at. */
+    public boolean isPlace() {
+        return group == Group.PLACE;
     }
 
     public static AutomationTrigger fromKey(String key) {

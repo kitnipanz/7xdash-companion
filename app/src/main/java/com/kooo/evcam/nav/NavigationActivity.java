@@ -26,12 +26,13 @@ import com.kooo.evcam.R;
 import com.kooo.evcam.overlay.OverlayCoordinator;
 import com.kooo.evcam.trip.Arrival;
 import com.kooo.evcam.trip.DestinationLink;
+import com.kooo.evcam.trip.Trip;
 
 import org.maplibre.android.maps.MapLibreMap;
 import org.maplibre.android.maps.SupportMapFragment;
 
 /**
- * Navigation: search a place (or take the one shared from the iPhone, or hold on the map),
+ * Navigation (beta): search a place (or take the one shared from the iPhone, or hold on the map),
  * see the route with its time, distance and battery at arrival, then Start for turn-by-turn.
  * The map is Google's (Maps SDK, needs Google Play services); without it the screen still
  * guides, just with no map. The guiding itself is {@link Navigator}'s and goes on when this closes.
@@ -59,13 +60,13 @@ public class NavigationActivity extends AppCompatActivity implements Navigator.L
     private MaterialButton end;
     private View endGuiding;
     private View actions;
-    private MaterialButton mute;
     private View recenter;
     private LinearLayout routes;
     /** The choices and the chosen one the cards were last made for. */
     private java.util.List<NavRoute> shownRoutes;
     private NavRoute shownChosen;
     private View hudPreview;
+    private View savePlace;
     private TextView hudPreviewLabel;
     private HudTurnCard hudCard;
 
@@ -73,7 +74,6 @@ public class NavigationActivity extends AppCompatActivity implements Navigator.L
     /** Null until the map is ready (and stays null without one). */
     private NavMapPainter painter;
     private Navigator.Phase shownPhase;
-    private View savePlace;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -97,7 +97,6 @@ public class NavigationActivity extends AppCompatActivity implements Navigator.L
         end = findViewById(R.id.nav_end);
         endGuiding = findViewById(R.id.nav_end_guiding);
         actions = findViewById(R.id.nav_actions);
-        mute = findViewById(R.id.nav_mute);
         recenter = findViewById(R.id.nav_recenter);
         routes = findViewById(R.id.nav_routes);
         hudPreview = findViewById(R.id.nav_hud_preview);
@@ -115,10 +114,10 @@ public class NavigationActivity extends AppCompatActivity implements Navigator.L
             return false;
         });
         // the box can already hold the focus when the screen opens: a tap then changes nothing
-        search.setOnClickListener(v -> showRecent(false));
+        search.setOnClickListener(v -> showSharedPlace());
         search.setOnFocusChangeListener((v, focused) -> {
             if (focused) {
-                showRecent(false);
+                showSharedPlace();
             }
         });
         go.setOnClickListener(v -> {
@@ -138,7 +137,6 @@ public class NavigationActivity extends AppCompatActivity implements Navigator.L
         };
         end.setOnClickListener(endTrip);
         endGuiding.setOnClickListener(endTrip);
-        mute.setOnClickListener(v -> Navigator.get().setMuted(!Navigator.get().snapshot().muted));
         recenter.setOnClickListener(v -> {
             recenter.setVisibility(View.GONE);
             if (painter != null) {
@@ -449,21 +447,21 @@ public class NavigationActivity extends AppCompatActivity implements Navigator.L
         super.onStop();
     }
 
-    /** The phone's places already shown: a new one opens the list once, here or on the next open. */
-    private static int sharedSeen;
+    /** FLAG_KEEP_SCREEN_ON as last set on the window. */
+    private boolean keptOn;
 
     @Override
     public void onNavChanged(Navigator.Snapshot s) {
         boolean guiding = s.phase == Navigator.Phase.GUIDING || s.phase == Navigator.Phase.ARRIVED;
-        int shared = Navigator.get().sharedCount();
-        if (shared != sharedSeen && !guiding) {
-            sharedSeen = shared;
-            showRecent(true);
-        }
-        if (guiding) {
-            getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-        } else {
-            getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        // Keep the screen on while guiding. Only when it changes: addFlags / clearFlags update the
+        // window (a relayout, with the map in it) on every call, and this runs every second.
+        if (guiding != keptOn) {
+            keptOn = guiding;
+            if (guiding) {
+                getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+            } else {
+                getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+            }
         }
         searchBar.setVisibility(guiding ? View.GONE : View.VISIBLE);
         if (guiding) {
@@ -473,8 +471,6 @@ public class NavigationActivity extends AppCompatActivity implements Navigator.L
         options.setVisibility(s.phase == Navigator.Phase.IDLE || s.phase == Navigator.Phase.PREVIEW
                 ? View.VISIBLE : View.GONE);
         savePlace.setVisibility(s.phase == Navigator.Phase.PREVIEW ? View.VISIBLE : View.GONE);
-        mute.setIconResource(s.muted ? R.drawable.ic_voice_off : R.drawable.ic_voice_on);
-        mute.setVisibility(guiding ? View.VISIBLE : View.GONE);
         showBanner(s);
         showSheet(s);
         showRoutes(s);
@@ -551,7 +547,8 @@ public class NavigationActivity extends AppCompatActivity implements Navigator.L
             case IDLE:
                 place.setText(R.string.nav_title);
                 summary.setText("");
-                status.setText(!Navigator.hasKey() ? R.string.nav_error_no_key : R.string.nav_idle_hint);
+                status.setText(!Navigator.active(this) ? R.string.nav_need_beta
+                        : !Navigator.hasKey() ? R.string.nav_error_no_key : R.string.nav_idle_hint);
                 return;
             case ROUTING:
                 place.setText(placeName(s.destination));
@@ -642,32 +639,25 @@ public class NavigationActivity extends AppCompatActivity implements Navigator.L
             }
             for (int i = 0; i < Math.min(6, found.size()); i++) {
                 TomTomJson.Found f = found.get(i);
-                results.addView(row(f.place.name, f.address, () -> {
-                    RecentPlaces.add(this, f.place, false);
-                    choose(f.place);
-                }));
+                results.addView(row(f.place.name, f.address, () -> choose(f.place)));
             }
         });
     }
 
-    /** Recent places (the phone's newest on top), then saved ones, for the driver to pick. */
-    private void showRecent(boolean fresh) {
-        if (Navigator.get().isGuiding() || (!fresh && results.getVisibility() == View.VISIBLE)) {
+    /** Offers the place last shared from the iPhone (Battery at arrival), if there is one, then the saved places. */
+    private void showSharedPlace() {
+        if (Navigator.get().isGuiding() || results.getVisibility() == View.VISIBLE) {
             return;
         }
-        java.util.List<RecentPlaces.Place> recent = RecentPlaces.load(this);
+        DestinationLink.Place shared = Trip.get().status().destination;
         java.util.List<SavedPlaces.Place> places = SavedPlaces.load(this);
-        if (recent.isEmpty() && places.isEmpty()) {
+        if (shared == null && places.isEmpty()) {
             return;
         }
         results.removeAllViews();
-        for (RecentPlaces.Place place : recent) {
-            DestinationLink.Place p = place.destination();
-            results.addView(row(placeName(p), getString(place.shared ? R.string.nav_shared_sub : R.string.nav_recent_sub),
-                    () -> {
-                        RecentPlaces.add(this, p, place.shared);
-                        choose(p);
-                    }));
+        if (shared != null) {
+            results.addView(row(getString(R.string.nav_shared, placeName(shared)), getString(R.string.nav_shared_sub),
+                    () -> choose(shared)));
         }
         for (SavedPlaces.Place place : places) {
             results.addView(row(place.name, getString(R.string.place_saved_sub), () -> choose(place.destination())));

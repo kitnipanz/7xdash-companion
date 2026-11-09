@@ -238,4 +238,36 @@ public class SideViewDecisionTest {
         in.showing = LaneCycle.RIGHT;
         assertEquals(LaneCycle.RIGHT, SideViewDecision.decide(in));
     }
+
+    @Test
+    public void signalTowardWarnedSideIgnoresSignalSpeed() {
+        SideViewDecision.Input in = driving(2);
+        in.speedKmh = 10f;
+        assertEquals(SideViewDecision.NONE, SideViewDecision.decide(in));
+        in.warnedSides = com.kooo.evcam.telemetry.VehicleState.TURN_RIGHT;
+        assertEquals(LaneCycle.RIGHT, SideViewDecision.decide(in));
+        // warned on the other side: the signal's speed gate still holds
+        in.warnedSides = com.kooo.evcam.telemetry.VehicleState.TURN_LEFT;
+        assertEquals(SideViewDecision.NONE, SideViewDecision.decide(in));
+    }
+
+    @Test
+    public void warningAloneWaitsForWarningSpeed() {
+        SideViewDecision.Input in = driving(0);
+        in.warningCamera = true;
+        in.warningMinSpeedKmh = 60;
+        in.warnedSides = com.kooo.evcam.telemetry.VehicleState.TURN_LEFT;
+        in.speedKmh = 40f;
+        assertEquals(SideViewDecision.NONE, SideViewDecision.decide(in));
+        in.speedKmh = 65f;
+        assertEquals(LaneCycle.LEFT, SideViewDecision.decide(in));
+        // already showing: dropping below keeps it, no flicker
+        in.speedKmh = 40f;
+        in.showing = LaneCycle.LEFT;
+        assertEquals(LaneCycle.LEFT, SideViewDecision.decide(in));
+        // unknown speed does not block
+        in.showing = SideViewDecision.NONE;
+        in.speedKmh = null;
+        assertEquals(LaneCycle.LEFT, SideViewDecision.decide(in));
+    }
 }

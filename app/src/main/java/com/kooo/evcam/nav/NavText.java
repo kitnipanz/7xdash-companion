@@ -8,7 +8,7 @@ import com.kooo.evcam.R;
 import java.util.Date;
 import java.util.Locale;
 
-/** What the Navigation screen, the HUD and the voice say. */
+/** What the Navigation screen and the HUD say. */
 public final class NavText {
 
     private NavText() {
@@ -71,28 +71,4 @@ public final class NavText {
         return nl < 0 ? "" : s.substring(nl + 1).replace('\n', ' ').trim();
     }
 
-    /** The sentence to speak for a prompt. */
-    public static String spoken(Context c, NavRoute route, VoicePlan.Prompt p) {
-        String what = p.next < 0 ? c.getString(R.string.nav_say_destination)
-                : route.steps.get(p.next).instruction.replace('\n', ' ').replace("  ", " ").trim();
-        if (what.isEmpty()) {
-            what = c.getString(R.string.nav_continue);
-        }
-        if (p.stage == VoicePlan.Stage.NOW) {
-            return p.next < 0 ? c.getString(R.string.nav_say_arrived) : what;
-        }
-        String far = p.meters >= 1_000
-                ? c.getString(R.string.nav_say_km, p.meters % 1000 == 0
-                ? String.valueOf(p.meters / 1000) : String.format(Locale.getDefault(), "%.1f", p.meters / 1000.0))
-                : c.getString(R.string.nav_say_m, p.meters);
-        return c.getString(R.string.nav_say_in, far, lowerFirst(what));
-    }
-
-    /** "Turn left" → "turn left" after "In 300 metres, ". Leaves Thai (no case) alone. */
-    private static String lowerFirst(String s) {
-        if (s.length() < 2 || !Character.isUpperCase(s.charAt(0)) || Character.isUpperCase(s.charAt(1))) {
-            return s;
-        }
-        return Character.toLowerCase(s.charAt(0)) + s.substring(1);
-    }
 }

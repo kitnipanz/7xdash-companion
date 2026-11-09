@@ -5,12 +5,15 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import com.kooo.evcam.nav.SavedPlaces;
 import com.kooo.evcam.telemetry.Signal;
 
 import org.junit.Test;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class AutomationWatchTest {
 
@@ -127,105 +130,6 @@ public class AutomationWatchTest {
         return !watch.step(Collections.singletonList(rule), s).isEmpty();
     }
 
-    private static AutomationRule darkAndRainy() {
-        AutomationRule rule = rule(AutomationTrigger.DARK, 0);
-        rule.also.add(new AutomationRule.Condition(AutomationTrigger.RAIN_START.key, 0));
-        return rule;
-    }
-
-    private boolean weather(AutomationRule rule, Integer dayNight, Boolean raining) {
-        AutomationWatch.Sample s = sample();
-        s.dayNight = dayNight;
-        s.rain = raining;
-        return !watch.step(Collections.singletonList(rule), s).isEmpty();
-    }
-
-    @Test
-    public void darkAndRainy_firesWhenTheLastComesTrue_inEitherOrder() {
-        AutomationRule rule = darkAndRainy();
-        weather(rule, Signal.DAY, false);
-        assertFalse("dark alone", weather(rule, Signal.NIGHT, false));
-        assertTrue("then rain", weather(rule, Signal.NIGHT, true));
-        assertFalse("still both", weather(rule, Signal.NIGHT, true));
-
-        AutomationWatch other = new AutomationWatch();
-        AutomationRule second = darkAndRainy();
-        AutomationWatch.Sample s = sample();
-        s.dayNight = Signal.DAY;
-        s.rain = false;
-        other.step(Collections.singletonList(second), s);
-        s = sample();
-        s.dayNight = Signal.DAY;
-        s.rain = true;
-        assertTrue("rain alone", other.step(Collections.singletonList(second), s).isEmpty());
-        s = sample();
-        s.dayNight = Signal.NIGHT;
-        s.rain = true;
-        assertEquals(1, other.step(Collections.singletonList(second), s).size());
-    }
-
-    @Test
-    public void allTrueWhenFirstSeen_doesNotFire() {
-        assertFalse(weather(darkAndRainy(), Signal.NIGHT, true));
-    }
-
-    @Test
-    public void unknownConditionHoldsItBack() {
-        AutomationRule rule = darkAndRainy();
-        weather(rule, Signal.DAY, null);
-        assertFalse(weather(rule, Signal.NIGHT, null));
-    }
-
-    @Test
-    public void firesAgainAfterOneStopped_onceTheGapHasPassed() {
-        AutomationRule rule = darkAndRainy();
-        weather(rule, Signal.NIGHT, false);
-        assertTrue(weather(rule, Signal.NIGHT, true));
-        weather(rule, Signal.NIGHT, false);
-        assertFalse("too soon", weather(rule, Signal.NIGHT, true));
-        weather(rule, Signal.NIGHT, false);
-        now += AutomationWatch.NUMBER_GAP_MS;
-        assertTrue(weather(rule, Signal.NIGHT, true));
-    }
-
-    @Test
-    public void gearAndSpeed_useTheNumberMargin() {
-        AutomationRule rule = rule(AutomationTrigger.GEAR_D, 0);
-        rule.also.add(new AutomationRule.Condition(AutomationTrigger.SPEED_ABOVE.key, 80));
-        AutomationWatch.Sample s = sample();
-        s.gear = "D";
-        s.speedKmh = 50f;
-        assertTrue(watch.step(Collections.singletonList(rule), s).isEmpty());
-        s = sample();
-        s.gear = "D";
-        s.speedKmh = 85f;
-        assertEquals(1, watch.step(Collections.singletonList(rule), s).size());
-        s = sample();
-        s.gear = "D";
-        s.speedKmh = 79f;
-        assertTrue(watch.step(Collections.singletonList(rule), s).isEmpty());
-        now += AutomationWatch.NUMBER_GAP_MS;
-        s = sample();
-        s.gear = "D";
-        s.speedKmh = 85f;
-        assertTrue("stayed within the margin", watch.step(Collections.singletonList(rule), s).isEmpty());
-    }
-
-    @Test
-    public void ruleSavedWithOneCondition_stillReads() {
-        List<AutomationRule> back = AutomationRule.parseAll(
-                "[{\"id\":\"a\",\"enabled\":true,\"trigger\":\"dark\",\"value\":0,\"steps\":[{\"action\":\"dim\",\"choice\":\"50\"}]}]");
-        assertEquals(1, back.get(0).conditions().size());
-        assertEquals(AutomationTrigger.DARK, back.get(0).trigger());
-    }
-
-    @Test
-    public void conditionsComeBackFromSaving() {
-        List<AutomationRule> back = AutomationRule.parseAll(AutomationRule.toJson(Collections.singletonList(darkAndRainy())));
-        assertEquals(2, back.get(0).conditions().size());
-        assertEquals(AutomationTrigger.RAIN_START, back.get(0).conditions().get(1).trigger());
-    }
-
     @Test
     public void rainStart_firesOnTheChange_notWhenAlreadyRaining() {
         AutomationRule start = rule(AutomationTrigger.RAIN_START, 0);
@@ -335,133 +239,58 @@ public class AutomationWatchTest {
         assertTrue(AutomationRule.parseAll("[{\"id\":\"a\",\"trigger\":\"nope\",\"steps\":[]}]").isEmpty());
     }
 
-    // ---- time, days, places
+    // ---- Saved places
 
-    private boolean at(AutomationRule rule, int minute, int dayBit) {
+    /** Home at 13.7, 100.5; one degree of latitude is about 111 km, so 0.001 is about 111 m. */
+    private static Map<Integer, SavedPlaces.Place> home() {
+        SavedPlaces.Place home = SavedPlaces.add(new java.util.ArrayList<>(), "Home", 13.7, 100.5);
+        Map<Integer, SavedPlaces.Place> places = new HashMap<>();
+        places.put(home.id, home);
+        return places;
+    }
+
+    private boolean at(AutomationRule rule, Map<Integer, SavedPlaces.Place> places, Double northOfHome) {
         AutomationWatch.Sample s = sample();
-        s.minuteOfDay = minute;
-        s.dayBit = dayBit;
-        return !watch.step(Collections.singletonList(rule), s).isEmpty();
-    }
-
-    private static final int MONDAY = AutomationClock.dayBit(java.util.Calendar.MONDAY);
-    private static final int SATURDAY = AutomationClock.dayBit(java.util.Calendar.SATURDAY);
-
-    private static AutomationRule rule(AutomationTrigger first, int value, AutomationTrigger second, int secondValue) {
-        AutomationRule rule = rule(first, value);
-        rule.also.add(new AutomationRule.Condition(second.key, secondValue));
-        return rule;
-    }
-
-    @Test
-    public void aTimeRunsOnceWhenItComes() {
-        AutomationRule rule = rule(AutomationTrigger.TIME_AT, 480);
-        assertFalse(at(rule, 479, MONDAY));
-        now += 60_000L;
-        assertTrue(at(rule, 480, MONDAY));
-        now += 15_000L;
-        assertFalse(at(rule, 480, MONDAY));
-        now += 60_000L;
-        assertFalse(at(rule, 481, MONDAY));
-    }
-
-    @Test
-    public void openingTheAppAtTheTimeDoesNotRunIt() {
-        assertFalse(at(rule(AutomationTrigger.TIME_AT, 480), 480, MONDAY));
-    }
-
-    @Test
-    public void aRuleWithDaysWaitsForTheRightDay() {
-        AutomationRule rule = rule(AutomationTrigger.TIME_AT, 480, AutomationTrigger.DAYS, AutomationClock.WEEKDAYS);
-        assertFalse(at(rule, 479, SATURDAY));
-        now += 60_000L;
-        assertFalse(at(rule, 480, SATURDAY));
-        now += 60_000L;
-        assertFalse(at(rule, 481, MONDAY));
-        now += 60_000L;
-        assertFalse(at(rule, 479, MONDAY));
-        now += 60_000L;
-        assertTrue(at(rule, 480, MONDAY));
-    }
-
-    @Test
-    public void aGearInsideTheHoursRuns_outsideTheyDoNot() {
-        AutomationRule rule = rule(AutomationTrigger.GEAR_D, 0, AutomationTrigger.TIME_BETWEEN,
-                AutomationClock.span(420, 540));
-        AutomationWatch.Sample s = sample();
-        s.gear = "P";
-        s.minuteOfDay = 600;
-        s.dayBit = MONDAY;
-        assertTrue(watch.step(Collections.singletonList(rule), s).isEmpty());
-        s = sample();
-        s.gear = "P";
-        s.minuteOfDay = 500;
-        s.dayBit = MONDAY;
-        assertTrue(watch.step(Collections.singletonList(rule), s).isEmpty());
-        s = sample();
-        s.gear = "D";
-        s.minuteOfDay = 501;
-        s.dayBit = MONDAY;
-        assertEquals(1, watch.step(Collections.singletonList(rule), s).size());
-    }
-
-    @Test
-    public void theCarComingOnAtBootCountsWithOtherConditions() {
-        AutomationRule rule = rule(AutomationTrigger.CAR_ON, 0, AutomationTrigger.DAYS, AutomationClock.WEEKDAYS);
-        AutomationWatch.Sample s = sample();
-        s.ignition = Signal.IGNITION_ON;
-        s.justBooted = true;
-        s.minuteOfDay = 480;
-        s.dayBit = MONDAY;
-        assertEquals(1, watch.step(Collections.singletonList(rule), s).size());
-    }
-
-    private static final com.kooo.evcam.nav.SavedPlaces.Place HOME = home();
-
-    private static com.kooo.evcam.nav.SavedPlaces.Place home() {
-        return com.kooo.evcam.nav.SavedPlaces.add(new java.util.ArrayList<>(), "Home", 13.7, 100.5);
-    }
-
-    /** Metres north of home. */
-    private boolean near(AutomationRule rule, Double metres) {
-        AutomationWatch.Sample s = sample();
-        s.lat = metres == null ? null : 13.7 + metres / 111_195.0;
-        s.lng = metres == null ? null : 100.5;
-        s.places = Collections.singletonMap(HOME.id, HOME);
-        now += 60_000L;
+        s.places = places;
+        s.lat = northOfHome == null ? null : 13.7 + northOfHome;
+        s.lng = northOfHome == null ? null : 100.5;
         return !watch.step(Collections.singletonList(rule), s).isEmpty();
     }
 
     @Test
-    public void arrivingRunsOnce_wanderAtTheEdgeDoesNotRepeatIt() {
-        AutomationRule rule = rule(AutomationTrigger.PLACE_ARRIVE, HOME.id);
-        assertFalse(near(rule, 2_000.0));
-        assertTrue(near(rule, 100.0));
-        assertFalse(near(rule, 200.0));
-        assertFalse(near(rule, 100.0));
-        assertFalse(near(rule, 2_000.0));
-        assertTrue(near(rule, 100.0));
+    public void arrivingFires_onlyComingIn() {
+        Map<Integer, SavedPlaces.Place> places = home();
+        AutomationRule arrive = rule(AutomationTrigger.PLACE_ARRIVE, 1);
+        assertFalse("already home when first seen", at(arrive, places, 0.0));
+        assertFalse(at(arrive, places, 0.01));
+        assertFalse("no fix", at(arrive, places, null));
+        assertTrue(at(arrive, places, 0.0005));
+        assertFalse(at(arrive, places, 0.0));
     }
 
     @Test
-    public void leavingRunsWhenClearOfThePlace() {
-        AutomationRule rule = rule(AutomationTrigger.PLACE_LEAVE, HOME.id);
-        assertFalse(near(rule, 50.0));
-        assertFalse(near(rule, 200.0));
-        assertTrue(near(rule, 300.0));
+    public void leavingFires_onlyPastTheMargin() {
+        Map<Integer, SavedPlaces.Place> places = home();
+        AutomationRule leave = rule(AutomationTrigger.PLACE_LEAVE, 1);
+        assertFalse(at(leave, places, 0.0));
+        assertFalse("200 m: GPS wander at the edge", at(leave, places, 0.0018));
+        assertTrue("300 m", at(leave, places, 0.0027));
+        assertFalse(at(leave, places, 0.01));
     }
 
     @Test
-    public void startingInsideAPlaceIsNotArriving() {
-        assertFalse(near(rule(AutomationTrigger.PLACE_ARRIVE, HOME.id), 50.0));
+    public void aDeletedPlaceNeverFires() {
+        AutomationRule arrive = rule(AutomationTrigger.PLACE_ARRIVE, 7);
+        assertFalse(at(arrive, home(), 0.01));
+        assertFalse(at(arrive, home(), 0.0));
     }
 
     @Test
-    public void noFixOrADeletedPlaceNeverRuns() {
-        AutomationRule rule = rule(AutomationTrigger.PLACE_ARRIVE, HOME.id);
-        assertFalse(near(rule, null));
-        AutomationRule gone = rule(AutomationTrigger.PLACE_ARRIVE, 99);
-        assertFalse(near(gone, 2_000.0));
-        assertFalse(near(gone, 50.0));
+    public void notLookingForAWhile_startsAgainFromWhereTheCarIs() {
+        Map<Integer, SavedPlaces.Place> places = home();
+        AutomationRule arrive = rule(AutomationTrigger.PLACE_ARRIVE, 1);
+        assertFalse(at(arrive, places, 0.01));
+        assertFalse("automation off: no places given", at(arrive, Collections.emptyMap(), 0.0));
+        assertFalse("home already when it looks again", at(arrive, places, 0.0));
     }
 }

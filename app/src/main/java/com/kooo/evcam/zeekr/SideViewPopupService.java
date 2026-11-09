@@ -255,6 +255,7 @@ public class SideViewPopupService extends Service {
         in.doorsOpen = s.doorsOpen;
         in.warningCamera = appConfig.isSidePopupOnWarning();
         in.warnedSides = s.blindSpotWarning;
+        in.warningMinSpeedKmh = appConfig.getSidePopupWarningMinSpeed();
         in.showing = popup != null && popup.isShowing() ? popup.lane() : SideViewDecision.NONE;
 
         boolean blocked = ScreenState.dark() || RearViewMirrorService.isRunning()

@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -21,12 +22,12 @@ import java.util.Set;
  * is the car coming on right after the head unit started: the head unit wakes with the car, so
  * the first reading is the only one there is. An unknown reading (null) never counts as a change.</p>
  *
- * <p>A rule with several conditions fires the moment the last of them comes true, in any order, and
- * can fire again once one has stopped being true. It uses the same gap as a number.</p>
- *
  * <p>A number has to come back by {@link AutomationTrigger.Measure#hysteresis} before it can fire
  * again, and at least {@link #NUMBER_GAP_MS} passes between two runs, so driving around 80 km/h
  * does not flip the drive mode over and over. Rain gets the same gap.</p>
+ *
+ * <p>A saved place is entered within {@link #PLACE_RADIUS_M} and left only {@link #PLACE_MARGIN_M}
+ * further out, so GPS wander at the edge is not leaving and arriving over and over.</p>
  */
 final class AutomationWatch {
 
@@ -42,10 +43,7 @@ final class AutomationWatch {
         /** The head unit started moments ago. */
         boolean justBooted;
         long at;
-        /** The wall clock; -1 until it is given. */
-        int minuteOfDay = -1;
-        /** Today as {@link AutomationClock#dayBit}. */
-        int dayBit;
+        /** The car's GPS position; given only while a rule needs a place. */
         Double lat;
         Double lng;
         /** The saved places, by id. */
@@ -55,7 +53,7 @@ final class AutomationWatch {
     static final long NUMBER_GAP_MS = 30_000L;
     /** Inside a place within this of it. */
     static final double PLACE_RADIUS_M = 150;
-    /** Outside again only this much further on, so GPS wander at the edge is not leaving and arriving. */
+    /** Outside again only this much further on. */
     static final double PLACE_MARGIN_M = 100;
     /** {@link com.kooo.evcam.screen.VehicleScreen}: codes from here up to ACC are "off or lower". */
     private static final int IGNITION_LOW_MIN = 0x00200100;
@@ -67,23 +65,23 @@ final class AutomationWatch {
     /** Per rule and number: past the number now. */
     private final Map<String, Boolean> past = new HashMap<>();
     private final Map<String, Long> lastRun = new HashMap<>();
-    /** Per rule and its set of conditions: all true at the last reading. */
-    private final Map<String, Boolean> together = new HashMap<>();
     /** Per saved place: the car is inside it. */
     private final Map<Integer, Boolean> inside = new HashMap<>();
+    /** Per rule and place: what the rule last saw, so it fires on the change only. */
+    private final Map<String, Boolean> seenInside = new HashMap<>();
 
     /** The rules to run now, in list order. Call with no rules to keep up while nothing should run. */
     List<AutomationRule> step(List<AutomationRule> rules, Sample s) {
         Set<AutomationTrigger> events = events(s);
+        locate(s);
+        Set<String> placeKeys = new HashSet<>();
         List<AutomationRule> out = new ArrayList<>();
         for (AutomationRule rule : rules) {
             AutomationTrigger trigger = rule.trigger();
             if (!rule.enabled || trigger == null || rule.steps.isEmpty()) {
                 continue;
             }
-            List<AutomationRule.Condition> conditions = rule.conditions();
-            boolean fires = conditions.size() > 1 || trigger.polled()
-                    ? allCameTrue(rule, conditions, s, events.contains(AutomationTrigger.CAR_ON))
+            boolean fires = trigger.isPlace() ? movedPast(rule, trigger, placeKeys)
                     : trigger.measure == null
                     ? events.contains(trigger) && settled(rule, trigger, s.at)
                     : crossed(rule, trigger, reading(trigger.measure, s), s.at);
@@ -91,6 +89,8 @@ final class AutomationWatch {
                 out.add(rule);
             }
         }
+        // a rule that is off, or was not looking, starts again from where the car is
+        seenInside.keySet().retainAll(placeKeys);
         return out;
     }
 
@@ -131,99 +131,35 @@ final class AutomationWatch {
         return events;
     }
 
-    private boolean allCameTrue(AutomationRule rule, List<AutomationRule.Condition> conditions, Sample s,
-                                boolean carCameOn) {
-        StringBuilder key = new StringBuilder(rule.id);
-        Boolean all = Boolean.TRUE;
-        boolean wantsCarOn = false;
-        for (AutomationRule.Condition condition : conditions) {
-            key.append('|').append(condition.trigger).append(':').append(condition.value);
-            wantsCarOn |= condition.trigger() == AutomationTrigger.CAR_ON;
-            Boolean now = holds(rule, condition, s);
-            if (now == null) {
-                all = null;
-            } else if (!now && all != null) {
-                all = Boolean.FALSE;
-            }
-        }
-        if (all == null) {
-            return false;
-        }
-        String id = key.toString();
-        Boolean was = together.get(id);
-        if (was == null && carCameOn && wantsCarOn) {
-            // The head unit wakes with the car: this first reading is the car coming on
-            was = Boolean.FALSE;
-        }
-        if (was == null || !all || was) {
-            together.put(id, all);
-            return false;
-        }
-        Long last = lastRun.get(rule.id);
-        if (last != null && s.at - last < NUMBER_GAP_MS) {
-            return false;
-        }
-        together.put(id, true);
-        lastRun.put(rule.id, s.at);
-        return true;
-    }
-
-    /** Whether a condition is true now; null while the car has not said. */
-    private Boolean holds(AutomationRule rule, AutomationRule.Condition condition, Sample s) {
-        AutomationTrigger trigger = condition.trigger();
-        switch (trigger) {
-            case CAR_ON: return carOn;
-            case CAR_OFF: return carOn == null ? null : !carOn;
-            case GEAR_P: return gear == null ? null : "P".equals(gear);
-            case GEAR_D: return gear == null ? null : "D".equals(gear);
-            case GEAR_R: return gear == null ? null : "R".equals(gear);
-            case DARK: return dayNight == null ? null : dayNight == Signal.NIGHT;
-            case LIGHT: return dayNight == null ? null : dayNight != Signal.NIGHT;
-            case RAIN_START: return rain;
-            case RAIN_STOP: return rain == null ? null : !rain;
-            case TIME_AT: return s.minuteOfDay < 0 ? null : s.minuteOfDay == condition.value;
-            case TIME_BETWEEN:
-                return s.minuteOfDay < 0 ? null : AutomationClock.within(s.minuteOfDay, condition.value);
-            case DAYS: return s.minuteOfDay < 0 ? null : (condition.value & s.dayBit) != 0;
-            case PLACE_ARRIVE: return inside(condition.value, s);
-            case PLACE_LEAVE:
-                Boolean in = inside(condition.value, s);
-                return in == null ? null : !in;
-            default: return past(rule, condition, reading(trigger.measure, s));
-        }
-    }
-
-    /** Whether the car is at a saved place; null for a deleted place, or before the first fix. */
-    private Boolean inside(int placeId, Sample s) {
-        SavedPlaces.Place place = s.places.get(placeId);
-        if (place == null) {
-            return null;
-        }
-        Boolean was = inside.get(placeId);
+    /** Where the car is against each saved place; a place stays as it was while there is no fix. */
+    private void locate(Sample s) {
+        inside.keySet().retainAll(s.places.keySet());
         if (s.lat == null || s.lng == null) {
-            return was;
+            return;
         }
-        double meters = Geo.meters(s.lat, s.lng, place.lat, place.lng);
-        boolean now = meters <= (Boolean.TRUE.equals(was) ? PLACE_RADIUS_M + PLACE_MARGIN_M : PLACE_RADIUS_M);
-        inside.put(placeId, now);
-        return now;
+        for (SavedPlaces.Place place : s.places.values()) {
+            boolean was = Boolean.TRUE.equals(inside.get(place.id));
+            double meters = Geo.meters(s.lat, s.lng, place.lat, place.lng);
+            inside.put(place.id, meters <= (was ? PLACE_RADIUS_M + PLACE_MARGIN_M : PLACE_RADIUS_M));
+        }
     }
 
-    /** Whether a number is past its limit, with the same margin as {@link #crossed}. */
-    private Boolean past(AutomationRule rule, AutomationRule.Condition condition, Float reading) {
-        AutomationTrigger trigger = condition.trigger();
-        String key = rule.id + ":" + condition.trigger + ":" + condition.value;
-        Boolean was = past.get(key);
-        if (reading == null) {
-            return was;
+    /**
+     * Arrive fires going from outside to inside, Leave the other way. Where the car already was when
+     * the rule first saw it does nothing; a deleted place or no fix yet never fires.
+     */
+    private boolean movedPast(AutomationRule rule, AutomationTrigger trigger, Set<String> keys) {
+        Boolean now = inside.get(rule.value);
+        if (now == null) {
+            return false;
         }
-        float limit = condition.value;
-        boolean beyond = trigger.rising ? reading >= limit : reading <= limit;
-        float back = trigger.measure.hysteresis;
-        boolean now = was == null || !was ? beyond
-                : !(trigger.rising ? reading <= limit - back : reading >= limit + back);
-        past.put(key, now);
-        return now;
+        String key = rule.id + ":" + rule.value;
+        keys.add(key);
+        Boolean was = seenInside.put(key, now);
+        if (was == null || was.equals(now)) {
+            return false;
+        }
+        return trigger == AutomationTrigger.PLACE_ARRIVE ? now : !now;
     }
 
     /** Light rain can read on and off every few seconds: rain gets the same gap between runs as a number. */

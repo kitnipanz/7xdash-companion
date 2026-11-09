@@ -20,9 +20,10 @@ import com.kooo.evcam.ui.Notice;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Carries out the steps of an automation, one after the other, on its own thread: writes to the
@@ -33,6 +34,7 @@ final class AutomationRunner {
 
     /** The car drops a value sent straight after power on ({@code CarAmbientLight}). */
     private static final long AFTER_POWER_MS = 250L;
+    /** How long a step waits for the main thread to answer. */
     private static final long MAIN_WAIT_S = 3L;
 
     private final Context app;
@@ -46,11 +48,8 @@ final class AutomationRunner {
         worker = new Handler(thread.getLooper());
     }
 
-    /**
-     * With {@code report}, a person pressed Try: say it finished as well as what failed. {@code done}
-     * gets why steps failed, empty when none said so, on the main thread.
-     */
-    void run(List<AutomationRule.Step> steps, boolean report, Consumer<String> done) {
+    /** With {@code report}, a person pressed Try: say it finished as well as what failed. */
+    void run(List<AutomationRule.Step> steps, boolean report) {
         List<AutomationRule.Step> copy = new ArrayList<>(steps);
         worker.post(() -> {
             StringBuilder failed = new StringBuilder();
@@ -67,24 +66,12 @@ final class AutomationRunner {
                     failed.append(failed.length() == 0 ? "" : ", ").append(why);
                 }
             }
-            // A shortcut says what it did itself: "Sent" would cover that
             String text = failed.length() > 0 ? app.getString(R.string.automation_failed, failed)
-                    : report && !hasShortcut(copy) ? app.getString(R.string.automation_try_done) : null;
+                    : report ? app.getString(R.string.automation_try_done) : null;
             if (text != null) {
                 main.post(() -> Notice.makeText(app, text, Toast.LENGTH_LONG).show());
             }
-            String why = failed.toString();
-            main.post(() -> done.accept(why));
         });
-    }
-
-    private static boolean hasShortcut(List<AutomationRule.Step> steps) {
-        for (AutomationRule.Step step : steps) {
-            if (AutomationAction.SHORTCUT.key.equals(step.action)) {
-                return true;
-            }
-        }
-        return false;
     }
 
     /** Returns null when done, else why not. */
@@ -155,7 +142,7 @@ final class AutomationRunner {
         if (place == null) {
             return app.getString(R.string.automation_no_place);
         }
-        if (!Navigator.hasKey()) {
+        if (!Navigator.active(app) || !Navigator.hasKey()) {
             return app.getString(R.string.automation_no_navigation);
         }
         FutureTask<Boolean> task = new FutureTask<>(() -> Navigator.get().guideTo(app, place.destination()));
@@ -165,7 +152,7 @@ final class AutomationRunner {
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             return e.toString();
-        } catch (java.util.concurrent.ExecutionException | java.util.concurrent.TimeoutException e) {
+        } catch (ExecutionException | TimeoutException e) {
             return e.toString();
         }
     }

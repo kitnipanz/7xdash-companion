@@ -405,6 +405,13 @@
                 android:title="@string/set_side_popup_warning_title"
                 android:summary="@string/set_side_popup_warning_summary" />
 
+            <SeekBarPreference
+                android:key="pref_side_popup_warning_min_speed"
+                android:dependency="pref_side_popup_warning"
+                android:title="@string/set_side_popup_warning_speed_title"
+                android:summary="@string/set_side_popup_warning_speed_summary"
+                app:showSeekBarValue="true" />
+
             <SwitchPreferenceCompat
                 android:key="pref_side_popup_door"
                 android:dependency="pref_side_popup"
@@ -511,11 +518,6 @@
         android:title="@string/set_section_floating">
 
         <SwitchPreferenceCompat
-            android:key="pref_recording_floating"
-            android:title="@string/set_section_floating"
-            android:summary="@string/set_recording_floating_summary" />
-
-        <SwitchPreferenceCompat
             android:key="pref_dash_panel"
             android:title="@string/home_card_dash_panel"
             android:summary="@string/set_dash_panel_summary" />
@@ -524,46 +526,6 @@
             android:key="pref_macro_pad"
             android:title="@string/macro_pad_title"
             android:summary="@string/set_macro_pad_summary" />
-
-        <ListPreference
-            android:key="pref_floating_tap"
-            android:dependency="pref_recording_floating"
-            android:title="@string/set_floating_tap_title" />
-
-        <ListPreference
-            android:key="pref_floating_long_press"
-            android:dependency="pref_recording_floating"
-            android:title="@string/set_floating_long_press_title" />
-
-        <SeekBarPreference
-            android:key="pref_button_size"
-            android:dependency="pref_recording_floating"
-            android:title="@string/set_button_size_title"
-            app:showSeekBarValue="true" />
-
-        <SeekBarPreference
-            android:key="pref_floating_alpha"
-            android:dependency="pref_recording_floating"
-            android:title="@string/set_floating_alpha_title"
-            app:showSeekBarValue="true" />
-
-        <SwitchPreferenceCompat
-            android:key="pref_floating_lock"
-            android:dependency="pref_recording_floating"
-            android:title="@string/set_floating_lock_title"
-            android:summary="@string/set_floating_lock_summary" />
-
-        <SwitchPreferenceCompat
-            android:key="pref_floating_duration"
-            android:dependency="pref_recording_floating"
-            android:title="@string/set_floating_duration_title"
-            android:summary="@string/set_floating_duration_summary" />
-
-        <SeekBarPreference
-            android:key="pref_button_text_size"
-            android:dependency="pref_floating_duration"
-            android:title="@string/set_button_text_size_title"
-            app:showSeekBarValue="true" />
 
         <Preference
             android:key="pref_reset_floating"
@@ -737,11 +699,6 @@
             android:key="pref_usb_restore"
             android:title="@string/usb_settings_restore_title"
             android:summary="@string/usb_settings_restore_summary" />
-
-        <Preference
-            android:key="pref_car_signals"
-            android:title="@string/set_car_signals_title"
-            android:summary="@string/set_car_signals_summary" />
 
         <SwitchPreferenceCompat
             android:key="pref_signal_recorder"

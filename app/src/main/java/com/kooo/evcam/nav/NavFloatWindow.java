@@ -40,8 +40,7 @@ import org.maplibre.android.maps.MapView;
  * Navigation in a floating window over whatever else is on the head unit: the map, with the next
  * turn (or the trip) in a bar on top. Moved and docked by its bar like the AirPlay window
  * ({@link FloatingWindowGestures}), double-tap the bar for small / large, and the corner grip
- * changes the width and the height freely: the bottom-right one keeps the top-left corner still, the
- * top-left one the bottom-right. Full screen opens {@link NavigationActivity} (which
+ * changes the width and the height freely. Full screen opens {@link NavigationActivity} (which
  * closes this); × closes it while guiding goes on. Where it sat and its size are remembered.
  * Main thread only.
  */
@@ -57,7 +56,6 @@ public final class NavFloatWindow implements Navigator.Listener {
     private static final int MIN_W_DP = 300;
     private static final int MIN_H_DP = 220;
     private static final int BAR_DP = 68;
-    private static final int TOP_GRIP_DP = 52;
 
     private static final NavFloatWindow INSTANCE = new NavFloatWindow();
 
@@ -80,8 +78,6 @@ public final class NavFloatWindow implements Navigator.Listener {
     private TextView trip;
     /** Under the bar, over the map: battery at arrival in words, while there is a route. */
     private TextView battery;
-    /** Under the bar, over the map: time left and arrival time, while guiding. */
-    private TextView eta;
     private View recenter;
     /** Start (on a route preview) or Try again (no route), right on the bar. */
     private ImageView go;
@@ -164,41 +160,21 @@ public final class NavFloatWindow implements Navigator.Listener {
         FrameLayout.LayoutParams batteryAt = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT,
                 FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.TOP | Gravity.START);
         batteryAt.setMargins(Math.round(10 * density), bar + Math.round(8 * density), 0, 0);
-        // Arrival time above the battery: both under the bar, over the map
-        eta = new TextView(context);
-        eta.setTextAppearance(R.style.TextAppearance_Cam_Caption);
-        eta.setTypeface(eta.getTypeface(), android.graphics.Typeface.BOLD);
-        eta.setTextColor(Color.WHITE);
-        eta.setPadding(chip, chip / 2, chip, chip / 2);
-        GradientDrawable etaBack = new GradientDrawable();
-        etaBack.setColor(0xE6101114);
-        etaBack.setCornerRadius(100 * density);
-        eta.setBackground(etaBack);
-        eta.setVisibility(View.GONE);
-        LinearLayout chips = new LinearLayout(context);
-        chips.setOrientation(LinearLayout.VERTICAL);
-        LinearLayout.LayoutParams chipAt = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT);
-        chipAt.bottomMargin = chip / 2;
-        chips.addView(eta, chipAt);
-        chips.addView(battery);
-        root.addView(chips, batteryAt);
+        root.addView(battery, batteryAt);
 
         int g = Math.round(64 * density);
-        View grip = new Grip(context, false);
+        View grip = new Grip(context);
         grip.setContentDescription(context.getString(R.string.nav_float_resize));
         grip.setOnTouchListener(new ResizeTouch());
         root.addView(grip, new FrameLayout.LayoutParams(g, g, Gravity.BOTTOM | Gravity.END));
-        int gTop = Math.round(TOP_GRIP_DP * density);
-        View topGrip = new Grip(context, true);
-        topGrip.setContentDescription(context.getString(R.string.nav_float_resize));
-        topGrip.setOnTouchListener(new TopResizeTouch());
-        root.addView(topGrip, new FrameLayout.LayoutParams(gTop, gTop, Gravity.TOP | Gravity.START));
 
         lp = new WindowManager.LayoutParams(
                 WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
-                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
+                // screen kept on for as long as the floating map is up: switching it on when guiding starts
+                // meant updating the window (and its map surface) at that very moment, when it froze
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
+                        | WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON,
                 PixelFormat.TRANSLUCENT);
         lp.gravity = Gravity.TOP | Gravity.START;
         DisplayMetrics dm = screen();
@@ -275,13 +251,7 @@ public final class NavFloatWindow implements Navigator.Listener {
             hide();
             return;
         }
-        boolean guiding = s.phase == Navigator.Phase.GUIDING;
-        int flags = lp.flags;
-        lp.flags = guiding ? flags | WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
-                : flags & ~WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON;
-        if (lp.flags != flags) {
-            update();
-        }
+        long t0 = android.os.SystemClock.uptimeMillis();
         showBar(s);
         if (painter != null) {
             if (s.phase == Navigator.Phase.PREVIEW && s.phase != shownPhase) {
@@ -294,6 +264,8 @@ public final class NavFloatWindow implements Navigator.Listener {
             shownPhase = s.phase;
             painter.draw(s);
         }
+        com.kooo.evcam.blackbox.SlowStep.check("floating map update (" + s.phase + ")", t0,
+                android.os.SystemClock.uptimeMillis());
     }
 
     /** Battery at arrival as a chip on the map: white when fine, orange when low, red when short. */
@@ -324,13 +296,6 @@ public final class NavFloatWindow implements Navigator.Listener {
     /** The bar: the next turn (or the trip before it starts), and km left · battery at arrival on the right. */
     private void showBar(Navigator.Snapshot s) {
         showBattery(s);
-        boolean guiding = s.phase == Navigator.Phase.GUIDING && s.progress != null;
-        eta.setVisibility(guiding ? View.VISIBLE : View.GONE);
-        if (guiding) {
-            double seconds = s.progress.remainingSeconds;
-            eta.setText(context.getString(R.string.nav_summary_sub, NavText.duration(context, seconds),
-                    NavText.eta(context, seconds)));
-        }
         TripLine t = s.phase == Navigator.Phase.IDLE ? null : TripLine.now(context);
         trip.setVisibility(t == null ? View.GONE : View.VISIBLE);
         if (t != null) {
@@ -413,8 +378,7 @@ public final class NavFloatWindow implements Navigator.Listener {
         bar.setGravity(Gravity.CENTER_VERTICAL);
         bar.setBackgroundColor(0xE6101114);
         int pad = Math.round(12 * density);
-        // The left edge leaves room for the top-left resize grip
-        bar.setPadding(Math.round(TOP_GRIP_DP * density), 0, Math.round(6 * density), 0);
+        bar.setPadding(pad, 0, Math.round(6 * density), 0);
 
         arrow = new ManeuverIcon.ArrowView(context);
         int icon = Math.round(44 * density);
@@ -705,61 +669,13 @@ public final class NavFloatWindow implements Navigator.Listener {
         }
     }
 
-    /** The top-left grip: the same, but the bottom-right corner stays. */
-    private final class TopResizeTouch implements View.OnTouchListener {
-        private float downX;
-        private float downY;
-        private int startX;
-        private int startY;
-        private int startW;
-        private int startH;
-
-        @SuppressLint("ClickableViewAccessibility")
-        @Override
-        public boolean onTouch(View v, MotionEvent e) {
-            switch (e.getActionMasked()) {
-                case MotionEvent.ACTION_DOWN:
-                    downX = e.getRawX();
-                    downY = e.getRawY();
-                    startX = lp.x;
-                    startY = lp.y;
-                    startW = lp.width;
-                    startH = lp.height;
-                    return true;
-                case MotionEvent.ACTION_MOVE:
-                    lp.width = sizeFromStart(startX, startW, Math.round(e.getRawX() - downX), Math.round(MIN_W_DP * density));
-                    lp.height = sizeFromStart(startY, startH, Math.round(e.getRawY() - downY), Math.round(MIN_H_DP * density));
-                    lp.x = startX + startW - lp.width;
-                    lp.y = startY + startH - lp.height;
-                    update();
-                    return true;
-                case MotionEvent.ACTION_UP:
-                case MotionEvent.ACTION_CANCEL:
-                    save();
-                    return true;
-                default:
-                    return true;
-            }
-        }
-    }
-
-    /**
-     * The size after dragging the near edge by {@code moved}: never under {@code least}, and the
-     * edge stops at the screen's edge. The far edge stays where it is.
-     */
-    static int sizeFromStart(int start, int size, int moved, int least) {
-        return Math.max(least, Math.min(size - moved, size + Math.max(0, start)));
-    }
-
     /** Three short diagonal lines in the corner: grab here to resize. */
     private static final class Grip extends View {
         private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
         private final Paint back = new Paint(Paint.ANTI_ALIAS_FLAG);
-        private final boolean topLeft;
 
-        Grip(Context context, boolean topLeft) {
+        Grip(Context context) {
             super(context);
-            this.topLeft = topLeft;
             float d = context.getResources().getDisplayMetrics().density;
             paint.setColor(0xFFF0622D);
             paint.setStrokeWidth(3.5f * d);
@@ -771,9 +687,6 @@ public final class NavFloatWindow implements Navigator.Listener {
         protected void onDraw(Canvas c) {
             float w = getWidth();
             float h = getHeight();
-            if (topLeft) {
-                c.rotate(180f, w / 2, h / 2);
-            }
             // a dark quarter-circle in the corner, so the lines show on any map
             c.drawCircle(w, h, w * 0.85f, back);
             float m = w * 0.18f;

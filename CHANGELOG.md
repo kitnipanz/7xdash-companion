@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.11-beta] - 2026-11-09
+
+### Blind-spot log
+- **Every value, every change.** With **Report blind-spot signals** on, the log now writes each change of every value in the car's settings service and of every ECARX signal, not only the blind-spot-looking ones. Settings-service values are also read once a second, since some are never sent by the car.
+- **LCMA marker.** Each change of the blind spot lamp (`ID_SETTING_FUNC_LCMA_INDCN_DATA`) gets a `##### LCMA LEFT / RIGHT #####` line, so what changed around it is easy to find.
+- **On the USB drive too.** The log is also written to `7xDash/bsd-log/` on the USB drive. A drive put in later is picked up within 30 seconds with everything so far. Send blind-spot log to phone still works.
+
 ## [1.8.10-beta] - 2026-11-09
 
 A test build to find the navigation freeze. The freeze is in 1.8.0 too (1.8.9-beta is the 1.8.0 app), so this build records what the screen is stuck on. After a freeze, send the black box export.

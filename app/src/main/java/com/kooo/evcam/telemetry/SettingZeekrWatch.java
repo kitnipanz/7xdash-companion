@@ -34,9 +34,10 @@ import java.util.regex.Pattern;
  *   {@link #AREA_RIGHT} for the right one. {@link BlindSpotWatch} reads it through
  *   {@link #lcmaSides()} and counts it like the RCTA flags.</li>
  *   <li><b>Capture</b>: while a {@link BlindSpotLog} session is open (Report blind-spot signals on),
- *   the full property list with every area's value goes to the log once, then every value the
- *   service pushes that changed. Blind-spot-looking names are always written; others at most once
- *   per {@link #OTHER_EVERY_MS} each, since speed and the like are pushed all the time.</li>
+ *   the full property list with every area's value goes to the log once, then every change of
+ *   every property: what the service pushes, and what a read of all of them every
+ *   {@link #POLL_MS} finds (some values are never pushed). A change of the LCMA lamp also gets a
+ *   marker line, so the values around it are easy to find.</li>
  * </ul>
  *
  * <h3>How it connects</h3>
@@ -58,8 +59,8 @@ public final class SettingZeekrWatch {
     static final String LCMA = "ID_SETTING_FUNC_LCMA_INDCN_DATA";
     public static final int AREA_LEFT = 0x1;
     public static final int AREA_RIGHT = 0x4;
-    /** A non-blind-spot property is written to the log at most this often. */
-    static final long OTHER_EVERY_MS = 1_000L;
+    /** While a log is open, every property is read this often to catch values that are never pushed. */
+    static final long POLL_MS = 1_000L;
     /** Names written on every change: blind spot, cross traffic, door open warning, lane change. */
     static final Pattern WATCHED = Pattern.compile(
             "LCMA|BSD|BSW|BSI|BLIND|BLIS|LCA|LANE_CHANGE|DOW|DOOROPENWARN|DOOR_OPEN_WARN|RCTA|RCTB|RCW|CROSS|SIDE_WARN|APPROACH|INDCN",
@@ -84,8 +85,6 @@ public final class SettingZeekrWatch {
     private Map<Integer, Object> configs = new HashMap<>();
     /** "id/area" → last value text, for change detection. */
     private final Map<String, String> last = new HashMap<>();
-    /** "id/area" → when it was last written to the log. */
-    private final Map<String, Long> loggedAt = new HashMap<>();
     /** The log session last dumped into, so a new session gets the full list again. */
     private BlindSpotLog dumpedInto;
     private volatile Integer lastLcma;
@@ -234,6 +233,8 @@ public final class SettingZeekrWatch {
             if (log != null) {
                 dump(log);
             }
+            work.removeCallbacks(poll);
+            work.postDelayed(poll, POLL_MS);
         } catch (Throwable t) {
             detach();
             note("failed: attach " + describe(t));
@@ -247,6 +248,7 @@ public final class SettingZeekrWatch {
         getProperty = null;
         unregister = null;
         lcmaId = -1;
+        work.removeCallbacks(poll);
         last.clear();
         dumpedInto = null;
         if (b != null && u != null) {
@@ -340,7 +342,11 @@ public final class SettingZeekrWatch {
         }
         int id = intOf(value, getter(value, 0));
         int area = intOf(value, getter(value, 1));
-        String now = text(call(value, getter(value, 2)));
+        change(log, "push", id, area, text(call(value, getter(value, 2))));
+    }
+
+    /** One value seen (pushed or read): a line when it changed, and a marker when it is the LCMA lamp. */
+    private void change(BlindSpotLog log, String how, int id, int area, String now) {
         String key = id + "/" + area;
         String was = last.get(key);
         if (last.containsKey(key) && Objects.equals(was, now)) {
@@ -348,19 +354,46 @@ public final class SettingZeekrWatch {
         }
         last.put(key, now);
         String name = names.containsKey(id) ? names.get(id) : "?";
-        boolean watched = WATCHED.matcher(name).find();
-        long t = SystemClock.elapsedRealtime();
-        Long prev = loggedAt.get(key);
-        if (!watched && prev != null && t - prev < OTHER_EVERY_MS) {
-            return;
+        String context = BlindSpotLog.context(Telemetry.get().latest());
+        if (id == lcmaId && id >= 0) {
+            log.line("##### LCMA " + (area == AREA_LEFT ? "LEFT" : area == AREA_RIGHT ? "RIGHT" : "area " + hex(area))
+                    + " " + was + " → " + now + " #####  | " + context);
         }
-        loggedAt.put(key, t);
-        String line = "[setting] " + name + " " + hex(id) + " area " + hex(area) + ": " + was + " → " + now;
-        log.line(line + "  | " + BlindSpotLog.context(Telemetry.get().latest()));
-        if (watched) {
+        String line = "[setting " + how + "] " + name + " " + hex(id) + " area " + hex(area) + ": " + was + " → " + now;
+        log.line(line + "  | " + context);
+        if (WATCHED.matcher(name).find()) {
             AppLog.i(TAG, line);
         }
     }
+
+    /** Every {@link #POLL_MS} while a log is open: read every property, log what changed. */
+    private final Runnable poll = new Runnable() {
+        @Override
+        public void run() {
+            BlindSpotLog log = BlindSpotLog.current();
+            if (log != null && base != null) {
+                if (log != dumpedInto) {
+                    dump(log);
+                }
+                long t0 = SystemClock.uptimeMillis();
+                for (Map.Entry<Integer, Object> e : configs.entrySet()) {
+                    int id = e.getKey();
+                    Class<?> type = type(e.getValue());
+                    int[] areas = areas(e.getValue());
+                    if (areas.length == 0) {
+                        areas = new int[]{0};
+                    }
+                    for (int area : areas) {
+                        change(log, "read", id, area, text(read(id, area, type)));
+                    }
+                }
+                lastPassMs = SystemClock.uptimeMillis() - t0;
+            }
+            // never busier than half the time: a slow pass waits as long again
+            work.postDelayed(this, Math.max(POLL_MS, lastPassMs * 2));
+        }
+    };
+    private long lastPassMs;
 
     /** Full list: every property, its areas, and each area's value now. */
     private void dump(BlindSpotLog log) {
@@ -389,7 +422,9 @@ public final class SettingZeekrWatch {
             }
             log.raw(sb.toString());
         }
-        log.raw("(* = blind-spot-looking name, every change logged; others at most once a second)");
+        log.raw("(* = blind-spot-looking name. Every change of every property is logged: [setting push] when the"
+                + " service sent it, [setting read] when the read every " + POLL_MS + " ms found it."
+                + " ##### LCMA ##### marks each change of the blind spot lamp.)");
         log.section("Changes (ECARX lines and [setting] lines mixed, by time)");
     }
 

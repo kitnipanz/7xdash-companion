@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.12-beta] - 2026-11-09
+
+### Navigation
+- **A place from your phone opens the full Navigation screen**, no longer the floating map. You can still float it with its button.
+- **No window update when guiding starts.** The floating map keeps the screen on from the moment it opens, instead of switching that on at Start. The full Navigation screen switched it on or off at every update, about once a second, which made the window lay itself out again with the map in it; now it does that only when guiding starts or ends.
+- Floating map updates over 150 ms are written to the black box, like the other map steps.
+
 ## [1.8.11-beta] - 2026-11-09
 
 ### Blind-spot log

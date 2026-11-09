@@ -440,13 +440,21 @@ public class NavigationActivity extends AppCompatActivity implements Navigator.L
         super.onStop();
     }
 
+    /** FLAG_KEEP_SCREEN_ON as last set on the window. */
+    private boolean keptOn;
+
     @Override
     public void onNavChanged(Navigator.Snapshot s) {
         boolean guiding = s.phase == Navigator.Phase.GUIDING || s.phase == Navigator.Phase.ARRIVED;
-        if (guiding) {
-            getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-        } else {
-            getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        // Keep the screen on while guiding. Only when it changes: addFlags / clearFlags update the
+        // window (a relayout, with the map in it) on every call, and this runs every second.
+        if (guiding != keptOn) {
+            keptOn = guiding;
+            if (guiding) {
+                getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+            } else {
+                getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+            }
         }
         searchBar.setVisibility(guiding ? View.GONE : View.VISIBLE);
         if (guiding) {

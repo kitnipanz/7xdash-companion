@@ -198,7 +198,7 @@ public final class Navigator {
 
     /**
      * The iPhone shared a place: show its route, or switch to it while guiding. With no Navigation
-     * screen open, the floating window opens so the head unit shows it at once.
+     * screen open, the full Navigation screen opens so the head unit shows it at once.
      */
     private void onShared(Context context, DestinationLink.Place place) {
         String name = NavMapPainter.placeName(place);
@@ -213,8 +213,16 @@ public final class Navigator {
                 : R.string.nav_place_received, name));
         preview(context, place);
         startWhenRouted = wasGuiding;
+        // The full Navigation screen opens, no longer the floating map (it froze when its route started).
+        // Over other apps it needs the overlay permission, which also allows starting a screen from the background.
         if (attached == 0 && OverlayCoordinator.canShowOverlay(context)) {
-            NavFloatWindow.get().show(context);
+            try {
+                android.content.Intent open = new android.content.Intent(context, NavigationActivity.class);
+                open.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK);
+                context.startActivity(open);
+            } catch (RuntimeException e) {
+                AppLog.w(TAG, "could not open Navigation for the shared place: " + e.getMessage());
+            }
         }
     }
 

@@ -171,7 +171,10 @@ public final class NavFloatWindow implements Navigator.Listener {
         lp = new WindowManager.LayoutParams(
                 WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
-                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
+                // screen kept on for as long as the floating map is up: switching it on when guiding starts
+                // meant updating the window (and its map surface) at that very moment, when it froze
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
+                        | WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON,
                 PixelFormat.TRANSLUCENT);
         lp.gravity = Gravity.TOP | Gravity.START;
         DisplayMetrics dm = screen();
@@ -248,13 +251,7 @@ public final class NavFloatWindow implements Navigator.Listener {
             hide();
             return;
         }
-        boolean guiding = s.phase == Navigator.Phase.GUIDING;
-        int flags = lp.flags;
-        lp.flags = guiding ? flags | WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
-                : flags & ~WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON;
-        if (lp.flags != flags) {
-            update();
-        }
+        long t0 = android.os.SystemClock.uptimeMillis();
         showBar(s);
         if (painter != null) {
             if (s.phase == Navigator.Phase.PREVIEW && s.phase != shownPhase) {
@@ -267,6 +264,8 @@ public final class NavFloatWindow implements Navigator.Listener {
             shownPhase = s.phase;
             painter.draw(s);
         }
+        com.kooo.evcam.blackbox.SlowStep.check("floating map update (" + s.phase + ")", t0,
+                android.os.SystemClock.uptimeMillis());
     }
 
     /** Battery at arrival as a chip on the map: white when fine, orange when low, red when short. */

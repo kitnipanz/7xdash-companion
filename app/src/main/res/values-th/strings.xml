@@ -1664,8 +1664,10 @@
     <string name="whats_new_none">ไม่มีบันทึกสำหรับเวอร์ชันนี้</string>
     <string name="home_card_dash_panel">หน้าปัดลอย</string>
     <string name="home_card_dash_panel_sub">ความเร็ว เกียร์ และปุ่ม ลอยเหนือทุกแอป</string>
-    <string name="set_dash_panel_summary">การ์ดเล็กที่ลอยเหนือแผนที่ เพลง หรือแอปอื่น: ความเร็ว เกียร์ ไฟเลี้ยว นาฬิกา และสถานะการบันทึกของ 7xDash พร้อมปุ่มถ่ายรูปรอบคัน บันทึกคลิปทันที กระจกมองหลัง และเปิด 7xDash ด้านขวามีปุ่มบันทึก ปุ่มหรี่จอ (แตะเพื่อเปิดหรือปิด เลื่อนเพื่อปรับความมืด) และปุ่มปิดแอป (แตะสองครั้ง) ลากเพื่อย้าย บีบเพื่อปรับขนาด ดันไปขอบเพื่อเก็บ</string>
+    <string name="set_dash_panel_summary">การ์ดเล็กที่ลอยเหนือแผนที่ เพลง หรือแอปอื่น: ความเร็ว เกียร์ ไฟเลี้ยว นาฬิกา และสถานะการบันทึกของ 7xDash พร้อมปุ่มถ่ายรูปรอบคัน บันทึกคลิปทันที กระจกมองหลัง และเปิด 7xDash ด้านขวามีปุ่มย่อ (เหลือแถบเล็กแสดงความเร็วและเกียร์ พร้อมปุ่มด้านขวาเรียงใต้แถบ หรือข้างแถบเมื่อเปิดแผงปุ่มลัด แตะแถบหรือปุ่มขยายเพื่อขยายกลับ) ปุ่มบันทึก ปุ่มหรี่จอ (แตะเพื่อเปิดหรือปิด เลื่อนเพื่อปรับความมืด) และปุ่มปิดแอป (แตะสองครั้ง) ลากเพื่อย้าย บีบเพื่อปรับขนาด ดันไปขอบเพื่อเก็บ</string>
     <string name="dash_panel_need_overlay">อนุญาตให้ 7xDash แสดงทับแอปอื่นก่อน</string>
+    <string name="dash_panel_minimize">ย่อ</string>
+    <string name="dash_panel_expand">ขยาย</string>
     <string name="shortcut_action_dash_panel">เปิด / ปิดหน้าปัดลอย</string>
     <!-- Battery at arrival (beta) -->
     <string name="arrival_waiting_short">รอข้อมูลรถ</string>
@@ -1691,9 +1693,9 @@
     <!-- Macro pad -->
     <string name="macro_pad_title">แผงปุ่มลัด</string>
     <string name="home_card_macro_pad_sub">ปุ่มของคุณเอง ลอยเหนือทุกแอป แตะเพื่อเลือกปุ่ม</string>
-    <string name="set_macro_pad_summary">แผงปุ่มลอย 6 ปุ่มทับทุกแอป เลือกได้ว่าแต่ละปุ่มทำอะไรที่การ์ดแผงปุ่มลัด</string>
+    <string name="set_macro_pad_summary">แผงปุ่มลอย 6 ปุ่มทับทุกแอป เลือกได้ว่าแต่ละปุ่มทำอะไรที่การ์ดแผงปุ่มลัด เมื่อเปิด Dash panel อยู่ แผงปุ่มจะติดอยู่ใต้ panel และเลื่อนตามไปด้วย</string>
     <string name="macro_pad_switch">แสดงแผงปุ่มลัด</string>
-    <string name="macro_pad_hint">แตะปุ่มด้านล่างเพื่อเลือกว่าจะให้ทำอะไร บนแพด: แตะปุ่มเพื่อสั่งงาน ลากเพื่อย้าย ถ่างนิ้วเพื่อขยาย ดันชิดขอบจอเพื่อเก็บ</string>
+    <string name="macro_pad_hint">แตะปุ่มด้านล่างเพื่อเลือกว่าจะให้ทำอะไร บนแพด: แตะปุ่มเพื่อสั่งงาน ลากเพื่อย้าย ถ่างนิ้วเพื่อขยาย ดันชิดขอบจอเพื่อเก็บ เมื่อเปิด Dash panel อยู่ แพดจะติดอยู่ใต้ panel: ลาก panel เพื่อย้ายทั้งคู่</string>
     <string name="macro_pad_empty">ว่าง</string>
     <string name="macro_pad_button">ปุ่ม %1$d</string>
     <string name="macro_pad_clear">ล้าง</string>
@@ -1935,6 +1937,25 @@
     <string name="automation_named_choice">%1$s: %2$s</string>
     <string name="automation_percent">%1$d%%</string>
     <string name="automation_no_ambient">รถคันนี้ไม่มีฟังก์ชันไฟ Ambient</string>
+    <string name="automation_group_place">สถานที่</string>
+    <string name="automation_chip_place_arrive">ถึง</string>
+    <string name="automation_chip_place_leave">ออกจาก</string>
+    <string name="automation_when_place_arrive">ถึง %1$s</string>
+    <string name="automation_when_place_leave">ออกจาก %1$s</string>
+    <string name="automation_do_navigate">นำทางไปที่</string>
+    <string name="automation_no_place">สถานที่นี้ถูกลบแล้ว</string>
+    <string name="automation_no_navigation">ปิดการนำทางอยู่</string>
+    <string name="automation_already_guiding">กำลังนำทางอยู่แล้ว</string>
+    <string name="place_save">บันทึกสถานที่</string>
+    <string name="place_save_here">บันทึกจุดนี้</string>
+    <string name="place_save_title">ตั้งชื่อสถานที่</string>
+    <string name="place_name_hint">บ้าน ที่ทำงาน…</string>
+    <string name="place_saved">บันทึก %1$s แล้ว</string>
+    <string name="place_saved_sub">สถานที่ที่บันทึกไว้</string>
+    <string name="place_deleted">สถานที่ที่ถูกลบ</string>
+    <string name="place_no_fix">ยังไม่มีตำแหน่ง GPS</string>
+    <string name="place_delete_title">ลบ %1$s ไหม</string>
+    <string name="place_delete_message">ระบบอัตโนมัติที่ใช้สถานที่นี้จะหยุดทำงาน</string>
     <string name="automation_when_car_on">สตาร์ทรถ</string>
     <string name="automation_when_car_off">ดับรถ</string>
     <string name="automation_when_gear_p">เข้าเกียร์ P (จอด)</string>

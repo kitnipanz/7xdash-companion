@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.8.13] - 2026-11-10
+
+### Navigation
+- **The freeze is fixed.** When a route started, Navigation said the first turn. The head unit's speech engine failed while starting, and 7xDash kept asking for it again in a loop: the screen froze for about 7 seconds, then the app closed and restarted. This was in every version since 1.8.0.
+- **No spoken turns any more.** The voice and its mute button are gone; turns stay on screen and on the HUD.
+- **Saved places are back.** **Save place** on the route card, named as you like.
+
+### Automation
+- **Place conditions are back.** **Arrive at** or **Leave** a saved place (inside means within 150 m), and **Save this spot** right in the rule. **Navigate to** a saved place as an action.
+
+### Dash panel
+- **Minimize.** The orange arrows at the top of the right-hand buttons shrink the panel to a speed pill with the turn arrows; the expand button brings it back. It remembers which you chose.
+- **Macro pad docks under the panel** when both are on, the same width, and moves with it. Minimized, it spans the pill and its buttons. Without the macro pad, the minimized buttons sit under the pill.
+
 ## [1.8.12-beta] - 2026-11-09
 
 ### Navigation

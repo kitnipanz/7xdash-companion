@@ -19,10 +19,6 @@
             style="@style/NavSettingsHeader"
             android:text="@string/nav_section_voice_hud" />
         <com.google.android.material.switchmaterial.SwitchMaterial
-            android:id="@+id/nav_voice_switch"
-            style="@style/NavSettingsSwitch"
-            android:text="@string/nav_voice_switch" />
-        <com.google.android.material.switchmaterial.SwitchMaterial
             android:id="@+id/nav_hud_switch"
             style="@style/NavSettingsSwitch"
             android:text="@string/nav_hud_switch" />

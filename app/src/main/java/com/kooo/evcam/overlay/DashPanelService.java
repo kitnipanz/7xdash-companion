@@ -23,12 +23,15 @@ import com.kooo.evcam.recording.RecordingCoordinator;
 import com.kooo.evcam.telemetry.Readings;
 import com.kooo.evcam.telemetry.Telemetry;
 import com.kooo.evcam.zeekr.FloatingWindowGestures;
+import com.kooo.evcam.zeekr.RearViewTouchModel;
 
 /**
  * Dash panel: a small floating card over any app (maps, music, AirPlay) with speed, gear, turn
  * signals, the clock and whether 7xDash is recording, plus four buttons: surround photo, instant
  * capture, Super mirror and open 7xDash, and on the right what the floating button used to carry:
- * record, dim (tap on / off, slide for how dark) and quit (tap twice). Head units rarely allow real split screen for normal apps
+ * minimize (to a small pill with speed and gear, these buttons in a row beside it; tap the pill or
+ * expand to bring the panel back), record, dim (tap
+ * on / off, slide for how dark) and quit (tap twice). Head units rarely allow real split screen for normal apps
  * ({@link com.kooo.evcam.screen.MultiWindowProbe}); this is the part of 7xDash that can sit next to
  * another app anyway.
  *
@@ -44,10 +47,12 @@ public class DashPanelService extends Service implements Telemetry.Listener {
     /** Default and smallest height, in dp. */
     private static final int DEFAULT_HEIGHT_DP = 220;
     private static final int MIN_HEIGHT_DP = 90;
+    /** Smallest height of the minimized pill, in dp. */
+    private static final int MINI_MIN_HEIGHT_DP = 36;
     private static final long TICK_MS = 500L;
     /** Buttons, in the order {@link DashPanelView#ICONS} draws them: the bottom row, then the column. */
     private static final ShortcutAction[] ACTIONS = {ShortcutAction.PHOTO_SURROUND, ShortcutAction.INSTANT_CAPTURE,
-            ShortcutAction.MIRROR, ShortcutAction.APP, ShortcutAction.RECORD, ShortcutAction.DIM, ShortcutAction.QUIT};
+            ShortcutAction.MIRROR, ShortcutAction.APP, null, ShortcutAction.RECORD, ShortcutAction.DIM, ShortcutAction.QUIT};
     /** Quitting stops recording, so one stray tap only arms the button; a second tap within this quits. */
     private static final long QUIT_ARM_MS = 3_000L;
 
@@ -64,6 +69,19 @@ public class DashPanelService extends Service implements Telemetry.Listener {
         }
     }
 
+    /**
+     * Where the panel's window is now, {x, y, width, height} in pixels, or null when it is not up.
+     * Main thread; the Macro pad docks under it ({@link MacroPadService}).
+     */
+    @Nullable
+    static int[] windowBounds() {
+        DashPanelService svc = instance;
+        if (svc == null || svc.view == null || svc.view.getParent() == null || svc.params == null) {
+            return null;
+        }
+        return new int[]{svc.params.x, svc.params.y, svc.params.width, svc.params.height};
+    }
+
     private final Handler main = new Handler(Looper.getMainLooper());
     private WindowManager windowManager;
     private DashPanelView view;
@@ -73,6 +91,10 @@ public class DashPanelService extends Service implements Telemetry.Listener {
     private boolean blink;
     private boolean raiseWhenLifted;
     private boolean quitArmed;
+    private boolean minimized;
+    /** The whole panel's size; the window is smaller while {@link #minimized}. */
+    private int fullWidth;
+    private int fullHeight;
     private final Runnable disarmQuit = () -> {
         quitArmed = false;
         refresh();
@@ -132,6 +154,7 @@ public class DashPanelService extends Service implements Telemetry.Listener {
             if (view != null) {
                 place();
                 windowManager.updateViewLayout(view, params);
+                OverlayCoordinator.dashPanelMoved();
             }
         } else {
             attach();
@@ -144,6 +167,8 @@ public class DashPanelService extends Service implements Telemetry.Listener {
             return;
         }
         view = new DashPanelView(this);
+        minimized = config.isDashPanelMinimized();
+        view.setMinimized(minimized, stacked());
         params = new WindowManager.LayoutParams(
                 WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
@@ -169,24 +194,39 @@ public class DashPanelService extends Service implements Telemetry.Listener {
 
             @Override
             public int minSize() {
-                return dp(MIN_HEIGHT_DP);
+                return dp(minimized ? MINI_MIN_HEIGHT_DP : MIN_HEIGHT_DP);
             }
 
             @Override
             public void apply() {
                 if (view != null && view.isAttachedToWindow()) {
                     windowManager.updateViewLayout(view, params);
+                    OverlayCoordinator.dashPanelMoved();
                 }
             }
 
             @Override
             public void save() {
-                config.setDashPanelBounds(params.x, params.y, params.width, params.height);
+                if (minimized) {
+                    // a pinch on the pill sizes the whole panel by the same amount
+                    setFullHeight(Math.round(DashPanelView.pillHeight(params.width, stacked())
+                            / DashPanelView.MINI_SCALE));
+                } else {
+                    fullWidth = params.width;
+                    fullHeight = params.height;
+                }
+                config.setDashPanelBounds(params.x, params.y, fullWidth, fullHeight);
             }
 
             @Override
             public void onTap(MotionEvent up) {
-                press(view.buttonAt(up));
+                int button = view.buttonAt(up);
+                if (minimized && button < 0) {
+                    // the pill itself
+                    setMinimized(false);
+                } else {
+                    press(button);
+                }
             }
         });
         view.setOnTouchListener((v, event) -> dimTouch(event) || gestures.onTouch(event));
@@ -198,24 +238,103 @@ public class DashPanelService extends Service implements Telemetry.Listener {
             stopSelf();
             return;
         }
+        OverlayCoordinator.dashPanelMoved();
         Telemetry.get().acquire(this, TELEMETRY_USER);
         Telemetry.get().addListener(this);
         main.post(tick);
         AppLog.i(TAG, "shown");
     }
 
-    /** Saved size and place, or the default (top right). Width follows the height. */
+    /** Saved size and place, or the default (top right). Width follows the height. The pill keeps the top-left corner. */
     private void place() {
         int[] saved = config.getDashPanelBounds();
-        int height = saved[3] > 0 ? saved[3] : dp(DEFAULT_HEIGHT_DP);
-        params.height = Math.max(dp(MIN_HEIGHT_DP), Math.min(height, screenHeight()));
-        params.width = Math.min(Math.round(params.height * DashPanelView.ASPECT), screenWidth());
-        params.x = saved[2] > 0 ? saved[0] : screenWidth() - params.width - dp(24);
+        setFullHeight(saved[3] > 0 ? saved[3] : dp(DEFAULT_HEIGHT_DP));
+        params.x = saved[2] > 0 ? saved[0] : screenWidth() - fullWidth - dp(24);
         params.y = saved[2] > 0 ? saved[1] : dp(96);
+        sizeWindow();
+    }
+
+    private void setFullHeight(int height) {
+        fullHeight = Math.max(dp(MIN_HEIGHT_DP), Math.min(height, screenHeight()));
+        fullWidth = Math.min(Math.round(fullHeight * DashPanelView.ASPECT), screenWidth());
+    }
+
+    /** The window to the whole panel's size or the pill's, as {@link #minimized} says. */
+    private void sizeWindow() {
+        if (minimized) {
+            int[] mini = DashPanelView.miniSize(fullHeight, dp(MINI_MIN_HEIGHT_DP), stacked());
+            params.width = mini[0];
+            params.height = mini[1];
+        } else {
+            params.width = fullWidth;
+            params.height = fullHeight;
+        }
+    }
+
+    /**
+     * Minimized, the buttons go under the pill when the Macro pad is not up (the pill and its row
+     * then make a small block), and beside it when the pad is, so the pad docks under one strip.
+     */
+    private static boolean stacked() {
+        return !MacroPadService.isUp();
+    }
+
+    /** The Macro pad opened or closed: minimized, the buttons move under or beside the pill. */
+    static void macroPadChanged() {
+        DashPanelService svc = instance;
+        if (svc != null) {
+            svc.main.post(() -> {
+                if (svc.minimized && svc.view != null) {
+                    svc.relayout();
+                }
+            });
+        }
+    }
+
+    /**
+     * Pill or whole panel. The top-left corner stays put; tucked into a side it stays tucked into
+     * that side; otherwise it is kept on screen. Remembered for next time.
+     */
+    private void setMinimized(boolean minimize) {
+        if (view == null || minimized == minimize) {
+            return;
+        }
+        minimized = minimize;
+        config.setDashPanelMinimized(minimize);
+        relayout();
+        AppLog.i(TAG, minimize ? "minimized" : "expanded");
+    }
+
+    /** Window and picture to {@link #minimized} and {@link #stacked()}, keeping the corner and any dock. */
+    private void relayout() {
+        int sw = screenWidth();
+        RearViewTouchModel.Dock dock = RearViewTouchModel.dockedAt(params.x, params.width, sw);
+        view.setMinimized(minimized, stacked());
+        sizeWindow();
+        int peek = FloatingWindowGestures.PEEK_WIDTH_PX;
+        if (dock == RearViewTouchModel.Dock.RIGHT) {
+            params.x = sw - peek;
+        } else if (dock == RearViewTouchModel.Dock.LEFT) {
+            params.x = peek - params.width;
+        } else {
+            params.x = Math.max(0, Math.min(params.x, sw - params.width));
+        }
+        params.y = RearViewTouchModel.clampY(params.y, params.height, screenHeight());
+        try {
+            windowManager.updateViewLayout(view, params);
+        } catch (Exception e) {
+            AppLog.w(TAG, "resize: " + e.getMessage());
+        }
+        config.setDashPanelBounds(params.x, params.y, fullWidth, fullHeight);
+        OverlayCoordinator.dashPanelMoved();
     }
 
     private void press(int button) {
         if (button < 0 || button >= ACTIONS.length) {
+            return;
+        }
+        if (button == DashPanelView.MINIMIZE) {
+            setMinimized(!minimized);
             return;
         }
         if (button == DashPanelView.QUIT_BUTTON) {
@@ -370,6 +489,8 @@ public class DashPanelService extends Service implements Telemetry.Listener {
             }
             view = null;
         }
+        // the Macro pad floats on its own again
+        OverlayCoordinator.dashPanelMoved();
         AppLog.i(TAG, "hidden");
         super.onDestroy();
     }

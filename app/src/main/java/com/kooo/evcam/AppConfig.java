@@ -2606,6 +2606,17 @@ public class AppConfig {
         prefs.edit().putString(KEY_DASH_PANEL_BOUNDS, x + "," + y + "," + width + "," + height).apply();
     }
 
+    private static final String KEY_DASH_PANEL_MINIMIZED = "dash_panel_minimized";
+
+    /** Dash panel shown as its small pill (speed and gear) instead of the whole panel. */
+    public boolean isDashPanelMinimized() {
+        return prefs.getBoolean(KEY_DASH_PANEL_MINIMIZED, false);
+    }
+
+    public void setDashPanelMinimized(boolean minimized) {
+        prefs.edit().putBoolean(KEY_DASH_PANEL_MINIMIZED, minimized).apply();
+    }
+
     // ==================== Macro pad ====================
 
     private static final String KEY_HOME_CARD_ORDER = "home_card_order";
@@ -2627,6 +2638,17 @@ public class AppConfig {
 
     public void setHomeCardsHidden(String ids) {
         prefs.edit().putString(KEY_HOME_CARDS_HIDDEN, ids).apply();
+    }
+
+    private static final String KEY_SAVED_PLACES = "saved_places";
+
+    /** Places the person named, as JSON ({@link com.kooo.evcam.nav.SavedPlaces}). */
+    public String getSavedPlaces() {
+        return prefs.getString(KEY_SAVED_PLACES, null);
+    }
+
+    public void setSavedPlaces(String json) {
+        prefs.edit().putString(KEY_SAVED_PLACES, json).apply();
     }
 
     private static final String KEY_AUTOMATION = "automation_on";

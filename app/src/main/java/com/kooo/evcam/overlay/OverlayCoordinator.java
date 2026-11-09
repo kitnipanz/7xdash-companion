@@ -145,7 +145,16 @@ public final class OverlayCoordinator {
         return true;
     }
 
-    /** 开 / 关全屏遮罩。返回值含义同 {@link #setDashPanelEnabled}。Dash panel 的月亮自己每半秒读一次。 */
+    /**
+     * The Dash panel moved, changed size, was minimized or expanded, opened or closed. The Macro pad
+     * hangs under it while both are up, and floats on its own again once the panel is gone.
+     * Main thread.
+     */
+    static void dashPanelMoved() {
+        MacroPadService.followDashPanel();
+    }
+
+        /** 开 / 关全屏遮罩。返回值含义同 {@link #setDashPanelEnabled}。Dash panel 的月亮自己每半秒读一次。 */
     public static boolean setDimOverlayEnabled(Context context, boolean enabled) {
         if (enabled && !canShowOverlay(context)) {
             return false;

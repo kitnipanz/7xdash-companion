@@ -1688,8 +1688,10 @@ Then reopen this app.</string>
     <string name="whats_new_none">No notes for this version</string>
     <string name="home_card_dash_panel">Dash panel</string>
     <string name="home_card_dash_panel_sub">Speed, gear and buttons over any app</string>
-    <string name="set_dash_panel_summary">A small card that floats over maps, music or any other app: speed, gear, turn signals, the clock and whether 7xDash is recording, with buttons for a surround photo, an instant capture, Super mirror and opening 7xDash. On its right: record, dim (tap on or off, slide for how dark) and quit (tap twice). Drag to move, pinch to resize, push to a side to dock</string>
+    <string name="set_dash_panel_summary">A small card that floats over maps, music or any other app: speed, gear, turn signals, the clock and whether 7xDash is recording, with buttons for a surround photo, an instant capture, Super mirror and opening 7xDash. On its right: minimize (to a small pill with speed and gear, these buttons in a row under it, or beside it when the Macro pad is on; tap the pill or expand to bring the panel back), record, dim (tap on or off, slide for how dark) and quit (tap twice). Drag to move, pinch to resize, push to a side to dock</string>
     <string name="dash_panel_need_overlay">Allow 7xDash to display over other apps first</string>
+    <string name="dash_panel_minimize">Minimize</string>
+    <string name="dash_panel_expand">Expand</string>
     <string name="shortcut_action_dash_panel">Dash panel on / off</string>
     <!-- Battery at arrival (beta) -->
     <string name="arrival_waiting_short">Waiting for car</string>
@@ -1715,9 +1717,9 @@ Then reopen this app.</string>
     <!-- Macro pad -->
     <string name="macro_pad_title">Macro pad</string>
     <string name="home_card_macro_pad_sub">Your own buttons over any app. Tap to choose them</string>
-    <string name="set_macro_pad_summary">A floating pad of six buttons over any app. Choose what each one does on the Macro pad card</string>
+    <string name="set_macro_pad_summary">A floating pad of six buttons over any app. Choose what each one does on the Macro pad card. With the Dash panel up, it hangs right under the panel and moves with it</string>
     <string name="macro_pad_switch">Show the Macro pad</string>
-    <string name="macro_pad_hint">Tap a button below to choose what it does. On the pad: tap a button to run it, drag to move, pinch to resize, push to an edge to tuck it away.</string>
+    <string name="macro_pad_hint">Tap a button below to choose what it does. On the pad: tap a button to run it, drag to move, pinch to resize, push to an edge to tuck it away. With the Dash panel up, the pad hangs under it: drag the panel to move both.</string>
     <string name="macro_pad_empty">Empty</string>
     <string name="macro_pad_button">Button %1$d</string>
     <string name="macro_pad_clear">Clear</string>
@@ -1960,6 +1962,25 @@ Then reopen this app.</string>
     <string name="automation_named_choice">%1$s: %2$s</string>
     <string name="automation_percent">%1$d%%</string>
     <string name="automation_no_ambient">this car has no ambient light function</string>
+    <string name="automation_group_place">Place</string>
+    <string name="automation_chip_place_arrive">Arrive</string>
+    <string name="automation_chip_place_leave">Leave</string>
+    <string name="automation_when_place_arrive">Arrive at %1$s</string>
+    <string name="automation_when_place_leave">Leave %1$s</string>
+    <string name="automation_do_navigate">Navigate to</string>
+    <string name="automation_no_place">That place was deleted</string>
+    <string name="automation_no_navigation">Navigation is off</string>
+    <string name="automation_already_guiding">A trip is already on</string>
+    <string name="place_save">Save place</string>
+    <string name="place_save_here">Save this spot</string>
+    <string name="place_save_title">Name this place</string>
+    <string name="place_name_hint">Home, Work…</string>
+    <string name="place_saved">Saved %1$s</string>
+    <string name="place_saved_sub">Saved place</string>
+    <string name="place_deleted">a deleted place</string>
+    <string name="place_no_fix">No GPS position yet</string>
+    <string name="place_delete_title">Delete %1$s?</string>
+    <string name="place_delete_message">Automations using it stop running.</string>
     <string name="automation_when_car_on">The car turns on</string>
     <string name="automation_when_car_off">The car turns off</string>
     <string name="automation_when_gear_p">Shift to P (parked)</string>

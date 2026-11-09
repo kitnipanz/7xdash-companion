@@ -236,8 +236,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
-            android:orientation="vertical">
-            <!-- everything else (voice, HUD, map and car colours, iPhone) is in the settings dialog -->
+            android:orientation="horizontal">
+            <!-- everything else (HUD, map and car colours, iPhone) is in the settings dialog -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/nav_settings"
                 style="@style/Widget.Material3.Button.TonalButton"
@@ -246,6 +246,17 @@
                 android:text="@string/nav_settings_button"
                 app:cornerRadius="28dp"
                 app:icon="@drawable/ic_settings" />
+            <!-- with a route shown: keep its place for search and Automation -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/nav_save_place"
+                style="@style/Widget.Material3.Button.TonalButton"
+                android:layout_width="wrap_content"
+                android:layout_height="56dp"
+                android:layout_marginStart="10dp"
+                android:text="@string/place_save"
+                android:visibility="gone"
+                app:cornerRadius="28dp"
+                app:icon="@drawable/ic_automation_place" />
         </LinearLayout>
         <!-- before starting: the routes to choose from, Google's pick first; filled in by NavigationActivity -->
         <LinearLayout
@@ -304,19 +315,6 @@
             app:backgroundTint="@color/surface"
             app:cornerRadius="36dp"
             app:icon="@drawable/ic_float_window"
-            app:iconSize="30dp" />
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/nav_mute"
-            style="@style/Widget.Cam.IconButton"
-            android:layout_width="72dp"
-            android:layout_height="72dp"
-            android:layout_gravity="end"
-            android:contentDescription="@string/nav_mute"
-            android:elevation="6dp"
-            android:stateListAnimator="@null"
-            app:backgroundTint="@color/surface"
-            app:cornerRadius="36dp"
-            app:icon="@drawable/ic_voice_on"
             app:iconSize="30dp" />
         <!-- the map was moved by hand: back to the car -->
         <com.google.android.material.button.MaterialButton

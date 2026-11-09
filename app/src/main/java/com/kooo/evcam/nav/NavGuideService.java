@@ -15,7 +15,7 @@ import com.kooo.evcam.AppLog;
 import com.kooo.evcam.R;
 
 /**
- * Keeps the GPS coming while a trip is on. Android stops an app's location as soon as no screen of
+ * Keeps the GPS coming while a trip is on, or while an automation waits for a saved place. Android stops an app's location as soon as no screen of
  * it is in front, a floating window included, unless a location foreground service is running; without
  * this the map and the HUD freeze when Navigation is closed. Started and stopped by {@link Navigator}.
  */

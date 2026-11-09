@@ -18,7 +18,10 @@ public enum AutomationTrigger {
     RAIN_STOP("rain_stop", R.string.automation_when_rain_stop, R.string.automation_chip_rain_stop, Group.RAIN, null, false),
     BATTERY_BELOW("battery_below", R.string.automation_when_battery_below, R.string.automation_chip_drops, Group.BATTERY, Measure.BATTERY, false),
     OUTSIDE_ABOVE("outside_above", R.string.automation_when_outside_above, R.string.automation_chip_reaches, Group.OUTSIDE, Measure.OUTSIDE, true),
-    OUTSIDE_BELOW("outside_below", R.string.automation_when_outside_below, R.string.automation_chip_drops, Group.OUTSIDE, Measure.OUTSIDE, false);
+    OUTSIDE_BELOW("outside_below", R.string.automation_when_outside_below, R.string.automation_chip_drops, Group.OUTSIDE, Measure.OUTSIDE, false),
+    /** Value: a saved place's id ({@link com.kooo.evcam.nav.SavedPlaces}). */
+    PLACE_ARRIVE("place_arrive", R.string.automation_when_place_arrive, R.string.automation_chip_place_arrive, Group.PLACE, null, false),
+    PLACE_LEAVE("place_leave", R.string.automation_when_place_leave, R.string.automation_chip_place_leave, Group.PLACE, null, false);
 
     /** Triggers about the same thing sit together in the picker. */
     public enum Group {
@@ -28,7 +31,8 @@ public enum AutomationTrigger {
         DAYLIGHT(R.string.automation_group_daylight, R.drawable.ic_automation_daylight, 0),
         RAIN(R.string.automation_group_rain, R.drawable.ic_automation_rain, 0),
         BATTERY(R.string.automation_group_battery, R.drawable.ic_automation_battery, R.string.automation_percent),
-        OUTSIDE(R.string.automation_group_outside, R.drawable.ic_automation_temp, R.string.automation_unit_temp);
+        OUTSIDE(R.string.automation_group_outside, R.drawable.ic_automation_temp, R.string.automation_unit_temp),
+        PLACE(R.string.automation_group_place, R.drawable.ic_automation_place, 0);
 
         public final int labelRes;
         public final int iconRes;
@@ -81,6 +85,11 @@ public enum AutomationTrigger {
         this.group = group;
         this.measure = measure;
         this.rising = rising;
+    }
+
+    /** Arriving and leaving: nothing on the car says the place changed, so the GPS has to be looked at. */
+    public boolean isPlace() {
+        return group == Group.PLACE;
     }
 
     public static AutomationTrigger fromKey(String key) {

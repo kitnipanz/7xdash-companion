@@ -1,10 +1,14 @@
 package com.kooo.evcam.automation;
 
+import com.kooo.evcam.nav.Geo;
+import com.kooo.evcam.nav.SavedPlaces;
 import com.kooo.evcam.telemetry.Signal;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -21,6 +25,9 @@ import java.util.Set;
  * <p>A number has to come back by {@link AutomationTrigger.Measure#hysteresis} before it can fire
  * again, and at least {@link #NUMBER_GAP_MS} passes between two runs, so driving around 80 km/h
  * does not flip the drive mode over and over. Rain gets the same gap.</p>
+ *
+ * <p>A saved place is entered within {@link #PLACE_RADIUS_M} and left only {@link #PLACE_MARGIN_M}
+ * further out, so GPS wander at the edge is not leaving and arriving over and over.</p>
  */
 final class AutomationWatch {
 
@@ -36,9 +43,18 @@ final class AutomationWatch {
         /** The head unit started moments ago. */
         boolean justBooted;
         long at;
+        /** The car's GPS position; given only while a rule needs a place. */
+        Double lat;
+        Double lng;
+        /** The saved places, by id. */
+        Map<Integer, SavedPlaces.Place> places = Collections.emptyMap();
     }
 
     static final long NUMBER_GAP_MS = 30_000L;
+    /** Inside a place within this of it. */
+    static final double PLACE_RADIUS_M = 150;
+    /** Outside again only this much further on. */
+    static final double PLACE_MARGIN_M = 100;
     /** {@link com.kooo.evcam.screen.VehicleScreen}: codes from here up to ACC are "off or lower". */
     private static final int IGNITION_LOW_MIN = 0x00200100;
 
@@ -49,23 +65,32 @@ final class AutomationWatch {
     /** Per rule and number: past the number now. */
     private final Map<String, Boolean> past = new HashMap<>();
     private final Map<String, Long> lastRun = new HashMap<>();
+    /** Per saved place: the car is inside it. */
+    private final Map<Integer, Boolean> inside = new HashMap<>();
+    /** Per rule and place: what the rule last saw, so it fires on the change only. */
+    private final Map<String, Boolean> seenInside = new HashMap<>();
 
     /** The rules to run now, in list order. Call with no rules to keep up while nothing should run. */
     List<AutomationRule> step(List<AutomationRule> rules, Sample s) {
         Set<AutomationTrigger> events = events(s);
+        locate(s);
+        Set<String> placeKeys = new HashSet<>();
         List<AutomationRule> out = new ArrayList<>();
         for (AutomationRule rule : rules) {
             AutomationTrigger trigger = rule.trigger();
             if (!rule.enabled || trigger == null || rule.steps.isEmpty()) {
                 continue;
             }
-            boolean fires = trigger.measure == null
+            boolean fires = trigger.isPlace() ? movedPast(rule, trigger, placeKeys)
+                    : trigger.measure == null
                     ? events.contains(trigger) && settled(rule, trigger, s.at)
                     : crossed(rule, trigger, reading(trigger.measure, s), s.at);
             if (fires) {
                 out.add(rule);
             }
         }
+        // a rule that is off, or was not looking, starts again from where the car is
+        seenInside.keySet().retainAll(placeKeys);
         return out;
     }
 
@@ -104,6 +129,37 @@ final class AutomationWatch {
             rain = s.rain;
         }
         return events;
+    }
+
+    /** Where the car is against each saved place; a place stays as it was while there is no fix. */
+    private void locate(Sample s) {
+        inside.keySet().retainAll(s.places.keySet());
+        if (s.lat == null || s.lng == null) {
+            return;
+        }
+        for (SavedPlaces.Place place : s.places.values()) {
+            boolean was = Boolean.TRUE.equals(inside.get(place.id));
+            double meters = Geo.meters(s.lat, s.lng, place.lat, place.lng);
+            inside.put(place.id, meters <= (was ? PLACE_RADIUS_M + PLACE_MARGIN_M : PLACE_RADIUS_M));
+        }
+    }
+
+    /**
+     * Arrive fires going from outside to inside, Leave the other way. Where the car already was when
+     * the rule first saw it does nothing; a deleted place or no fix yet never fires.
+     */
+    private boolean movedPast(AutomationRule rule, AutomationTrigger trigger, Set<String> keys) {
+        Boolean now = inside.get(rule.value);
+        if (now == null) {
+            return false;
+        }
+        String key = rule.id + ":" + rule.value;
+        keys.add(key);
+        Boolean was = seenInside.put(key, now);
+        if (was == null || was.equals(now)) {
+            return false;
+        }
+        return trigger == AutomationTrigger.PLACE_ARRIVE ? now : !now;
     }
 
     /** Light rain can read on and off every few seconds: rain gets the same gap between runs as a number. */

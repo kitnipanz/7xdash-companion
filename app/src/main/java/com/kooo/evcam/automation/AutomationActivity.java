@@ -17,6 +17,7 @@ import androidx.core.content.ContextCompat;
 import com.google.android.material.switchmaterial.SwitchMaterial;
 import com.kooo.evcam.AppConfig;
 import com.kooo.evcam.R;
+import com.kooo.evcam.nav.SavedPlaces;
 
 import java.util.Collections;
 import java.util.List;
@@ -75,7 +76,7 @@ public class AutomationActivity extends AppCompatActivity {
             TextView heading = text(this, getString(R.string.automation_examples), false);
             heading.setPadding(dp(8), dp(4), 0, dp(8));
             list.addView(heading);
-            for (AutomationRule example : AutomationExamples.all()) {
+            for (AutomationRule example : AutomationExamples.all(SavedPlaces.load(this))) {
                 list.addView(exampleRow(example));
             }
             return;
@@ -161,6 +162,11 @@ public class AutomationActivity extends AppCompatActivity {
 
     static String whenText(Context context, AutomationRule rule) {
         AutomationTrigger trigger = rule.trigger();
+        if (trigger.isPlace()) {
+            SavedPlaces.Place place = SavedPlaces.find(SavedPlaces.load(context), rule.value);
+            return context.getString(trigger.labelRes,
+                    place == null ? context.getString(R.string.place_deleted) : place.name);
+        }
         return trigger.measure == null ? context.getString(trigger.labelRes)
                 : context.getString(trigger.labelRes, rule.value);
     }

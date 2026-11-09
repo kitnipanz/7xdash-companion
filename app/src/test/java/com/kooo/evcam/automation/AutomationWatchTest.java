@@ -5,12 +5,15 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import com.kooo.evcam.nav.SavedPlaces;
 import com.kooo.evcam.telemetry.Signal;
 
 import org.junit.Test;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class AutomationWatchTest {
 
@@ -234,5 +237,60 @@ public class AutomationWatchTest {
         assertTrue(AutomationRule.parseAll(null).isEmpty());
         assertTrue(AutomationRule.parseAll("{not json").isEmpty());
         assertTrue(AutomationRule.parseAll("[{\"id\":\"a\",\"trigger\":\"nope\",\"steps\":[]}]").isEmpty());
+    }
+
+    // ---- Saved places
+
+    /** Home at 13.7, 100.5; one degree of latitude is about 111 km, so 0.001 is about 111 m. */
+    private static Map<Integer, SavedPlaces.Place> home() {
+        SavedPlaces.Place home = SavedPlaces.add(new java.util.ArrayList<>(), "Home", 13.7, 100.5);
+        Map<Integer, SavedPlaces.Place> places = new HashMap<>();
+        places.put(home.id, home);
+        return places;
+    }
+
+    private boolean at(AutomationRule rule, Map<Integer, SavedPlaces.Place> places, Double northOfHome) {
+        AutomationWatch.Sample s = sample();
+        s.places = places;
+        s.lat = northOfHome == null ? null : 13.7 + northOfHome;
+        s.lng = northOfHome == null ? null : 100.5;
+        return !watch.step(Collections.singletonList(rule), s).isEmpty();
+    }
+
+    @Test
+    public void arrivingFires_onlyComingIn() {
+        Map<Integer, SavedPlaces.Place> places = home();
+        AutomationRule arrive = rule(AutomationTrigger.PLACE_ARRIVE, 1);
+        assertFalse("already home when first seen", at(arrive, places, 0.0));
+        assertFalse(at(arrive, places, 0.01));
+        assertFalse("no fix", at(arrive, places, null));
+        assertTrue(at(arrive, places, 0.0005));
+        assertFalse(at(arrive, places, 0.0));
+    }
+
+    @Test
+    public void leavingFires_onlyPastTheMargin() {
+        Map<Integer, SavedPlaces.Place> places = home();
+        AutomationRule leave = rule(AutomationTrigger.PLACE_LEAVE, 1);
+        assertFalse(at(leave, places, 0.0));
+        assertFalse("200 m: GPS wander at the edge", at(leave, places, 0.0018));
+        assertTrue("300 m", at(leave, places, 0.0027));
+        assertFalse(at(leave, places, 0.01));
+    }
+
+    @Test
+    public void aDeletedPlaceNeverFires() {
+        AutomationRule arrive = rule(AutomationTrigger.PLACE_ARRIVE, 7);
+        assertFalse(at(arrive, home(), 0.01));
+        assertFalse(at(arrive, home(), 0.0));
+    }
+
+    @Test
+    public void notLookingForAWhile_startsAgainFromWhereTheCarIs() {
+        Map<Integer, SavedPlaces.Place> places = home();
+        AutomationRule arrive = rule(AutomationTrigger.PLACE_ARRIVE, 1);
+        assertFalse(at(arrive, places, 0.01));
+        assertFalse("automation off: no places given", at(arrive, Collections.emptyMap(), 0.0));
+        assertFalse("home already when it looks again", at(arrive, places, 0.0));
     }
 }

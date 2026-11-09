@@ -24,12 +24,18 @@ import com.kooo.evcam.R;
 import com.kooo.evcam.announce.AnnouncePick;
 import com.kooo.evcam.input.ActionTabs;
 import com.kooo.evcam.input.ShortcutAction;
+import com.kooo.evcam.nav.Navigator;
+import com.kooo.evcam.nav.SavePlaceDialog;
+import com.kooo.evcam.nav.SavedPlaces;
+import com.kooo.evcam.telemetry.Telemetry;
+import com.kooo.evcam.telemetry.VehicleState;
 import com.kooo.evcam.ui.CamDialogs;
 import com.kooo.evcam.ui.Notice;
 
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * One automation on one page. Everything to choose from is in view: When on the left, Do on the
@@ -45,6 +51,8 @@ public class AutomationEditActivity extends AppCompatActivity {
 
     private static final String KEPT_DRAFT = "draft";
     private static final String KEPT_START = "started_as";
+    /** Registered while this page shows, so "Save this spot" has a position. */
+    private static final String TELEMETRY_USER = "automation_edit";
 
     private AutomationRule draft;
     private String startedAs;
@@ -92,6 +100,18 @@ public class AutomationEditActivity extends AppCompatActivity {
         draw();
     }
 
+    @Override
+    protected void onStart() {
+        super.onStart();
+        Telemetry.get().acquire(this, TELEMETRY_USER);
+    }
+
+    @Override
+    protected void onStop() {
+        Telemetry.get().release(TELEMETRY_USER);
+        super.onStop();
+    }
+
     /** The screen is rebuilt when the car's day or night theme changes: keep what was picked. */
     @Override
     protected void onSaveInstanceState(Bundle out) {
@@ -126,10 +146,84 @@ public class AutomationEditActivity extends AppCompatActivity {
             if (picked != null && picked.group == group && picked.measure != null) {
                 whenPane.addView(number(picked));
             }
+            if (group == AutomationTrigger.Group.PLACE) {
+                drawPlaces(picked != null && picked.isPlace() ? picked : null);
+            }
         }
     }
 
+    /** The saved places under Arrive and Leave; hold one to delete it. */
+    private void drawPlaces(AutomationTrigger picked) {
+        ChipGroup chips = chipRow(whenPane);
+        chips.setPaddingRelative(dp(34), dp(8), 0, 0);
+        for (SavedPlaces.Place place : SavedPlaces.load(this)) {
+            TextView row = chip(place.name, picked != null && draft.value == place.id,
+                    v -> setPlace(picked == null ? AutomationTrigger.PLACE_ARRIVE : picked, place.id));
+            row.setOnLongClickListener(v -> {
+                askDeletePlace(place);
+                return true;
+            });
+            chips.addView(row);
+        }
+        chips.addView(saveSpotChip(place -> setPlace(picked == null ? AutomationTrigger.PLACE_ARRIVE : picked, place.id)));
+    }
+
+    private void setPlace(AutomationTrigger trigger, int placeId) {
+        draft.trigger = trigger.key;
+        draft.value = placeId;
+        draw();
+    }
+
+    private void askDeletePlace(SavedPlaces.Place place) {
+        CamDialogs.show(new MaterialAlertDialogBuilder(this, R.style.Theme_Cam_MaterialAlertDialog)
+                .setTitle(getString(R.string.place_delete_title, place.name))
+                .setMessage(R.string.place_delete_message)
+                .setPositiveButton(R.string.action_delete, (dialog, which) -> {
+                    List<SavedPlaces.Place> places = SavedPlaces.load(this);
+                    places.removeIf(other -> other.id == place.id);
+                    SavedPlaces.save(this, places);
+                    Automation.reload();
+                    draw();
+                })
+                .setNegativeButton(android.R.string.cancel, null));
+    }
+
+    private TextView saveSpotChip(Consumer<SavedPlaces.Place> saved) {
+        TextView add = chip(getString(R.string.place_save_here), false, v -> askSaveSpot(saved));
+        add.setCompoundDrawablesRelativeWithIntrinsicBounds(R.drawable.ic_add, 0, 0, 0);
+        add.setCompoundDrawablePadding(dp(8));
+        return add;
+    }
+
+    /** Names the car's position now and saves it; {@code saved} gets it, then the page redraws. */
+    private void askSaveSpot(Consumer<SavedPlaces.Place> saved) {
+        VehicleState car = Telemetry.get().latest();
+        if (car == null || car.latitude == null || car.longitude == null) {
+            Notice.makeText(this, R.string.place_no_fix, Toast.LENGTH_LONG).show();
+            return;
+        }
+        SavePlaceDialog.ask(this, car.latitude, car.longitude, "", place -> {
+            saved.accept(place);
+            draw();
+        });
+    }
+
     private void pickTrigger(AutomationTrigger trigger) {
+        if (trigger.isPlace()) {
+            AutomationTrigger was = draft.trigger();
+            if (was != null && was.isPlace()) {
+                // Arrive and Leave swap, the place stays
+                setPlace(trigger, draft.value);
+                return;
+            }
+            List<SavedPlaces.Place> places = SavedPlaces.load(this);
+            if (places.isEmpty()) {
+                askSaveSpot(place -> setPlace(trigger, place.id));
+            } else {
+                setPlace(trigger, places.get(0).id);
+            }
+            return;
+        }
         boolean sameMeasure = draft.trigger() != null && draft.trigger().measure == trigger.measure;
         draft.trigger = trigger.key;
         if (trigger.measure == null) {
@@ -189,11 +283,16 @@ public class AutomationEditActivity extends AppCompatActivity {
         hint.setPadding(0, 0, 0, dp(4));
         doPane.addView(hint);
         for (AutomationAction action : AutomationAction.values()) {
-            if (action != AutomationAction.SHORTCUT) {
+            if (action != AutomationAction.SHORTCUT && offered(action)) {
                 drawAction(action);
             }
         }
         drawShortcuts();
+    }
+
+    /** Navigation is a beta feature and needs the TomTom key. */
+    private boolean offered(AutomationAction action) {
+        return action != AutomationAction.NAVIGATE || (Navigator.active(this) && Navigator.hasKey());
     }
 
     private void drawAction(AutomationAction action) {
@@ -206,6 +305,9 @@ public class AutomationEditActivity extends AppCompatActivity {
                 draw();
             };
             chips.addView(option.color < 0 ? chip(option.label, on, tap) : swatch(option, on, tap));
+        }
+        if (action == AutomationAction.NAVIGATE) {
+            chips.addView(saveSpotChip(place -> setChoice(action, Integer.toString(place.id))));
         }
     }
 
@@ -399,6 +501,11 @@ public class AutomationEditActivity extends AppCompatActivity {
         labelParams.setMarginStart(dp(10));
         title.addView(label, labelParams);
         pane.addView(title);
+        return chipRow(pane);
+    }
+
+    /** A wrapping row of choices, added to {@code pane}. */
+    private ChipGroup chipRow(LinearLayout pane) {
         ChipGroup chips = new ChipGroup(this);
         chips.setChipSpacingHorizontal(dp(8));
         chips.setChipSpacingVertical(dp(8));

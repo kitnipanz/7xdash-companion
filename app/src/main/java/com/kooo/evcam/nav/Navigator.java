@@ -24,8 +24,9 @@ import java.util.concurrent.Executors;
 
 /**
  * Turn-by-turn navigation (beta): a route with traffic from the car's GPS to
- * a place ({@link TomTomApi}), followed fix by fix ({@link Guidance}), with the turns spoken in the
- * cabin ({@link VoicePlan}, {@link NavVoice}) and kept on the HUD ({@link HudTurnWindow}). Leaving
+ * a place ({@link TomTomApi}), followed fix by fix ({@link Guidance}), with the turns on screen and
+ * kept on the HUD ({@link HudTurnWindow}). No spoken turns: the head unit's speech engine failed
+ * and its retries froze navigation. Leaving
  * the route asks for a new one. Keeps going when the Navigation screen is closed, until the
  * destination or End.
  *
@@ -84,13 +85,12 @@ public final class Navigator {
         public final Long carFixAtMs;
         /** Battery at arrival, or null until the car has given battery and range. */
         public final Arrival.Estimate battery;
-        public final boolean muted;
         /** Before starting, the routes to choose from (TomTom's pick first); one or none otherwise. */
         public final List<NavRoute> choices;
 
         Snapshot(Phase phase, DestinationLink.Place destination, NavRoute route, Guidance.Progress progress,
                  boolean rerouting, int error, String errorDetail, Double carLat, Double carLng, Double carBearing,
-                 Float carSpeedKmh, Long carFixAtMs, Arrival.Estimate battery, boolean muted,
+                 Float carSpeedKmh, Long carFixAtMs, Arrival.Estimate battery,
                  List<NavRoute> choices) {
             this.phase = phase;
             this.destination = destination;
@@ -105,7 +105,6 @@ public final class Navigator {
             this.carSpeedKmh = carSpeedKmh;
             this.carFixAtMs = carFixAtMs;
             this.battery = battery;
-            this.muted = muted;
             this.choices = choices;
         }
     }
@@ -127,7 +126,6 @@ public final class Navigator {
         return t;
     });
     private final List<Listener> listeners = new ArrayList<>();
-    private final VoicePlan voicePlan = new VoicePlan();
     private final HudTurnWindow hud = new HudTurnWindow();
     private final HudMapWindow hudMap = new HudMapWindow();
     private final Runnable tick = new Runnable() {
@@ -142,7 +140,6 @@ public final class Navigator {
 
     private Context app;
     private TomTomApi api;
-    private NavVoice voice;
     private Phase phase = Phase.IDLE;
     private DestinationLink.Place destination;
     private Guidance guidance;
@@ -164,7 +161,6 @@ public final class Navigator {
     private double headingFromLat = Double.NaN;
     private double headingFromLng = Double.NaN;
     private Arrival.Estimate battery;
-    private boolean muted;
     private boolean telemetryHeld;
     /** The routes to choose from before starting (TomTom's pick first); the chosen one is {@link #guidance}'s. */
     private List<NavRoute> choices = new ArrayList<>();
@@ -174,8 +170,10 @@ public final class Navigator {
     private boolean hudPlacing;
     /** Navigation screens open (the full screen, the floating window): GPS on for the map and the search, even with nothing planned. */
     private int attached;
-    /** {@link NavGuideService} is on: there is a trip. */
+    /** {@link NavGuideService} is on: there is a trip, or a rule waits for a place. */
     private boolean guideService;
+    /** An automation waits to arrive at or leave a saved place: GPS in the background with no trip. */
+    private boolean gpsHeld;
 
     private Navigator() {
     }
@@ -213,15 +211,22 @@ public final class Navigator {
                 : R.string.nav_place_received, name));
         preview(context, place);
         startWhenRouted = wasGuiding;
-        // The full Navigation screen opens, no longer the floating map (it froze when its route started).
-        // Over other apps it needs the overlay permission, which also allows starting a screen from the background.
+        openScreen(context);
+    }
+
+    /**
+     * The full Navigation screen opens, no longer the floating map (it froze when its route started),
+     * unless one is open already. Over other apps it needs the overlay permission, which also allows
+     * starting a screen from the background.
+     */
+    private void openScreen(Context context) {
         if (attached == 0 && OverlayCoordinator.canShowOverlay(context)) {
             try {
                 android.content.Intent open = new android.content.Intent(context, NavigationActivity.class);
                 open.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK);
                 context.startActivity(open);
             } catch (RuntimeException e) {
-                AppLog.w(TAG, "could not open Navigation for the shared place: " + e.getMessage());
+                AppLog.w(TAG, "could not open Navigation: " + e.getMessage());
             }
         }
     }
@@ -295,7 +300,7 @@ public final class Navigator {
     /** Telemetry held and the tick going while {@link #running}, released and stopped when not. */
     private void keepRunning() {
         main.removeCallbacks(tick);
-        if (app != null && (phase != Phase.IDLE) != guideService) {
+        if (app != null && (phase != Phase.IDLE || gpsHeld) != guideService) {
             guideService = !guideService;
             if (guideService) {
                 NavGuideService.start(app);
@@ -328,7 +333,7 @@ public final class Navigator {
 
     public Snapshot snapshot() {
         return new Snapshot(phase, destination, guidance == null ? null : guidance.route(), progress, rerouting,
-                error, errorDetail, carLat, carLng, carBearing, carSpeed, carFixAt, battery, muted, java.util.Collections.unmodifiableList(new ArrayList<>(choices)));
+                error, errorDetail, carLat, carLng, carBearing, carSpeed, carFixAt, battery, java.util.Collections.unmodifiableList(new ArrayList<>(choices)));
     }
 
     public boolean isGuiding() {
@@ -344,7 +349,6 @@ public final class Navigator {
         progress = null;
         choices = new ArrayList<>();
         startWhenRouted = false;
-        voicePlan.reset();
         phase = Phase.ROUTING;
         AppLog.i(TAG, "planning" + (place.name.isEmpty() ? "" : " to " + place.name));
         if (wasGuiding) {
@@ -367,22 +371,39 @@ public final class Navigator {
         onTick();
     }
 
+    /**
+     * An automation wants this trip: guide there as soon as the route is in. False when a trip is on
+     * already, which it leaves alone: the person chose that one.
+     */
+    public boolean guideTo(Context context, DestinationLink.Place place) {
+        if (phase == Phase.GUIDING || startWhenRouted) {
+            return false;
+        }
+        AppLog.i(TAG, "automation asked for a trip");
+        preview(context, place);
+        startWhenRouted = true;
+        openScreen(context);
+        return true;
+    }
+
+    /** Keeps the GPS allowed in the background with no trip on: a rule is waiting for a place. */
+    public void holdGps(Context context, boolean on) {
+        bind(context);
+        gpsHeld = on;
+        keepRunning();
+    }
+
     /** Starts guiding along the route shown. */
     public void start() {
         if (guidance == null || (phase != Phase.PREVIEW && phase != Phase.GUIDING)) {
             return;
         }
         phase = Phase.GUIDING;
-        voicePlan.reset();
         AppLog.i(TAG, "guiding");
-        NavRoute r = guidance.route();
-        if (!r.steps.isEmpty()) {
-            speak(NavText.headline(app, r, 0));
-        }
         onTick();
     }
 
-    /** Ends navigation: route, voice and HUD card go. */
+    /** Ends navigation: route and HUD card go. */
     public void end() {
         if (phase == Phase.IDLE) {
             return;
@@ -402,18 +423,7 @@ public final class Navigator {
         ask++;
         hud.hide();
         hudMap.hide();
-        if (voice != null) {
-            voice.stop();
-        }
         keepRunning();
-        changed();
-    }
-
-    public void setMuted(boolean muted) {
-        this.muted = muted;
-        if (muted && voice != null) {
-            voice.stop();
-        }
         changed();
     }
 
@@ -454,7 +464,6 @@ public final class Navigator {
         if (app == null) {
             app = context.getApplicationContext();
             api = new TomTomApi(app);
-            voice = new NavVoice(app);
         }
     }
 
@@ -516,7 +525,6 @@ public final class Navigator {
                 route.seconds / 60, route.steps.size(), reroute ? " (rerouted)" : ""));
         guidance = new Guidance(route);
         choices = phase == Phase.GUIDING ? new ArrayList<>(java.util.Collections.singletonList(route)) : all;
-        voicePlan.reset();
         error = 0;
         errorDetail = null;
         if (phase != Phase.GUIDING) {
@@ -621,7 +629,6 @@ public final class Navigator {
             AppLog.i(TAG, "arrived");
             phase = Phase.ARRIVED;
             arrivedAt = now;
-            speak(app.getString(R.string.nav_say_arrived));
             showHud();
             return;
         }
@@ -631,17 +638,7 @@ public final class Navigator {
         } else if (!rerouting && now - routedAt > REFRESH_MS) {
             askRoute(true);
         }
-        NavRoute route = guidance.route();
         showHud();
-
-        float kmh = s == null || s.speedKmh == null ? 0 : s.speedKmh;
-        double leg = progress.next < 0 ? route.meters - route.steps.get(route.steps.size() - 1).startAlong
-                : route.steps.get(progress.next).startAlong
-                - (progress.next > 0 ? route.steps.get(progress.next - 1).startAlong : 0);
-        VoicePlan.Prompt prompt = voicePlan.due(progress.next, progress.toNext, leg, kmh);
-        if (prompt != null && !progress.offRoute) {
-            speak(NavText.spoken(app, route, prompt));
-        }
     }
 
     private String destinationName() {
@@ -690,13 +687,6 @@ public final class Navigator {
         hudMap.reset();
         hudMap.relayout(app);
         showHud();
-    }
-
-    private void speak(String text) {
-        if (muted || voice == null || !new AppConfig(app).isNavVoiceEnabled()) {
-            return;
-        }
-        voice.say(text, Locale.forLanguageTag(api.language()));
     }
 
     private void changed() {

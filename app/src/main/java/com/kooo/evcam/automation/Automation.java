@@ -1,12 +1,16 @@
 package com.kooo.evcam.automation;
 
 import android.content.Context;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.SystemClock;
 
 import com.kooo.evcam.AppConfig;
 import com.kooo.evcam.UserExit;
 import com.kooo.evcam.analytics.Analytics;
 import com.kooo.evcam.blackbox.BlackBox;
+import com.kooo.evcam.nav.Navigator;
+import com.kooo.evcam.nav.SavedPlaces;
 import com.kooo.evcam.telemetry.Readings;
 import com.kooo.evcam.telemetry.Signal;
 import com.kooo.evcam.telemetry.Telemetry;
@@ -27,12 +31,18 @@ import java.util.Map;
  * Speed, battery and temperature are float sensors, so this registers as a full telemetry user
  * only while a rule that is on needs one. Installed after {@code GearLight}, so a colour set when
  * the gear changes lands on top of what the gear picks. Main thread only.</p>
+ *
+ * <p>Arriving at or leaving a saved place needs the GPS: while such a rule is on, telemetry is held,
+ * {@link Navigator#holdGps} keeps the position coming in the background, and the position is
+ * looked at every {@link #LOOK_MS} as well as on every change of the car's readings.</p>
  */
 public final class Automation implements Telemetry.Listener {
 
     private static final String USER = "automation";
     /** The first ignition reading counts as the car coming on this soon after the head unit started. */
     private static final long BOOT_MS = 5 * 60_000L;
+    /** The car's position changes without the car saying so: look this often while a rule needs it. */
+    private static final long LOOK_MS = 15_000L;
 
     private static Automation installed;
 
@@ -42,14 +52,30 @@ public final class Automation implements Telemetry.Listener {
     private final AutomationWatch watch = new AutomationWatch();
     /** When each rule last ran (wall clock), for the list. Not kept across restarts. */
     private final Map<String, Long> ranAt = new HashMap<>();
+    private final Handler main = new Handler(Looper.getMainLooper());
+    private final Runnable look = () -> {
+        looking = false;
+        onReadingsChanged(Telemetry.get().readings());
+    };
     private List<AutomationRule> rules;
+    private Map<Integer, SavedPlaces.Place> places = new HashMap<>();
     private boolean floatsHeld;
+    private boolean gpsHeld;
+    private boolean looking;
 
     private Automation(Context context) {
         app = context.getApplicationContext();
         config = new AppConfig(app);
         runner = new AutomationRunner(app);
         rules = AutomationRule.parseAll(config.getAutomationRules());
+        readPlaces();
+    }
+
+    private void readPlaces() {
+        places = new HashMap<>();
+        for (SavedPlaces.Place place : SavedPlaces.load(app)) {
+            places.put(place.id, place);
+        }
     }
 
     /** Application start. Repeat calls do nothing. */
@@ -62,10 +88,11 @@ public final class Automation implements Telemetry.Listener {
         installed.onReadingsChanged(Telemetry.get().readings());
     }
 
-    /** The switch or the rules changed. */
+    /** The switch, the rules or the saved places changed. */
     public static void reload() {
         if (installed != null) {
             installed.rules = AutomationRule.parseAll(installed.config.getAutomationRules());
+            installed.readPlaces();
             installed.onReadingsChanged(Telemetry.get().readings());
         }
     }
@@ -85,8 +112,14 @@ public final class Automation implements Telemetry.Listener {
     @Override
     public void onReadingsChanged(Readings readings) {
         boolean active = config.isAutomationOn();
-        holdFloats(active && wantsFloats());
-        List<AutomationRule> fired = watch.step(active ? rules : Collections.emptyList(), sample(readings));
+        boolean gps = active && wantsPlace();
+        holdFloats(active && (gps || wantsFloats()));
+        holdGps(gps);
+        if (gps && !looking) {
+            looking = true;
+            main.postDelayed(look, LOOK_MS);
+        }
+        List<AutomationRule> fired = watch.step(active ? rules : Collections.emptyList(), sample(readings, gps));
         if (fired.isEmpty() || UserExit.isExited(app)) {
             return;
         }
@@ -98,7 +131,7 @@ public final class Automation implements Telemetry.Listener {
         }
     }
 
-    private static AutomationWatch.Sample sample(Readings readings) {
+    private AutomationWatch.Sample sample(Readings readings, boolean located) {
         VehicleState car = Telemetry.get().latest();
         AutomationWatch.Sample s = new AutomationWatch.Sample();
         s.ignition = readings.code(Signal.IGNITION);
@@ -110,7 +143,30 @@ public final class Automation implements Telemetry.Listener {
         s.rain = readings.bool(Signal.RAIN);
         s.at = SystemClock.elapsedRealtime();
         s.justBooted = s.at < BOOT_MS;
+        if (located) {
+            s.lat = car.latitude;
+            s.lng = car.longitude;
+            s.places = places;
+        }
         return s;
+    }
+
+    /** Does a rule that is on wait to arrive at or leave a place? */
+    private boolean wantsPlace() {
+        for (AutomationRule rule : rules) {
+            AutomationTrigger trigger = rule.trigger();
+            if (rule.enabled && trigger != null && trigger.isPlace()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void holdGps(boolean on) {
+        if (on != gpsHeld) {
+            gpsHeld = on;
+            Navigator.get().holdGps(app, on);
+        }
     }
 
     private boolean wantsFloats() {

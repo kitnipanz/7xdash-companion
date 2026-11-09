@@ -22,8 +22,13 @@ import java.util.Locale;
 /**
  * The Dash panel's picture, drawn to scale so a pinch makes everything bigger or smaller together:
  * clock and recording dot on top, speed with the turn arrows either side and the gear in the middle,
- * a row of four buttons at the bottom ({@link #buttonAt}). On the right, a card of its own with what the
- * floating button used to carry (record, dim, quit), one above the other.
+ * a row of four buttons at the bottom ({@link #buttonAt}). On the right, a card of its own with minimize
+ * and what the floating button used to carry (record, dim, quit), one above the other.
+ *
+ * <p>Minimized ({@link #setMinimized}) it is a small pill instead: turn arrows, speed and gear, and a
+ * red dot while recording, with the right-hand card's buttons in a row beside it (expand, record,
+ * dim, quit); at the pill's height a column of four would be too small to hit. A tap on the pill or
+ * on expand brings the panel back.</p>
  *
  * <p>Always dark, like an instrument cluster, whatever the app's day / night theme.</p>
  */
@@ -33,15 +38,32 @@ public final class DashPanelView extends View {
     public static final float ASPECT = 2.34f;
     /** The four buttons along the bottom, left to right, then the column on the right, top to bottom. */
     public static final int[] ICONS = {R.drawable.ic_surround, R.drawable.ic_flash, R.drawable.ic_rearview,
-            R.drawable.ic_home, R.drawable.ic_record, R.drawable.ic_dim, R.drawable.ic_power};
+            R.drawable.ic_home, R.drawable.ic_collapse, R.drawable.ic_record, R.drawable.ic_dim, R.drawable.ic_power};
     /** Buttons in the bottom row; the rest are the column. */
     public static final int ROW = 4;
-    /** {@link #buttonAt} for the record button, the first of the column. */
-    public static final int RECORD = ROW;
+    /** {@link #buttonAt} for the minimize button, the first of the column. */
+    public static final int MINIMIZE = ROW;
+    /** {@link #buttonAt} for the record button. */
+    public static final int RECORD = ROW + 1;
     /** {@link #buttonAt} for the dim button: tap turns it on or off, slide sets how dark. */
-    public static final int DIM_BUTTON = ROW + 1;
+    public static final int DIM_BUTTON = ROW + 2;
     /** {@link #buttonAt} for the quit button: the first tap arms it, the second quits. */
-    public static final int QUIT_BUTTON = ROW + 2;
+    public static final int QUIT_BUTTON = ROW + 3;
+    /** Minimized: width of the pill, of the gap after it, of the button card's padding, buttons and gaps between them, in hundredths of the height. */
+    private static final float PILL_U = 300f;
+    private static final float MINI_GAP_U = 6f;
+    private static final float MINI_PAD_U = 8f;
+    private static final float MINI_BUTTON_U = 84f;
+    private static final float MINI_BUTTON_GAP_U = 6f;
+    /** Width : height of the minimized window: the pill, the gap and the card of four buttons. */
+    public static final float MINI_ASPECT = (PILL_U + MINI_GAP_U + 2 * MINI_PAD_U
+            + 4 * MINI_BUTTON_U + 3 * MINI_BUTTON_GAP_U) / 100f;
+    /** Stacked (no Macro pad): the four buttons in a row under the pill, as wide as it. */
+    private static final float STACK_BUTTON_U = (PILL_U - 2 * MINI_PAD_U - 3 * MINI_BUTTON_GAP_U) / 4f;
+    /** Height : pill height of the stacked minimized window: the pill, the gap and the row card. */
+    public static final float STACK_HEIGHT = (100f + MINI_GAP_U + 2 * MINI_PAD_U + STACK_BUTTON_U) / 100f;
+    /** Height of the minimized pill, as a share of the full panel's height. */
+    public static final float MINI_SCALE = 0.32f;
     /** Width of the right-hand card, in hundredths of the height. */
     private static final float COLUMN_U = 30f;
     /** See-through gap between the panel and the right-hand card. */
@@ -58,6 +80,8 @@ public final class DashPanelView extends View {
     private final RectF rect = new RectF();
     private final Path arrow = new Path();
     private final Drawable[] icons = new Drawable[ICONS.length];
+    /** On the minimize button while minimized: maximize, lit, so the way back to the panel is plain to see. */
+    private final Drawable expandIcon;
     private final SimpleDateFormat clock = new SimpleDateFormat("HH:mm", Locale.getDefault());
     private final int energy;
     private final int recording;
@@ -70,6 +94,9 @@ public final class DashPanelView extends View {
     private int arrivalColor = TEXT;
     private boolean dimOn;
     private boolean quitArmed;
+    private boolean minimized;
+    /** Minimized with the buttons under the pill rather than beside it. */
+    private boolean stacked;
 
     public DashPanelView(Context context) {
         super(context);
@@ -83,6 +110,13 @@ public final class DashPanelView extends View {
             }
             icons[i] = d;
         }
+        Drawable expand = ContextCompat.getDrawable(context, R.drawable.ic_maximize);
+        if (expand != null) {
+            expand = expand.mutate();
+            expand.setTint(TEXT);
+        }
+        expandIcon = expand;
+        setContentDescription(context.getString(R.string.dash_panel_minimize));
         text.setTypeface(Typeface.create("sans-serif", Typeface.NORMAL));
     }
 
@@ -102,6 +136,34 @@ public final class DashPanelView extends View {
         }
     }
 
+    /**
+     * The small pill (true) or the whole panel. Minimized, {@code stacked} puts the buttons in a row
+     * under the pill, as wide as it (no Macro pad), instead of beside it (the pad docks under both).
+     * The window's size is the service's business ({@link #miniSize}).
+     */
+    public void setMinimized(boolean minimized, boolean stacked) {
+        if (this.minimized != minimized || this.stacked != stacked) {
+            this.minimized = minimized;
+            this.stacked = stacked;
+            setContentDescription(getContext().getString(
+                    minimized ? R.string.dash_panel_expand : R.string.dash_panel_minimize));
+            invalidate();
+        }
+    }
+
+    /** The minimized window's size {width, height} for a full panel {@code fullHeight} tall, pill at least {@code minHeight}. */
+    public static int[] miniSize(int fullHeight, int minHeight, boolean stacked) {
+        int h = Math.max(minHeight, Math.round(fullHeight * MINI_SCALE));
+        return stacked
+                ? new int[]{Math.round(h * PILL_U / 100f), Math.round(h * STACK_HEIGHT)}
+                : new int[]{Math.round(h * MINI_ASPECT), h};
+    }
+
+    /** The pill's height in a minimized window {@code width} wide. */
+    public static int pillHeight(int width, boolean stacked) {
+        return Math.round(width / (stacked ? PILL_U / 100f : MINI_ASPECT));
+    }
+
     /** The battery at arrival line at the top, or null for none. */
     public void arrival(String line, int color) {
         this.arrival = line;
@@ -110,7 +172,7 @@ public final class DashPanelView extends View {
 
     /** Which button a tap at (x, y) in this view hit, or -1. */
     public int buttonAt(float x, float y) {
-        for (int i = 0; i < ICONS.length; i++) {
+        for (int i = minimized ? ROW : 0; i < ICONS.length; i++) {
             buttonRect(i, rect);
             if (rect.contains(x, y)) {
                 return i;
@@ -126,12 +188,29 @@ public final class DashPanelView extends View {
         return buttonAt(up.getRawX() - at[0], up.getRawY() - at[1]);
     }
 
+    /** A hundredth of the panel's height, or minimized, of the pill's. */
     private float unit() {
+        if (minimized && stacked) {
+            return getWidth() / PILL_U;
+        }
         return getHeight() / 100f;
     }
 
     private void buttonRect(int i, RectF out) {
         float u = unit();
+        if (minimized && stacked) {
+            // the right-hand card's buttons, in a row under the pill
+            float left = (MINI_PAD_U + (i - ROW) * (STACK_BUTTON_U + MINI_BUTTON_GAP_U)) * u;
+            float top = (100f + MINI_GAP_U + MINI_PAD_U) * u;
+            out.set(left, top, left + STACK_BUTTON_U * u, top + STACK_BUTTON_U * u);
+            return;
+        }
+        if (minimized) {
+            // the right-hand card's buttons, in a row right of the pill
+            float left = (PILL_U + MINI_GAP_U + MINI_PAD_U + (i - ROW) * (MINI_BUTTON_U + MINI_BUTTON_GAP_U)) * u;
+            out.set(left, MINI_PAD_U * u, left + MINI_BUTTON_U * u, getHeight() - MINI_PAD_U * u);
+            return;
+        }
         float pad = 5 * u;
         float gap = 3 * u;
         if (i >= ROW) {
@@ -155,6 +234,10 @@ public final class DashPanelView extends View {
 
     @Override
     protected void onDraw(Canvas canvas) {
+        if (minimized) {
+            drawMini(canvas);
+            return;
+        }
         float u = unit();
         float w = contentWidth();
         fill.setColor(BG);
@@ -223,24 +306,84 @@ public final class DashPanelView extends View {
 
         // buttons
         for (int i = 0; i < ICONS.length; i++) {
-            buttonRect(i, rect);
-            fill.setColor(i == QUIT_BUTTON && quitArmed ? recording : BUTTON);
-            canvas.drawRoundRect(rect, 5 * u, 5 * u, fill);
-            Drawable d = icons[i];
-            if (i == RECORD && rec) {
-                // recording: a red stop square instead of the record dot
-                fill.setColor(recording);
-                float half = 6 * u;
-                canvas.drawRoundRect(rect.centerX() - half, rect.centerY() - half, rect.centerX() + half,
-                        rect.centerY() + half, 2 * u, 2 * u, fill);
-            } else if (d != null) {
-                d.setTint(i == DIM_BUTTON && dimOn ? energy : TEXT);
-                int size = Math.round(13 * u);
-                int l = Math.round(rect.centerX() - size / 2f);
-                int t = Math.round(rect.centerY() - size / 2f);
-                d.setBounds(l, t, l + size, t + size);
-                d.draw(canvas);
-            }
+            drawButton(canvas, i, u);
+        }
+    }
+
+    /** Button {@code i}, sized in {@code u}: the full panel's hundredth of its height. */
+    private void drawButton(Canvas canvas, int i, float u) {
+        buttonRect(i, rect);
+        fill.setColor(i == QUIT_BUTTON && quitArmed ? recording : BUTTON);
+        canvas.drawRoundRect(rect, 5 * u, 5 * u, fill);
+        Drawable d = minimized && i == MINIMIZE ? expandIcon : icons[i];
+        if (i == RECORD && rec) {
+            // recording: a red stop square instead of the record dot
+            fill.setColor(recording);
+            float half = 6 * u;
+            canvas.drawRoundRect(rect.centerX() - half, rect.centerY() - half, rect.centerX() + half,
+                    rect.centerY() + half, 2 * u, 2 * u, fill);
+        } else if (d != null) {
+            // the size control (minimize, or maximize when minimized) is always lit, so it reads as one
+            d.setTint((i == DIM_BUTTON && dimOn) || i == MINIMIZE ? energy : TEXT);
+            int size = Math.round(13 * u);
+            int l = Math.round(rect.centerX() - size / 2f);
+            int t = Math.round(rect.centerY() - size / 2f);
+            d.setBounds(l, t, l + size, t + size);
+            d.draw(canvas);
+        }
+    }
+
+    /**
+     * The pill (left arrow, speed, gear, right arrow, recording dot) and right of it, or under it
+     * when stacked, the card of buttons. Scales with the pill's height like the panel.
+     */
+    private void drawMini(Canvas canvas) {
+        float u = unit();
+        float w = PILL_U * u;
+        float h = 100f * u;
+        fill.setColor(BG);
+        rect.set(0, 0, w, h);
+        canvas.drawRoundRect(rect, h / 2f, h / 2f, fill);
+        if (stacked) {
+            rect.set(0, h + MINI_GAP_U * u, w, getHeight());
+        } else {
+            rect.set(w + MINI_GAP_U * u, 0, getWidth(), h);
+        }
+        canvas.drawRoundRect(rect, 16 * u, 16 * u, fill);
+        // buttons sized like the full panel's (its u is this one over MINI_SCALE), a bit smaller stacked
+        float bu = u / MINI_SCALE * (stacked ? STACK_BUTTON_U / MINI_BUTTON_U : 1f);
+        for (int i = ROW; i < ICONS.length; i++) {
+            drawButton(canvas, i, bu);
+        }
+
+        VehicleState s = state;
+        Integer turn = s == null ? null : s.turnSignal;
+        boolean hazard = s != null && Boolean.TRUE.equals(s.hazard);
+        boolean left = hazard || (turn != null && (turn & VehicleState.TURN_LEFT) != 0);
+        boolean right = hazard || (turn != null && (turn & VehicleState.TURN_RIGHT) != 0);
+        drawArrow(canvas, w * 0.13f, 50 * u, 20 * u, true, left && blinkOn);
+        drawArrow(canvas, w * 0.78f, 50 * u, 20 * u, false, right && blinkOn);
+
+        Float speed = s == null ? null : s.speedKmh;
+        String speedText = speed == null ? "--" : String.valueOf(Math.round(Math.max(0f, speed)));
+        text.setTextAlign(Paint.Align.CENTER);
+        text.setColor(TEXT);
+        text.setFakeBoldText(true);
+        text.setTextSize(56 * u);
+        canvas.drawText(speedText, w * 0.43f, 70 * u, text);
+
+        String gear = s == null || s.gear == null ? "" : s.gear;
+        if (!gear.isEmpty()) {
+            text.setTextSize(36 * u);
+            text.setColor(energy);
+            text.setTextAlign(Paint.Align.LEFT);
+            canvas.drawText(gear, w * 0.62f, 64 * u, text);
+        }
+        text.setFakeBoldText(false);
+
+        if (rec) {
+            fill.setColor(recording);
+            canvas.drawCircle(w - 30 * u, 50 * u, 8 * u, fill);
         }
     }
 

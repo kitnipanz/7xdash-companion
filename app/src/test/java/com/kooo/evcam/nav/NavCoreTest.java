@@ -124,54 +124,6 @@ public class NavCoreTest {
     }
 
     @Test
-    public void voiceSaysEachStageOnceInOrder() {
-        VoicePlan v = new VoicePlan();
-        // 60 km/h: far 1000 m, near 250 m, now 83 m
-        assertNull(v.due(1, 1500, 3000, 60));
-        VoicePlan.Prompt far = v.due(1, 990, 3000, 60);
-        assertNotNull(far);
-        assertEquals(VoicePlan.Stage.FAR, far.stage);
-        assertEquals(1000, far.meters);
-        assertNull(v.due(1, 900, 3000, 60));
-        VoicePlan.Prompt near = v.due(1, 240, 3000, 60);
-        assertEquals(VoicePlan.Stage.NEAR, near.stage);
-        assertEquals(250, near.meters);
-        assertNull(v.due(1, 200, 3000, 60));
-        assertEquals(VoicePlan.Stage.NOW, v.due(1, 60, 3000, 60).stage);
-        assertNull(v.due(1, 20, 3000, 60));
-        // the next maneuver starts over
-        assertNotNull(v.due(2, 80, 3000, 60));
-    }
-
-    @Test
-    public void noFarPromptWhenTurnsAreClose() {
-        VoicePlan v = new VoicePlan();
-        assertNull(v.due(1, 400, 400, 30));
-        assertEquals(VoicePlan.Stage.NEAR, v.due(1, 140, 400, 30).stage);
-    }
-
-    @Test
-    public void jumpingAheadSkipsEarlierStages() {
-        VoicePlan v = new VoicePlan();
-        assertEquals(VoicePlan.Stage.NOW, v.due(1, 25, 3000, 50).stage);
-        assertNull(v.due(1, 20, 3000, 50));
-    }
-
-    @Test
-    public void highwayAnnouncesEarlier() {
-        VoicePlan v = new VoicePlan();
-        assertEquals(VoicePlan.Stage.FAR, v.due(1, 1900, 10000, 110).stage);
-    }
-
-    @Test
-    public void roundsLikePeopleSayIt() {
-        assertEquals(300, VoicePlan.spokenMeters(312));
-        assertEquals(50, VoicePlan.spokenMeters(48));
-        assertEquals(1500, VoicePlan.spokenMeters(1420));
-        assertEquals(2000, VoicePlan.spokenMeters(1980));
-    }
-
-    @Test
     public void readsARoutesAnswer() throws Exception {
         String body = "{\"routes\":[{\"summary\":{\"travelTimeInSeconds\":300,\"trafficDelayInSeconds\":100},"
                 + "\"legs\":[{\"points\":[{\"latitude\":13.70,\"longitude\":100.50},{\"latitude\":13.71,\"longitude\":100.50},"

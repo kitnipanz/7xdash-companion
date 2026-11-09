@@ -60,13 +60,13 @@ public class NavigationActivity extends AppCompatActivity implements Navigator.L
     private MaterialButton end;
     private View endGuiding;
     private View actions;
-    private MaterialButton mute;
     private View recenter;
     private LinearLayout routes;
     /** The choices and the chosen one the cards were last made for. */
     private java.util.List<NavRoute> shownRoutes;
     private NavRoute shownChosen;
     private View hudPreview;
+    private View savePlace;
     private TextView hudPreviewLabel;
     private HudTurnCard hudCard;
 
@@ -97,7 +97,6 @@ public class NavigationActivity extends AppCompatActivity implements Navigator.L
         end = findViewById(R.id.nav_end);
         endGuiding = findViewById(R.id.nav_end_guiding);
         actions = findViewById(R.id.nav_actions);
-        mute = findViewById(R.id.nav_mute);
         recenter = findViewById(R.id.nav_recenter);
         routes = findViewById(R.id.nav_routes);
         hudPreview = findViewById(R.id.nav_hud_preview);
@@ -114,6 +113,8 @@ public class NavigationActivity extends AppCompatActivity implements Navigator.L
             }
             return false;
         });
+        // the box can already hold the focus when the screen opens: a tap then changes nothing
+        search.setOnClickListener(v -> showSharedPlace());
         search.setOnFocusChangeListener((v, focused) -> {
             if (focused) {
                 showSharedPlace();
@@ -136,7 +137,6 @@ public class NavigationActivity extends AppCompatActivity implements Navigator.L
         };
         end.setOnClickListener(endTrip);
         endGuiding.setOnClickListener(endTrip);
-        mute.setOnClickListener(v -> Navigator.get().setMuted(!Navigator.get().snapshot().muted));
         recenter.setOnClickListener(v -> {
             recenter.setVisibility(View.GONE);
             if (painter != null) {
@@ -145,6 +145,13 @@ public class NavigationActivity extends AppCompatActivity implements Navigator.L
         });
         findViewById(R.id.nav_float).setOnClickListener(v -> openFloating());
         findViewById(R.id.nav_settings).setOnClickListener(v -> openSettings());
+        savePlace = findViewById(R.id.nav_save_place);
+        savePlace.setOnClickListener(v -> {
+            DestinationLink.Place to = Navigator.get().snapshot().destination;
+            if (to != null) {
+                SavePlaceDialog.ask(this, to.lat, to.lng, placeName(to), place -> { });
+            }
+        });
 
         setUpMap();
     }
@@ -463,8 +470,7 @@ public class NavigationActivity extends AppCompatActivity implements Navigator.L
         banner.setVisibility(guiding ? View.VISIBLE : View.GONE);
         options.setVisibility(s.phase == Navigator.Phase.IDLE || s.phase == Navigator.Phase.PREVIEW
                 ? View.VISIBLE : View.GONE);
-        mute.setIconResource(s.muted ? R.drawable.ic_voice_off : R.drawable.ic_voice_on);
-        mute.setVisibility(guiding ? View.VISIBLE : View.GONE);
+        savePlace.setVisibility(s.phase == Navigator.Phase.PREVIEW ? View.VISIBLE : View.GONE);
         showBanner(s);
         showSheet(s);
         showRoutes(s);
@@ -638,18 +644,24 @@ public class NavigationActivity extends AppCompatActivity implements Navigator.L
         });
     }
 
-    /** Offers the place last shared from the iPhone (Battery at arrival), if there is one. */
+    /** Offers the place last shared from the iPhone (Battery at arrival), if there is one, then the saved places. */
     private void showSharedPlace() {
         if (Navigator.get().isGuiding() || results.getVisibility() == View.VISIBLE) {
             return;
         }
         DestinationLink.Place shared = Trip.get().status().destination;
-        if (shared == null) {
+        java.util.List<SavedPlaces.Place> places = SavedPlaces.load(this);
+        if (shared == null && places.isEmpty()) {
             return;
         }
         results.removeAllViews();
-        results.addView(row(getString(R.string.nav_shared, placeName(shared)), getString(R.string.nav_shared_sub),
-                () -> choose(shared)));
+        if (shared != null) {
+            results.addView(row(getString(R.string.nav_shared, placeName(shared)), getString(R.string.nav_shared_sub),
+                    () -> choose(shared)));
+        }
+        for (SavedPlaces.Place place : places) {
+            results.addView(row(place.name, getString(R.string.place_saved_sub), () -> choose(place.destination())));
+        }
         results.setVisibility(View.VISIBLE);
     }
 

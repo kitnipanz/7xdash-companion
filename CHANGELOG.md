@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.14-beta] - 2026-11-10
+
+### OBD2 (beta)
+- **Battery values, read straight from the battery module:** pack voltage, current and power, average and highest pack temperature, battery health (SOH) and odometer. They are worked out the way a Volvo EX30 is, a car on the same platform, and are not checked on a 7X yet: the raw bytes are shown next to each value. Compare them with the car's own screen.
+- **Scan battery module, new.** Asks the battery module for every identifier from 224800 to 2249FF once (up to 4 minutes) and saves what answered to `7xDash/odb_logs/becm-scan-….txt` on the USB drive. Two scans at different battery levels or temperatures show which bytes follow which value, such as cell voltages.
+- Still read only: the only new requests are reads by identifier in that range and the odometer.
+
 ## [1.8.13] - 2026-11-10
 
 ### Navigation

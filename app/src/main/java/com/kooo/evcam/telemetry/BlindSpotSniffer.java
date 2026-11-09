@@ -108,6 +108,7 @@ public final class BlindSpotSniffer {
             log = BlindSpotLog.start(app);
             work.post(poll);
         } else {
+            BlindSpotLog.setCurrent(null);
             if (log != null) {
                 log.section("Stopped");
                 log = null;
@@ -201,8 +202,16 @@ public final class BlindSpotSniffer {
             CarAmbientLab.Constant k = watched.get(i);
             log.raw(k.name + " " + k.hex() + " " + k.owner + " = " + watchedNow[i]);
         }
+        log.raw("");
+        log.raw("Mirror lamp (ECARX) now: " + SettingZeekrWatch.hex(BlindSpotWatch.MIRROR_LEFT) + "/" + SettingZeekrWatch.hex(BlindSpotWatch.MIRROR_RIGHT)
+                + " = " + CarAmbientLab.value(app, BlindSpotWatch.MIRROR_LEFT) + "/" + CarAmbientLab.value(app, BlindSpotWatch.MIRROR_RIGHT)
+                + ", RCTA = " + CarAmbientLab.value(app, BlindSpotWatch.RCTA_LEFT) + "/" + CarAmbientLab.value(app, BlindSpotWatch.RCTA_RIGHT)
+                + "; LCMA (setting_zeekr) sides = " + SettingZeekrWatch.lcmaSides());
         log.section("Changes");
         log.line("start  | " + BlindSpotLog.context(Telemetry.get().latest()));
+        // the settings service writes its own full list next, then its changes as [setting] lines
+        BlindSpotLog.setCurrent(log);
+        SettingZeekrWatch.dumpInto(log);
     }
 
     /** A line whenever gear, turn signal or hazard changes, so changes can be read against what the car was doing. */

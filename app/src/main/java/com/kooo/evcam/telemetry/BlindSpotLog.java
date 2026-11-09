@@ -27,8 +27,21 @@ public final class BlindSpotLog {
     private static final String DIR = "bsd-log";
     static final int KEEP = 10;
 
+    /** The open session, so {@link SettingZeekrWatch} can write into the same file; null when none. */
+    private static volatile BlindSpotLog current;
+
     private final File file;
     private final SimpleDateFormat time = new SimpleDateFormat("HH:mm:ss.SSS", Locale.US);
+
+    /** The open session, or null. */
+    static BlindSpotLog current() {
+        return current;
+    }
+
+    /** Makes {@code log} the open session (null closes it). */
+    static void setCurrent(BlindSpotLog log) {
+        current = log;
+    }
 
     private BlindSpotLog(File file) {
         this.file = file;
@@ -63,12 +76,12 @@ public final class BlindSpotLog {
     }
 
     /** One line with the time in front. */
-    void line(String text) {
+    synchronized void line(String text) {
         raw(time.format(new Date()) + "  " + text);
     }
 
-    /** One line as it is. */
-    void raw(String text) {
+    /** One line as it is. Two threads write (sniffer, settings service), so one at a time. */
+    synchronized void raw(String text) {
         try (FileWriter w = new FileWriter(file, true)) {
             w.write(text);
             w.write('\n');

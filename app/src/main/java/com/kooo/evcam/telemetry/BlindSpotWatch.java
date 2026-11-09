@@ -126,18 +126,27 @@ public final class BlindSpotWatch implements Telemetry.Listener {
         Integer mirrorRight = taughtRight ? null : raw("mirror right", MIRROR_RIGHT);
         Integer rctaLeft = taughtLeft ? null : raw("RCTA left", RCTA_LEFT);
         Integer rctaRight = taughtRight ? null : raw("RCTA right", RCTA_RIGHT);
+        // LCMA blind spot lamp from the settings service: bits, null when not readable
+        Integer lcma = SettingZeekrWatch.lcmaSides();
         if (learnedLeft == null && learnedRight == null && mirrorLeft == null && mirrorRight == null
-                && rctaLeft == null && rctaRight == null) {
+                && rctaLeft == null && rctaRight == null && lcma == null) {
             return null;
         }
         int out = 0;
-        if (side(taughtLeft, l.leftValue, learnedLeft, mirrorLeft, rctaLeft)) {
+        if (side(taughtLeft, l.leftValue, learnedLeft, mirrorLeft, rctaLeft)
+                || lcmaWarns(lcma, VehicleState.TURN_LEFT)) {
             out |= VehicleState.TURN_LEFT;
         }
-        if (side(taughtRight, l.rightValue, learnedRight, mirrorRight, rctaRight)) {
+        if (side(taughtRight, l.rightValue, learnedRight, mirrorRight, rctaRight)
+                || lcmaWarns(lcma, VehicleState.TURN_RIGHT)) {
             out |= VehicleState.TURN_RIGHT;
         }
         return out;
+    }
+
+    /** The car's own blind spot lamp (LCMA) is lit on that side. It always counts, taught or not: it is the car's own warning. */
+    public static boolean lcmaWarns(Integer lcmaSides, int bit) {
+        return lcmaSides != null && (lcmaSides & bit) != 0;
     }
 
     /** Reads a built-in signal; every change goes to the black box, since what the car really sends is still being checked. */

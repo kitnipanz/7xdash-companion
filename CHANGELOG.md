@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.8.9-beta] - 2026-11-09
+
+### Blind spot
+- **The car's own blind spot lamp counts as a warning.** 7xDash now also reads the blind spot lamp in the mirrors from the car's settings service (`ID_SETTING_FUNC_LCMA_INDCN_DATA`, left and right). Like the mirror lamp and rear cross traffic alert, it puts the red edge on that side of the side view, blinking while you signal toward it, and turns the mood lights red. Not yet checked on a car; left and right may be swapped.
+- **The blind-spot log captures more.** With **Report blind-spot signals** on, the log you send to your phone now also lists every value in the car's settings service at the start, then each one that changes, with gear, speed and turn signal. Blind spot, door open warning, cross traffic and lane change values are written on every change; the rest at most once a second.
+
 ## [1.8.8] - 2026-11-08
 
 ### Back to 1.8.0

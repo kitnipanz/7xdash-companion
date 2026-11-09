@@ -48,4 +48,13 @@ public class BlindSpotWatchTest {
         assertTrue(BlindSpotWatch.builtInWarning(254));
         assertFalse(BlindSpotWatch.builtInWarning(255));
     }
+
+    @Test
+    public void lcmaLampCountsPerSide() {
+        assertFalse(BlindSpotWatch.lcmaWarns(null, VehicleState.TURN_LEFT));
+        assertFalse(BlindSpotWatch.lcmaWarns(0, VehicleState.TURN_LEFT));
+        assertTrue(BlindSpotWatch.lcmaWarns(VehicleState.TURN_LEFT, VehicleState.TURN_LEFT));
+        assertFalse(BlindSpotWatch.lcmaWarns(VehicleState.TURN_LEFT, VehicleState.TURN_RIGHT));
+        assertTrue(BlindSpotWatch.lcmaWarns(VehicleState.TURN_LEFT | VehicleState.TURN_RIGHT, VehicleState.TURN_RIGHT));
+    }
 }

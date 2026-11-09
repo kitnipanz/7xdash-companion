@@ -55,6 +55,7 @@ public class ZeekrShortcutApp extends Application {
         com.kooo.evcam.climate.RearAc.install(this);
         // After GearLight, so a colour picked for a gear change lands on top. Off unless switched on
         com.kooo.evcam.automation.Automation.install(this);
+        com.kooo.evcam.telemetry.SettingZeekrWatch.install(this);
         com.kooo.evcam.telemetry.BlindSpotWatch.install(this);
         com.kooo.evcam.telemetry.BlindSpotSniffer.install(this);
         // Experimental: every car signal to the USB drive, when switched on

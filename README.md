@@ -44,6 +44,8 @@ While you signal, the camera on that side pops up and closes when the signal goe
 - Tap the **Blind spot** card to cycle: off, centre screen, HUD.
 - Settings → Side mirror: show from a speed, straighten the picture, size and position, HUD size,
   how long it stays open, instant pop-up in D.
+- A red edge marks the side the car warns about: its blind spot lamp, the mirror lamp or rear cross
+  traffic alert. It blinks while you signal toward that side.
 
 ### Cabin passenger
 A floating window with the rear cabin camera. It moves, pinches and docks like the Super mirror.

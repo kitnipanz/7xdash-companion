@@ -12,7 +12,7 @@ import java.util.regex.Pattern;
  *
  * <p><b>This app only reads the car.</b> {@link #ALLOWED} is the whole list of what may go down the
  * wire: adapter setup, live data (mode 01), reading trouble codes (modes 03 and 07) and the
- * fixed identifiers of {@link ZeekrProbe} (UDS read by identifier, to one fixed address). Clearing
+ * identifiers of {@link ZeekrProbe} (UDS read by identifier, service 22, to one fixed address). Clearing
  * codes (mode 04) or anything that writes to a module is refused here, whoever asks. Monitor mode
  * (ATMA) sends nothing to the car; with ATCSM1 the adapter does not even acknowledge frames.</p>
  */
@@ -31,7 +31,7 @@ final class ElmSession {
     private static final Pattern ALLOWED = Pattern.compile(
             "^(AT(Z|D|E0|L0|S0|H0|H1|AL|AT1|SP[0-9A-C]|DP|DPN|RV|ST64|MA|CSM1"
                     + "|SHD01635|CP1D|CRA1EC6AE80|FCSH1DD01635|FCSD300000|FCSM1)"
-                    + "|01[0-9A-F]{2}|03|07|224801|22491B)$");
+                    + "|01[0-9A-F]{2}|03|07|22(48|49)[0-9A-F]{2}|22DD01)$");
     private static final long POLL_MS = 5L;
     private static final long STOP_MS = 2_000L;
 

@@ -105,6 +105,14 @@
                 android:layout_marginStart="12dp"
                 android:text="@string/obd_codes_read"
                 android:visibility="gone" />
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/obd_becm_scan"
+                style="@style/Widget.Cam.RailSmall"
+                android:layout_width="wrap_content"
+                android:layout_height="52dp"
+                android:layout_marginStart="12dp"
+                android:text="@string/obd_becm_scan"
+                android:visibility="gone" />
         </LinearLayout>
     </LinearLayout>
 </LinearLayout>

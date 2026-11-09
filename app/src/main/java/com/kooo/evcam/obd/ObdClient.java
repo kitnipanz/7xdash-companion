@@ -22,6 +22,9 @@ import java.util.regex.Pattern;
  * it working, the adapter stays set up for it.</p>
  *
  * <p>An answer it cannot use blanks that value. Only the adapter going silent ends the run.</p>
+ *
+ * <p>{@link #requestBatteryScan} asks the battery module for every identifier from
+ * {@link ZeekrProbe#SCAN_FIRST} to {@link ZeekrProbe#SCAN_LAST} once, to find what else it holds.</p>
  */
 final class ObdClient {
 
@@ -54,6 +57,7 @@ final class ObdClient {
     private final Thread thread;
     private volatile boolean stopped;
     private volatile boolean codesWanted;
+    private volatile boolean scanWanted;
 
     // The fields below belong to the reading thread
     private ElmSession session;
@@ -75,6 +79,11 @@ final class ObdClient {
     private boolean zeekrGaveUp;
     private int zeekrMisses;
     private int rounds;
+    /** Battery module scan: what answered, the identifier being asked, and how many scans ran. */
+    private final Map<Integer, ZeekrProbe.Result> scan = new LinkedHashMap<>();
+    private int scanAt = -1;
+    private boolean scanRunning;
+    private int scans;
 
     ObdClient(ObdLink link, Listener listener) {
         this(link, listener, 250L, 5_000L);
@@ -105,6 +114,11 @@ final class ObdClient {
     /** Read stored and pending codes after the current round. */
     void requestCodes() {
         codesWanted = true;
+    }
+
+    /** Scan the battery module after the current round. */
+    void requestBatteryScan() {
+        scanWanted = true;
     }
 
     private void run() {
@@ -138,6 +152,10 @@ final class ObdClient {
                 if (codesWanted && state == ObdSnapshot.State.LIVE && !zeekrOnly) {
                     codesWanted = false;
                     readCodes();
+                }
+                if (scanWanted) {
+                    scanWanted = false;
+                    batteryScan();
                 }
                 publish();
                 Thread.sleep(state == ObdSnapshot.State.LIVE ? roundPauseMs : noCarPauseMs);
@@ -283,6 +301,43 @@ final class ObdClient {
         }
     }
 
+    /**
+     * Every identifier in the scan range once. Keeps what the module answered, and refusals other
+     * than "no such identifier" (0x31), such as a locked one.
+     */
+    private void batteryScan() throws IOException {
+        scans++;
+        scan.clear();
+        scanRunning = true;
+        scanAt = ZeekrProbe.SCAN_FIRST;
+        publish();
+        if (!zeekrOnly) {
+            for (String command : ZeekrProbe.ENTER) {
+                ask(command, SETUP_MS);
+            }
+        }
+        try {
+            for (int did = ZeekrProbe.SCAN_FIRST; did <= ZeekrProbe.SCAN_LAST && !stopped; did++) {
+                scanAt = did;
+                String reply = ask(ZeekrProbe.request(did), READ_MS);
+                ElmReply parsed = reply == null ? null : ElmReply.parse(reply);
+                ZeekrProbe.Result result = ZeekrProbe.read(did,
+                        parsed == null ? new ArrayList<>() : parsed.frames);
+                if (result.hex != null || (result.refusal >= 0 && result.refusal != 0x31)) {
+                    scan.put(did, result);
+                }
+                if ((did & 0x0F) == 0x0F) {
+                    publish();
+                }
+            }
+        } finally {
+            scanRunning = false;
+        }
+        if (!zeekrOnly) {
+            leaveZeekr();
+        }
+    }
+
     private void readRound() throws IOException {
         boolean carAnswered = false;
         boolean busGone = false;
@@ -345,6 +400,7 @@ final class ObdClient {
         Map<ObdPid, Double> copy = new EnumMap<>(ObdPid.class);
         copy.putAll(values);
         listener.onSnapshot(new ObdSnapshot(state, failure, adapter, protocol, volts, copy,
-                new ArrayList<>(supported), storedCodes, pendingCodes, new LinkedHashMap<>(zeekr)));
+                new ArrayList<>(supported), storedCodes, pendingCodes, new LinkedHashMap<>(zeekr),
+                new ObdSnapshot.Scan(scans, scanAt, scanRunning, new LinkedHashMap<>(scan))));
     }
 }

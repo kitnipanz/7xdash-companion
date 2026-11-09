@@ -39,11 +39,34 @@ final class ObdSnapshot {
     final List<String> pendingCodes;
     /** Direct battery module reads by identifier, in request order; empty until tried. */
     final Map<Integer, ZeekrProbe.Result> zeekr;
+    final Scan scan;
+
+    /** A battery module scan; {@link #number} is 0 until one starts. */
+    static final class Scan {
+        /** Counts scans, so a finished one is saved once. */
+        final int number;
+        /** The identifier being asked, or the last one asked. */
+        final int at;
+        final boolean running;
+        /** What answered, in identifier order. */
+        final Map<Integer, ZeekrProbe.Result> found;
+
+        Scan(int number, int at, boolean running, Map<Integer, ZeekrProbe.Result> found) {
+            this.number = number;
+            this.at = at;
+            this.running = running;
+            this.found = Collections.unmodifiableMap(found);
+        }
+
+        boolean finished() {
+            return number > 0 && !running;
+        }
+    }
 
     ObdSnapshot(State state, Failure failure, String adapter, String protocol, Float volts,
                 Map<ObdPid, Double> values, List<Integer> supported,
                 List<String> storedCodes, List<String> pendingCodes,
-                Map<Integer, ZeekrProbe.Result> zeekr) {
+                Map<Integer, ZeekrProbe.Result> zeekr, Scan scan) {
         this.state = state;
         this.failure = failure;
         this.adapter = adapter;
@@ -51,6 +74,7 @@ final class ObdSnapshot {
         this.volts = volts;
         this.values = Collections.unmodifiableMap(values);
         this.zeekr = Collections.unmodifiableMap(zeekr);
+        this.scan = scan;
         this.supported = Collections.unmodifiableList(supported);
         this.storedCodes = storedCodes == null ? null : Collections.unmodifiableList(storedCodes);
         this.pendingCodes = pendingCodes == null ? null : Collections.unmodifiableList(pendingCodes);

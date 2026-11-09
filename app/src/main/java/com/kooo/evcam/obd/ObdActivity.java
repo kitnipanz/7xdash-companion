@@ -59,6 +59,11 @@ public class ObdActivity extends AppCompatActivity {
     private TextView status;
     private TextView connectButton;
     private View readCodesButton;
+    private View becmScanButton;
+    /** The last battery module scan saved to the drive, and where. */
+    private int savedScan;
+    private String scanSavedTo;
+    private boolean scanSaveFailed;
     private TextView recordButton;
     private View liveButton;
     private TextView scanButton;
@@ -95,6 +100,12 @@ public class ObdActivity extends AppCompatActivity {
         readCodesButton.setOnClickListener(v -> {
             if (client != null) {
                 client.requestCodes();
+            }
+        });
+        becmScanButton = findViewById(R.id.obd_becm_scan);
+        becmScanButton.setOnClickListener(v -> {
+            if (client != null) {
+                client.requestBatteryScan();
             }
         });
         findViewById(R.id.obd_back).setOnClickListener(v -> finish());
@@ -254,6 +265,9 @@ public class ObdActivity extends AppCompatActivity {
         }
         rememberAdapter();
         last = null;
+        savedScan = 0;
+        scanSavedTo = null;
+        scanSaveFailed = false;
         final int thisRun = ++run;
         client = new ObdClient(link, new ObdClient.Listener() {
             @Override
@@ -353,6 +367,10 @@ public class ObdActivity extends AppCompatActivity {
         if (snapshot.state == ObdSnapshot.State.STOPPED) {
             client = null;
         }
+        if (snapshot.scan.finished() && snapshot.scan.number != savedScan) {
+            savedScan = snapshot.scan.number;
+            saveScan(snapshot.scan);
+        }
         render();
     }
 
@@ -379,6 +397,8 @@ public class ObdActivity extends AppCompatActivity {
         }
         readCodesButton.setVisibility(last != null && last.state == ObdSnapshot.State.LIVE
                 && !last.supported.isEmpty() ? View.VISIBLE : View.GONE);
+        becmScanButton.setVisibility(client != null && last != null && last.state == ObdSnapshot.State.LIVE
+                && !last.scan.running ? View.VISIBLE : View.GONE);
         list.removeAllViews();
         if (client == null && !running) {
             renderAdapters();
@@ -526,6 +546,7 @@ public class ObdActivity extends AppCompatActivity {
             }
         }
         renderZeekr(snapshot);
+        renderScan(snapshot.scan);
         if (snapshot.state == ObdSnapshot.State.LIVE && !snapshot.supported.isEmpty()) {
             renderCodes(snapshot);
             addHeader(R.string.obd_supported);
@@ -539,12 +560,45 @@ public class ObdActivity extends AppCompatActivity {
         }
         addHeader(R.string.obd_zeekr);
         for (Map.Entry<Integer, ZeekrProbe.Result> entry : snapshot.zeekr.entrySet()) {
-            addRow(ZeekrProbe.request(entry.getKey()), zeekrText(entry.getValue()));
+            int did = entry.getKey();
+            addRow(getString(zeekrLabel(did)) + " · " + ZeekrProbe.request(did),
+                    zeekrText(did, entry.getValue()));
+        }
+        Double power = ZeekrProbe.powerKw(snapshot.zeekr.get(ZeekrProbe.PACK_VOLTAGE),
+                snapshot.zeekr.get(ZeekrProbe.PACK_CURRENT));
+        if (power != null) {
+            addRow(getString(R.string.obd_becm_power), String.format(Locale.US, "%.2f kW", power));
         }
         addNote(R.string.obd_zeekr_note);
     }
 
-    private String zeekrText(ZeekrProbe.Result result) {
+    private static int zeekrLabel(int did) {
+        switch (did) {
+            case ZeekrProbe.PACK_VOLTAGE:
+                return R.string.obd_becm_voltage;
+            case ZeekrProbe.PACK_CURRENT:
+                return R.string.obd_becm_current;
+            case ZeekrProbe.PACK_TEMP_AVG:
+                return R.string.obd_becm_temp_avg;
+            case ZeekrProbe.PACK_TEMP_MAX:
+                return R.string.obd_becm_temp_max;
+            case ZeekrProbe.STATE_OF_HEALTH:
+                return R.string.obd_becm_soh;
+            default:
+                return R.string.obd_becm_odometer;
+        }
+    }
+
+    /** The decoded value with the raw bytes after it, so a wrong formula shows. */
+    private String zeekrText(int did, ZeekrProbe.Result result) {
+        if (result.hex != null) {
+            Double value = ZeekrProbe.value(did, result.data);
+            return value == null ? result.hex : ZeekrProbe.format(did, value) + "   (" + result.hex + ")";
+        }
+        return refusalText(result);
+    }
+
+    private String refusalText(ZeekrProbe.Result result) {
         if (result.hex != null) {
             return result.hex;
         }
@@ -553,6 +607,76 @@ public class ObdActivity extends AppCompatActivity {
         }
         String code = String.format(Locale.ROOT, "%02X", result.refusal);
         return getString(result.refusal == 0x33 ? R.string.obd_zeekr_locked : R.string.obd_zeekr_refused, code);
+    }
+
+    private void renderScan(ObdSnapshot.Scan scan) {
+        if (scan.number == 0) {
+            return;
+        }
+        addHeader(R.string.obd_becm_scan_title);
+        if (scan.running) {
+            addText(getString(R.string.obd_becm_scan_running, ZeekrProbe.request(scan.at),
+                    ZeekrProbe.request(ZeekrProbe.SCAN_LAST), scan.found.size()));
+        } else if (scanSavedTo != null) {
+            addText(getString(R.string.obd_becm_scan_saved, scan.found.size(), scanSavedTo));
+        } else {
+            addText(getString(scanSaveFailed ? R.string.obd_becm_scan_not_saved : R.string.obd_becm_scan_done,
+                    scan.found.size()));
+        }
+        for (Map.Entry<Integer, ZeekrProbe.Result> entry : scan.found.entrySet()) {
+            addRow(ZeekrProbe.request(entry.getKey()), refusalText(entry.getValue()));
+        }
+    }
+
+    /** One finished scan as a text file next to the capture logs, written off the main thread. */
+    private void saveScan(ObdSnapshot.Scan scan) {
+        scanSavedTo = null;
+        scanSaveFailed = false;
+        File root = StorageHelper.getExternalSdCardRoot(this);
+        File dir = root == null ? null : new File(root, LOG_DIR);
+        if (dir == null) {
+            scanSaveFailed = true;
+            return;
+        }
+        Date when = new Date();
+        File file = new File(dir, "becm-scan-" + ObdLog.fileName(when).substring("obd-".length()));
+        final int thisRun = run;
+        new Thread(() -> {
+            boolean saved = false;
+            ObdLog log = null;
+            try {
+                if (dir.isDirectory() || dir.mkdirs()) {
+                    log = new ObdLog(file);
+                    log.line("# 7xDash " + BuildConfig.VERSION_NAME + " battery module scan, " + when);
+                    log.line("# " + String.join(";", ZeekrProbe.ENTER) + "  "
+                            + ZeekrProbe.request(ZeekrProbe.SCAN_FIRST) + ".."
+                            + ZeekrProbe.request(ZeekrProbe.SCAN_LAST)
+                            + ", left out: no such identifier (7F 22 31) and no answer");
+                    log.line("# car: " + BlindSpotLog.context(Telemetry.get().latest()));
+                    for (Map.Entry<Integer, ZeekrProbe.Result> entry : scan.found.entrySet()) {
+                        ZeekrProbe.Result result = entry.getValue();
+                        log.line(ZeekrProbe.request(entry.getKey()) + "\t" + (result.hex != null
+                                ? result.hex : String.format(Locale.ROOT, "7F22%02X", result.refusal)));
+                    }
+                    saved = true;
+                }
+            } catch (IOException | RuntimeException e) {
+                AppLog.w(TAG, "cannot save battery scan: " + e);
+            } finally {
+                if (log != null) {
+                    log.close();
+                }
+            }
+            final boolean ok = saved;
+            runOnUiThread(() -> {
+                if (thisRun != run) {
+                    return;
+                }
+                scanSavedTo = ok ? file.getAbsolutePath() : null;
+                scanSaveFailed = !ok;
+                render();
+            });
+        }, "obd-scan-save").start();
     }
 
     private void renderCodes(ObdSnapshot snapshot) {

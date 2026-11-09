@@ -34,11 +34,12 @@ public class ElmSessionTest {
     @Test
     public void onlyReadCommandsPass() {
         for (String ok : new String[]{"ATZ", "ATD", "ATRV", "ATDPN", "ATSP7", "ATSHD01635", "ATMA", "ATCSM1", "ATH1", "ATAL",
-                "ATCRA1EC6AE80", "0100", "010D", "03", "07", "224801", "22491B"}) {
+                "ATCRA1EC6AE80", "0100", "010D", "03", "07", "224801", "22491B",
+                "224802", "224945", "22496D", "2248FF", "224900", "22DD01"}) {
             assertTrue(ok, ElmSession.allowed(ok));
         }
         for (String no : new String[]{"04", "0104 ", "08", "0902", "2E0101", "3101", "10", "11", "ATCSM0",
-                "ATMR00", "ATMT00", "ATWS", "ATPP", "ATSH7E0", "AT", "", "22F190", "224802", "2E4801", "2F4801", "3101FF00",
+                "ATMR00", "ATMT00", "ATWS", "ATPP", "ATSH7E0", "AT", "", "22F190", "224A00", "2247FF", "22DD02", "22D901", "2248", "2248010", "2E4801", "2F4801", "3101FF00",
                 "27", "1003", "1101", "ATSHD01636", "ATCRA", "ATFCSH7E0"}) {
             assertFalse(no, ElmSession.allowed(no));
         }

@@ -124,8 +124,11 @@ public class SideViewPopupView extends ViewGroup {
         return warning;
     }
 
-    private boolean warnLit = true;
-    /** 红的那半拍跟着 {@link com.kooo.evcam.telemetry.BlindSpotWatch#redHalfAt} 走，和氛围灯一起亮一起灭。 */
+    /**
+     * 每到共用时钟翻面就重画一次。红不红不在这里记：画的那一刻直接看时钟
+     * （{@link com.kooo.evcam.telemetry.BlindSpotWatch#redHalfAt}），主线程忙、这一下来晚了，
+     * 相机帧带来的重画照样在翻面后的第一帧换过去，和氛围灯一起亮一起灭。
+     */
     private final Runnable warnBlink = new Runnable() {
         @Override
         public void run() {
@@ -133,7 +136,6 @@ public class SideViewPopupView extends ViewGroup {
                 return;
             }
             long now = android.os.SystemClock.uptimeMillis();
-            warnLit = com.kooo.evcam.telemetry.BlindSpotWatch.redHalfAt(now);
             invalidate();
             postDelayed(this, com.kooo.evcam.telemetry.BlindSpotWatch.untilFlip(now));
         }
@@ -499,9 +501,8 @@ public class SideViewPopupView extends ViewGroup {
             // 虚拟相机转过去（往后、往上、滚转）再拉直，见 SideViewProjection
             RearViewGeometry.ShaderRects r = RearViewGeometry.toShaderRects(
                     plan, lane, RearViewGeometry.Viewport.full());
-            mesh.prepare(FisheyeProjection.MESH_DIVISIONS,
-                    r.laneOffsetX * width, r.laneOffsetY * height,
-                    r.laneScaleX * width, r.laneScaleY * height, turnedMap);
+            prepareMesh(r.laneOffsetX * width, r.laneOffsetY * height,
+                    r.laneScaleX * width, r.laneScaleY * height);
             mesh.draw(canvas, 0f, 0f, width, height, paintTexture);
         } else {
             // 不拉直：只能在原图里裁一块挪一挪（见 SideViewAim），角度折算成那边的百分比；
@@ -535,13 +536,29 @@ public class SideViewPopupView extends ViewGroup {
         drawWarning(canvas, hudFrame, width, height);
     }
 
+    private float glowEdge = Float.NaN;
+    private float glowInner = Float.NaN;
+    /** 上一次算网格用的参数；没变就不重算（121 个角点各一次三角函数，每帧都算是白费）。 */
+    private final float[] meshFor = new float[10];
+    private boolean meshReady;
+
+    private void prepareMesh(float laneLeft, float laneTop, float laneWidth, float laneHeight) {
+        float[] now = {laneLeft, laneTop, laneWidth, laneHeight, viewFov, yaw, pitch, roll, lane, aspect};
+        if (meshReady && java.util.Arrays.equals(now, meshFor)) {
+            return;
+        }
+        System.arraycopy(now, 0, meshFor, 0, now.length);
+        meshReady = true;
+        mesh.prepare(FisheyeProjection.MESH_DIVISIONS, laneLeft, laneTop, laneWidth, laneHeight, turnedMap);
+    }
+
     /**
      * Tesla style: a red glow on the side of the picture where the car is (the outer edge: left for
      * the left camera, right for the right one), strongest at the edge and fading inward, blinking
      * with {@link #warnBlink}.
      */
     private void drawWarning(Canvas canvas, boolean hudFrame, int width, int height) {
-        if (!warning || !warnLit) {
+        if (!warning || !com.kooo.evcam.telemetry.BlindSpotWatch.redHalfAt(android.os.SystemClock.uptimeMillis())) {
             return;
         }
         float x = hudFrame ? frameX : 0f;
@@ -551,8 +568,13 @@ public class SideViewPopupView extends ViewGroup {
         float band = width * WARN_BAND;
         float edge = leftSide ? x : x + width;
         float inner = leftSide ? x + band : x + width - band;
-        warnGlow.setShader(new android.graphics.LinearGradient(edge, 0, inner, 0,
-                WARN_GLOW, WARN_COLOR & 0x00FFFFFF, android.graphics.Shader.TileMode.CLAMP));
+        if (edge != glowEdge || inner != glowInner) {
+            // 每帧都画：光带只在窗口换了大小或换了边时重建
+            glowEdge = edge;
+            glowInner = inner;
+            warnGlow.setShader(new android.graphics.LinearGradient(edge, 0, inner, 0,
+                    WARN_GLOW, WARN_COLOR & 0x00FFFFFF, android.graphics.Shader.TileMode.CLAMP));
+        }
         int save = canvas.save();
         warnClip.reset();
         warnClip.addRoundRect(x, y, x + width, y + height, radius, radius, android.graphics.Path.Direction.CW);

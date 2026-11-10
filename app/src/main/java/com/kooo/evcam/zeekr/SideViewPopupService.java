@@ -327,6 +327,12 @@ public class SideViewPopupService extends Service {
             }
         }
         com.kooo.evcam.telemetry.BlindSpotWatch.setEdgeShown(shown);
+        // 侧视在屏幕上时地图让一让（见 MapPace），不然两边抢同一条主线程和显卡，相机画面会卡
+        boolean showing = false;
+        for (SideViewPopupView view : new SideViewPopupView[]{popup, hudCopy}) {
+            showing |= view != null && view.isShowing();
+        }
+        com.kooo.evcam.nav.MapPace.yieldToCamera(showing);
     }
 
     // ================================================================= 窗口

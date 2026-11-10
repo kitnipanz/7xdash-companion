@@ -58,6 +58,8 @@ final class CarAmbientLight implements LightLink {
     private Integer sentColor;
     private Integer wantPower;
     private Integer wantColor;
+    /** Colour sent ahead while off, for the power on that follows; null when none. */
+    private Integer primedColor;
     private long lastWrite;
     private long nextGap = WRITE_EVERY_MS;
     /** The last state has been sent twice; nothing to repeat until it changes. */
@@ -202,8 +204,10 @@ final class CarAmbientLight implements LightLink {
     }
 
     /**
-     * One value per turn: power on first (a value sent while off may be lost), then the brightness,
-     * then the colour; off on its own.
+     * One value per turn. Turning on with a new colour: the colour goes first, while still off, so
+     * the light comes on in it (a blind-spot blink from off was a quarter second late on its first
+     * red, showing the old colour until then). A value sent while off may be lost, so the colour
+     * goes once more after power on, before the brightness. Off on its own.
      */
     private void flush() {
         if (released) {
@@ -213,18 +217,27 @@ final class CarAmbientLight implements LightLink {
         int value = 0;
         boolean lit = !Integer.valueOf(OFF).equals(sentPower);
         int levelAt = lit && wantLevel != null ? stale(sentLevels, wantLevel) : -1;
-        if (wantPower != null && !wantPower.equals(sentPower)) {
+        if (colorFirst(sentPower, wantPower, sentColor, wantColor, primedColor)) {
+            function = colorId;
+            value = wantColor;
+            primedColor = wantColor;
+        } else if (wantPower != null && !wantPower.equals(sentPower)) {
             function = powerId;
             value = wantPower;
             sentPower = wantPower;
-        } else if (levelAt >= 0) {
-            function = levelIds[levelAt];
-            value = wantLevel;
-            sentLevels[levelAt] = wantLevel;
+            if (primedColor != null) {
+                // the car may have dropped the colour it got while off: it goes again once on
+                sentColor = null;
+                primedColor = null;
+            }
         } else if (wantColor != null && !wantColor.equals(sentColor) && !Integer.valueOf(OFF).equals(sentPower)) {
             function = colorId;
             value = wantColor;
             sentColor = wantColor;
+        } else if (levelAt >= 0) {
+            function = levelIds[levelAt];
+            value = wantLevel;
+            sentLevels[levelAt] = wantLevel;
         }
         if (function == null) {
             if (!settled) {
@@ -251,6 +264,16 @@ final class CarAmbientLight implements LightLink {
         sentColor = null;
         java.util.Arrays.fill(sentLevels, null);
         schedule();
+    }
+
+    /**
+     * About to turn on in a colour the car does not have yet, and that colour has not gone ahead
+     * while off: send it before the power.
+     */
+    static boolean colorFirst(Integer sentPower, Integer wantPower, Integer sentColor, Integer wantColor,
+                              Integer primedColor) {
+        return wantPower != null && wantPower == ON && !wantPower.equals(sentPower)
+                && wantColor != null && !wantColor.equals(sentColor) && !wantColor.equals(primedColor);
     }
 
     /** How long the next value waits after this one. */

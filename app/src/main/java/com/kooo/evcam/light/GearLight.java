@@ -102,6 +102,8 @@ public final class GearLight implements Telemetry.Listener {
         }
         installed = new GearLight(context.getApplicationContext());
         Telemetry.get().addListener(installed);
+        GearLight light = installed;
+        com.kooo.evcam.telemetry.BlindSpotWatch.addEdgeListener(light::update);
         installed.update();
     }
 
@@ -184,7 +186,9 @@ public final class GearLight implements Telemetry.Listener {
         boolean running = !paused && state.gear != null && config.isMoodLightOn() && canConnect();
         boolean warn = config.isMoodLightBlindSpotBlink();
         // null: no blink; else whether this is the red half (the other half is each group's usual colour)
-        Boolean redHalf = blink(running && BlindSpotBlink.active(warn, state, config.getSidePopupWarningMinSpeed()));
+        // the red edge on screen counts too, so the lights never stop while the edge still blinks
+        Boolean redHalf = blink(running && warn && (BlindSpotBlink.active(true, state, config.getSidePopupWarningMinSpeed())
+                || com.kooo.evcam.telemetry.BlindSpotWatch.edgeShown() != 0));
         // the warning alone blinks only from a speed: keep speed fresh while the car warns
         boolean wantsSpeed = running && warn && state.blindSpotWarning != null && state.blindSpotWarning != 0;
         for (MoodLightGroups.Group group : groups.groups) {
@@ -242,9 +246,9 @@ public final class GearLight implements Telemetry.Listener {
         if (!on) {
             return null;
         }
-        long since = now - blinkSinceMs;
-        main.postDelayed(blinkTick, BlindSpotBlink.HALF_MS - since % BlindSpotBlink.HALF_MS);
-        return BlindSpotBlink.redHalf(since);
+        // the shared clock, the same one the red edge reads, so both turn red together
+        main.postDelayed(blinkTick, com.kooo.evcam.telemetry.BlindSpotWatch.untilFlip(now));
+        return com.kooo.evcam.telemetry.BlindSpotWatch.redHalfAt(now);
     }
 
     private void apply(Slot slot, LightLook look) {

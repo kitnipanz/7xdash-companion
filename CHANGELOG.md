@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.8.18-beta] - 2026-11-10
+
+### Blind spot
+- **The red edge and the mood lights blink in step.** Both follow one clock now, so they turn red at the same moment instead of drifting apart.
+- **The lights stay with the red edge.** While the red edge shows on screen the mood lights keep blinking red, also below the warning speed or while the side view waits to close.
+
+### Navigation
+- **HUD map zoom: normal / far**, a new shortcut for a steering wheel button or the Macro pad. Press once to see further out, again to go back to normal. It is kept for the next drive.
+
 ## [1.8.17-beta] - 2026-11-10
 
 ### Navigation

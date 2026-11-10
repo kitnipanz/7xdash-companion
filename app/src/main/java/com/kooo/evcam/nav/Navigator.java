@@ -690,6 +690,26 @@ public final class Navigator {
         return bias;
     }
 
+    /** The far-out zoom of {@link #toggleHudZoom}, in zoom levels from the map's own. */
+    static final float HUD_ZOOM_FAR = -2f;
+
+    /** What a press of the toggle sets: far out unless it is already there, then back to normal (0). */
+    static float nextHudZoom(float bias) {
+        return bias > HUD_ZOOM_FAR + NavMapPainter.ZOOM_STEP / 2 ? HUD_ZOOM_FAR : 0f;
+    }
+
+    /**
+     * One button for the HUD map's zoom: normal, then far out, then normal again. Kept for next
+     * time, like {@link #zoomHud}. Returns whether it is far out now.
+     */
+    public boolean toggleHudZoom(Context context) {
+        AppConfig config = new AppConfig(context);
+        float bias = nextHudZoom(config.getHudZoomBias());
+        config.setHudZoomBias(bias);
+        hudMap.zoomChanged();
+        return bias < 0f;
+    }
+
     /** Its place or size changed (the card's or the map's), or the map was switched: draw them again. */
     public void relayoutHud() {
         if (app == null) {

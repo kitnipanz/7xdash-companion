@@ -1776,6 +1776,9 @@
     <string name="nav_hud_zoom">ซูมแผนที่บน HUD</string>
     <string name="shortcut_action_hud_zoom_in">ซูมเข้าแผนที่บน HUD</string>
     <string name="shortcut_action_hud_zoom_out">ซูมออกแผนที่บน HUD</string>
+    <string name="shortcut_action_hud_zoom_toggle">สลับซูมแผนที่บน HUD: ปกติ / ไกล</string>
+    <string name="nav_hud_zoom_far">ไกล</string>
+    <string name="nav_hud_zoom_normal">ปกติ</string>
     <string name="nav_car_colour">สีรถ</string>
     <string name="nav_hud_preview">บน HUD ตอนนี้</string>
     <string name="nav_hud_preview_switch">แสดงการ์ด HUD บนแผนที่</string>

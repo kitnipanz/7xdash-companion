@@ -1727,6 +1727,9 @@ Then reopen this app.</string>
     <string name="shortcut_action_nav_float">Floating map on / off</string>
     <string name="shortcut_action_hud_zoom_in">HUD map zoom in</string>
     <string name="shortcut_action_hud_zoom_out">HUD map zoom out</string>
+    <string name="shortcut_action_hud_zoom_toggle">HUD map zoom: normal / far</string>
+    <string name="nav_hud_zoom_far">Far</string>
+    <string name="nav_hud_zoom_normal">Normal</string>
     <!-- Navigation (beta) -->
     <string name="nav_guide_running">Guiding: keeps your position up to date</string>
     <string name="nav_title">Navigation</string>

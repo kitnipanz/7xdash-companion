@@ -1,5 +1,32 @@
 # Changelog
 
+## [1.8.19] - 2026-11-10
+
+Stable release of 1.8.14-beta to 1.8.18-beta.
+
+### Automation
+- **And only if.** Under When, pick what must also be true for the automation to run: days (Workdays, Weekend or single days), dark or light, raining or not, at or away from a saved place. For example: Leave Home, on workdays → Navigate to Office. Something the car has not told yet, such as a GPS fix, counts as not true.
+- **New actions:** tailgate opening height (50 to 100%), lock / unlock feedback (hazard lights only, or with sound, headlights or the light signal) and rear fog light on or off.
+- **A notice when an automation runs** by itself: what happened, what it did, and anything that failed.
+- **New examples:** leave home → tailgate opens to 50%; rain starts while it is dark → rear fog light on; it gets dark → mood light on.
+
+### Navigation
+- **Space map.** A new map colour next to Follow screen, Light and Dark: a night city with lit 3D buildings, a glowing route (teal when clear, amber when slow, red in a jam), a lower camera that fades into the night at the horizon, and a dark glass turn banner. Navigation → Settings → Map colours.
+- **Zoom buttons** on the map. While guiding they move the map's own zoom closer or further and keep it for next time; the floating map follows. Otherwise they zoom as a pinch would.
+- **HUD turn card follows the map colours:** white on Light, black on Dark, dark glass with a teal arrow on Space.
+
+### Buttons
+- **HUD map zoom in / zoom out**, and **HUD map zoom: normal / far** for one button that switches between the two. For a steering wheel button or the Macro pad; kept for the next drive.
+
+### Blind spot
+- **The red edge and the mood lights blink in step**, on one clock.
+- **The lights stay with the red edge:** while the red edge shows on screen the mood lights keep blinking red, also below the warning speed or while the side view waits to close.
+
+### OBD2 (beta)
+- **Battery values from the battery module:** pack voltage, current and power, average and highest pack temperature, battery health (SOH) and odometer. Worked out the way a Volvo EX30 is (same platform) and not checked on a 7X yet: the raw bytes are shown next to each value.
+- **Scan battery module:** reads every identifier from 224800 to 2249FF once (up to 4 minutes) and saves the answers to `7xDash/odb_logs/becm-scan-….txt` on the USB drive.
+- Still read only.
+
 ## [1.8.18-beta] - 2026-11-10
 
 ### Blind spot

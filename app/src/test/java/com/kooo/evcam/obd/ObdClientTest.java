@@ -199,4 +199,26 @@ public class ObdClientTest {
         assertFalse(ObdClient.isCan("A3"));
         assertFalse(ObdClient.isCan("5"));
     }
+
+    @Test
+    public void batteryScanKeepsWhatAnsweredAndGoesBackToStandardObd() throws Exception {
+        FakeElm elm = FakeElm.car().reply("224801", "62 48 01 86 08")
+                .reply("224850", "62 48 50 01 02").reply("2249A0", "7F 22 33").reply("224900", "7F 22 31");
+        ObdClient client = client(elm);
+        client.start();
+        await(s -> s.values.containsKey(ObdPid.SPEED));
+        client.requestBatteryScan();
+        ObdSnapshot done = await(s -> s.scan.finished());
+        await(s -> s.values.containsKey(ObdPid.SPEED) && !s.scan.running);
+        client.stop();
+
+        assertEquals(1, done.scan.number);
+        assertEquals(Arrays.asList(0x4801, 0x4850, 0x49A0), new java.util.ArrayList<>(done.scan.found.keySet()));
+        assertEquals("0102", done.scan.found.get(0x4850).hex);
+        assertEquals(0x33, done.scan.found.get(0x49A0).refusal);
+        assertTrue(elm.received.contains("2249FF"));
+        assertFalse(elm.received.contains("224A00"));
+        int last = elm.received.lastIndexOf("2249FF");
+        assertTrue("back on standard OBD after the scan", elm.received.subList(last, elm.received.size()).contains("ATSP6"));
+    }
 }

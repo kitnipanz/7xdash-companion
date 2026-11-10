@@ -150,6 +150,117 @@ public class AutomationEditActivity extends AppCompatActivity {
                 drawPlaces(picked != null && picked.isPlace() ? picked : null);
             }
         }
+        drawConditions();
+    }
+
+    // ---- And only if
+
+    /**
+     * States that must be true as well when the trigger happens, one per group: the days, dark or
+     * light, rain or dry, at or away from a saved place. Nothing picked means any.
+     */
+    private void drawConditions() {
+        TextView heading = heading(R.string.automation_and_heading);
+        heading.setPadding(0, dp(28), 0, dp(4));
+        whenPane.addView(heading);
+        whenPane.addView(AutomationActivity.text(this, getString(R.string.automation_and_hint), false));
+        drawDays();
+        drawStates(AutomationCondition.Group.DAYLIGHT);
+        drawStates(AutomationCondition.Group.RAIN);
+        drawPlaceCondition();
+    }
+
+    private void drawDays() {
+        AutomationCondition.Group group = AutomationCondition.Group.DAYS;
+        ChipGroup chips = addSection(whenPane, group.iconRes, getString(group.labelRes));
+        AutomationRule.Condition current = draft.condition(group);
+        int mask = current == null ? 0 : current.value;
+        chips.addView(chip(getString(R.string.automation_days_workdays_chip), mask == AutomationCondition.WORKDAYS,
+                v -> setDays(mask == AutomationCondition.WORKDAYS ? 0 : AutomationCondition.WORKDAYS)));
+        chips.addView(chip(getString(R.string.automation_days_weekend_chip), mask == AutomationCondition.WEEKEND,
+                v -> setDays(mask == AutomationCondition.WEEKEND ? 0 : AutomationCondition.WEEKEND)));
+        ChipGroup days = chipRow(whenPane);
+        days.setPaddingRelative(dp(34), dp(8), 0, 0);
+        String[] names = AutomationCondition.shortDayNames();
+        for (int i = 0; i < 7; i++) {
+            int bit = AutomationCondition.MONDAY << i;
+            TextView day = chip(names[i], (mask & bit) != 0, v -> setDays(mask ^ bit));
+            day.setMinWidth(dp(56));
+            day.setPadding(dp(10), 0, dp(10), 0);
+            days.addView(day);
+        }
+    }
+
+    /** No day at all, or every day, is the same as not asking. */
+    private void setDays(int mask) {
+        boolean any = mask == 0 || (mask & AutomationCondition.EVERY_DAY) == AutomationCondition.EVERY_DAY;
+        draft.setCondition(AutomationCondition.Group.DAYS, any ? null : AutomationCondition.DAYS, mask);
+        draw();
+    }
+
+    /** Dark or light, raining or dry: one of the two, a second tap takes it back. */
+    private void drawStates(AutomationCondition.Group group) {
+        ChipGroup chips = addSection(whenPane, group.iconRes, getString(group.labelRes));
+        AutomationRule.Condition current = draft.condition(group);
+        for (AutomationCondition kind : AutomationCondition.values()) {
+            if (kind.group != group) {
+                continue;
+            }
+            boolean on = current != null && kind == current.kind();
+            chips.addView(chip(getString(stateChip(kind)), on, v -> {
+                draft.setCondition(group, on ? null : kind, 0);
+                draw();
+            }));
+        }
+    }
+
+    private static int stateChip(AutomationCondition kind) {
+        switch (kind) {
+            case DARK: return R.string.automation_chip_is_dark;
+            case LIGHT: return R.string.automation_chip_is_light;
+            case RAINING: return R.string.automation_chip_raining;
+            default: return R.string.automation_chip_dry;
+        }
+    }
+
+    /** At or away from a saved place: pick which, then the place. */
+    private void drawPlaceCondition() {
+        AutomationCondition.Group group = AutomationCondition.Group.PLACE;
+        ChipGroup chips = addSection(whenPane, group.iconRes, getString(group.labelRes));
+        AutomationRule.Condition current = draft.condition(group);
+        AutomationCondition picked = current == null ? null : current.kind();
+        List<SavedPlaces.Place> places = SavedPlaces.load(this);
+        for (AutomationCondition kind : new AutomationCondition[]{
+                AutomationCondition.AT_PLACE, AutomationCondition.AWAY_FROM_PLACE}) {
+            boolean on = kind == picked;
+            int label = kind == AutomationCondition.AT_PLACE ? R.string.automation_chip_at : R.string.automation_chip_away;
+            chips.addView(chip(getString(label), on, v -> {
+                if (on) {
+                    draft.setCondition(group, null, 0);
+                    draw();
+                } else if (current != null) {
+                    draft.setCondition(group, kind, current.value);
+                    draw();
+                } else if (places.isEmpty()) {
+                    askSaveSpot(place -> draft.setCondition(group, kind, place.id));
+                } else {
+                    draft.setCondition(group, kind, places.get(0).id);
+                    draw();
+                }
+            }));
+        }
+        if (picked == null) {
+            return;
+        }
+        ChipGroup row = chipRow(whenPane);
+        row.setPaddingRelative(dp(34), dp(8), 0, 0);
+        for (SavedPlaces.Place place : places) {
+            row.addView(chip(place.name, current.value == place.id, v -> {
+                draft.setCondition(group, picked, place.id);
+                draw();
+            }));
+        }
+        row.addView(saveSpotChip(place -> draft.setCondition(group, picked, place.id)));
     }
 
     /** The saved places under Arrive and Leave; hold one to delete it. */

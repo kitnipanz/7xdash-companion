@@ -3179,15 +3179,45 @@ public class AppConfig {
     public static final int NAV_MAP_AUTO = 0;
     public static final int NAV_MAP_LIGHT = 1;
     public static final int NAV_MAP_DARK = 2;
+    /** Near-black map with glass 3D buildings and a glowing route; always the night look. */
+    public static final int NAV_MAP_SPACE = 3;
 
-    /** Navigation: light or dark map, or following the head unit ({@link #NAV_MAP_AUTO}, the default). */
+    /** Navigation: light, dark or space map, or following the head unit ({@link #NAV_MAP_AUTO}, the default). */
     public int getNavMapScheme() {
         int v = prefs.getInt(KEY_NAV_MAP_SCHEME, NAV_MAP_AUTO);
-        return v == NAV_MAP_LIGHT || v == NAV_MAP_DARK ? v : NAV_MAP_AUTO;
+        return v == NAV_MAP_LIGHT || v == NAV_MAP_DARK || v == NAV_MAP_SPACE ? v : NAV_MAP_AUTO;
     }
 
     public void setNavMapScheme(int scheme) {
         prefs.edit().putInt(KEY_NAV_MAP_SCHEME, scheme).apply();
+    }
+
+    private static final String KEY_NAV_ZOOM_BIAS = "nav_zoom_bias";
+    private static final String KEY_HUD_ZOOM_BIAS = "hud_zoom_bias";
+    /** How far the zoom buttons move the guiding map from its own speed-based zoom, in zoom levels. */
+    public static final float NAV_ZOOM_BIAS_MIN = -3f;
+    public static final float NAV_ZOOM_BIAS_MAX = 2f;
+
+    /** Navigation's map (full screen and floating window): closer (+) or further (-) than its own zoom. */
+    public float getNavZoomBias() {
+        return clampZoomBias(prefs.getFloat(KEY_NAV_ZOOM_BIAS, 0f));
+    }
+
+    public void setNavZoomBias(float bias) {
+        prefs.edit().putFloat(KEY_NAV_ZOOM_BIAS, clampZoomBias(bias)).apply();
+    }
+
+    /** The map on the HUD: closer (+) or further (-) than its own zoom. */
+    public float getHudZoomBias() {
+        return clampZoomBias(prefs.getFloat(KEY_HUD_ZOOM_BIAS, 0f));
+    }
+
+    public void setHudZoomBias(float bias) {
+        prefs.edit().putFloat(KEY_HUD_ZOOM_BIAS, clampZoomBias(bias)).apply();
+    }
+
+    public static float clampZoomBias(float bias) {
+        return Float.isNaN(bias) ? 0f : Math.max(NAV_ZOOM_BIAS_MIN, Math.min(NAV_ZOOM_BIAS_MAX, bias));
     }
 
     private static final String KEY_NAV_SHARE = "nav_share";

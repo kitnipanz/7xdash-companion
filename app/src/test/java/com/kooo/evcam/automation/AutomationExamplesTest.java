@@ -25,6 +25,24 @@ public class AutomationExamplesTest {
     }
 
     @Test
+    public void leaveHomeExample_onlyWithASavedPlace() {
+        assertEquals(2, AutomationExamples.all().size());
+        java.util.List<com.kooo.evcam.nav.SavedPlaces.Place> places = new java.util.ArrayList<>();
+        com.kooo.evcam.nav.SavedPlaces.Place home = com.kooo.evcam.nav.SavedPlaces.add(places, "Home", 13.7, 100.5);
+        List<AutomationRule> examples = AutomationExamples.all(places);
+        assertEquals(3, examples.size());
+        assertEquals(AutomationTrigger.PLACE_LEAVE, examples.get(0).trigger());
+        assertEquals(home.id, examples.get(0).value);
+        assertEquals(AutomationAction.TAILGATE_HEIGHT.key, examples.get(0).steps.get(0).action);
+        AutomationRule fog = examples.get(1);
+        assertEquals(AutomationTrigger.RAIN_START, fog.trigger());
+        assertEquals(AutomationCondition.DARK, fog.condition(AutomationCondition.Group.DAYLIGHT).kind());
+        assertEquals(AutomationAction.REAR_FOG.key, fog.steps.get(0).action);
+        assertEquals(AutomationTrigger.DARK, examples.get(2).trigger());
+        assertEquals(AutomationAction.MOOD_LIGHT.key, examples.get(2).steps.get(0).action);
+    }
+
+    @Test
     public void draftWithNoTriggerYet_survivesTheScreenBeingRebuilt() {
         AutomationRule draft = new AutomationRule();
         draft.steps.add(new AutomationRule.Step(AutomationAction.DRIVE_MODE.key, "normal"));

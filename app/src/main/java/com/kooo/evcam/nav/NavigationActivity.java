@@ -85,6 +85,7 @@ public class NavigationActivity extends AppCompatActivity implements Navigator.L
         results = findViewById(R.id.nav_results);
         searchBar = findViewById(R.id.nav_search_bar);
         banner = findViewById(R.id.nav_banner);
+        styleBanner(config.getNavMapScheme());
         arrow = findViewById(R.id.nav_arrow);
         toNext = findViewById(R.id.nav_to_next);
         instruction = findViewById(R.id.nav_instruction);
@@ -144,6 +145,8 @@ public class NavigationActivity extends AppCompatActivity implements Navigator.L
             }
         });
         findViewById(R.id.nav_float).setOnClickListener(v -> openFloating());
+        findViewById(R.id.nav_zoom_in).setOnClickListener(v -> zoom(NavMapPainter.ZOOM_STEP));
+        findViewById(R.id.nav_zoom_out).setOnClickListener(v -> zoom(-NavMapPainter.ZOOM_STEP));
         findViewById(R.id.nav_settings).setOnClickListener(v -> openSettings());
         savePlace = findViewById(R.id.nav_save_place);
         savePlace.setOnClickListener(v -> {
@@ -154,6 +157,20 @@ public class NavigationActivity extends AppCompatActivity implements Navigator.L
         });
 
         setUpMap();
+    }
+
+    /** A zoom button: the map closer or further, and the floating window with it while guiding. */
+    private void zoom(float levels) {
+        if (painter != null) {
+            painter.zoomBy(levels);
+        }
+        NavFloatWindow.get().refresh();
+    }
+
+    /** The turn banner: dark glass on the space map, the usual deep green otherwise. */
+    private void styleBanner(int scheme) {
+        banner.setBackgroundResource(scheme == AppConfig.NAV_MAP_SPACE
+                ? R.drawable.bg_nav_banner_space : R.drawable.bg_nav_banner);
     }
 
     /** The cards go with the map: light on the day map, dark on the night map. */
@@ -374,10 +391,14 @@ public class NavigationActivity extends AppCompatActivity implements Navigator.L
 
             @Override
             public void schemeChanged(int scheme) {
+                styleBanner(scheme);
                 if (painter != null) {
                     painter.applyScheme(scheme);
                 }
                 NavFloatWindow.get().applyScheme(scheme);
+                // the HUD's turn card (and the preview of it here) and its map take the new colours
+                Navigator.get().relayoutHud();
+                onNavChanged(Navigator.get().snapshot());
             }
 
             @Override

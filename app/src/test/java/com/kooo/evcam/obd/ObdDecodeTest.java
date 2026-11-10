@@ -103,4 +103,40 @@ public class ObdDecodeTest {
     public void noCodes() {
         assertTrue(ObdCodes.troubleCodes(frame(0x43, 0), 0x43, true).isEmpty());
     }
+
+    /** Values as the EX30 sends them, from its confirmed map. */
+    @Test
+    public void batteryModuleValuesDecodeAsOnTheEx30() {
+        assertEquals(343.12, ZeekrProbe.value(ZeekrProbe.PACK_VOLTAGE, bytes(0x86, 0x08)), 1e-9);
+        assertEquals(2.7, ZeekrProbe.value(ZeekrProbe.PACK_CURRENT, bytes(0x40, 0x1B)), 1e-9);
+        assertEquals(-6.1, ZeekrProbe.value(ZeekrProbe.PACK_CURRENT, bytes(0x3F, 0xC3)), 1e-9);
+        assertEquals(30.0, ZeekrProbe.value(ZeekrProbe.PACK_TEMP_AVG, bytes(0x1F, 0x40)), 1e-9);
+        assertEquals(31.45, ZeekrProbe.value(ZeekrProbe.PACK_TEMP_MAX, bytes(0x07, 0x1F, 0xD1)), 1e-9);
+        assertEquals(93.68, ZeekrProbe.value(ZeekrProbe.STATE_OF_HEALTH, bytes(0, 0, 0x24, 0x98)), 1e-9);
+        assertEquals(41_234, ZeekrProbe.value(ZeekrProbe.ODOMETER, bytes(0x00, 0xA1, 0x12)), 1e-9);
+    }
+
+    @Test
+    public void shortOrUnknownBatteryAnswersHaveNoValue() {
+        assertNull(ZeekrProbe.value(ZeekrProbe.PACK_VOLTAGE, bytes(0x86)));
+        assertNull(ZeekrProbe.value(ZeekrProbe.STATE_OF_HEALTH, bytes(0, 0, 0x24)));
+        assertNull(ZeekrProbe.value(0x4900, bytes(1, 2, 3, 4)));
+        assertNull(ZeekrProbe.value(ZeekrProbe.PACK_VOLTAGE, null));
+    }
+
+    @Test
+    public void packPowerFromVoltageAndCurrent() {
+        ZeekrProbe.Result volts = ZeekrProbe.read(0x4801, frame(0x62, 0x48, 0x01, 0x86, 0x08));
+        ZeekrProbe.Result amps = ZeekrProbe.read(0x4802, frame(0x62, 0x48, 0x02, 0x40, 0x1B));
+        assertEquals(0.926, ZeekrProbe.powerKw(volts, amps), 1e-3);
+        assertNull(ZeekrProbe.powerKw(volts, null));
+    }
+
+    private static byte[] bytes(int... values) {
+        byte[] out = new byte[values.length];
+        for (int i = 0; i < values.length; i++) {
+            out[i] = (byte) values[i];
+        }
+        return out;
+    }
 }

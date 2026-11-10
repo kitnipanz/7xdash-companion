@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Navigation, space map: the next-turn banner as dark glass with a thin teal rim -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:angle="270"
+                android:endColor="#E6060C14"
+                android:startColor="#E6102434" />
+            <corners android:radius="20dp" />
+            <stroke
+                android:width="1.5dp"
+                android:color="#8022E6D2" />
+        </shape>
+    </item>
+</layer-list>

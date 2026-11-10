@@ -169,6 +169,17 @@ public final class ShortcutPerformer {
                     hud(context, R.string.nav_float, true);
                 }
                 return;
+            case HUD_ZOOM_IN:
+            case HUD_ZOOM_OUT:
+                float bias = com.kooo.evcam.nav.Navigator.get().zoomHud(context, action == ShortcutAction.HUD_ZOOM_IN);
+                com.kooo.evcam.hud.HudNotice.post(context, context.getString(R.string.nav_hud_zoom),
+                        String.format(java.util.Locale.US, "%+.1f", bias));
+                return;
+            case HUD_ZOOM_TOGGLE:
+                boolean far = com.kooo.evcam.nav.Navigator.get().toggleHudZoom(context);
+                com.kooo.evcam.hud.HudNotice.post(context, context.getString(R.string.nav_hud_zoom),
+                        context.getString(far ? R.string.nav_hud_zoom_far : R.string.nav_hud_zoom_normal));
+                return;
             case MOOD_LIGHT:
                 com.kooo.evcam.light.GearLight.toggle(context);
                 return;

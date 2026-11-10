@@ -315,6 +315,18 @@ public class SideViewPopupService extends Service {
                 view.setWarning(sides != null && (sides & bit) != 0);
             }
         }
+        publishEdge();
+    }
+
+    /** 告诉氛围灯：哪一侧的红光正显示在屏幕上，红光在它就跟着一起闪。 */
+    private void publishEdge() {
+        int shown = 0;
+        for (SideViewPopupView view : new SideViewPopupView[]{popup, hudCopy}) {
+            if (view != null && view.isShowing() && view.isWarning()) {
+                shown |= view.lane() == LaneCycle.LEFT ? VehicleState.TURN_LEFT : VehicleState.TURN_RIGHT;
+            }
+        }
+        com.kooo.evcam.telemetry.BlindSpotWatch.setEdgeShown(shown);
     }
 
     // ================================================================= 窗口
@@ -341,6 +353,7 @@ public class SideViewPopupService extends Service {
         } else {
             detachPopup();
         }
+        publishEdge();
     }
 
     private void cancelDelayedClose() {
@@ -509,6 +522,7 @@ public class SideViewPopupService extends Service {
             popup.detach();
             popup = null;
         }
+        publishEdge();
     }
 
     /** 显示过、到收起时一帧都没来：记下来，诊断报告里看得到。 */

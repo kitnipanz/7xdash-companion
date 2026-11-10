@@ -17,20 +17,21 @@ final class AutomationExamples {
         return all(Collections.emptyList());
     }
 
-    /** With saved places there are examples about the first of them. */
+    /**
+     * Leave the first saved place (home, most likely) and set the tailgate to open to 50%; rain
+     * starts while it is dark and the rear fog light comes on;
+     * it gets dark and the mood light comes on. The first needs a saved place.
+     */
     static List<AutomationRule> all(List<SavedPlaces.Place> places) {
         List<AutomationRule> out = new ArrayList<>();
         if (!places.isEmpty()) {
-            int place = places.get(0).id;
-            out.add(rule(AutomationTrigger.PLACE_ARRIVE, place, step(AutomationAction.AC, AutomationAction.OFF)));
-            out.add(rule(AutomationTrigger.PLACE_LEAVE, place, step(AutomationAction.MOOD_LIGHT, AutomationAction.ON)));
+            out.add(rule(AutomationTrigger.PLACE_LEAVE, places.get(0).id,
+                    step(AutomationAction.TAILGATE_HEIGHT, "50")));
         }
-        out.add(rule(AutomationTrigger.SPEED_ABOVE, 100, step(AutomationAction.DRIVE_MODE, "sport")));
-        out.add(rule(AutomationTrigger.GEAR_P, 0, step(AutomationAction.DRIVE_MODE, "comfort")));
-        out.add(rule(AutomationTrigger.DARK, 0, step(AutomationAction.DIM, "50")));
-        out.add(rule(AutomationTrigger.LIGHT, 0, step(AutomationAction.DIM, AutomationAction.OFF)));
-        out.add(rule(AutomationTrigger.RAIN_START, 0, step(AutomationAction.AC, AutomationAction.ON)));
-        out.add(rule(AutomationTrigger.CAR_ON, 0, step(AutomationAction.MOOD_LIGHT, AutomationAction.ON)));
+        AutomationRule fog = rule(AutomationTrigger.RAIN_START, 0, step(AutomationAction.REAR_FOG, AutomationAction.ON));
+        fog.setCondition(AutomationCondition.Group.DAYLIGHT, AutomationCondition.DARK, 0);
+        out.add(fog);
+        out.add(rule(AutomationTrigger.DARK, 0, step(AutomationAction.MOOD_LIGHT, AutomationAction.ON)));
         return out;
     }
 

@@ -111,25 +111,31 @@ public class SideViewPopupView extends ViewGroup {
     public void setWarning(boolean on) {
         if (warning != on) {
             warning = on;
-            warnLit = true;
             removeCallbacks(warnBlink);
             if (on) {
-                postDelayed(warnBlink, WARN_BLINK_MS);
+                warnBlink.run();
             }
             invalidate();
         }
     }
 
+    /** 是否报警中、此刻是否在红的那半拍（共用时钟，和氛围灯同步）。 */
+    public boolean isWarning() {
+        return warning;
+    }
+
     private boolean warnLit = true;
+    /** 红的那半拍跟着 {@link com.kooo.evcam.telemetry.BlindSpotWatch#redHalfAt} 走，和氛围灯一起亮一起灭。 */
     private final Runnable warnBlink = new Runnable() {
         @Override
         public void run() {
             if (!warning) {
                 return;
             }
-            warnLit = !warnLit;
+            long now = android.os.SystemClock.uptimeMillis();
+            warnLit = com.kooo.evcam.telemetry.BlindSpotWatch.redHalfAt(now);
             invalidate();
-            postDelayed(this, WARN_BLINK_MS);
+            postDelayed(this, com.kooo.evcam.telemetry.BlindSpotWatch.untilFlip(now));
         }
     };
 
@@ -357,7 +363,6 @@ public class SideViewPopupView extends ViewGroup {
     /** The glow at the edge: the warning red, mostly opaque. */
     private static final int WARN_GLOW = 0xD9E53935;
     /** Half a blink of the red border. */
-    private static final long WARN_BLINK_MS = com.kooo.evcam.telemetry.BlindSpotWatch.BLINK_HALF_MS;
     private static final int WARN_COLOR = 0xFFE53935;
     private static final float SLIDE_DP = 56f;
     private static final long SLIDE_MS = 220L;

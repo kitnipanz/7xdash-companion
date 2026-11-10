@@ -48,8 +48,12 @@ final class AutomationRunner {
         worker = new Handler(thread.getLooper());
     }
 
-    /** With {@code report}, a person pressed Try: say it finished as well as what failed. */
-    void run(List<AutomationRule.Step> steps, boolean report) {
+    /**
+     * With {@code report}, a person pressed Try: say it finished as well as what failed. With
+     * {@code ran}, the rule ran by itself: say so on screen ("Automation: Leave Home → Navigate
+     * to Office"), with what failed if anything did.
+     */
+    void run(List<AutomationRule.Step> steps, boolean report, String ran) {
         List<AutomationRule.Step> copy = new ArrayList<>(steps);
         worker.post(() -> {
             StringBuilder failed = new StringBuilder();
@@ -68,8 +72,13 @@ final class AutomationRunner {
             }
             String text = failed.length() > 0 ? app.getString(R.string.automation_failed, failed)
                     : report ? app.getString(R.string.automation_try_done) : null;
+            if (ran != null) {
+                text = text == null ? app.getString(R.string.automation_ran, ran)
+                        : app.getString(R.string.automation_ran, ran) + "\n" + text;
+            }
             if (text != null) {
-                main.post(() -> Notice.makeText(app, text, Toast.LENGTH_LONG).show());
+                String shown = text;
+                main.post(() -> Notice.makeText(app, shown, Toast.LENGTH_LONG).show());
             }
         });
     }
@@ -104,6 +113,12 @@ final class AutomationRunner {
                 return CarControls.tempZones(app, AutomationAction.DUAL.equals(step.choice));
             case GLOVEBOX:
                 return CarControls.openGlovebox(app);
+            case REAR_FOG:
+                return CarControls.rearFog(app, AutomationAction.ON.equals(step.choice));
+            case LOCK_FEEDBACK:
+                return CarControls.lockFeedback(app, step.choice);
+            case TAILGATE_HEIGHT:
+                return CarControls.tailgateHeight(app, step.choice);
             case NAVIGATE:
                 return navigate(step.choice);
             case SHORTCUT:

@@ -46,6 +46,8 @@ final class AutomationWatch {
         /** The car's GPS position; given only while a rule needs a place. */
         Double lat;
         Double lng;
+        /** Today, as a {@link AutomationCondition} day bit; 0 when not known. */
+        int dayBit;
         /** The saved places, by id. */
         Map<Integer, SavedPlaces.Place> places = Collections.emptyMap();
     }
@@ -85,7 +87,7 @@ final class AutomationWatch {
                     : trigger.measure == null
                     ? events.contains(trigger) && settled(rule, trigger, s.at)
                     : crossed(rule, trigger, reading(trigger.measure, s), s.at);
-            if (fires) {
+            if (fires && holds(rule, s)) {
                 out.add(rule);
             }
         }
@@ -129,6 +131,41 @@ final class AutomationWatch {
             rain = s.rain;
         }
         return events;
+    }
+
+    /**
+     * Every condition of the rule is true now. A state not known yet (no day/night reading, no GPS
+     * fix) does not hold, so a rule never runs on a guess.
+     */
+    private boolean holds(AutomationRule rule, Sample s) {
+        for (AutomationRule.Condition condition : rule.conditions) {
+            AutomationCondition kind = condition.kind();
+            if (kind == null || !holds(kind, condition.value, s)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private boolean holds(AutomationCondition kind, int value, Sample s) {
+        switch (kind) {
+            case DAYS:
+                return (value & s.dayBit) != 0;
+            case DARK:
+                return dayNight != null && dayNight == Signal.NIGHT;
+            case LIGHT:
+                return dayNight != null && dayNight != Signal.NIGHT;
+            case RAINING:
+                return Boolean.TRUE.equals(rain);
+            case DRY:
+                return Boolean.FALSE.equals(rain);
+            case AT_PLACE:
+                return Boolean.TRUE.equals(inside.get(value));
+            case AWAY_FROM_PLACE:
+                return Boolean.FALSE.equals(inside.get(value));
+            default:
+                return false;
+        }
     }
 
     /** Where the car is against each saved place; a place stays as it was while there is no fix. */

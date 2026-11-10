@@ -142,9 +142,14 @@ Reads the car through an ELM327 adapter in the OBD socket, while the screen is o
   stickers drop off during the 10-second search.
 - Turn on Settings → Interface → **Beta features**, tap the **OBD2** card, choose the adapter, press
   **Connect**.
-- Shows the 12 V battery voltage, the standard values the car reports, and raw bytes read directly
-  from the battery module with the request used on the Zeekr 001. The 7X may answer little: its
-  owners report only the VIN and voltage so far, and the bytes are not decoded yet.
+- Shows the 12 V battery voltage, the standard values the car reports, and values read directly
+  from the battery module: pack voltage, current and power, average and highest pack temperature,
+  battery health (SOH) and odometer. They are worked out the way a Volvo EX30 is, a car on the same
+  platform, and are not checked on a 7X yet: the raw bytes are shown next to each one. Compare them
+  with the car's own screen.
+- **Scan battery module** asks the module for every identifier from 224800 to 2249FF once (up to
+  4 minutes) and saves what answered to `7xDash/odb_logs/becm-scan-….txt` on the USB drive. Two
+  scans at different battery levels or temperatures show which bytes follow which value.
 - **Record all signals** saves everything the adapter can hear to `7xDash/odb_logs` on the USB drive.
   After a short check at the start it only listens. It stops after 1 hour, or 5 minutes of silence.
   A floating window lists signals that just changed. Tap **Mark** when something happens: the log

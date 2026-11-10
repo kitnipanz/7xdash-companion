@@ -26,6 +26,45 @@ public final class BlindSpotWatch implements Telemetry.Listener {
     public static final long BLINK_HALF_MS = 350L;
 
     /**
+     * Red half of the shared blink clock at this uptime. The red edge and the lights both read this
+     * clock instead of each counting from when it started, so they turn red and back together.
+     */
+    public static boolean redHalfAt(long uptimeMs) {
+        return (Math.max(0L, uptimeMs) / BLINK_HALF_MS) % 2 == 0;
+    }
+
+    /** How long until the shared clock flips. */
+    public static long untilFlip(long uptimeMs) {
+        return BLINK_HALF_MS - Math.max(0L, uptimeMs) % BLINK_HALF_MS;
+    }
+
+    private static volatile int edgeSides;
+    private static final java.util.List<Runnable> edgeListeners = new java.util.concurrent.CopyOnWriteArrayList<>();
+
+    /**
+     * Sides whose red edge is on screen now (the side view shows that side and the car warns about
+     * it). While it shows, the lights blink too, whatever the speed, so the two never disagree.
+     */
+    public static int edgeShown() {
+        return edgeSides;
+    }
+
+    /** Main thread: the side view says which red edges are on screen now. */
+    public static void setEdgeShown(int sides) {
+        if (sides != edgeSides) {
+            edgeSides = sides;
+            for (Runnable listener : edgeListeners) {
+                listener.run();
+            }
+        }
+    }
+
+    /** Called on the main thread when the red edges on screen change. */
+    public static void addEdgeListener(Runnable listener) {
+        edgeListeners.add(listener);
+    }
+
+    /**
      * Warned sides that alert now (bits {@link VehicleState#TURN_LEFT} / {@link VehicleState#TURN_RIGHT}).
      * Hazards on: none. A side alerts when the turn signal points at it, at any speed, or when the car
      * goes at least {@code minSpeedKmh} (0 = any speed; an unknown speed does not block), so city

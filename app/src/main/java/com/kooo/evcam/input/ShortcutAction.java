@@ -59,7 +59,12 @@ public enum ShortcutAction {
     /** The floating Macro pad on or off (overlay.MacroPadService). */
     MACRO_PAD("toggle_macro_pad", R.string.shortcut_action_macro_pad, R.drawable.ic_macro_pad),
     // Navigation's map in a floating window over other apps, on / off
-    NAV_FLOAT("toggle_nav_float", R.string.shortcut_action_nav_float, R.drawable.ic_float_window);
+    NAV_FLOAT("toggle_nav_float", R.string.shortcut_action_nav_float, R.drawable.ic_float_window),
+    /** The map on the HUD one step closer or further out (nav.Navigator#zoomHud), kept for next time. */
+    HUD_ZOOM_IN("hud_zoom_in", R.string.shortcut_action_hud_zoom_in, R.drawable.ic_zoom_in),
+    HUD_ZOOM_OUT("hud_zoom_out", R.string.shortcut_action_hud_zoom_out, R.drawable.ic_zoom_out),
+    /** One button for the HUD map: normal zoom, press again for far out, again for normal (nav.Navigator#toggleHudZoom). */
+    HUD_ZOOM_TOGGLE("hud_zoom_toggle", R.string.shortcut_action_hud_zoom_toggle, R.drawable.ic_zoom_out);
 
     /** The tabs actions are picked from, in tab order. */
     public enum Group {

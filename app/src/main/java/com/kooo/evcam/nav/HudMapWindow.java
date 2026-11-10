@@ -90,7 +90,10 @@ final class HudMapWindow implements Navigator.Listener {
                     return;
                 }
                 painter = new NavMapPainter(window, map, mapView, 0, 0);
-                painter.applyScheme(AppConfig.NAV_MAP_DARK);
+                painter.forHud();
+                // the HUD stays dark (bright light on the windscreen dazzles); the space map keeps its own look
+                painter.applyScheme(new AppConfig(window).getNavMapScheme() == AppConfig.NAV_MAP_SPACE
+                        ? AppConfig.NAV_MAP_SPACE : AppConfig.NAV_MAP_DARK);
                 map.getUiSettings().setAllGesturesEnabled(false);
                 map.getUiSettings().setCompassEnabled(false);
                 painter.draw(Navigator.get().snapshot());
@@ -152,6 +155,13 @@ final class HudMapWindow implements Navigator.Listener {
     private int[] box(Context context) {
         float[] shares = HudTurnPlace.restore(new AppConfig(context).getNavHudMapPlace());
         return HudTurnPlace.toPixels(hudSize.x, hudSize.y, shares != null ? shares : HudTurnPlace.mapDefaults());
+    }
+
+    /** The HUD zoom setting changed: draw again at the new zoom. */
+    void zoomChanged() {
+        if (painter != null) {
+            painter.draw(Navigator.get().snapshot());
+        }
     }
 
     /** Try again after a failure, e.g. when the HUD comes back. */

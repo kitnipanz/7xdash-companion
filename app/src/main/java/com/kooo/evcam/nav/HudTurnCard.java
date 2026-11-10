@@ -14,11 +14,41 @@ import android.widget.TextView;
  * The next-turn card as the HUD shows it: arrow, distance, road, and the trip (arrival time and
  * battery at arrival). Built at any height, so the same card goes on the HUD ({@link HudTurnWindow})
  * and, smaller, as the HUD preview on the Navigation maps. Its text always fits: tall Thai lines or a
- * small card shrink it ({@link #fitScale}) rather than cut the last line off.
+ * small card shrink it ({@link #fitScale}) rather than cut the last line off. Its colours follow the
+ * map's colours setting ({@link Theme}): black with an orange rim, white, or the space map's dark glass.
  */
 final class HudTurnCard {
 
     private static final int ENERGY = 0xFFF0622D;
+
+    /** The card's colours for one map colour scheme. */
+    static final class Theme {
+        final int[] background;
+        final int rim;
+        final int arrow;
+        final int main;
+        final int sub;
+
+        Theme(int[] background, int rim, int arrow, int main, int sub) {
+            this.background = background;
+            this.rim = rim;
+            this.arrow = arrow;
+            this.main = main;
+            this.sub = sub;
+        }
+
+        static final Theme DARK = new Theme(new int[] {0xD9101114, 0xD9101114}, ENERGY, Color.WHITE, Color.WHITE, 0xFFD0D2D6);
+        static final Theme LIGHT = new Theme(new int[] {0xF2FFFFFF, 0xF2F3F4F6}, ENERGY, 0xFF1F2226, 0xFF1F2226, 0xFF5F6368);
+        static final Theme SPACE = new Theme(new int[] {0xE6102434, 0xE6060C14}, 0xFF22E6D2, 0xFF22E6D2, Color.WHITE, 0xFFC8DCF0);
+
+        /** The theme of a map colour setting: auto follows the head unit's day / night. */
+        static Theme of(Context context, int scheme) {
+            if (scheme == com.kooo.evcam.AppConfig.NAV_MAP_SPACE) {
+                return SPACE;
+            }
+            return NavMapPainter.isDark(context, scheme) ? DARK : LIGHT;
+        }
+    }
 
     final LinearLayout view;
     private final ManeuverIcon.ArrowView arrow;
@@ -31,19 +61,17 @@ final class HudTurnCard {
     private final float tripPx;
     /** What was last fitted, so a resize of the text doesn't fit it again for ever. */
     private String fitted = "";
+    private final int height;
+    private Theme theme;
 
     /** @param height the card's height in pixels; everything in it scales with it */
     HudTurnCard(Context context, int height) {
         view = new LinearLayout(context);
         view.setOrientation(LinearLayout.HORIZONTAL);
         view.setGravity(Gravity.CENTER_VERTICAL);
+        this.height = height;
         int pad = Math.max(4, height / 20);
         view.setPadding(pad * 2, pad, pad * 2, pad);
-        GradientDrawable bg = new GradientDrawable();
-        bg.setColor(0xD9101114);
-        bg.setCornerRadius(height / 12f);
-        bg.setStroke(Math.max(2, height / 60), ENERGY);
-        view.setBackground(bg);
 
         arrow = new ManeuverIcon.ArrowView(context);
         int icon = Math.round(height * 0.7f);
@@ -70,16 +98,34 @@ final class HudTurnCard {
         textsAt.leftMargin = pad * 2;
         view.addView(texts, textsAt);
         view.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or, ob) -> fit());
+        applyTheme();
+    }
+
+    /** Takes the colours of the map's colour setting now, when they changed. */
+    private void applyTheme() {
+        Context context = view.getContext();
+        Theme now = Theme.of(context, new com.kooo.evcam.AppConfig(context).getNavMapScheme());
+        if (now == theme) {
+            return;
+        }
+        theme = now;
+        GradientDrawable bg = new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, now.background);
+        bg.setCornerRadius(height / 12f);
+        bg.setStroke(Math.max(2, height / 60), now.rim);
+        view.setBackground(bg);
+        distance.setTextColor(now.main);
+        road.setTextColor(now.sub);
     }
 
     void set(Navigator.HudLine line) {
-        arrow.set(line.maneuver, Color.WHITE);
+        applyTheme();
+        arrow.set(line.maneuver, theme.arrow);
         distance.setText(line.distance);
         road.setText(line.text);
         trip.setText(line.trip);
         trip.setVisibility(line.trip == null || line.trip.isEmpty() ? android.view.View.GONE : android.view.View.VISIBLE);
         trip.setTextColor(line.tripLevel == com.kooo.evcam.trip.Arrival.Level.SHORT ? 0xFFFF6B6B
-                : line.tripLevel == com.kooo.evcam.trip.Arrival.Level.LOW ? ENERGY : 0xFFD0D2D6);
+                : line.tripLevel == com.kooo.evcam.trip.Arrival.Level.LOW ? ENERGY : theme.sub);
         fit();
     }
 

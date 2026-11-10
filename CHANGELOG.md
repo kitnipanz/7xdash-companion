@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.8.17-beta] - 2026-11-10
+
+### Navigation
+- **Space map.** A new map colour next to Follow screen, Light and Dark: a night city with lit 3D buildings, a glowing route (teal when clear, amber when slow, red in a jam), a lower camera that fades into the night at the horizon, and a dark glass turn banner. Navigation → Settings → Map colours.
+- **Zoom buttons** on the map. While guiding they move the map's own zoom closer or further and keep it for next time; the floating map follows. Otherwise they zoom as a pinch would.
+- **HUD turn card follows the map colours:** white on Light, black on Dark, dark glass with a teal arrow on Space. The HUD map uses the Space look too when Space is picked.
+
+### Buttons
+- **HUD map zoom in / zoom out:** put them on a steering wheel button or the Macro pad to bring the HUD map closer or further. Kept for next time.
+
 ## [1.8.16-beta] - 2026-11-10
 
 ### Automation

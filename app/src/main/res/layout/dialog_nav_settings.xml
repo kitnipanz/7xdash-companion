@@ -69,6 +69,13 @@
                 android:layout_height="56dp"
                 android:layout_weight="1"
                 android:text="@string/nav_scheme_dark" />
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/nav_scheme_space"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="56dp"
+                android:layout_weight="1"
+                android:text="@string/nav_scheme_space" />
         </com.google.android.material.button.MaterialButtonToggleGroup>
         <TextView
             style="@style/NavSettingsLabel"

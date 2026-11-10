@@ -14,7 +14,8 @@ import org.maplibre.android.maps.Style;
  * Repaints TomTom's map in the familiar phone-map colours: pale land, white roads, yellow motorways,
  * soft green parks and blue water; slate and tan at night. The tiles stay TomTom's, only the paint of
  * their layers changes, so it also applies to the floating window and the HUD map. Layers this does
- * not name (traffic, borders, railways, icons) keep TomTom's look.
+ * not name (traffic, borders, railways, icons) keep TomTom's look. The space scheme goes further:
+ * a near-black map, faint blue roads and see-through glass 3D buildings that glow at the top.
  */
 final class NavMapColors {
 
@@ -67,26 +68,49 @@ final class NavMapColors {
             "#242F3E", "#17263C", "#263C3F", "#2C3849", "#222C3A",
             "#38414E", "#212A37", "#4A5364", "#2A3240", "#746855", "#1F2835",
             "#9CA5B3", "#D5DAE1", "#515C6D", "#17263C");
+    private static final Palette SPACE = new Palette(
+            "#07101A", "#0A2440", "#0B1E1A", "#0F2230", "#08131C",
+            "#14202E", "#060C14", "#1A2A40", "#0A1422", "#21406A", "#0C1A2E",
+            "#7890AC", "#C8DCF0", "#3A6A99", "#07101A");
+    /** Space: a night city, the buildings dark at the foot and lit pale toward the roof line. */
+    private static final String SPACE_LIGHT_COLOR = "#DDEFFF";
+    private static final float SPACE_GLASS_OPACITY = 0.8f;
+    private static final float SPACE_LIGHT = 0.35f;
 
     private NavMapColors() {
     }
 
     /** Repaints a freshly loaded style. Before the app's own layers are added. */
     static void apply(Style style, boolean dark) {
+        apply(style, dark, false);
+    }
+
+    /** As {@link #apply(Style, boolean)}; {@code space} paints the space scheme (on the dark style). */
+    static void apply(Style style, boolean dark, boolean space) {
         // the 3D buildings' walls stay near their roofs' colour: soft blocks, not dark slabs
         org.maplibre.android.style.light.Light light = style.getLight();
         if (light != null) {
-            light.setIntensity(BUILDING_LIGHT);
+            light.setIntensity(space ? SPACE_LIGHT : BUILDING_LIGHT);
+            if (space) {
+                light.setColor(SPACE_LIGHT_COLOR);
+            }
         }
+        Palette palette = space ? SPACE : dark ? NIGHT : DAY;
         for (Layer layer : style.getLayers()) {
-            String paint = paintFor(layer.getId(), dark);
+            String paint = paintFor(layer.getId(), palette, dark || space);
             if (paint == null) {
                 continue;
             }
             if (layer instanceof BackgroundLayer) {
                 layer.setProperties(PropertyFactory.backgroundColor(paint));
             } else if (layer instanceof FillExtrusionLayer) {
-                layer.setProperties(PropertyFactory.fillExtrusionColor(paint));
+                if (space) {
+                    layer.setProperties(PropertyFactory.fillExtrusionColor(glass()),
+                            PropertyFactory.fillExtrusionOpacity(SPACE_GLASS_OPACITY),
+                            PropertyFactory.fillExtrusionVerticalGradient(true));
+                } else {
+                    layer.setProperties(PropertyFactory.fillExtrusionColor(paint));
+                }
             } else if (layer instanceof FillLayer) {
                 layer.setProperties(paint.startsWith("[") ? PropertyFactory.fillColor(Expression.raw(paint))
                         : PropertyFactory.fillColor(paint));
@@ -95,14 +119,17 @@ final class NavMapColors {
                         : PropertyFactory.lineColor(paint));
             } else if (layer instanceof SymbolLayer) {
                 layer.setProperties(PropertyFactory.textColor(paint),
-                        PropertyFactory.textHaloColor((dark ? NIGHT : DAY).halo));
+                        PropertyFactory.textHaloColor(palette.halo));
             }
         }
     }
 
     /** The colour (or, starting with {@code [}, the colour expression) for a layer of the style; null = leave it. */
     static String paintFor(String id, boolean dark) {
-        Palette p = dark ? NIGHT : DAY;
+        return paintFor(id, dark ? NIGHT : DAY, dark);
+    }
+
+    private static String paintFor(String id, Palette p, boolean dark) {
         if (id.equals("background") || id.equals("LULC - Built-up area")
                 || id.startsWith("Structure - Bridge")) {
             return p.land;
@@ -142,6 +169,15 @@ final class NavMapColors {
             return p.waterText;
         }
         return null;
+    }
+
+    /** Space: taller buildings are lit brighter, so the skyline stands out of the night. */
+    private static Expression glass() {
+        return Expression.interpolate(Expression.linear(), Expression.coalesce(Expression.get("height"), Expression.literal(4)),
+                Expression.stop(0, Expression.color(0xFF0C1C2A)),
+                Expression.stop(40, Expression.color(0xFF173A4E)),
+                Expression.stop(120, Expression.color(0xFF2E6F86)),
+                Expression.stop(300, Expression.color(0xFF8FD3E3)));
     }
 
     /** A road line or its outline: the road layers of the surface, tunnels and bridges. */

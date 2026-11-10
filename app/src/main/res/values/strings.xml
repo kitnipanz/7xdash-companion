@@ -1725,6 +1725,8 @@ Then reopen this app.</string>
     <string name="macro_pad_clear">Clear</string>
     <string name="shortcut_action_macro_pad">Macro pad on / off</string>
     <string name="shortcut_action_nav_float">Floating map on / off</string>
+    <string name="shortcut_action_hud_zoom_in">HUD map zoom in</string>
+    <string name="shortcut_action_hud_zoom_out">HUD map zoom out</string>
     <!-- Navigation (beta) -->
     <string name="nav_guide_running">Guiding: keeps your position up to date</string>
     <string name="nav_title">Navigation</string>
@@ -1795,6 +1797,10 @@ Then reopen this app.</string>
     <string name="nav_scheme_auto">Follow screen</string>
     <string name="nav_scheme_light">Light</string>
     <string name="nav_scheme_dark">Dark</string>
+    <string name="nav_scheme_space">Space</string>
+    <string name="nav_zoom_in">Zoom in</string>
+    <string name="nav_zoom_out">Zoom out</string>
+    <string name="nav_hud_zoom">HUD map zoom</string>
     <string name="nav_car_colour">Car colour</string>
     <string name="nav_hud_preview">On the HUD now</string>
     <string name="nav_hud_preview_switch">Show the HUD card on the map</string>

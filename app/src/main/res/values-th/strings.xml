@@ -1770,6 +1770,12 @@
     <string name="nav_scheme_auto">ตามหน้าจอ</string>
     <string name="nav_scheme_light">สว่าง</string>
     <string name="nav_scheme_dark">มืด</string>
+    <string name="nav_scheme_space">อวกาศ</string>
+    <string name="nav_zoom_in">ซูมเข้า</string>
+    <string name="nav_zoom_out">ซูมออก</string>
+    <string name="nav_hud_zoom">ซูมแผนที่บน HUD</string>
+    <string name="shortcut_action_hud_zoom_in">ซูมเข้าแผนที่บน HUD</string>
+    <string name="shortcut_action_hud_zoom_out">ซูมออกแผนที่บน HUD</string>
     <string name="nav_car_colour">สีรถ</string>
     <string name="nav_hud_preview">บน HUD ตอนนี้</string>
     <string name="nav_hud_preview_switch">แสดงการ์ด HUD บนแผนที่</string>

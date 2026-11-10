@@ -62,14 +62,15 @@ final class NavSettings {
         });
 
         MaterialButtonToggleGroup scheme = box.findViewById(R.id.nav_scheme_group);
-        int[] schemeIds = {R.id.nav_scheme_auto, R.id.nav_scheme_light, R.id.nav_scheme_dark};
+        int[] schemeIds = {R.id.nav_scheme_auto, R.id.nav_scheme_light, R.id.nav_scheme_dark, R.id.nav_scheme_space};
         scheme.check(schemeIds[config.getNavMapScheme()]);
         scheme.addOnButtonCheckedListener((group, id, checked) -> {
             if (!checked) {
                 return;
             }
             int chosen = id == R.id.nav_scheme_light ? AppConfig.NAV_MAP_LIGHT
-                    : id == R.id.nav_scheme_dark ? AppConfig.NAV_MAP_DARK : AppConfig.NAV_MAP_AUTO;
+                    : id == R.id.nav_scheme_dark ? AppConfig.NAV_MAP_DARK
+                    : id == R.id.nav_scheme_space ? AppConfig.NAV_MAP_SPACE : AppConfig.NAV_MAP_AUTO;
             config.setNavMapScheme(chosen);
             host.schemeChanged(chosen);
         });

@@ -302,6 +302,35 @@
         android:layout_gravity="bottom|end"
         android:layout_margin="16dp"
         android:orientation="vertical">
+        <!-- zoom: while guiding they move the map's own zoom closer or further (kept); otherwise a plain zoom -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/nav_zoom_in"
+            style="@style/Widget.Cam.IconButton"
+            android:layout_width="72dp"
+            android:layout_height="72dp"
+            android:layout_gravity="end"
+            android:layout_marginBottom="8dp"
+            android:contentDescription="@string/nav_zoom_in"
+            android:elevation="6dp"
+            android:stateListAnimator="@null"
+            app:backgroundTint="@color/surface"
+            app:cornerRadius="36dp"
+            app:icon="@drawable/ic_zoom_in"
+            app:iconSize="30dp" />
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/nav_zoom_out"
+            style="@style/Widget.Cam.IconButton"
+            android:layout_width="72dp"
+            android:layout_height="72dp"
+            android:layout_gravity="end"
+            android:layout_marginBottom="24dp"
+            android:contentDescription="@string/nav_zoom_out"
+            android:elevation="6dp"
+            android:stateListAnimator="@null"
+            app:backgroundTint="@color/surface"
+            app:cornerRadius="36dp"
+            app:icon="@drawable/ic_zoom_out"
+            app:iconSize="30dp" />
         <com.google.android.material.button.MaterialButton
             android:id="@+id/nav_float"
             style="@style/Widget.Cam.IconButton"

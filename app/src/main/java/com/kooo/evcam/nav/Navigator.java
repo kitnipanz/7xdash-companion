@@ -678,6 +678,18 @@ public final class Navigator {
         showHud();
     }
 
+    /**
+     * The HUD map one step closer ({@code in}) or further out, kept for next time. Works while the
+     * HUD map is hidden too (the next drive starts there). Returns the new setting in zoom levels.
+     */
+    public float zoomHud(Context context, boolean in) {
+        AppConfig config = new AppConfig(context);
+        float bias = AppConfig.clampZoomBias(config.getHudZoomBias() + (in ? NavMapPainter.ZOOM_STEP : -NavMapPainter.ZOOM_STEP));
+        config.setHudZoomBias(bias);
+        hudMap.zoomChanged();
+        return bias;
+    }
+
     /** Its place or size changed (the card's or the map's), or the map was switched: draw them again. */
     public void relayoutHud() {
         if (app == null) {

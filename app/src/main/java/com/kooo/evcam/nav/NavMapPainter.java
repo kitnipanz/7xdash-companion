@@ -47,6 +47,17 @@ final class NavMapPainter {
     private static final String TRAFFIC_JAM = "#D93025";
     private static final String OTHER_ROUTE = "#B4C6E4";
     private static final String OTHER_EDGE = "#8199BF";
+    /** Space scheme: a glowing teal route, amber and hot pink traffic, faint grey choices. */
+    private static final String SPACE_FREE = "#22E6D2";
+    private static final String SPACE_SLOW = "#FFB020";
+    private static final String SPACE_JAM = "#FF3B6B";
+    private static final String SPACE_EDGE = "#032026";
+    private static final String SPACE_CORE = "#E9FFFD";
+    private static final String SPACE_OTHER = "#3A5068";
+    private static final String SPACE_OTHER_EDGE = "#16222F";
+    /** Space: a lower camera, more of the city ahead, faded into the night at the horizon. */
+    private static final float SPACE_TILT = 60f;
+    private static final float HORIZON_FADE = 0.38f;
     /** Our zoom numbers count 256 px tiles; MapLibre's world is 512 px, one level closer. */
     private static final float ZOOM_SHIFT = 1f;
     private static final String COLOR = "color";
@@ -118,6 +129,15 @@ final class NavMapPainter {
     private int shownScheme = -1;
     private boolean shownDark;
     private String url;
+    /** Showing the space scheme: its own paint on the dark style, a glow on the route, a lower camera. */
+    private boolean space;
+    private float tilt = TILT;
+    /** Space: the night colour fading the far edge of the map. */
+    private View horizon;
+    /** The HUD's map: its own zoom setting, not the one of Navigation's own map. */
+    private boolean onHud;
+    /** Zoom step of the zoom buttons and the HUD zoom actions. */
+    static final float ZOOM_STEP = 0.5f;
     private boolean placed;
     /** The camera follows the car until the map is moved by hand. */
     boolean following = true;
@@ -158,7 +178,7 @@ final class NavMapPainter {
     /** A new style has no layers of ours: add them, then draw what is on again. */
     private void onStyle(Style loaded) {
         style = loaded;
-        NavMapColors.apply(loaded, shownDark);
+        NavMapColors.apply(loaded, shownDark, space);
         restSource = new GeoJsonSource("nav-rest");
         headSource = new GeoJsonSource("nav-head");
         // moved every frame: an update that waits for the map's worker leaves the line behind the car
@@ -170,13 +190,28 @@ final class NavMapPainter {
         loaded.addSource(othersSource);
         loaded.addSource(pinSource);
         loaded.addImage("nav-pin", pinIcon());
-        loaded.addLayer(line("nav-others-edge", "nav-others", 13f, PropertyFactory.lineColor(OTHER_EDGE)));
-        loaded.addLayer(line(OTHERS_LINE, "nav-others", 9f, PropertyFactory.lineColor(OTHER_ROUTE)));
-        loaded.addLayer(line("nav-rest-edge", "nav-rest", 15f, PropertyFactory.lineColor(ROUTE_EDGE)));
-        loaded.addLayer(line("nav-head-edge", "nav-head", 15f, PropertyFactory.lineColor(ROUTE_EDGE)));
+        loaded.addLayer(line("nav-others-edge", "nav-others", 13f, PropertyFactory.lineColor(space ? SPACE_OTHER_EDGE : OTHER_EDGE)));
+        loaded.addLayer(line(OTHERS_LINE, "nav-others", 9f, PropertyFactory.lineColor(space ? SPACE_OTHER : OTHER_ROUTE)));
         Expression color = Expression.toColor(Expression.get(COLOR));
+        if (space) {
+            // a soft halo of the route's own colour under it: the line glows on the night map
+            for (String part : new String[] {"rest", "head"}) {
+                loaded.addLayer(line("nav-" + part + "-glow", "nav-" + part, 40f, PropertyFactory.lineColor(color))
+                        .withProperties(PropertyFactory.lineBlur(22f), PropertyFactory.lineOpacity(0.45f)));
+            }
+        }
+        String edge = space ? SPACE_EDGE : ROUTE_EDGE;
+        loaded.addLayer(line("nav-rest-edge", "nav-rest", 15f, PropertyFactory.lineColor(edge)));
+        loaded.addLayer(line("nav-head-edge", "nav-head", 15f, PropertyFactory.lineColor(edge)));
         loaded.addLayer(line("nav-rest-line", "nav-rest", 10f, PropertyFactory.lineColor(color)));
         loaded.addLayer(line("nav-head-line", "nav-head", 10f, PropertyFactory.lineColor(color)));
+        if (space) {
+            // a bright thin core down the middle, like a lit tube
+            for (String part : new String[] {"rest", "head"}) {
+                loaded.addLayer(line("nav-" + part + "-core", "nav-" + part, 3f, PropertyFactory.lineColor(SPACE_CORE))
+                        .withProperties(PropertyFactory.lineBlur(1.5f), PropertyFactory.lineOpacity(0.75f)));
+            }
+        }
         loaded.addLayer(new SymbolLayer("nav-pin", "nav-pin").withProperties(
                 PropertyFactory.iconImage("nav-pin"),
                 PropertyFactory.iconAnchor(Property.ICON_ANCHOR_BOTTOM),
@@ -238,22 +273,65 @@ final class NavMapPainter {
      */
     void applyScheme(int scheme) {
         boolean dark = isDark(mapView.getContext(), scheme);
+        boolean nowSpace = scheme == AppConfig.NAV_MAP_SPACE;
         if (scheme != shownScheme || dark != shownDark) {
             shownScheme = scheme;
             shownDark = dark;
-            com.kooo.evcam.AppLog.i("NavMapPainter", "map colours: " + (dark ? "dark" : "light")
+            com.kooo.evcam.AppLog.i("NavMapPainter", "map colours: " + (nowSpace ? "space" : dark ? "dark" : "light")
                     + (scheme == AppConfig.NAV_MAP_AUTO ? " (head unit)" : ""));
         }
-        if (url == null || !url.equals(NavMap.styleUrl(dark))) {
+        boolean spaceChanged = nowSpace != space;
+        space = nowSpace;
+        tilt = space ? SPACE_TILT : TILT;
+        showHorizon();
+        // space and dark share TomTom's style: a change between them reloads it for the other paint
+        if (url == null || spaceChanged || !url.equals(NavMap.styleUrl(dark))) {
             url = NavMap.styleUrl(dark);
             style = null;
             map.setStyle(new Style.Builder().fromUri(url), this::onStyle);
         }
     }
 
+    /** Space: the night colour over the top of the map, so the far tiles melt into the dark sky. */
+    private void showHorizon() {
+        if (!space) {
+            if (horizon != null) {
+                horizon.setVisibility(View.GONE);
+            }
+            return;
+        }
+        if (horizon == null) {
+            horizon = new View(mapView.getContext());
+            horizon.setClickable(false);
+            horizon.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+            horizon.setBackground(new android.graphics.drawable.GradientDrawable(
+                    android.graphics.drawable.GradientDrawable.Orientation.TOP_BOTTOM,
+                    new int[] {0xF207101A, 0x9907101A, 0x0007101A}));
+            ((ViewGroup) mapView).addView(horizon, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0));
+            mapView.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or, ob) -> sizeHorizon());
+            if (car != null) {
+                car.bringToFront();
+            }
+        }
+        horizon.setVisibility(View.VISIBLE);
+        sizeHorizon();
+    }
+
+    private void sizeHorizon() {
+        if (horizon == null) {
+            return;
+        }
+        ViewGroup.LayoutParams lp = horizon.getLayoutParams();
+        int h = Math.round(mapView.getHeight() * HORIZON_FADE);
+        if (lp.height != h) {
+            lp.height = h;
+            horizon.setLayoutParams(lp);
+        }
+    }
+
     /** Whether this scheme means the dark map right now. */
     static boolean isDark(Context context, int scheme) {
-        return scheme == AppConfig.NAV_MAP_DARK || (scheme == AppConfig.NAV_MAP_AUTO && headUnitNight(context));
+        return scheme == AppConfig.NAV_MAP_DARK || scheme == AppConfig.NAV_MAP_SPACE || (scheme == AppConfig.NAV_MAP_AUTO && headUnitNight(context));
     }
 
     /** The head unit's own night mode (the system's, not this app's theme). */
@@ -343,7 +421,8 @@ final class NavMapPainter {
         goalRoute = onRoute ? s.route : null;
         goalAlong = onRoute ? s.progress.along : 0;
         goalBearing = bearing;
-        goalZoom = guiding ? zoomFor(s.carSpeedKmh, s.progress == null ? null : s.progress.toNext) + windowZoom(width) : 15;
+        goalZoom = guiding ? zoomFor(s.carSpeedKmh, s.progress == null ? null : s.progress.toNext) + windowZoom(width)
+                + zoomBias() : 15;
         this.guiding = guiding;
         if (!placed) {
             // straight to the car the first time, not a fly-in from the whole world
@@ -455,6 +534,37 @@ final class NavMapPainter {
         return 0.5f + (CAR_AT - 0.5f) / scale;
     }
 
+    /** This painter draws the HUD's map: it follows the HUD zoom setting. */
+    void forHud() {
+        onHud = true;
+    }
+
+    /** The zoom setting this map follows while guiding, in zoom levels (+ closer). */
+    private float zoomBias() {
+        AppConfig config = new AppConfig(mapView.getContext());
+        return onHud ? config.getHudZoomBias() : config.getNavZoomBias();
+    }
+
+    /**
+     * A zoom button: while guiding it moves the map's own zoom closer or further, and remembers
+     * that; otherwise it zooms the map as a pinch would.
+     */
+    void zoomBy(float levels) {
+        if (guiding && following) {
+            AppConfig config = new AppConfig(mapView.getContext());
+            float before = zoomBias();
+            float after = AppConfig.clampZoomBias(before + levels);
+            if (onHud) {
+                config.setHudZoomBias(after);
+            } else {
+                config.setNavZoomBias(after);
+            }
+            goalZoom += after - before;
+            return;
+        }
+        map.animateCamera(CameraUpdateFactory.zoomBy(levels), 250);
+    }
+
     /** The owner is going: no more frames. */
     void release() {
         stopFollowing();
@@ -517,10 +627,10 @@ final class NavMapPainter {
         float scale = viewScale(curZoom, camZoom);
         setViewScale(scale);
         float carAt = carAtInView(scale);
-        double ahead = h <= 0 ? 0 : aheadMeters(curLat, camZoom, h / (density * NavMap.SCALE), carAt) * aheadScale;
+        double ahead = h <= 0 ? 0 : aheadMeters(curLat, camZoom, h / (density * NavMap.SCALE), carAt, tilt) * aheadScale;
         double[] target = Geo.offset(curLat, curLng, curBearing, ahead);
         map.moveCamera(CameraUpdateFactory.newCameraPosition(new CameraPosition.Builder()
-                .target(new LatLng(target[0], target[1])).bearing(curBearing).tilt(TILT).zoom(camZoom - ZOOM_SHIFT)
+                .target(new LatLng(target[0], target[1])).bearing(curBearing).tilt(tilt).zoom(camZoom - ZOOM_SHIFT)
                 .padding(0, 0, 0, 0).build()));
         placeCar();
         lineToCar();
@@ -574,7 +684,7 @@ final class NavMapPainter {
         curBearing = bearing;
         curZoom = zoom;
         map.moveCamera(CameraUpdateFactory.newCameraPosition(new CameraPosition.Builder()
-                .target(at).bearing(guiding ? bearing : 0).tilt(guiding ? TILT : 0).zoom(zoom - ZOOM_SHIFT)
+                .target(at).bearing(guiding ? bearing : 0).tilt(guiding ? tilt : 0).zoom(zoom - ZOOM_SHIFT)
                 .padding(0, 0, 0, 0).build()));
     }
 
@@ -609,8 +719,12 @@ final class NavMapPainter {
      * height: the ground under that many screen pixels at this zoom, stretched by the tilt.
      */
     static double aheadMeters(double lat, float zoom, float heightPx, float carAt) {
+        return aheadMeters(lat, zoom, heightPx, carAt, TILT);
+    }
+
+    static double aheadMeters(double lat, float zoom, float heightPx, float carAt, float tilt) {
         double metresPerPx = 156543.03392 * Math.cos(Math.toRadians(lat)) / Math.pow(2, zoom);
-        return (carAt - 0.5) * heightPx * metresPerPx / Math.cos(Math.toRadians(TILT));
+        return (carAt - 0.5) * heightPx * metresPerPx / Math.cos(Math.toRadians(tilt));
     }
 
     /**
@@ -686,6 +800,14 @@ final class NavMapPainter {
         return level == NavRoute.JAM ? TRAFFIC_JAM : level == NavRoute.SLOW ? TRAFFIC_SLOW : ROUTE_BLUE;
     }
 
+    /** The traffic colour in the scheme shown: neon on the space map. */
+    private String color(byte level) {
+        if (!space) {
+            return trafficColor(level);
+        }
+        return level == NavRoute.JAM ? SPACE_JAM : level == NavRoute.SLOW ? SPACE_SLOW : SPACE_FREE;
+    }
+
     /** The line through {@code pts}, coloured by {@code levels} (one per piece between two points). */
     private void drawLine(List<LatLng> pts, byte[] levels) {
         if (pts.size() < 2) {
@@ -696,7 +818,7 @@ final class NavMapPainter {
         head = new ArrayList<>();
         head.add(point(pts.get(0)));
         head.add(point(pts.get(1)));
-        headColor = trafficColor(levels.length > 0 ? levels[0] : NavRoute.FREE);
+        headColor = color(levels.length > 0 ? levels[0] : NavRoute.FREE);
         drawHead();
         List<Feature> runs = new ArrayList<>();
         int i = 1;
@@ -711,7 +833,7 @@ final class NavMapPainter {
                 run.add(point(pts.get(k)));
             }
             Feature f = Feature.fromGeometry(LineString.fromLngLats(run));
-            f.addStringProperty(COLOR, trafficColor(level));
+            f.addStringProperty(COLOR, color(level));
             runs.add(f);
             i = j;
         }

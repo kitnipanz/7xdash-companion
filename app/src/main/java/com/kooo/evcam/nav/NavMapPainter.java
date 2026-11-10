@@ -92,8 +92,6 @@ final class NavMapPainter {
     private static final float BEARING_S = 0.5f;
     private static final float ZOOM_IN_S = 0.9f;
     private static final float ZOOM_OUT_S = 2.2f;
-    /** About 30 camera moves a second: smooth, and light on the head unit (and the HUD). */
-    private static final float FRAME_MIN_S = 0.03f;
 
     private final MapLibreMap map;
     private final View mapView;
@@ -473,14 +471,29 @@ final class NavMapPainter {
             if (!ticking) {
                 return;
             }
+            boolean yielding = MapPace.yielding();
+            if (yielding != paceYielding) {
+                setPace(yielding);
+            }
             float dt = lastFrameNanos == 0 ? 0.016f : Math.min(0.1f, (now - lastFrameNanos) / 1e9f);
-            if (lastFrameNanos == 0 || dt >= FRAME_MIN_S) {
+            // a little under the wanted gap: frames come on the screen's beat, not exactly on ours
+            if (lastFrameNanos == 0 || dt >= MapPace.frameMinSeconds(yielding) - 0.004f) {
                 lastFrameNanos = now;
                 step(dt);
             }
             android.view.Choreographer.getInstance().postFrameCallback(this);
         }
     };
+
+    /** The map engine draws at the pace the camera moves: slower while the side view shows ({@link MapPace}). */
+    private boolean paceYielding;
+
+    private void setPace(boolean yielding) {
+        paceYielding = yielding;
+        if (mapView instanceof org.maplibre.android.maps.MapView) {
+            ((org.maplibre.android.maps.MapView) mapView).setMaximumFps(MapPace.maxFps(yielding));
+        }
+    }
 
     private void startFollowing() {
         if (!ticking) {
@@ -494,6 +507,10 @@ final class NavMapPainter {
         if (ticking) {
             ticking = false;
             android.view.Choreographer.getInstance().removeFrameCallback(frame);
+        }
+        if (paceYielding) {
+            // nothing checks the pace once the frames stop: back to full before a pinch or a fly-to
+            setPace(false);
         }
         setViewScale(1f);
     }

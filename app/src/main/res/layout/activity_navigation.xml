@@ -65,19 +65,6 @@
                 android:textAppearance="@style/TextAppearance.Cam.Row"
                 android:textColor="@color/text_primary"
                 android:textColorHint="@color/text_hint" />
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:background="@drawable/bg_segment"
-                android:paddingStart="10dp"
-                android:paddingTop="2dp"
-                android:paddingEnd="10dp"
-                android:paddingBottom="2dp"
-                android:text="@string/nav_beta"
-                android:textAppearance="@style/TextAppearance.Cam.Caption"
-                android:textColor="@color/energy_text"
-                android:textStyle="bold" />
         </LinearLayout>
 
         <!-- search results and the place shared from the iPhone -->

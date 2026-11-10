@@ -15,7 +15,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
- * Navigation (beta) for 7xDash web, through the Car Link: the state the car tells the hub
+ * Navigation for 7xDash web, through the Car Link: the state the car tells the hub
  * ({@code {"t":"nav",…}}: whether it takes places, where it is going, the trip, how the last place
  * went) and the places the web sends ({@code {"t":"place","text":…}}), which go the same way as
  * one shared from the iPhone ({@link Trip#receive}): a link, coordinates, or a place name.
@@ -36,7 +36,7 @@ public final class NavRemote {
     private NavRemote() {
     }
 
-    /** Takes places from the web: beta features on, Navigation taking shared places. */
+    /** Takes places from the web: Navigation taking shared places. */
     public static boolean supported(Context context) {
         return Navigator.active(context) && new AppConfig(context).isNavShareEnabled();
     }

@@ -56,6 +56,8 @@ public final class NavFloatWindow implements Navigator.Listener {
     private static final int MIN_W_DP = 300;
     private static final int MIN_H_DP = 220;
     private static final int BAR_DP = 68;
+    private static final int GRIP_DP = 64;
+    private static final int ZOOM_DP = 60;
 
     private static final NavFloatWindow INSTANCE = new NavFloatWindow();
 
@@ -151,6 +153,24 @@ public final class NavFloatWindow implements Navigator.Listener {
         at.setMargins(Math.round(10 * density), 0, 0, Math.round(10 * density));
         root.addView(recenter, at);
 
+        // zoom, as on the full screen: a row at the bottom, left of the resize grip
+        LinearLayout zoom = new LinearLayout(context);
+        zoom.setOrientation(LinearLayout.HORIZONTAL);
+        int z = Math.round(ZOOM_DP * density);
+        int zp = Math.round(15 * density);
+        ImageView out = round(R.drawable.ic_zoom_out, R.string.nav_zoom_out, v -> zoom(-NavMapPainter.ZOOM_STEP));
+        ImageView in = round(R.drawable.ic_zoom_in, R.string.nav_zoom_in, v -> zoom(NavMapPainter.ZOOM_STEP));
+        out.setPadding(zp, zp, zp, zp);
+        in.setPadding(zp, zp, zp, zp);
+        LinearLayout.LayoutParams outAt = new LinearLayout.LayoutParams(z, z);
+        outAt.rightMargin = Math.round(8 * density);
+        zoom.addView(out, outAt);
+        zoom.addView(in, new LinearLayout.LayoutParams(z, z));
+        FrameLayout.LayoutParams zoomAt = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT,
+                FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM | Gravity.END);
+        zoomAt.setMargins(0, 0, Math.round((GRIP_DP + 4) * density), Math.round(10 * density));
+        root.addView(zoom, zoomAt);
+
         battery = new TextView(context);
         battery.setTextAppearance(R.style.TextAppearance_Cam_Caption);
         battery.setTypeface(battery.getTypeface(), android.graphics.Typeface.BOLD);
@@ -162,7 +182,7 @@ public final class NavFloatWindow implements Navigator.Listener {
         batteryAt.setMargins(Math.round(10 * density), bar + Math.round(8 * density), 0, 0);
         root.addView(battery, batteryAt);
 
-        int g = Math.round(64 * density);
+        int g = Math.round(GRIP_DP * density);
         View grip = new Grip(context);
         grip.setContentDescription(context.getString(R.string.nav_float_resize));
         grip.setOnTouchListener(new ResizeTouch());
@@ -266,6 +286,13 @@ public final class NavFloatWindow implements Navigator.Listener {
         }
         com.kooo.evcam.blackbox.SlowStep.check("floating map update (" + s.phase + ")", t0,
                 android.os.SystemClock.uptimeMillis());
+    }
+
+    /** A zoom button: while guiding the map's own zoom moves (and is kept); otherwise a plain zoom. */
+    private void zoom(float levels) {
+        if (painter != null) {
+            painter.zoomBy(levels);
+        }
     }
 
     /** Battery at arrival as a chip on the map: white when fine, orange when low, red when short. */

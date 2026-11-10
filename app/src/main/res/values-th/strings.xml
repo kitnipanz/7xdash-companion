@@ -1038,7 +1038,7 @@
     <!-- Interface section · first-launch side question · record unavailable · status bar -->
     <string name="set_section_interface">อินเทอร์เฟซ</string>
     <string name="set_beta_features_title">ฟีเจอร์เบต้า</string>
-    <string name="set_beta_features_summary">แสดงและเปิดใช้ฟีเจอร์ที่ยังทดลองในรถอยู่ ตอนนี้มี: จอดไว้ที่ไหน (การ์ดในหน้าหลัก และอ่านป้ายเมื่อเข้าเกียร์ P) แบตเมื่อถึงที่หมาย นำทาง และ OBD2 ปุ่มลัดจอดไว้ที่ไหนยังใช้ได้</string>
+    <string name="set_beta_features_summary">แสดงและเปิดใช้ฟีเจอร์ที่ยังทดลองในรถอยู่ ตอนนี้มี: จอดไว้ที่ไหน (การ์ดในหน้าหลัก และอ่านป้ายเมื่อเข้าเกียร์ P) แบตเมื่อถึงที่หมาย และ OBD2 ปุ่มลัดจอดไว้ที่ไหนยังใช้ได้</string>
     <string name="set_usage_stats_title">สถิติการใช้งาน (ไม่ระบุตัวตน)</string>
     <string name="set_usage_stats_summary">ฟีเจอร์ที่ใช้ เช่น การเปิดแอป การ์ดหน้าหลัก หน้าที่เปิด การทำงานที่ใช้และกดจากตรงไหน ปุ่มที่ตั้งค่าไว้ การบันทึก และการควบคุมจาก 7xDash เว็บ ใช้แค่รหัสสุ่มที่สร้างตอนติดตั้งแอป ไม่มีอีเมล ป้ายทะเบียน หรือตำแหน่ง ประมาณ 20–50 KB ต่อวัน</string>
     <string name="usage_consent_title">ช่วยให้ 7xDash ดีขึ้นไหม?</string>
@@ -1701,11 +1701,10 @@
     <string name="macro_pad_clear">ล้าง</string>
     <string name="shortcut_action_macro_pad">เปิด / ปิดแผงปุ่มลัด</string>
     <string name="shortcut_action_nav_float">เปิด / ปิดแผนที่ลอย</string>
-    <!-- Navigation (beta) -->
+    <!-- Navigation -->
     <string name="nav_guide_running">กำลังนำทาง: อัปเดตตำแหน่งของคุณอยู่</string>
     <string name="nav_title">นำทาง</string>
-    <string name="nav_beta">BETA</string>
-    <string name="home_card_nav_sub">เบต้า · นำทางด้วย TomTom</string>
+    <string name="home_card_nav_sub">นำทางด้วย TomTom</string>
     <string name="nav_search_hint">ค้นหาสถานที่</string>
     <string name="nav_searching">กำลังค้นหา…</string>
     <string name="nav_no_results">ไม่พบสถานที่</string>
@@ -1713,7 +1712,6 @@
     <string name="nav_shared_sub">ส่งมาจาก iPhone</string>
     <string name="nav_dropped_pin">หมุดที่ปักไว้</string>
     <string name="nav_idle_hint">ค้นหาสถานที่ หรือแตะค้างบนแผนที่</string>
-    <string name="nav_need_beta">เปิด การตั้งค่า → อินเทอร์เฟซ → ฟีเจอร์เบต้า ก่อน</string>
     <string name="nav_routing">กำลังหาเส้นทางที่ดีที่สุด…</string>
     <string name="nav_waiting_gps">กำลังรอ GPS จากรถ…</string>
     <string name="nav_start">เริ่ม</string>

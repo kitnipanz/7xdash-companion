@@ -1,5 +1,33 @@
 # Changelog
 
+## [1.8.22] - 2026-11-10
+
+Stable release of 1.8.20-beta and 1.8.21-beta.
+
+### Navigation
+- **Navigation is no longer beta.** It works without Beta features turned on, and its Home card sits with the other regular cards. Battery at arrival from the iPhone, Where I parked and OBD2 are still beta.
+- **Zoom buttons on the floating map**, as on the full screen. While guiding they move the map closer or further and keep it for the next drive.
+
+### Blind spot
+- **Smoother blind-spot camera with the floating map open.** While the side view shows, the map moves 12 times a second instead of 30, so the camera picture no longer stutters. It goes back to full speed when the side view closes.
+- **The red edge stays in step with the ambient light**, also when the head unit is busy.
+- **The car's ambient light turns red on time.** When the blink starts with the ambient light off, the red now goes before the power, so the light comes on red instead of in its old colour for a quarter second.
+
+## [1.8.21-beta] - 2026-11-10
+
+### Navigation
+- **Navigation is no longer beta.** It works without Beta features turned on, and its Home card sits with the other regular cards. Battery at arrival from the iPhone, Where I parked and OBD2 are still beta.
+
+## [1.8.20-beta] - 2026-11-10
+
+### Blind spot
+- **Smoother blind-spot camera with the floating map open.** While the side view shows, the map moves 12 times a second instead of 30, so the camera picture no longer stutters. It goes back to full speed when the side view closes.
+- **The red edge stays in step with the ambient light**, also when the head unit is busy: it turns red on the first camera frame after the shared blink clock does.
+- **The car's ambient light turns red on time.** When the blink starts with the ambient light off, the red now goes before the power, so the light comes on red instead of in its old colour for a quarter second.
+
+### Navigation
+- **Zoom buttons on the floating map**, as on the full screen. While guiding they move the map closer or further and keep it for the next drive.
+
 ## [1.8.19] - 2026-11-10
 
 Stable release of 1.8.14-beta to 1.8.18-beta.

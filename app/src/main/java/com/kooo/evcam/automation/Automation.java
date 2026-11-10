@@ -6,6 +6,7 @@ import android.os.Looper;
 import android.os.SystemClock;
 
 import com.kooo.evcam.AppConfig;
+import com.kooo.evcam.R;
 import com.kooo.evcam.UserExit;
 import com.kooo.evcam.analytics.Analytics;
 import com.kooo.evcam.blackbox.BlackBox;
@@ -100,7 +101,7 @@ public final class Automation implements Telemetry.Listener {
     /** The Try button: run these steps now, whatever the car is doing. */
     public static void tryNow(List<AutomationRule.Step> steps) {
         if (installed != null) {
-            installed.runner.run(steps, true);
+            installed.runner.run(steps, true, null);
         }
     }
 
@@ -124,10 +125,12 @@ public final class Automation implements Telemetry.Listener {
             return;
         }
         for (AutomationRule rule : new ArrayList<>(fired)) {
-            BlackBox.note("Automation: " + rule.trigger + " " + rule.value + " ran " + rule.steps.size() + " steps");
+            BlackBox.note("Automation: " + rule.trigger + " " + rule.value + " if " + rule.conditions.size()
+                    + " conditions ran " + rule.steps.size() + " steps");
             Analytics.event("automation_ran", "trigger", rule.trigger);
             ranAt.put(rule.id, System.currentTimeMillis());
-            runner.run(rule.steps, false);
+            runner.run(rule.steps, false, app.getString(R.string.automation_sentence,
+                    AutomationActivity.whenText(app, rule), AutomationAction.describeAll(app, rule.steps)));
         }
     }
 
@@ -143,6 +146,7 @@ public final class Automation implements Telemetry.Listener {
         s.rain = readings.bool(Signal.RAIN);
         s.at = SystemClock.elapsedRealtime();
         s.justBooted = s.at < BOOT_MS;
+        s.dayBit = AutomationCondition.dayBit(java.util.Calendar.getInstance().get(java.util.Calendar.DAY_OF_WEEK));
         if (located) {
             s.lat = car.latitude;
             s.lng = car.longitude;
@@ -151,11 +155,14 @@ public final class Automation implements Telemetry.Listener {
         return s;
     }
 
-    /** Does a rule that is on wait to arrive at or leave a place? */
+    /** Does a rule that is on wait to arrive at or leave a place, or only run at or away from one? */
     private boolean wantsPlace() {
         for (AutomationRule rule : rules) {
             AutomationTrigger trigger = rule.trigger();
             if (rule.enabled && trigger != null && trigger.isPlace()) {
+                return true;
+            }
+            if (rule.enabled && rule.condition(AutomationCondition.Group.PLACE) != null) {
                 return true;
             }
         }

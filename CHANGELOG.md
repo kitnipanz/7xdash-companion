@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.16-beta] - 2026-11-10
+
+### Automation
+- **And only if.** Under When, pick what must also be true for the automation to run: days (Workdays, Weekend or single days), dark or light, raining or not, at or away from a saved place. For example: Leave Home, on workdays → Navigate to Office. Something the car has not told yet, such as a GPS fix, counts as not true.
+- **A notice when an automation runs** by itself: what happened and what it did, and anything that failed.
+- **New examples:** leave home → tailgate opens to 50%; rain starts while it is dark → rear fog light on; it gets dark → mood light on.
+
 ## [1.8.15-beta] - 2026-11-10
 
 ### Automation

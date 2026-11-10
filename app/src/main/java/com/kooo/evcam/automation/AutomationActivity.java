@@ -160,7 +160,16 @@ public class AutomationActivity extends AppCompatActivity {
                 DateFormat.getTimeFormat(this).format(ran));
     }
 
+    /** The trigger, then each condition: "Leave Home and on workdays". */
     static String whenText(Context context, AutomationRule rule) {
+        String out = triggerText(context, rule);
+        for (AutomationRule.Condition condition : rule.conditions) {
+            out = context.getString(R.string.automation_and, out, AutomationCondition.describe(context, condition));
+        }
+        return out;
+    }
+
+    private static String triggerText(Context context, AutomationRule rule) {
         AutomationTrigger trigger = rule.trigger();
         if (trigger.isPlace()) {
             SavedPlaces.Place place = SavedPlaces.find(SavedPlaces.load(context), rule.value);

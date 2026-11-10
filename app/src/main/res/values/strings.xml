@@ -1927,6 +1927,15 @@ Then reopen this app.</string>
     <string name="automation_temp_synced">Synced</string>
     <string name="automation_temp_dual">Dual zone</string>
     <string name="automation_do_glovebox">Glovebox (parked only)</string>
+    <string name="automation_do_tailgate_height">Tailgate opening height</string>
+    <string name="automation_tailgate_bad">Tailgate height must be 50 to 100%</string>
+    <string name="automation_do_rear_fog">Rear fog light</string>
+    <string name="automation_do_lock_feedback">Lock / unlock feedback</string>
+    <string name="automation_lock_hazard">Hazard lights only</string>
+    <string name="automation_lock_hazard_sound">Hazard lights + sound</string>
+    <string name="automation_lock_hazard_headlight">Hazard lights + headlights</string>
+    <string name="automation_lock_hazard_signal">Hazard lights + light signal</string>
+    <string name="automation_lock_feedback_missing">This car has no lock feedback setting</string>
     <string name="automation_open">Open</string>
     <string name="automation_glovebox_parked">glovebox opens only in P</string>
     <string name="automation_paused">Off. Nothing below runs until you turn this on.</string>

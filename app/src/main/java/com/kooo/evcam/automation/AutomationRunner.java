@@ -104,6 +104,12 @@ final class AutomationRunner {
                 return CarControls.tempZones(app, AutomationAction.DUAL.equals(step.choice));
             case GLOVEBOX:
                 return CarControls.openGlovebox(app);
+            case REAR_FOG:
+                return CarControls.rearFog(app, AutomationAction.ON.equals(step.choice));
+            case LOCK_FEEDBACK:
+                return CarControls.lockFeedback(app, step.choice);
+            case TAILGATE_HEIGHT:
+                return CarControls.tailgateHeight(app, step.choice);
             case NAVIGATE:
                 return navigate(step.choice);
             case SHORTCUT:

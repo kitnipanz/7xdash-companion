@@ -27,6 +27,12 @@ public enum AutomationAction {
     TEMP_ZONES("temp_zones", R.string.automation_do_temp_zones, R.drawable.ic_automation_temp_zones),
     /** Only in P ({@link CarControls#openGlovebox}). */
     GLOVEBOX("glovebox", R.string.automation_do_glovebox, R.drawable.ic_automation_glovebox),
+    /** How far the power tailgate opens, 50 to 100 percent; the choice is the percent. */
+    TAILGATE_HEIGHT("tailgate_height", R.string.automation_do_tailgate_height, R.drawable.ic_automation_tailgate),
+    /** Rear fog lamp on or off. */
+    REAR_FOG("rear_fog", R.string.automation_do_rear_fog, R.drawable.ic_fog),
+    /** What the car does outside when it locks or unlocks; the choice is the car's value. */
+    LOCK_FEEDBACK("lock_feedback", R.string.automation_do_lock_feedback, R.drawable.ic_automation_lock_feedback),
     /** Start guiding to a saved place; the choice is its id. Leaves a trip already on alone. */
     NAVIGATE("navigate", R.string.automation_do_navigate, R.drawable.ic_navigation),
     /** Any shortcut action, by its stored key. */
@@ -57,6 +63,12 @@ public enum AutomationAction {
             R.string.automation_color_cyan, R.string.automation_color_blue, R.string.automation_color_purple,
             R.string.automation_color_pink};
     private static final int[] DIM_LEVELS = {30, 50, 70, 90};
+    /** The car's values for lock feedback, in the order its own settings screen shows them. */
+    static final int[] LOCK_FEEDBACK_VALUES = {0, 4, 2, 3};
+    private static final int[] LOCK_FEEDBACK_NAMES = {R.string.automation_lock_hazard,
+            R.string.automation_lock_hazard_sound, R.string.automation_lock_hazard_headlight,
+            R.string.automation_lock_hazard_signal};
+    static final int[] TAILGATE_LEVELS = {50, 60, 70, 80, 90, 100};
 
     public final String key;
     public final int labelRes;
@@ -88,6 +100,7 @@ public enum AutomationAction {
                 break;
             case MOOD_LIGHT:
             case AC:
+            case REAR_FOG:
                 addOnOff(context, out);
                 break;
             case TEMP_ZONES:
@@ -96,6 +109,16 @@ public enum AutomationAction {
                 break;
             case GLOVEBOX:
                 out.add(new Option(OPEN, context.getString(R.string.automation_open), -1));
+                break;
+            case TAILGATE_HEIGHT:
+                for (int level : TAILGATE_LEVELS) {
+                    out.add(new Option(Integer.toString(level), context.getString(R.string.automation_percent, level), -1));
+                }
+                break;
+            case LOCK_FEEDBACK:
+                for (int i = 0; i < LOCK_FEEDBACK_VALUES.length; i++) {
+                    out.add(new Option(Integer.toString(LOCK_FEEDBACK_VALUES[i]), context.getString(LOCK_FEEDBACK_NAMES[i]), -1));
+                }
                 break;
             case MOOD_COLOR:
                 addColors(context, out);

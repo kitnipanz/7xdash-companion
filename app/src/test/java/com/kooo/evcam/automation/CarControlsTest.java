@@ -1,0 +1,39 @@
+package com.kooo.evcam.automation;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+
+import org.junit.Test;
+
+public class CarControlsTest {
+
+    @Test
+    public void everyOfferedLevelIsAccepted() {
+        for (int level : AutomationAction.TAILGATE_LEVELS) {
+            assertEquals(Integer.valueOf(level), CarControls.tailgatePercent(Integer.toString(level)));
+        }
+    }
+
+    @Test
+    public void outOfRangeOrBadChoiceIsRefused() {
+        assertNull(CarControls.tailgatePercent("49"));
+        assertNull(CarControls.tailgatePercent("101"));
+        assertNull(CarControls.tailgatePercent("open"));
+        assertNull(CarControls.tailgatePercent(null));
+    }
+
+    @Test
+    public void storedKeyRoundTrips() {
+        assertEquals(AutomationAction.TAILGATE_HEIGHT, AutomationAction.fromKey("tailgate_height"));
+    }
+
+    @Test
+    public void lockFeedbackTakesOnlyTheCarsValues() {
+        for (int value : AutomationAction.LOCK_FEEDBACK_VALUES) {
+            assertEquals(Integer.valueOf(value), CarControls.lockFeedbackValue(Integer.toString(value)));
+        }
+        assertNull(CarControls.lockFeedbackValue("1"));
+        assertNull(CarControls.lockFeedbackValue("x"));
+        assertNull(CarControls.lockFeedbackValue(null));
+    }
+}

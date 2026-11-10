@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.15-beta] - 2026-11-10
+
+### Automation
+- **Tailgate opening height.** Set how far the power tailgate opens: 50, 60, 70, 80, 90 or 100%.
+- **Lock / unlock feedback.** Choose what the car does outside on lock and unlock: hazard lights only, or with sound, headlights or the light signal, the same choices as the car's own settings.
+- **Rear fog light.** Turn it on or off.
+
 ## [1.8.14-beta] - 2026-11-10
 
 ### OBD2 (beta)

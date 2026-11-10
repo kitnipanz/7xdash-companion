@@ -1902,6 +1902,15 @@
     <string name="automation_temp_synced">เท่ากัน</string>
     <string name="automation_temp_dual">แยกกัน</string>
     <string name="automation_do_glovebox">ช่องเก็บของหน้ารถ (เฉพาะตอนจอด)</string>
+    <string name="automation_do_tailgate_height">ความสูงการเปิดฝาท้าย</string>
+    <string name="automation_tailgate_bad">ความสูงฝาท้ายต้องอยู่ระหว่าง 50 ถึง 100%</string>
+    <string name="automation_do_rear_fog">ไฟตัดหมอกหลัง</string>
+    <string name="automation_do_lock_feedback">การตอบสนองภายนอกสำหรับการล็อก/ปลดล็อก</string>
+    <string name="automation_lock_hazard">ไฟฉุกเฉินเท่านั้น</string>
+    <string name="automation_lock_hazard_sound">ไฟฉุกเฉิน + เอฟเฟกต์เสียง</string>
+    <string name="automation_lock_hazard_headlight">ไฟฉุกเฉิน + ไฟหน้า</string>
+    <string name="automation_lock_hazard_signal">ไฟฉุกเฉิน + สัญญาณไฟ</string>
+    <string name="automation_lock_feedback_missing">รถคันนี้ไม่มีการตั้งค่าการตอบสนองการล็อก</string>
     <string name="automation_open">เปิด</string>
     <string name="automation_glovebox_parked">เปิดช่องเก็บของได้เฉพาะเกียร์ P</string>
     <string name="automation_paused">ปิดอยู่ รายการด้านล่างจะยังไม่ทำงานจนกว่าจะเปิดสวิตช์นี้</string>

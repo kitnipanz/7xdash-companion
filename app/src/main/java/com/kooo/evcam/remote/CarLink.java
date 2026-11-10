@@ -180,7 +180,7 @@ public final class CarLink {
     }
 
     /**
-     * Tells the hub Navigation's state (beta): whether it takes places from the web, where it is
+     * Tells the hub Navigation's state: whether it takes places from the web, where it is
      * going, the trip, how the last place went. Only when it changed, unless {@code force}.
      */
     private void sendNav(WebSocket ws, boolean force) {
@@ -430,7 +430,7 @@ public final class CarLink {
                             com.kooo.evcam.blackbox.BlackBox.note("car-link: volume " + (step > 0 ? "up" : "down"));
                         }
                     } else if ("place".equals(type)) {
-                        // Navigation (beta): a link or a place name typed on 7xDash web
+                        // Navigation: a link or a place name typed on 7xDash web
                         String place = j.optString("text");
                         handler.post(() -> com.kooo.evcam.nav.NavRemote.place(context, place,
                                 () -> sendNav(socket, true)));

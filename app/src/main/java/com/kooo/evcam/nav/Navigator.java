@@ -23,7 +23,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
- * Turn-by-turn navigation (beta): a route with traffic from the car's GPS to
+ * Turn-by-turn navigation: a route with traffic from the car's GPS to
  * a place ({@link TomTomApi}), followed fix by fix ({@link Guidance}), with the turns on screen and
  * kept on the HUD ({@link HudTurnWindow}). No spoken turns: the head unit's speech engine failed
  * and its retries froze navigation. Leaving
@@ -178,9 +178,9 @@ public final class Navigator {
     private Navigator() {
     }
 
-    /** Is the feature allowed: beta features on. */
+    /** Is the feature allowed. Always, since it left beta (1.8.20); it still needs a TomTom key ({@link #hasKey}). */
     public static boolean active(Context context) {
-        return new AppConfig(context).isBetaFeaturesEnabled();
+        return true;
     }
 
     /** True when the build has a TomTom key. */

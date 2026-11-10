@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.8.21-beta] - 2026-11-10
+
+### Navigation
+- **Navigation is no longer beta.** It works without Beta features turned on, and its Home card sits with the other regular cards. Battery at arrival from the iPhone, Where I parked and OBD2 are still beta.
+
 ## [1.8.20-beta] - 2026-11-10
 
 ### Blind spot

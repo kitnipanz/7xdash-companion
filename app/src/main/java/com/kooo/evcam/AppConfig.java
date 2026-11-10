@@ -3151,7 +3151,7 @@ public class AppConfig {
     }
 
 
-    // ==================== Navigation (beta) ====================
+    // ==================== Navigation ====================
 
     private static final String KEY_NAV_VOICE = "nav_voice";
     private static final String KEY_NAV_HUD = "nav_hud";

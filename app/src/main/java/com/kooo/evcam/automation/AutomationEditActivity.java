@@ -401,7 +401,7 @@ public class AutomationEditActivity extends AppCompatActivity {
         drawShortcuts();
     }
 
-    /** Navigation is a beta feature and needs the TomTom key. */
+    /** Navigation needs the TomTom key. */
     private boolean offered(AutomationAction action) {
         return action != AutomationAction.NAVIGATE || (Navigator.active(this) && Navigator.hasKey());
     }

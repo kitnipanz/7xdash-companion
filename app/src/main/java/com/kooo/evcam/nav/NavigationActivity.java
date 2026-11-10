@@ -32,7 +32,7 @@ import org.maplibre.android.maps.MapLibreMap;
 import org.maplibre.android.maps.SupportMapFragment;
 
 /**
- * Navigation (beta): search a place (or take the one shared from the iPhone, or hold on the map),
+ * Navigation: search a place (or take the one shared from the iPhone, or hold on the map),
  * see the route with its time, distance and battery at arrival, then Start for turn-by-turn.
  * The map is Google's (Maps SDK, needs Google Play services); without it the screen still
  * guides, just with no map. The guiding itself is {@link Navigator}'s and goes on when this closes.
@@ -568,8 +568,7 @@ public class NavigationActivity extends AppCompatActivity implements Navigator.L
             case IDLE:
                 place.setText(R.string.nav_title);
                 summary.setText("");
-                status.setText(!Navigator.active(this) ? R.string.nav_need_beta
-                        : !Navigator.hasKey() ? R.string.nav_error_no_key : R.string.nav_idle_hint);
+                status.setText(!Navigator.hasKey() ? R.string.nav_error_no_key : R.string.nav_idle_hint);
                 return;
             case ROUTING:
                 place.setText(placeName(s.destination));

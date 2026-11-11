@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.8.24] - 2026-11-11
+
+Stable release of 1.8.23-beta.
+
+### Car
+- **Sunroof shade**, a new Automation action: Closed, 25%, 50%, 75% or Open. For example: it gets hot, or you leave home → sunroof shade closed.
+- **Sunroof shade buttons:** open, close, and open / close on one button, for a steering wheel button or the Macro pad.
+
+## [1.8.23-beta] - 2026-11-11
+
+### Car
+- **Sunroof shade**, a new Automation action: Closed, 25%, 50%, 75% or Open. For example: it gets hot, or you leave home → sunroof shade closed.
+- **Sunroof shade buttons:** open, close, and open / close on one button, for a steering wheel button or the Macro pad.
+- Not tried on the car yet: tell us if the shade does not move, or only moves all the way.
+
 ## [1.8.22] - 2026-11-10
 
 Stable release of 1.8.20-beta and 1.8.21-beta.

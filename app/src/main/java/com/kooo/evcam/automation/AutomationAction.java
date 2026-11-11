@@ -29,6 +29,8 @@ public enum AutomationAction {
     GLOVEBOX("glovebox", R.string.automation_do_glovebox, R.drawable.ic_automation_glovebox),
     /** How far the power tailgate opens, 50 to 100 percent; the choice is the percent. */
     TAILGATE_HEIGHT("tailgate_height", R.string.automation_do_tailgate_height, R.drawable.ic_automation_tailgate),
+    /** How far the sunroof shade is open, 0 (closed) to 100; the choice is the percent ({@link SunShade}). */
+    SUNROOF_SHADE("sunroof_shade", R.string.automation_do_sunroof_shade, R.drawable.ic_sunshade),
     /** Rear fog lamp on or off. */
     REAR_FOG("rear_fog", R.string.automation_do_rear_fog, R.drawable.ic_fog),
     /** What the car does outside when it locks or unlocks; the choice is the car's value. */
@@ -69,6 +71,8 @@ public enum AutomationAction {
             R.string.automation_lock_hazard_sound, R.string.automation_lock_hazard_headlight,
             R.string.automation_lock_hazard_signal};
     static final int[] TAILGATE_LEVELS = {50, 60, 70, 80, 90, 100};
+    /** Sunroof shade, percent open: 0 reads Closed, 100 reads Open. */
+    static final int[] SUNSHADE_LEVELS = {0, 25, 50, 75, 100};
 
     public final String key;
     public final int labelRes;
@@ -113,6 +117,14 @@ public enum AutomationAction {
             case TAILGATE_HEIGHT:
                 for (int level : TAILGATE_LEVELS) {
                     out.add(new Option(Integer.toString(level), context.getString(R.string.automation_percent, level), -1));
+                }
+                break;
+            case SUNROOF_SHADE:
+                for (int level : SUNSHADE_LEVELS) {
+                    String label = level == 0 ? context.getString(R.string.sunshade_closed)
+                            : level == 100 ? context.getString(R.string.sunshade_open)
+                            : context.getString(R.string.automation_percent, level);
+                    out.add(new Option(Integer.toString(level), label, -1));
                 }
                 break;
             case LOCK_FEEDBACK:

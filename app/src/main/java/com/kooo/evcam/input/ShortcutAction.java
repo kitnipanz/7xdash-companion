@@ -64,7 +64,11 @@ public enum ShortcutAction {
     HUD_ZOOM_IN("hud_zoom_in", R.string.shortcut_action_hud_zoom_in, R.drawable.ic_zoom_in),
     HUD_ZOOM_OUT("hud_zoom_out", R.string.shortcut_action_hud_zoom_out, R.drawable.ic_zoom_out),
     /** One button for the HUD map: normal zoom, press again for far out, again for normal (nav.Navigator#toggleHudZoom). */
-    HUD_ZOOM_TOGGLE("hud_zoom_toggle", R.string.shortcut_action_hud_zoom_toggle, R.drawable.ic_zoom_out);
+    HUD_ZOOM_TOGGLE("hud_zoom_toggle", R.string.shortcut_action_hud_zoom_toggle, R.drawable.ic_zoom_out),
+    /** The sunroof shade all the way open, all the way closed, or the other way from where it is (automation.SunShade). */
+    SUNSHADE_OPEN("sunshade_open", R.string.shortcut_action_sunshade_open, R.drawable.ic_sunshade),
+    SUNSHADE_CLOSE("sunshade_close", R.string.shortcut_action_sunshade_close, R.drawable.ic_sunshade),
+    SUNSHADE_TOGGLE("sunshade_toggle", R.string.shortcut_action_sunshade_toggle, R.drawable.ic_sunshade);
 
     /** The tabs actions are picked from, in tab order. */
     public enum Group {

@@ -119,6 +119,8 @@ final class AutomationRunner {
                 return CarControls.lockFeedback(app, step.choice);
             case TAILGATE_HEIGHT:
                 return CarControls.tailgateHeight(app, step.choice);
+            case SUNROOF_SHADE:
+                return SunShade.set(app, step.choice);
             case NAVIGATE:
                 return navigate(step.choice);
             case SHORTCUT:

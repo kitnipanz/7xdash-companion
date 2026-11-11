@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- ic_sunshade: sunroof shade, a roof glass with the shade half drawn and pleats on it. Same icon set (24dp grid, 1.7 stroke, round caps). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M4.5,4.5h15a1.5,1.5 0,0 1,1.5 1.5v12a1.5,1.5 0,0 1,-1.5 1.5h-15a1.5,1.5 0,0 1,-1.5 -1.5v-12a1.5,1.5 0,0 1,1.5 -1.5z M3,12h18 M6.5,8h11 M6.5,15.5l1.5,-1.5 1.5,1.5 1.5,-1.5 1.5,1.5 1.5,-1.5 1.5,1.5 1.5,-1.5"
+        android:strokeWidth="1.7"
+        android:strokeColor="@color/text_primary"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+</vector>

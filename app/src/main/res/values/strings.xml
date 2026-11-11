@@ -1935,6 +1935,16 @@ Then reopen this app.</string>
     <string name="automation_temp_dual">Dual zone</string>
     <string name="automation_do_glovebox">Glovebox (parked only)</string>
     <string name="automation_do_tailgate_height">Tailgate opening height</string>
+    <string name="automation_do_sunroof_shade">Sunroof shade</string>
+    <string name="automation_sunshade_bad">Sunroof shade must be 0 to 100%</string>
+    <string name="sunshade_closed">Closed</string>
+    <string name="sunshade_open">Open</string>
+    <string name="sunshade_opening">Sunroof shade opening</string>
+    <string name="sunshade_closing">Sunroof shade closing</string>
+    <string name="sunshade_failed">Sunroof shade: %1$s</string>
+    <string name="shortcut_action_sunshade_open">Sunroof shade open</string>
+    <string name="shortcut_action_sunshade_close">Sunroof shade close</string>
+    <string name="shortcut_action_sunshade_toggle">Sunroof shade open/close</string>
     <string name="automation_tailgate_bad">Tailgate height must be 50 to 100%</string>
     <string name="automation_do_rear_fog">Rear fog light</string>
     <string name="automation_do_lock_feedback">Lock / unlock feedback</string>

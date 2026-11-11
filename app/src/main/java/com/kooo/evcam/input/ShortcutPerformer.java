@@ -186,6 +186,15 @@ public final class ShortcutPerformer {
             case FOG_LAMP:
                 com.kooo.evcam.light.FogLamp.toggle(context);
                 return;
+            case SUNSHADE_OPEN:
+                com.kooo.evcam.automation.SunShade.open(context);
+                return;
+            case SUNSHADE_CLOSE:
+                com.kooo.evcam.automation.SunShade.close(context);
+                return;
+            case SUNSHADE_TOGGLE:
+                com.kooo.evcam.automation.SunShade.toggle(context);
+                return;
             case MEDIA_PLAY_PAUSE:
                 com.kooo.evcam.audio.MediaKeys.playPause(context);
                 return;

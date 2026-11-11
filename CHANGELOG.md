@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.8.27] - 2026-11-12
+
+### Navigation
+- **Arrival time on the floating map.** While guiding, the bar shows when you arrive ("Arrive 14:35") and, under it, the time and distance left ("25 min · 12 km"). Battery at arrival stays on the chip over the map.
+
 ## [1.8.26] - 2026-11-11
 
 Stable release of 1.8.25-beta, plus steering feel.

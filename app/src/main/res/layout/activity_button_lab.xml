@@ -80,6 +80,85 @@
                     android:textAppearance="@style/TextAppearance.Cam.Body"
                     android:textColor="@color/text_secondary" />
             </LinearLayout>
+            <!-- Read or send any car function by hand: name or id, zone (optional), value -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:background="@drawable/bg_pref_row_static"
+                android:orientation="vertical"
+                android:padding="16dp">
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/button_lab_any_title"
+                    android:textAppearance="@style/TextAppearance.Cam.Body"
+                    android:textColor="@color/text_primary"
+                    android:textStyle="bold" />
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+                    <EditText
+                        android:id="@+id/btn_any_function"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:hint="@string/button_lab_any_function"
+                        android:importantForAutofill="no"
+                        android:inputType="textNoSuggestions|textCapCharacters"
+                        android:singleLine="true"
+                        android:textColor="@color/text_primary"
+                        android:textColorHint="@color/text_hint" />
+                    <EditText
+                        android:id="@+id/btn_any_zone"
+                        android:layout_width="150dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
+                        android:hint="@string/button_lab_any_zone"
+                        android:importantForAutofill="no"
+                        android:inputType="textNoSuggestions"
+                        android:singleLine="true"
+                        android:textColor="@color/text_primary"
+                        android:textColorHint="@color/text_hint" />
+                    <EditText
+                        android:id="@+id/btn_any_value"
+                        android:layout_width="130dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
+                        android:hint="@string/button_lab_any_value"
+                        android:importantForAutofill="no"
+                        android:inputType="textNoSuggestions"
+                        android:singleLine="true"
+                        android:textColor="@color/text_primary"
+                        android:textColorHint="@color/text_hint" />
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_any_read"
+                        style="@style/Widget.Cam.RailSmall"
+                        android:layout_width="wrap_content"
+                        android:layout_height="52dp"
+                        android:layout_marginStart="12dp"
+                        android:text="@string/button_lab_any_read" />
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_any_send"
+                        style="@style/Widget.Cam.RailSmall"
+                        android:layout_width="wrap_content"
+                        android:layout_height="52dp"
+                        android:layout_marginStart="10dp"
+                        android:text="@string/button_lab_any_send" />
+                </LinearLayout>
+                <TextView
+                    android:id="@+id/btn_any_result"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="@string/button_lab_any_hint"
+                    android:textAppearance="@style/TextAppearance.Cam.Caption"
+                    android:textColor="@color/text_secondary"
+                    android:textIsSelectable="true" />
+            </LinearLayout>
             <TextView
                 android:id="@+id/btn_empty"
                 android:layout_width="match_parent"

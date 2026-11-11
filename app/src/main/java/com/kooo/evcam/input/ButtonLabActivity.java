@@ -6,6 +6,7 @@ import android.os.HandlerThread;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -40,6 +41,10 @@ public class ButtonLabActivity extends AppCompatActivity implements ButtonLab.Li
     private TextView status;
     private TextView empty;
     private MaterialButton listen;
+    private EditText anyFunction;
+    private EditText anyZone;
+    private EditText anyValue;
+    private TextView anyResult;
     private int dp;
 
     @Override
@@ -62,6 +67,12 @@ public class ButtonLabActivity extends AppCompatActivity implements ButtonLab.Li
                 listen.setText(R.string.button_lab_stop);
             }
         });
+        anyFunction = findViewById(R.id.btn_any_function);
+        anyZone = findViewById(R.id.btn_any_zone);
+        anyValue = findViewById(R.id.btn_any_value);
+        anyResult = findViewById(R.id.btn_any_result);
+        findViewById(R.id.btn_any_read).setOnClickListener(v -> readAny());
+        findViewById(R.id.btn_any_send).setOnClickListener(v -> sendAny());
         findViewById(R.id.btn_clear).setOnClickListener(v -> {
             rows.removeAllViews();
             empty.setVisibility(View.VISIBLE);
@@ -139,6 +150,7 @@ public class ButtonLabActivity extends AppCompatActivity implements ButtonLab.Li
         if (h.source == ButtonLab.Source.KEY && h.keyCode != KeyEvent.KEYCODE_UNKNOWN) {
             top.addView(button(getString(R.string.button_lab_press_again), v -> pressAgain(h, result)));
         } else if (h.source == ButtonLab.Source.CAR) {
+            top.addView(button(getString(R.string.button_lab_copy), v -> copyName(h)));
             addSend(top, h, h.before, result);
             addSend(top, h, h.now, result);
         }
@@ -174,6 +186,80 @@ public class ButtonLabActivity extends AppCompatActivity implements ButtonLab.Li
                     work.post(() -> {
                         String line = CarAmbientLab.set(getApplicationContext(), h.setting, value);
                         runOnUiThread(() -> show(result, line));
+                    });
+                })
+                .setNegativeButton(android.R.string.cancel, null));
+    }
+
+    // ================================================================= read / send anything
+
+    /** Copies the setting's name and puts it in the read / send box, ready to read or send. */
+    private void copyName(ButtonLab.Heard h) {
+        android.content.ClipboardManager clip = getSystemService(android.content.ClipboardManager.class);
+        if (clip != null) {
+            clip.setPrimaryClip(android.content.ClipData.newPlainText(h.setting.name, h.setting.name));
+        }
+        anyFunction.setText(h.setting.name);
+        anyResult.setText(getString(R.string.button_lab_copied, h.setting.name, h.setting.hex()));
+    }
+
+    private static final class Typed {
+        final int id;
+        final Integer zone;
+
+        Typed(int id, Integer zone) {
+            this.id = id;
+            this.zone = zone;
+        }
+    }
+
+    /** What is in the function and zone boxes, on the work thread (a name is looked up there). */
+    private Typed typed() {
+        Integer id = CarAmbientLab.parseFunction(anyFunction.getText().toString());
+        String zoneText = anyZone.getText().toString().trim();
+        Integer zone = zoneText.isEmpty() ? null : CarAmbientLab.parseNumber(zoneText);
+        if (id == null) {
+            runOnUiThread(() -> anyResult.setText(R.string.button_lab_any_no_function));
+            return null;
+        }
+        if (!zoneText.isEmpty() && zone == null) {
+            runOnUiThread(() -> anyResult.setText(R.string.button_lab_any_bad_zone));
+            return null;
+        }
+        return new Typed(id, zone);
+    }
+
+    private void readAny() {
+        anyResult.setText(R.string.button_lab_any_reading);
+        work.post(() -> {
+            Typed t = typed();
+            if (t != null) {
+                String line = CarAmbientLab.readAny(getApplicationContext(), t.id, t.zone);
+                runOnUiThread(() -> anyResult.setText(line));
+            }
+        });
+    }
+
+    private void sendAny() {
+        Integer value = CarAmbientLab.parseNumber(anyValue.getText().toString());
+        if (value == null) {
+            anyResult.setText(R.string.button_lab_any_no_value);
+            return;
+        }
+        String what = anyFunction.getText().toString().trim();
+        String zone = anyZone.getText().toString().trim();
+        CamDialogs.showDestructive(new MaterialAlertDialogBuilder(this, R.style.Theme_Cam_MaterialAlertDialog)
+                .setTitle(R.string.car_ambient_confirm_title)
+                .setMessage(getString(R.string.button_lab_any_confirm, value, what,
+                        zone.isEmpty() ? getString(R.string.button_lab_any_no_zone) : zone))
+                .setPositiveButton(R.string.car_ambient_send, (d, w) -> {
+                    anyResult.setText(R.string.car_ambient_sending);
+                    work.post(() -> {
+                        Typed t = typed();
+                        if (t != null) {
+                            String line = CarAmbientLab.sendAny(getApplicationContext(), t.id, t.zone, value);
+                            runOnUiThread(() -> anyResult.setText(line));
+                        }
                     });
                 })
                 .setNegativeButton(android.R.string.cancel, null));

@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.8.25-beta] - 2026-11-11
+
+### Car buttons (experimental)
+- **Read or send any car setting.** A new box on the Car buttons screen: type a function (a number such as `0x20080100`, or its name), an optional zone and a value. Read shows whether the car supports it and what it reads; Send sets it (only in P, after you confirm) and reads it back. Everything goes to the black box.
+- **Copy name** on each car setting heard while listening: copies the setting's name and puts it in the Function box, ready to read or send.
+
 ## [1.8.24] - 2026-11-11
 
 Stable release of 1.8.23-beta.

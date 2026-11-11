@@ -260,6 +260,76 @@ public final class CarAmbientLab {
         }
     }
 
+    // ================================================================= read / send anything (Car buttons lab)
+
+    /**
+     * A function typed by hand: a hex id ({@code 0x20080100}), a decimal id, or an ECARX constant
+     * name looked up in the car's library ({@code functionId}). Null when it is none of these.
+     */
+    public static Integer parseFunction(String text) {
+        Integer number = parseNumber(text);
+        if (number != null) {
+            return number;
+        }
+        String name = text == null ? "" : text.trim();
+        return name.matches("[A-Za-z_][A-Za-z0-9_]*") ? functionId(name) : null;
+    }
+
+    /** {@code 0x…} hex or a plain (possibly negative) decimal; null when it is neither. */
+    public static Integer parseNumber(String text) {
+        if (text == null) {
+            return null;
+        }
+        String t = text.trim();
+        try {
+            if (t.startsWith("0x") || t.startsWith("0X")) {
+                return (int) Long.parseLong(t.substring(2), 16);
+            }
+            return t.matches("-?\\d+") ? Integer.valueOf(t) : null;
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    /**
+     * Reads one function as the lab sees it: supported or not, the plain value, and the value in
+     * {@code zone} when one is given. One line, for the screen and the black box. Blocking.
+     */
+    public static String readAny(Context context, int id, Integer zone) {
+        Integer plain = value(context, id);
+        String line = String.format(Locale.US, "0x%08X · supported %s · reads %s", id, support(context, id), plain);
+        if (zone != null) {
+            line += String.format(Locale.US, " · zone 0x%X reads %s", zone, valueInZone(context, id, zone));
+        }
+        BlackBox.note("Car lab read: " + line);
+        return line;
+    }
+
+    /**
+     * Sends {@code value} to any function, in {@code zone} when one is given, then reads it back.
+     * Parked only ({@link #parkedBlock}): this can reach anything the car has. Blocking.
+     */
+    public static String sendAny(Context context, int id, Integer zone, int value) {
+        String target = String.format(Locale.US, "0x%08X%s = %d", id,
+                zone == null ? "" : String.format(Locale.US, " zone 0x%X", zone), value);
+        String blocked = parkedBlock(Telemetry.get().latest().gear);
+        if (blocked != null) {
+            BlackBox.note("Car lab send " + target + ": " + blocked);
+            return blocked;
+        }
+        String failed = zone == null ? write(context, id, value) : writeInZone(context, id, zone, value);
+        try {
+            Thread.sleep(400);
+        } catch (InterruptedException ignored) {
+            Thread.currentThread().interrupt();
+        }
+        Integer after = zone == null ? value(context, id) : valueInZone(context, id, zone);
+        String line = "set " + target + " → " + (failed == null ? "sent" : failed) + " · reads " + after;
+        BlackBox.note("Car lab: " + line);
+        AppLog.i(TAG, line);
+        return line;
+    }
+
     static boolean looksAmbient(String name) {
         return name != null && AMBIENT.matcher(name.toUpperCase(Locale.US)).find();
     }

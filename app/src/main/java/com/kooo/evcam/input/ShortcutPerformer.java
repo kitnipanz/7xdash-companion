@@ -195,6 +195,18 @@ public final class ShortcutPerformer {
             case SUNSHADE_TOGGLE:
                 com.kooo.evcam.automation.SunShade.toggle(context);
                 return;
+            case STEERING_LIGHT:
+                com.kooo.evcam.automation.SteeringFeel.light(context);
+                return;
+            case STEERING_BALANCED:
+                com.kooo.evcam.automation.SteeringFeel.balanced(context);
+                return;
+            case STEERING_HEAVY:
+                com.kooo.evcam.automation.SteeringFeel.heavy(context);
+                return;
+            case STEERING_CYCLE:
+                com.kooo.evcam.automation.SteeringFeel.cycle(context);
+                return;
             case MEDIA_PLAY_PAUSE:
                 com.kooo.evcam.audio.MediaKeys.playPause(context);
                 return;

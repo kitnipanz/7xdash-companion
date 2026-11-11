@@ -68,7 +68,12 @@ public enum ShortcutAction {
     /** The sunroof shade all the way open, all the way closed, or the other way from where it is (automation.SunShade). */
     SUNSHADE_OPEN("sunshade_open", R.string.shortcut_action_sunshade_open, R.drawable.ic_sunshade),
     SUNSHADE_CLOSE("sunshade_close", R.string.shortcut_action_sunshade_close, R.drawable.ic_sunshade),
-    SUNSHADE_TOGGLE("sunshade_toggle", R.string.shortcut_action_sunshade_toggle, R.drawable.ic_sunshade);
+    SUNSHADE_TOGGLE("sunshade_toggle", R.string.shortcut_action_sunshade_toggle, R.drawable.ic_sunshade),
+    /** How heavy the steering wheel feels: one of the three, or the next one round (automation.SteeringFeel). */
+    STEERING_LIGHT("steering_light", R.string.shortcut_action_steering_light, R.drawable.ic_steering),
+    STEERING_BALANCED("steering_balanced", R.string.shortcut_action_steering_balanced, R.drawable.ic_steering),
+    STEERING_HEAVY("steering_heavy", R.string.shortcut_action_steering_heavy, R.drawable.ic_steering),
+    STEERING_CYCLE("steering_cycle", R.string.shortcut_action_steering_cycle, R.drawable.ic_steering);
 
     /** The tabs actions are picked from, in tab order. */
     public enum Group {

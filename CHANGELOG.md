@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.8.26] - 2026-11-11
+
+Stable release of 1.8.25-beta, plus steering feel.
+
+### Car
+- **Steering feel**, a new Automation action: Light, Balanced or Heavy. For example: Sport drive mode → steering heavy.
+- **Steering feel buttons:** light, balanced, heavy, and one button that goes to the next, for a steering wheel button or the Macro pad.
+
+### Car buttons (experimental)
+- **Read or send any car setting.** A new box on the Car buttons screen: type a function (a number such as `0x20080100`, or its name), an optional zone and a value. Read shows whether the car supports it and what it reads; Send sets it (only in P, after you confirm) and reads it back. Everything goes to the black box.
+- **Copy name** on each car setting heard while listening: copies the setting's name and puts it in the Function box, ready to read or send.
+
 ## [1.8.25-beta] - 2026-11-11
 
 ### Car buttons (experimental)

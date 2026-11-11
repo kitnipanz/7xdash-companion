@@ -1935,6 +1935,17 @@
     <string name="shortcut_action_sunshade_open">เปิดม่านซันรูฟ</string>
     <string name="shortcut_action_sunshade_close">ปิดม่านซันรูฟ</string>
     <string name="shortcut_action_sunshade_toggle">เปิด/ปิดม่านซันรูฟ</string>
+    <string name="automation_do_steering_feel">น้ำหนักพวงมาลัย</string>
+    <string name="automation_steering_bad">น้ำหนักพวงมาลัยต้องเป็น เบา สมดุล หรือ หนัก</string>
+    <string name="steering_light">เบา</string>
+    <string name="steering_balanced">สมดุล</string>
+    <string name="steering_heavy">หนัก</string>
+    <string name="steering_set">น้ำหนักพวงมาลัย: %1$s</string>
+    <string name="steering_failed">น้ำหนักพวงมาลัย: %1$s</string>
+    <string name="shortcut_action_steering_light">พวงมาลัยเบา</string>
+    <string name="shortcut_action_steering_balanced">พวงมาลัยสมดุล</string>
+    <string name="shortcut_action_steering_heavy">พวงมาลัยหนัก</string>
+    <string name="shortcut_action_steering_cycle">น้ำหนักพวงมาลัย: ถัดไป</string>
     <string name="automation_tailgate_bad">ความสูงฝาท้ายต้องอยู่ระหว่าง 50 ถึง 100%</string>
     <string name="automation_do_rear_fog">ไฟตัดหมอกหลัง</string>
     <string name="automation_do_lock_feedback">การตอบสนองภายนอกสำหรับการล็อก/ปลดล็อก</string>

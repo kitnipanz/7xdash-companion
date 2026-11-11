@@ -1960,6 +1960,17 @@ Then reopen this app.</string>
     <string name="shortcut_action_sunshade_open">Sunroof shade open</string>
     <string name="shortcut_action_sunshade_close">Sunroof shade close</string>
     <string name="shortcut_action_sunshade_toggle">Sunroof shade open/close</string>
+    <string name="automation_do_steering_feel">Steering feel</string>
+    <string name="automation_steering_bad">Steering feel must be Light, Balanced or Heavy</string>
+    <string name="steering_light">Light</string>
+    <string name="steering_balanced">Balanced</string>
+    <string name="steering_heavy">Heavy</string>
+    <string name="steering_set">Steering feel: %1$s</string>
+    <string name="steering_failed">Steering feel: %1$s</string>
+    <string name="shortcut_action_steering_light">Steering feel light</string>
+    <string name="shortcut_action_steering_balanced">Steering feel balanced</string>
+    <string name="shortcut_action_steering_heavy">Steering feel heavy</string>
+    <string name="shortcut_action_steering_cycle">Steering feel: next</string>
     <string name="automation_tailgate_bad">Tailgate height must be 50 to 100%</string>
     <string name="automation_do_rear_fog">Rear fog light</string>
     <string name="automation_do_lock_feedback">Lock / unlock feedback</string>

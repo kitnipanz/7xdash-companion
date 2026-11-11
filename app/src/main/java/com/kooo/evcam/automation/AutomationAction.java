@@ -31,6 +31,8 @@ public enum AutomationAction {
     TAILGATE_HEIGHT("tailgate_height", R.string.automation_do_tailgate_height, R.drawable.ic_automation_tailgate),
     /** How far the sunroof shade is open, 0 (closed) to 100; the choice is the percent ({@link SunShade}). */
     SUNROOF_SHADE("sunroof_shade", R.string.automation_do_sunroof_shade, R.drawable.ic_sunshade),
+    /** How heavy the steering wheel feels: light, balanced or heavy ({@link SteeringFeel}). */
+    STEERING_FEEL("steering_feel", R.string.automation_do_steering_feel, R.drawable.ic_steering),
     /** Rear fog lamp on or off. */
     REAR_FOG("rear_fog", R.string.automation_do_rear_fog, R.drawable.ic_fog),
     /** What the car does outside when it locks or unlocks; the choice is the car's value. */
@@ -126,6 +128,11 @@ public enum AutomationAction {
                             : context.getString(R.string.automation_percent, level);
                     out.add(new Option(Integer.toString(level), label, -1));
                 }
+                break;
+            case STEERING_FEEL:
+                out.add(new Option(SteeringFeel.CHOICE_LIGHT, context.getString(R.string.steering_light), -1));
+                out.add(new Option(SteeringFeel.CHOICE_BALANCED, context.getString(R.string.steering_balanced), -1));
+                out.add(new Option(SteeringFeel.CHOICE_HEAVY, context.getString(R.string.steering_heavy), -1));
                 break;
             case LOCK_FEEDBACK:
                 for (int i = 0; i < LOCK_FEEDBACK_VALUES.length; i++) {

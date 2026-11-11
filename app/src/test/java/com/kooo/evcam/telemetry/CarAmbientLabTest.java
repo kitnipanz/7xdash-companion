@@ -82,4 +82,25 @@ public class CarAmbientLabTest {
         assertTrue(b.watched);
         assertFalse(a.watched);
     }
+
+    @Test
+    public void typedNumbersReadAsHexOrDecimal() {
+        assertEquals(Integer.valueOf(0x20080100), CarAmbientLab.parseNumber("0x20080100"));
+        assertEquals(Integer.valueOf(0x8), CarAmbientLab.parseNumber(" 0X8 "));
+        assertEquals(Integer.valueOf(0x80000000), CarAmbientLab.parseNumber("0x80000000"));
+        assertEquals(Integer.valueOf(26), CarAmbientLab.parseNumber("26"));
+        assertEquals(Integer.valueOf(-1), CarAmbientLab.parseNumber("-1"));
+        org.junit.Assert.assertNull(CarAmbientLab.parseNumber("0xZZ"));
+        org.junit.Assert.assertNull(CarAmbientLab.parseNumber("1.5"));
+        org.junit.Assert.assertNull(CarAmbientLab.parseNumber(""));
+        org.junit.Assert.assertNull(CarAmbientLab.parseNumber(null));
+    }
+
+    @Test
+    public void typedFunctionTakesAnIdOrLooksUpAName() {
+        assertEquals(Integer.valueOf(0x20080100), CarAmbientLab.parseFunction("0x20080100"));
+        // not a name either: spaces, symbols
+        org.junit.Assert.assertNull(CarAmbientLab.parseFunction("sun shade"));
+        org.junit.Assert.assertNull(CarAmbientLab.parseFunction("0x"));
+    }
 }

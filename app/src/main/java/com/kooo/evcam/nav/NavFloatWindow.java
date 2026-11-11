@@ -76,8 +76,10 @@ public final class NavFloatWindow implements Navigator.Listener {
     private ManeuverIcon.ArrowView arrow;
     private TextView title;
     private TextView line;
-    /** Right of the texts: km left · battery at arrival. */
+    /** Right of the texts: km left · battery at arrival; while guiding, the arrival time. */
     private TextView trip;
+    /** Under {@link #trip} while guiding: time left · km left. */
+    private TextView tripSub;
     /** Under the bar, over the map: battery at arrival in words, while there is a route. */
     private TextView battery;
     private View recenter;
@@ -323,6 +325,24 @@ public final class NavFloatWindow implements Navigator.Listener {
     /** The bar: the next turn (or the trip before it starts), and km left · battery at arrival on the right. */
     private void showBar(Navigator.Snapshot s) {
         showBattery(s);
+        if (s.phase == Navigator.Phase.GUIDING && s.route != null) {
+            // arrival time big, time and km left under it; battery at arrival is the chip on the map
+            double seconds = s.progress != null ? s.progress.remainingSeconds : s.route.seconds;
+            double meters = s.progress != null ? s.progress.remainingMeters : s.route.meters;
+            trip.setVisibility(View.VISIBLE);
+            trip.setText(context.getString(R.string.nav_hud_eta, NavText.eta(context, seconds)));
+            trip.setTextColor(Color.WHITE);
+            tripSub.setVisibility(View.VISIBLE);
+            tripSub.setText(NavText.duration(context, seconds) + " · " + NavText.distance(context, meters));
+        } else {
+            showTripLine(s);
+        }
+        showGoAndTurn(s);
+    }
+
+    /** Not guiding: km left · battery at arrival, or the trip without a route, as before. */
+    private void showTripLine(Navigator.Snapshot s) {
+        tripSub.setVisibility(View.GONE);
         TripLine t = s.phase == Navigator.Phase.IDLE ? null : TripLine.now(context);
         trip.setVisibility(t == null ? View.GONE : View.VISIBLE);
         if (t != null) {
@@ -330,6 +350,9 @@ public final class NavFloatWindow implements Navigator.Listener {
             trip.setTextColor(t.color(Color.WHITE, ContextCompat.getColor(context, R.color.energy),
                     ContextCompat.getColor(context, R.color.recording)));
         }
+    }
+
+    private void showGoAndTurn(Navigator.Snapshot s) {
         go.setVisibility(s.phase == Navigator.Phase.PREVIEW || s.phase == Navigator.Phase.FAILED
                 ? View.VISIBLE : View.GONE);
         go.setContentDescription(context.getString(s.phase == Navigator.Phase.FAILED
@@ -420,12 +443,19 @@ public final class NavFloatWindow implements Navigator.Listener {
         texts.addView(title);
         texts.addView(line);
         bar.addView(texts, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1));
+        LinearLayout tripBox = new LinearLayout(context);
+        tripBox.setOrientation(LinearLayout.VERTICAL);
+        tripBox.setGravity(Gravity.END);
         trip = text(R.style.TextAppearance_Cam_Row, Color.WHITE, true);
         trip.setVisibility(View.GONE);
+        tripSub = text(R.style.TextAppearance_Cam_Caption, 0xFFD0D2D6, false);
+        tripSub.setVisibility(View.GONE);
+        tripBox.addView(trip);
+        tripBox.addView(tripSub);
         LinearLayout.LayoutParams tripAt = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT);
         tripAt.leftMargin = pad;
-        bar.addView(trip, tripAt);
+        bar.addView(tripBox, tripAt);
 
         int b = Math.round(48 * density);
         go = plain(R.drawable.ic_navigation, R.string.nav_start, v -> {

@@ -2005,6 +2005,46 @@ public class MultiCameraManager {
         return cameras.get(position);
     }
 
+    /**
+     * Retry pressed on 7xDash web: a camera that gave up is rescued from the start, and a camera
+     * another program holds is asked about at once (asked, never opened on trial). Any thread.
+     */
+    public void remoteRetry() {
+        com.kooo.evcam.blackbox.BlackBox.note("remote: retry pressed on the web");
+        scheduler.retryNow();
+    }
+
+    /** Remote watch, what 7xDash web shows for a camera: see {@link #remoteStatus}. */
+    public static final String REMOTE_OK = "ok";
+    /** Another program on the head unit holds it (or holds the camera that blocks it). */
+    public static final String REMOTE_TAKEN = "taken";
+    /** Lost or will not open; the rescue is running or has stopped. */
+    public static final String REMOTE_FAULT = "fault";
+    /** Closed, and cameras cannot be opened now (main screen not in front). */
+    public static final String REMOTE_BLOCKED = "blocked";
+    /** This car has no such camera. */
+    public static final String REMOTE_NONE = "none";
+
+    /**
+     * Whether remote watch can get a picture from this camera now, as one word for 7xDash web.
+     * A camera that is closed because nobody wants it counts as ok: it opens when it is watched.
+     * Main thread (reads the scheduler).
+     */
+    public String remoteStatus(String key) {
+        if (cameras.get(key) == null) {
+            return REMOTE_NONE;
+        }
+        switch (scheduler.condition(key)) {
+            case TAKEN:
+                return REMOTE_TAKEN;
+            case RESCUING:
+            case GAVE_UP:
+                return REMOTE_FAULT;
+            default:
+                return scheduler.cannotOpen(key) ? REMOTE_BLOCKED : REMOTE_OK;
+        }
+    }
+
     // ------------------------------------------------------------------ 主界面的预览画布、后视镜的画布（2.11 阶段 4a、4b）
     // 主界面、超级后视镜只声明、撤回自己的画布，再叫醒调度；带不带、什么时候摘由调度定（channel-logic §一、§二.4）。
     // 以前画布一就绪、一销毁就 setTextureView + recreateSession，是调度之外的又一个动手方。
@@ -3445,6 +3485,7 @@ public class MultiCameraManager {
         public void stopLifted(String key, ChannelRules.Event.Cause cause, Set<CameraNeeds.Holder> holders) {
             String why = cause == ChannelRules.Event.Cause.SCREEN_ON ? "亮屏了"
                     : cause == ChannelRules.Event.Cause.SERVICE_FREE ? "相机服务报它空闲"
+                    : cause == ChannelRules.Event.Cause.USER_RETRY ? "网页上按了重试"
                     : "登记表变了（" + holderCodes(holders) + "）";
             com.kooo.evcam.blackbox.BlackBox.noteImportant("通道：" + why + "，停手的 " + roleName(key) + " 重新救");
         }

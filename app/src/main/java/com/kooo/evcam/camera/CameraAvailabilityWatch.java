@@ -51,7 +51,7 @@ import java.util.function.Predicate;
  * 都要多等 3 秒；我们稳稳开着时它报的「空闲」算别人的 —— 那正是交接时的乱报（10-10 07:22，车机拿走相机 1 的
  * 同一毫秒报了我们开着的 0 和 2「空闲」）。怎么分见 {@link #classify}。</p>
  *
- * <p>被拿着的那一路每 30 秒问一次：注册一个新的可用性回调、收它的回放 —— 进程里的缓存，不进相机服务、不开相机
+ * <p>被拿着的那一路每 10 秒问一次：注册一个新的可用性回调、收它的回放 —— 进程里的缓存，不进相机服务、不开相机
  * （项目所有者 2026-10-10 确认：只问，不开）。回放和我们的记录对不上的，照回放改；回放里没有的槽位记为「不在」
  * （10-10 车机拿着后座舱时，相机 1 就这样从缓存里消失了）。怎么并见 {@link #merge}。</p>
  *
@@ -67,7 +67,7 @@ import java.util.function.Predicate;
  *   <li><b>交给调度</b>：调度（ChannelScheduler）用 {@link #addListener} 接上：分类时问它「这一路有没有我们的开或关在途」
  *       （它在主线程上的账最准，见 {@link Listener#ourStepInFlight}），有话、问完、回放收全时叫醒它；
  *       调度读 {@link #word}（最后一句：空闲 / 被占用、在不在、是不是我们引起的）、{@link #lastOthersChangeAt}、{@link #heardAnything}，
- *       被拿着的那一路有人要时每 30 秒 {@link #ask}。</li>
+ *       被拿着的那一路有人要时每 10 秒 {@link #ask}。</li>
  *   <li><b>时刻</b>都是开机起算、含深睡（{@code SystemClock.elapsedRealtime}），和 {@link CameraContention}、
  *       {@link CameraHolderSuspects} 一样。调度换到自己的钟：自己的此刻 −（{@code elapsedRealtime()} − 那个时刻）。</li>
  * </ul>

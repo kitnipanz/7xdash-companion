@@ -170,7 +170,7 @@ public class CameraAvailabilityWatchTest {
         assertEquals("1: busy -> absent", fixes.get(0).toString());
     }
 
-    /** 记的「不在」、快照里还是没有：不动 —— 每 30 秒问一次，不该每次都算一次变化。 */
+    /** 记的「不在」、快照里还是没有：不动 —— 每 10 秒问一次，不该每次都算一次变化。 */
     @Test
     public void stillAbsentChangesNothing() {
         assertTrue(CameraAvailabilityWatch.merge(map("0", FREE, "2", FREE), set("1"),
@@ -324,7 +324,7 @@ public class CameraAvailabilityWatchTest {
         assertEquals(3_000, ledger.lastOthersChangeAt());
     }
 
-    /** 问来的回放和记录一致：什么都不动，时刻也不动 —— 每 30 秒问一次，不该每次都挡一次安静。 */
+    /** 问来的回放和记录一致：什么都不动，时刻也不动 —— 每 10 秒问一次，不该每次都挡一次安静。 */
     @Test
     public void anAskThatAgreesChangesNothing() {
         CameraAvailabilityWatch.Ledger ledger = coldStartWithoutCabinRear(SLOTS);

@@ -75,6 +75,10 @@ public final class RemoteStream {
     private static final int GL_FPS = 20;
     private static final int CANVAS_FPS = 12;
     private static final int BITRATE = 2_000_000;
+    /** Slow uplink: the bitrate steps down to this at most, and climbs back when packets fit again. */
+    private static final int BITRATE_MIN = 350_000;
+    /** Seconds without a dropped packet before the bitrate climbs a step. */
+    private static final int CLIMB_AFTER_CLEAN_S = 5;
     private static final long CHECK_MS = 1000L;
     /** Cabin stills are full still captures: a few a second is plenty, the encoder repeats frames. */
     private static final long STILL_MS = 300L;
@@ -127,6 +131,11 @@ public final class RemoteStream {
     private long tapMovedMs;
     /** Surround path last logged: gpu, screen or stills. */
     private String surroundPath = "";
+    /** What the encoder is asked for now; follows the uplink between BITRATE_MIN and BITRATE. */
+    private int bitrate = BITRATE;
+    /** A packet did not fit the uplink since the last check (encoder thread sets it). */
+    private volatile boolean droppedSinceCheck;
+    private int cleanChecks;
 
     private final Runnable canvasTick = new Runnable() {
         @Override
@@ -145,6 +154,7 @@ public final class RemoteStream {
             if (!running) {
                 return;
             }
+            tuneBitrate();
             if (mode == Mode.GL && tapped != null) {
                 long drawn = tapped.tapFrames();
                 long now = SystemClock.elapsedRealtime();
@@ -187,6 +197,9 @@ public final class RemoteStream {
             // A new watch tries the GPU tap again
             gpuGaveUp = false;
             surroundPath = "";
+            bitrate = BITRATE;
+            droppedSinceCheck = false;
+            cleanChecks = 0;
         }
         if (!bind(src, !was)) {
             stop();
@@ -208,6 +221,43 @@ public final class RemoteStream {
     public void release() {
         stop();
         drawExec.shutdownNow();
+    }
+
+    /** The phone needs a keyframe now (it just joined, came back, or lost packets). Main thread. */
+    public void requestKeyFrame() {
+        LiveEncoder enc = encoder;
+        long now = SystemClock.elapsedRealtime();
+        if (enc == null || now - lastKeyAskMs < 500L) {
+            return;
+        }
+        lastKeyAskMs = now;
+        enc.requestKeyFrame();
+    }
+
+    /**
+     * Once a second: packets were dropped (uplink too slow for this bitrate), so step down at once;
+     * a few clean seconds, so step back up. Keeps the picture moving on weak signal instead of
+     * stalling between keyframes.
+     */
+    private void tuneBitrate() {
+        LiveEncoder enc = encoder;
+        if (enc == null) {
+            return;
+        }
+        int next = bitrate;
+        if (droppedSinceCheck) {
+            droppedSinceCheck = false;
+            cleanChecks = 0;
+            next = Math.max(BITRATE_MIN, (int) (bitrate * 0.6f));
+        } else if (++cleanChecks >= CLIMB_AFTER_CLEAN_S) {
+            cleanChecks = 0;
+            next = Math.min(BITRATE, (int) (bitrate * 1.25f));
+        }
+        if (next != bitrate) {
+            AppLog.i(TAG, "bitrate " + bitrate / 1000 + " -> " + next / 1000 + " kbps");
+            bitrate = next;
+            enc.setBitrate(next);
+        }
     }
 
     /** Last packet age; the activity falls back to JPEG if video never arrives. */
@@ -244,7 +294,7 @@ public final class RemoteStream {
         source = src;
         sourceCode = codeOf(src);
         lastPacketMs = 0;
-        encoder = LiveEncoder.start(WIDTH, HEIGHT, want == Mode.GL ? GL_FPS : CANVAS_FPS, BITRATE,
+        encoder = LiveEncoder.start(WIDTH, HEIGHT, want == Mode.GL ? GL_FPS : CANVAS_FPS, bitrate,
                 this::onPacket);
         if (encoder == null) {
             return false;
@@ -263,7 +313,7 @@ public final class RemoteStream {
             gpuGaveUp = true;
             path("screen", "GPU tap refused the encoder");
             unbind();
-            encoder = LiveEncoder.start(WIDTH, HEIGHT, CANVAS_FPS, BITRATE, this::onPacket);
+            encoder = LiveEncoder.start(WIDTH, HEIGHT, CANVAS_FPS, bitrate, this::onPacket);
             if (encoder == null) {
                 return false;
             }
@@ -477,6 +527,9 @@ public final class RemoteStream {
         long now = SystemClock.elapsedRealtime();
         lastPacketMs = now;
         boolean sent = link.pushVideo(frame(data, key, sourceCode, width, height, ptsUs), key);
+        if (!sent) {
+            droppedSinceCheck = true;
+        }
         // Uplink backed up and deltas got dropped: the phone needs a fresh keyframe to recover.
         if (!sent && now - lastKeyAskMs > 500L) {
             lastKeyAskMs = now;

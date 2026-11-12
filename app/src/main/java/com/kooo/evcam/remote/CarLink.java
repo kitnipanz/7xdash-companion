@@ -34,6 +34,24 @@ public final class CarLink {
     public static final String HTTP = "https://7x-dash.vercel.app";
     public static final String WS = "wss://7xdash-production.up.railway.app";
 
+    /**
+     * The hub to dial. Debug builds only: {@code adb shell setprop debug.sevenx.hub ws://10.0.2.2:8787}
+     * points the car at a hub on the development machine (an emulator reaches it at 10.0.2.2).
+     */
+    private static String wsBase() {
+        if (com.kooo.evcam.BuildConfig.DEBUG) {
+            try {
+                Object v = Class.forName("android.os.SystemProperties")
+                        .getMethod("get", String.class).invoke(null, "debug.sevenx.hub");
+                if (v instanceof String && (((String) v).startsWith("ws://") || ((String) v).startsWith("wss://"))) {
+                    return (String) v;
+                }
+            } catch (Throwable ignored) {
+            }
+        }
+        return WS;
+    }
+
     public interface Ui {
         void onLink(Snapshot snap);
     }
@@ -48,6 +66,14 @@ public final class CarLink {
         void command(JSONObject msg);
     }
 
+    /**
+     * Whether each camera can be watched now, for 7xDash web: {@link #status} is the car's
+     * {@code {"t":"cams","drive":…,"driver":…,"backseat":…}} message. Main thread.
+     */
+    public interface Cams {
+        JSONObject status();
+    }
+
     /** Fired when the phone starts/stops watch or changes camera source. */
     public interface WatchListener {
         void onWatch(boolean watching, String source);
@@ -57,6 +83,20 @@ public final class CarLink {
          * send stills for the rest of this watch. Main thread.
          */
         default void onNoVideo(String reason) {
+        }
+
+        /**
+         * A phone joined or lost packets ({@code {"t":"key"}}): the next video frame should be a
+         * keyframe so it can start decoding at once. Main thread.
+         */
+        default void onKeyRequest() {
+        }
+
+        /**
+         * Retry pressed on 7xDash web ({@code {"t":"retry"}}): look for the cameras again and
+         * start the live picture over. Main thread.
+         */
+        default void onRetry() {
         }
     }
 
@@ -81,7 +121,7 @@ public final class CarLink {
     private final Context context;
     private final OkHttpClient client = new OkHttpClient.Builder()
             .readTimeout(0, TimeUnit.MILLISECONDS)
-            .pingInterval(25, TimeUnit.SECONDS)
+            .pingInterval(10, TimeUnit.SECONDS)
             .build();
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final ExecutorService jpegExec = Executors.newSingleThreadExecutor();
@@ -89,6 +129,10 @@ public final class CarLink {
     private final AtomicBoolean running = new AtomicBoolean(false);
     private final AtomicBoolean reconnectPosted = new AtomicBoolean(false);
     private final AtomicInteger generation = new AtomicInteger(0);
+    /** Failed dials in a row; the first retry is quick, later ones back off. */
+    private final AtomicInteger retries = new AtomicInteger(0);
+    private static final long RETRY_FIRST_MS = 500L;
+    private static final long RETRY_MAX_MS = 8000L;
 
     private WebSocket socket;
     private long lastPushMs;
@@ -98,6 +142,9 @@ public final class CarLink {
     private Ui ui;
     private WatchListener watchListener;
     private volatile Speaker speaker;
+    private volatile Cams cams;
+    /** The last {@code {"t":"cams",…}} sent, so only a change goes out again. */
+    private String lastCams;
     /** The last {@code {"t":"nav",…}} sent, so only a change goes out again. */
     private volatile String lastNav;
     /** Navigation's state changes on its own (the trip, a place from the iPhone): look this often. */
@@ -106,6 +153,7 @@ public final class CarLink {
         @Override
         public void run() {
             sendNav(socket, false);
+            sendCams(socket, false);
             if (running.get()) {
                 handler.postDelayed(this, NAV_CHECK_MS);
             }
@@ -144,6 +192,34 @@ public final class CarLink {
 
     public void setWatchListener(WatchListener listener) {
         this.watchListener = listener;
+    }
+
+    public void setCams(Cams cams) {
+        this.cams = cams;
+    }
+
+    /**
+     * Tells the hub which cameras can be watched now. Only when it changed, unless {@code force}.
+     * Main thread.
+     */
+    private void sendCams(WebSocket ws, boolean force) {
+        Cams current = cams;
+        if (current == null || ws == null) {
+            return;
+        }
+        try {
+            JSONObject msg = current.status();
+            if (msg == null) {
+                return;
+            }
+            msg.put("t", "cams");
+            String text = msg.toString();
+            if (force || !text.equals(lastCams)) {
+                lastCams = text;
+                ws.send(text);
+            }
+        } catch (Exception ignored) {
+        }
     }
 
     public void setSpeaker(Speaker speaker) {
@@ -267,7 +343,7 @@ public final class CarLink {
                     return;
                 }
                 WebSocket ws = socket;
-                if (ws != null && watching.get()) {
+                if (ws != null && watching.get() && ws.queueSize() <= JPEG_BACKLOG_BYTES) {
                     ws.send(ByteString.of(out.toByteArray()));
                 }
             } finally {
@@ -275,6 +351,12 @@ public final class CarLink {
             }
         });
     }
+
+    /**
+     * Above this much unsent uplink a still is skipped: the next one is newer anyway. Without the
+     * limit a slow uplink queues stills until OkHttp (16 MB cap) closes the socket and the watch drops.
+     */
+    private static final long JPEG_BACKLOG_BYTES = 256 * 1024;
 
     /** Above this much unsent uplink, video deltas are dropped until the next keyframe. */
     private static final long VIDEO_BACKLOG_BYTES = 768 * 1024;
@@ -312,7 +394,7 @@ public final class CarLink {
             return;
         }
         WebSocket ws = socket;
-        if (ws != null) {
+        if (ws != null && ws.queueSize() <= JPEG_BACKLOG_BYTES) {
             ws.send(ByteString.of(jpeg));
         }
     }
@@ -343,7 +425,7 @@ public final class CarLink {
             old.cancel();
         }
         publish("CONNECTING", "", email);
-        Request req = new Request.Builder().url(WS + "/ws/car").build();
+        Request req = new Request.Builder().url(wsBase() + "/ws/car").build();
         socket = client.newWebSocket(req, new WebSocketListener() {
             @Override
             public void onOpen(WebSocket webSocket, Response response) {
@@ -357,9 +439,11 @@ public final class CarLink {
                     webSocket.send(hello.toString());
                 } catch (Exception ignored) {
                 }
+                retries.set(0);
                 publish("ONLINE", "", email);
                 sendSpeaker(webSocket);
                 sendNav(webSocket, true);
+                handler.post(() -> sendCams(webSocket, true));
             }
 
             @Override
@@ -419,6 +503,19 @@ public final class CarLink {
                         String reason = j.optString("reason");
                         if (listener != null) {
                             handler.post(() -> listener.onNoVideo(reason));
+                        }
+                    } else if ("key".equals(type)) {
+                        WatchListener listener = watchListener;
+                        if (listener != null) {
+                            handler.post(listener::onKeyRequest);
+                        }
+                    } else if ("retry".equals(type)) {
+                        WatchListener listener = watchListener;
+                        if (listener != null) {
+                            handler.post(() -> {
+                                listener.onRetry();
+                                sendCams(socket, true);
+                            });
                         }
                     } else if ("volume".equals(type)) {
                         // The car's main volume, one step per tap on 7xDash web
@@ -494,7 +591,8 @@ public final class CarLink {
         if (!reconnectPosted.compareAndSet(false, true)) {
             return;
         }
-        handler.postDelayed(reconnect, 3000);
+        int n = Math.min(retries.getAndIncrement(), 4);
+        handler.postDelayed(reconnect, Math.min(RETRY_FIRST_MS << n, RETRY_MAX_MS));
     }
 
     /** Link dropped: nobody is watching any more. Tell the listener so it lets the cameras go. */

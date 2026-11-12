@@ -2061,6 +2061,18 @@ public class ChannelRulesTest {
         assertEquals(Event.Cause.SCREEN_ON, event(Event.Type.STOP_LIFTED).cause);
         assertEquals(Move.RESCUE, d.move);
         assertEquals(1, d.attempt);
+
+        // 人在 7xDash 网页上按了「重试」：停手的路也从头救；只管这一轮
+        at(20_000);
+        stopLadder(surround);
+        assertEquals(Move.IDLE, round().move);
+        at(21_000);
+        w.retryAsked = true;
+        d = round();
+        assertEquals(Event.Cause.USER_RETRY, event(Event.Type.STOP_LIFTED).cause);
+        assertEquals(Move.RESCUE, d.move);
+        assertEquals(1, d.attempt);
+        assertFalse(w.retryAsked);
     }
 
     // ================================================================= 现场回放（diag_15_bb.txt，10-10；09-27 的冲突）
@@ -2298,9 +2310,9 @@ public class ChannelRulesTest {
         at(40_000);
         assertFalse(ChannelRules.askDue(w));
         claim(Holder.PREVIEW);
-        assertTrue("刚变成有人要、上一次问已超过 30 秒：马上问", ChannelRules.askDue(w));
+        assertTrue("刚变成有人要、上一次问已超过 10 秒：马上问", ChannelRules.askDue(w));
         ChannelRules.asked(w);
-        at(50_000);
+        at(40_000 + ChannelRules.ASK_EVERY_MS - 1);
         assertFalse(ChannelRules.askDue(w));
     }
 
@@ -2460,7 +2472,7 @@ public class ChannelRulesTest {
         assertEquals(2_000L, ChannelRules.TICK_MS);
         assertEquals(3_000L, ChannelRules.QUIET_MS);
         assertEquals(CameraTaken.QUIET_MS, ChannelRules.QUIET_MS);
-        assertEquals(30_000L, ChannelRules.ASK_EVERY_MS);
+        assertEquals(10_000L, ChannelRules.ASK_EVERY_MS);
         assertEquals(CameraTaken.ASK_EVERY_MS, ChannelRules.ASK_EVERY_MS);
         assertEquals(30_000L, ChannelRules.HOLD_MS);
         assertEquals(1_000L, ChannelRules.SLEEP_GRACE_MS);
@@ -2511,6 +2523,23 @@ public class ChannelRulesTest {
         assertEquals("only the cabin window's output", java.util.Collections.singleton(mirror),
                 ChannelRules.wantedOutputs(w, rear));
         assertTrue("other lanes keep their rules", ChannelRules.wanted(w, front));
+    }
+
+    /**
+     * Front cabin off in the profile is built for remote watch only: remote watch on the driver
+     * camera opens it, nothing else does.
+     */
+    @Test
+    public void aCabinOnlyFrontLaneIsWantedOnlyByRemoteWatch() {
+        front.cabinOnly = true;
+        w.screenOn = true;
+        planAll();
+        for (Holder holder : Holder.values()) {
+            w.holders.clear();
+            claim(holder);
+            assertEquals(holder + ": only remote watch on the driver camera opens it",
+                    holder == Holder.REMOTE_DRIVER, ChannelRules.wanted(w, front));
+        }
     }
 
     /**

@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.8.30-beta] - 2026-11-13
+
+### Stargate lab (experimental)
+- **A new screen to find out whether 7xDash can draw on the Stargate light curtain** of the 7X AWD Performance. Settings → Mood light → Stargate lab.
+- **Find** lists the car settings whose names match light-curtain words (CURTAIN, ISD, PIXEL, LIGHT SHOW…), with what they read now. The words can be changed.
+- **Car API** lists what the car interface can do. A ★ marks calls that take bytes, text or arrays, which drawing a picture would need.
+- **Light apps** lists the car's light and Zeekr apps and what they offer to other apps. **Save APK** copies an app to the USB drive for a closer look on a computer.
+- **Listen**: change things in the car's Light Studio one at a time. Each change shows here: a setting that changed, anything the car sends out for any setting (any zone, raw data included), or a system log line about lights.
+- Every line is saved to `7xDash/stargate_logs` on the USB drive, and **Copy all** copies it. Read any setting, or send one in P after you confirm.
+
 ## [1.8.29] - 2026-11-12
 
 ### Where I parked

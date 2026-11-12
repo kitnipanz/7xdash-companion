@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.29] - 2026-11-12
+
+### Where I parked
+- **Photos when no sign is read.** If the cameras can't read a floor or bay sign, 7xDash sends the left, front and right camera pictures at a bigger size (960×540, was 640×360), so you can still tell where the car is from what's around it.
+- **All three on 7xDash web.** With no sign read, the Where I parked card shows Left · Front · Right side by side. Tap one to see it big, or All three to go back.
+- The pillar scan no longer makes photos it never sends, so it does less work while you creep along.
+
 ## [1.8.28] - 2026-11-12
 
 ### Remote view

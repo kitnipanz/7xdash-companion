@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.8.28] - 2026-11-12
+
+### Remote view
+- **Keeps going on weak signal.** The car no longer drops the link when its upload is slow: stills wait their turn, and the live video lowers its quality on a weak signal and raises it again when the signal is back.
+- **Comes back by itself.** A drop in a tunnel or on a network change reconnects in seconds (was up to half a minute), and the phone's live view carries on without pressing Watch again.
+- **Camera status on 7xDash web.** The page says when the camera you picked can't be watched: the car itself is using it, it stopped responding, the car can't open cameras right now, or the car has no such camera.
+- **Retry from 7xDash web.** Looks for the cameras again and starts the picture over.
+- **Any camera.** Remote view can now watch a cabin camera even when it is switched off in the camera profile. It is opened only while you watch: not recorded, not shown on the car screen.
+- A camera another app is using is checked every 10 seconds (was 30), so the picture comes back sooner once it is free.
+
 ## [1.8.27] - 2026-11-12
 
 ### Navigation

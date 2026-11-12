@@ -128,6 +128,20 @@ public final class LiveEncoder {
         }
     }
 
+    /** Change the target bitrate while running (the uplink got slower or recovered). */
+    public void setBitrate(int bitrate) {
+        MediaCodec c = codec;
+        if (c == null || stopped) {
+            return;
+        }
+        try {
+            Bundle b = new Bundle();
+            b.putInt(MediaCodec.PARAMETER_KEY_VIDEO_BITRATE, bitrate);
+            c.setParameters(b);
+        } catch (IllegalStateException ignored) {
+        }
+    }
+
     private void drain(MediaCodec mc, int index, MediaCodec.BufferInfo info) {
         try {
             if (stopped) {

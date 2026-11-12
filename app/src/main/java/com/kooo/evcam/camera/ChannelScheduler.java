@@ -44,7 +44,7 @@ import java.util.function.Consumer;
  *   <li>录像输出离开了会话（改输出摘掉的），或者关着的一路录像不再留着它（停了录、不在计划里），告诉声明它的那一方
  *       （{@link #dispatchDrops}）；交给它的消费者（{@link #handOver}：主界面重建时留住的预览画布、关掉的超级后视镜留住的画布、
  *       换下来的录制器）离开了会话的，放掉；</li>
- *   <li>被拿着的一路有人要、到了 30 秒就问一次相机服务（只问，不开）；关完一轮 30 秒的、别的程序拿走一路相机 30 秒的
+ *   <li>被拿着的一路有人要、到了 10 秒就问一次相机服务（只问，不开）；关完一轮 30 秒的、别的程序拿走一路相机 30 秒的
  *       （{@link #watchAfter}），量一次还开着的那几路（{@link #noteAftermaths}；在那之前我们自己动了它的，量到动它那一刻）；
  *       关座舱时环视开着的，关完那一刻、1 秒、30 秒各量一次环视（{@link Coupling}，2.11.5 第 D2 项）；救完一路接着量别的几路到下一步开始；
  *       关座舱前先关环视的那一趟（规则那一步，2.11.6）走完写一行：环视断了多久、各段多久（{@link SurroundFirst}）；</li>
@@ -1569,6 +1569,18 @@ public final class ChannelScheduler {
         wake();
     }
 
+    private volatile boolean retryRequested;
+
+    /**
+     * 人在 7xDash 网页上按了「重试」（哪个线程都能调）：停手的路从头救，被拿着的路马上问一次相机服务 ——
+     * 只问，不开，和 {@link #askNow} 一样绝不因此去试开被拿着的路。
+     */
+    public void retryNow() {
+        retryRequested = true;
+        askRequested = true;
+        wake();
+    }
+
     /** 相机服务说访问优先级变了：叫醒，马上问一次（被拿着的一路才问）—— 绝不因此去开。 */
     void askNow() {
         askRequested = true;
@@ -1909,6 +1921,10 @@ public final class ChannelScheduler {
     private void refresh(long now) {
         long offset = host.elapsedNow() - now;
         Set<CameraNeeds.Holder> holders = host.holders();
+        if (retryRequested) {
+            retryRequested = false;
+            w.retryAsked = true;
+        }
         int changes = needsChanges.getAndSet(0);
         if (changes > 0) {
             w.needsVersion += changes;
@@ -3336,7 +3352,7 @@ public final class ChannelScheduler {
     // ---- 8. 问（只问，不开）
 
     /**
-     * 被拿着的一路有人要、上一次问已经过了 30 秒（刚变成有人要的马上问；规则见 {@link ChannelRules#askDue}），
+     * 被拿着的一路有人要、上一次问已经过了 10 秒（刚变成有人要的马上问；规则见 {@link ChannelRules#askDue}），
      * 或者访问优先级变了：问相机服务一次。答回来时每一路写一行（日志每次、黑匣子第一次和每第 10 次）。
      */
     private void maybeAsk() {

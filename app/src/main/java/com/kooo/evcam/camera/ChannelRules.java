@@ -402,6 +402,8 @@ public final class ChannelRules {
 
         /** 上一轮看到的 {@link #needsVersion}。 */
         int seenNeedsVersion;
+        /** 人按了「重试」（7xDash 网页）：这一轮停手的路从头救；{@link #settle} 读完就清。 */
+        boolean retryAsked;
         /**
          * 开不起来判成「现在用不了相机」、要等主界面回到前台的时刻；0 = 没有。主界面回到前台才清（{@link ChannelRules#mainCameForward}）。
          * 只在判的时候主界面不在前、出事以后它也没回到过前台时记（{@link ChannelRules#applyVerdict}）。
@@ -664,7 +666,9 @@ public final class ChannelRules {
             /** 亮屏（项目所有者 2026-10-11，§7.4）。 */
             SCREEN_ON,
             /** 相机服务报它空闲（项目所有者 2026-10-11，§7.4）。 */
-            SERVICE_FREE
+            SERVICE_FREE,
+            /** 人在 7xDash 网页上按了「重试」（项目所有者 2026-11-12）。 */
+            USER_RETRY
         }
 
         final Type type;
@@ -847,6 +851,8 @@ public final class ChannelRules {
         List<Event> events = new ArrayList<>();
         boolean needsChanged = w.needsVersion != w.seenNeedsVersion;
         w.seenNeedsVersion = w.needsVersion;
+        boolean retry = w.retryAsked;
+        w.retryAsked = false;
         for (Lane lane : w.lanes) {
             if (!wantsKind(w, lane, Kind.RECORD)) {
                 lane.recordWantedSince = 0;
@@ -858,7 +864,7 @@ public final class ChannelRules {
         recognize(w, events);
         judgeDue(w, events);
         release(w, events);
-        liftStops(w, needsChanged, events);
+        liftStops(w, needsChanged, retry, events);
         clearLadders(w);
         return events;
     }
@@ -1081,7 +1087,7 @@ public final class ChannelRules {
      * 关着的那一路交给救援（第一次救就是第 1 次），开着没画面的照 8 秒的规矩救。没人要了的不在这里报：
      * 梯子照「不再需要画面」归零（{@link #clearLadders}），以后有人要了从头开。
      */
-    private static void liftStops(World w, boolean needsChanged, List<Event> events) {
+    private static void liftStops(World w, boolean needsChanged, boolean retry, List<Event> events) {
         for (Lane lane : w.lanes) {
             if (!lane.ladder.stopped() || !wanted(w, lane)) {
                 continue;
@@ -1091,6 +1097,10 @@ public final class ChannelRules {
             if (needsChanged) {
                 cause = Event.Cause.NEEDS_CHANGED;
                 lifted = lane.ladder.registerChanged();
+            } else if (retry) {
+                // 人按的「重试」：和亮屏一样只解除停手，被拿着的路不在这里（它不上梯子，只问、不开）
+                cause = Event.Cause.USER_RETRY;
+                lifted = lane.ladder.liftStop();
             } else if (w.screenOnAt > lane.stoppedAt) {
                 cause = Event.Cause.SCREEN_ON;
                 lifted = lane.ladder.liftStop();
@@ -1136,7 +1146,7 @@ public final class ChannelRules {
 
     /**
      * 该问相机服务了（只问，不开；§二.7）：被拿着的一路有人要，上一次问已经过了 {@link #ASK_EVERY_MS} ——
-     * 每 30 秒一次；它刚变成有人要、而上一次问已超过 30 秒时，马上问。
+     * 每 10 秒一次；它刚变成有人要、而上一次问已超过 10 秒时，马上问。
      */
     static boolean askDue(World w) {
         if (winding(w)) {
@@ -1200,7 +1210,8 @@ public final class ChannelRules {
             return false;
         }
         if (lane.cabinOnly && holder != CameraNeeds.Holder.CABIN
-                && holder != CameraNeeds.Holder.REMOTE_BACKSEAT) {
+                && holder != CameraNeeds.Holder.REMOTE_BACKSEAT
+                && holder != CameraNeeds.Holder.REMOTE_DRIVER) {
             return false;
         }
         switch (holder) {

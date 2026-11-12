@@ -344,10 +344,10 @@ public class CameraTakenTest {
         assertTrue(CameraTaken.releases(BLOCKED, true, false, oneTaken));
     }
 
-    /** 数字是确认过的：30 秒问一次（只问，不开），别人引起的变化过去 3 秒才算安静。 */
+    /** 数字是确认过的：10 秒问一次（只问，不开），别人引起的变化过去 3 秒才算安静。 */
     @Test
     public void askAndQuietKeepTheConfirmedNumbers() {
-        assertEquals(30_000L, CameraTaken.ASK_EVERY_MS);
+        assertEquals(10_000L, CameraTaken.ASK_EVERY_MS);
         assertEquals(3_000L, CameraTaken.QUIET_MS);
     }
 }

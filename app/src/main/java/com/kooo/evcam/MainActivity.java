@@ -1748,6 +1748,31 @@ public class MainActivity extends AppCompatActivity {
                 remoteHandler.removeCallbacks(remotePump);
                 remoteHandler.post(remotePump);
             }
+
+            @Override
+            public void onRetry() {
+                if (cameraManager != null) {
+                    cameraManager.remoteRetry();
+                }
+                if (carLink == null || !carLink.isWatching() || remoteStream == null) {
+                    return;
+                }
+                // Start the picture over: video is tried again, on the GPU path first
+                remoteVideoRefused = false;
+                remoteStream.stop();
+                if (!remoteStream.start(carLink.watchSource())) {
+                    AppLog.w(TAG, "remote video unavailable after retry, JPEG only");
+                }
+                remoteHandler.removeCallbacks(remotePump);
+                remoteHandler.post(remotePump);
+            }
+
+            @Override
+            public void onKeyRequest() {
+                if (remoteStream != null && remoteStream.isRunning()) {
+                    remoteStream.requestKeyFrame();
+                }
+            }
         });
         carLink.setUi(snap -> {
             lastLink = snap;
@@ -1761,6 +1786,21 @@ public class MainActivity extends AppCompatActivity {
             if (snap.watching) {
                 remoteHandler.post(remotePump);
             }
+        });
+        carLink.setCams(() -> {
+            com.kooo.evcam.camera.MultiCameraManager cm = cameraManager;
+            if (cm == null) {
+                return null;
+            }
+            org.json.JSONObject out = new org.json.JSONObject();
+            try {
+                out.put("drive", cm.remoteStatus(com.kooo.evcam.camera.CameraSlots.KEY_SURROUND));
+                out.put("driver", cm.remoteStatus(com.kooo.evcam.camera.CameraSlots.KEY_CABIN_FRONT));
+                out.put("backseat", cm.remoteStatus(com.kooo.evcam.camera.CameraSlots.KEY_CABIN_REAR));
+            } catch (org.json.JSONException e) {
+                return null;
+            }
+            return out;
         });
         speakerRemote = new com.kooo.evcam.audio.SpeakerRemote(this, carLink);
         speakerRemote.attach();
@@ -2227,7 +2267,7 @@ public class MainActivity extends AppCompatActivity {
         showBuilt(built);
         // 布局是新建的，座舱两格默认都显示。管线里只有真正要建的那一路才有实例（配置里关着的那一路没有），问它就是结论
         // A rear cabin built only for the cabin passenger window is not part of this layout
-        showCabinPanes(pipeline.getCamera("back") != null,
+        showCabinPanes(pipeline.getCamera("back") != null && !pipeline.isCabinOnly("back"),
                 pipeline.getCamera("left") != null && !pipeline.isCabinOnly("left"));
         pipeline.declarePreviews(textureFront, textureBack, textureLeft);
         // 各路的画面尺寸可能在挂上回调之前就算出来了（不开设备先算的、上一个界面时开过的）：补一次

@@ -81,6 +81,11 @@
             android:key="pref_button_lab"
             android:title="@string/button_lab_title"
             android:summary="@string/button_lab_summary" />
+
+        <Preference
+            android:key="pref_stargate_lab"
+            android:title="@string/stargate_lab_title"
+            android:summary="@string/stargate_lab_summary" />
     </PreferenceScreen>
 
     <PreferenceScreen

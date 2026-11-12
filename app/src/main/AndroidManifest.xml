@@ -6,6 +6,10 @@
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.READ_LOGS" />
+    <!-- Stargate lab lists the car's light apps; 7xDash is sideloaded, not on Play -->
+    <uses-permission
+        android:name="android.permission.QUERY_ALL_PACKAGES"
+        tools:ignore="QueryAllPackagesPermission" />
     <!-- 车机没有无障碍设置页：adb 授权后应用自己打开无障碍服务，给快捷键用 -->
     <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS"
         tools:ignore="ProtectedPermissions" />
@@ -280,6 +284,13 @@
         <activity
             android:name=".zeekr.BlindSpotFinderActivity"
             android:label="@string/bsd_finder_title"
+            android:theme="@style/Theme.Cam"
+            android:screenOrientation="landscape"
+            android:exported="false" />
+
+        <activity
+            android:name=".light.StargateLabActivity"
+            android:label="@string/stargate_lab_title"
             android:theme="@style/Theme.Cam"
             android:screenOrientation="landscape"
             android:exported="false" />

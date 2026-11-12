@@ -1200,6 +1200,8 @@ public class SettingsPreferenceFragment extends PreferenceFragmentCompat {
                 startActivity(new Intent(getContext(), com.kooo.evcam.zeekr.BlindSpotFinderActivity.class)));
         onClick("pref_button_lab", pref ->
                 startActivity(new Intent(getContext(), com.kooo.evcam.input.ButtonLabActivity.class)));
+        onClick("pref_stargate_lab", pref ->
+                startActivity(new Intent(getContext(), com.kooo.evcam.light.StargateLabActivity.class)));
         onClick("pref_ble_signal", pref ->
                 startActivity(new Intent(getContext(), com.kooo.evcam.input.BleSignalActivity.class)));
         int cabinScreenWidth = getResources().getDisplayMetrics().widthPixels;

@@ -1,0 +1,250 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg"
+    android:orientation="vertical"
+    android:padding="16dp">
+    <!-- Stargate light curtain experiment: Find names, look at the car API and light apps, Listen, capture -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/title_bar_height"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="10dp"
+        android:paddingEnd="16dp">
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/sg_close"
+            style="@style/Widget.Cam.IconButton"
+            android:layout_width="@dimen/icon_button_size"
+            android:layout_height="@dimen/icon_button_size"
+            android:contentDescription="@string/action_back"
+            app:icon="@drawable/ic_back" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="14dp"
+            android:text="@string/stargate_lab_title"
+            android:textAppearance="@style/TextAppearance.Cam.Title"
+            android:textColor="@color/text_primary"
+            android:textStyle="bold" />
+    </LinearLayout>
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_marginTop="8dp"
+        android:background="@drawable/bg_surface_card"
+        android:fillViewport="true">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="20dp">
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_pref_row_static"
+                android:padding="16dp"
+                android:text="@string/stargate_lab_intro"
+                android:textAppearance="@style/TextAppearance.Cam.Body"
+                android:textColor="@color/text_secondary" />
+            <!-- 1. Look: words, Find, Car API, Light apps -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:background="@drawable/bg_pref_row_static"
+                android:orientation="vertical"
+                android:padding="16dp">
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/stargate_lab_look_title"
+                    android:textAppearance="@style/TextAppearance.Cam.Body"
+                    android:textColor="@color/text_primary"
+                    android:textStyle="bold" />
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+                    <EditText
+                        android:id="@+id/sg_words"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:hint="@string/stargate_lab_words_hint"
+                        android:importantForAutofill="no"
+                        android:inputType="textNoSuggestions|textCapCharacters"
+                        android:singleLine="true"
+                        android:textColor="@color/text_primary"
+                        android:textColorHint="@color/text_hint" />
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/sg_find"
+                        style="@style/Widget.Cam.RailSmall"
+                        android:layout_width="wrap_content"
+                        android:layout_height="52dp"
+                        android:layout_marginStart="12dp"
+                        android:text="@string/stargate_lab_find" />
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/sg_api"
+                        style="@style/Widget.Cam.RailSmall"
+                        android:layout_width="wrap_content"
+                        android:layout_height="52dp"
+                        android:layout_marginStart="10dp"
+                        android:text="@string/stargate_lab_api" />
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/sg_apps"
+                        style="@style/Widget.Cam.RailSmall"
+                        android:layout_width="wrap_content"
+                        android:layout_height="52dp"
+                        android:layout_marginStart="10dp"
+                        android:text="@string/stargate_lab_apps" />
+                </LinearLayout>
+            </LinearLayout>
+            <!-- 2. Listen and capture -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/sg_listen"
+                    style="@style/Widget.Cam.RailSmall"
+                    android:layout_width="wrap_content"
+                    android:layout_height="52dp"
+                    android:text="@string/stargate_lab_listen" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/sg_copy"
+                    style="@style/Widget.Cam.RailSmall"
+                    android:layout_width="wrap_content"
+                    android:layout_height="52dp"
+                    android:layout_marginStart="12dp"
+                    android:text="@string/stargate_lab_copy_all" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/sg_clear"
+                    style="@style/Widget.Cam.RailSmall"
+                    android:layout_width="wrap_content"
+                    android:layout_height="52dp"
+                    android:layout_marginStart="12dp"
+                    android:text="@string/button_lab_clear" />
+                <TextView
+                    android:id="@+id/sg_status"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:layout_weight="1"
+                    android:text="@string/button_lab_stopped"
+                    android:textAppearance="@style/TextAppearance.Cam.Body"
+                    android:textColor="@color/text_secondary" />
+            </LinearLayout>
+            <TextView
+                android:id="@+id/sg_file"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:text="@string/stargate_lab_no_file"
+                android:textAppearance="@style/TextAppearance.Cam.Caption"
+                android:textColor="@color/text_tertiary"
+                android:textIsSelectable="true" />
+            <!-- 3. Read or send any car function by hand -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:background="@drawable/bg_pref_row_static"
+                android:orientation="vertical"
+                android:padding="16dp">
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/button_lab_any_title"
+                    android:textAppearance="@style/TextAppearance.Cam.Body"
+                    android:textColor="@color/text_primary"
+                    android:textStyle="bold" />
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+                    <EditText
+                        android:id="@+id/sg_any_function"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:hint="@string/button_lab_any_function"
+                        android:importantForAutofill="no"
+                        android:inputType="textNoSuggestions|textCapCharacters"
+                        android:singleLine="true"
+                        android:textColor="@color/text_primary"
+                        android:textColorHint="@color/text_hint" />
+                    <EditText
+                        android:id="@+id/sg_any_zone"
+                        android:layout_width="150dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
+                        android:hint="@string/button_lab_any_zone"
+                        android:importantForAutofill="no"
+                        android:inputType="textNoSuggestions"
+                        android:singleLine="true"
+                        android:textColor="@color/text_primary"
+                        android:textColorHint="@color/text_hint" />
+                    <EditText
+                        android:id="@+id/sg_any_value"
+                        android:layout_width="130dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
+                        android:hint="@string/button_lab_any_value"
+                        android:importantForAutofill="no"
+                        android:inputType="textNoSuggestions"
+                        android:singleLine="true"
+                        android:textColor="@color/text_primary"
+                        android:textColorHint="@color/text_hint" />
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/sg_any_read"
+                        style="@style/Widget.Cam.RailSmall"
+                        android:layout_width="wrap_content"
+                        android:layout_height="52dp"
+                        android:layout_marginStart="12dp"
+                        android:text="@string/button_lab_any_read" />
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/sg_any_send"
+                        style="@style/Widget.Cam.RailSmall"
+                        android:layout_width="wrap_content"
+                        android:layout_height="52dp"
+                        android:layout_marginStart="10dp"
+                        android:text="@string/button_lab_any_send" />
+                </LinearLayout>
+                <TextView
+                    android:id="@+id/sg_any_result"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="@string/stargate_lab_any_hint"
+                    android:textAppearance="@style/TextAppearance.Cam.Caption"
+                    android:textColor="@color/text_secondary"
+                    android:textIsSelectable="true" />
+            </LinearLayout>
+            <TextView
+                android:id="@+id/sg_empty"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="@string/stargate_lab_empty"
+                android:textAppearance="@style/TextAppearance.Cam.Body"
+                android:textColor="@color/text_tertiary" />
+            <LinearLayout
+                android:id="@+id/sg_rows"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:orientation="vertical" />
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>

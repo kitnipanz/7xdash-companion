@@ -12,6 +12,10 @@ Plug in a USB drive before you start: videos, photos and the settings backup go 
 
 ## Features and how to use them
 
+**คู่มือภาษาไทย (Thai guide):** [ฟีเจอร์ทั้งหมด](docs/guide/features.md) ·
+[ระบบอัตโนมัติ](docs/guide/automation.md) · [การนำทาง](docs/guide/navigation.md)
+
+
 Most features have a card on the **Home** page and a section in **Settings**. Hold a card to jump to its
 settings; hold and drag to move it to another card's place. To choose what is on Home, tap **Customize Home**, the last card: drag a card by its dots to move it, × to
 remove, tap a card under More cards to add it back. With Beta features on, Stable and Beta tabs split the cards. The rail on the left (Home, Record, Dim, Rear, Capture, Megaphone, EQ, AirPlay, Settings) is on
@@ -157,28 +161,29 @@ Reads the car through an ELM327 adapter in the OBD socket, while the screen is o
 - Read only: it cannot clear codes or change anything. Unplug the adapter when you are done, because
   many keep drawing from the 12 V battery.
 
-### Navigation (beta)
-Turn-by-turn navigation on a Google map, with live traffic, spoken turns and the next turn on the HUD.
-- Turn on Settings → Interface → **Beta features**, then tap the **Navigation** card.
-- Search for a place, pick the one shared from your iPhone (Battery at arrival), or touch and hold on the
-  map. The route shows its time, distance, arrival time and battery at arrival; tap **Start**.
-- While guiding: the banner shows the next turn and how far it is, the map follows the car (move it by
-  hand and **Back to the car** returns), and leaving the route finds a new one. Guidance keeps going
-  on the HUD and by voice when you leave the screen, until you arrive or tap **End**.
-- **Speak the turns** and **Next turn on the HUD** are on the trip card. Turns are spoken by the head
-  unit's voice, or the offline English voice (Announcements) when it has none. Thai needs a Thai voice
-  on the head unit.
-- Needs a Google Maps Platform key in the build (`MAPS_API_KEY`, see Release) with the **Maps SDK for
-  Android**, **Routes API** and **Places API (New)** enabled, and internet. The map needs Google Play
-  services on the head unit; without it, guidance still works with no map.
+### Navigation
+Turn-by-turn navigation with TomTom: live traffic, alternative routes, battery at arrival, the next turn
+and a map on the HUD, and a floating map over other apps. Full guide (Thai): [docs/guide/navigation.md](docs/guide/navigation.md).
+- Tap the **Navigation** card. Search for a place, pick a saved place or one shared from your iPhone, or
+  touch and hold on the map. The route shows its time, distance, arrival time and battery at arrival; tap **Start**.
+- While guiding: the banner shows the next turn, the map follows the car, and leaving the route finds a new
+  one. Guidance keeps going on the HUD and the floating map when you leave the screen, until you arrive or tap **End**.
+- **Floating map**: the button at the bottom right, or its shortcut. The bar shows the next turn, the arrival
+  time, and the time and distance left. Drag the bar to move, double-tap for small or large, drag the corner to resize.
+- Needs internet and a TomTom key in the build (`TOMTOM_API_KEY`, see Release).
 
 ### Automation
-When something happens on the car, 7xDash does what you picked. Open the **Automation** card on Home. Off until you turn it on.
-- **When:** the car turns on or off, shift to P, D or R, speed reaches or drops to a number, it gets dark or light, it starts or stops raining, battery drops to a number, outside temperature reaches or drops to a number.
-- **Do**, as many as you like, in order: drive mode (Comfort, Normal, Sport), mood light on or off, mood light colour, car ambient light and its brightness, dim overlay, AC on or off, temperature zones (synced or dual), open the glovebox (only in P), or any shortcut action.
-- Automations run on a change, not on a state: opening the app in D does not run "Shift to D". A speed has to drop 3 km/h back before it runs again, and a number or rain runs at most once in 30 seconds.
-- Press **Add automation**, or start from an example. Pick When on the left and Do on the right; the line at the bottom reads back what you built. Tap a choice again to take it back.
-- **Try it now** at the bottom runs its actions straight away. A mood light colour stays until the gear rules pick a new look.
+When something happens on the car, 7xDash does what you picked. Open the **Automation** card on Home and
+turn it on. Full guide with real use cases (Thai): [docs/guide/automation.md](docs/guide/automation.md).
+- **When:** the car turns on or off, shift to P, D or R, speed reaches or drops to a number, it gets dark or
+  light, rain starts or stops, battery drops to a number, outside temperature reaches or drops to a number,
+  arrive at or leave a saved place.
+- **And only if** (optional): days (workdays, weekend), dark or light, raining or not, at or away from a saved place.
+- **Do**, in order: drive mode, steering feel, sunroof shade, tailgate height, rear fog light, AC,
+  temperature zones, glovebox (P only), lock feedback, mood light and its colour, car ambient light and its
+  brightness, dim overlay, navigate to a saved place, or any shortcut action.
+- Automations run on a change, not on a state. A number has to come back before it runs again, and numbers
+  and rain run at most once in 30 seconds. **Try it now** runs the actions straight away; test parked first.
 
 ### Settings backup on USB
 Your settings (switches, shortcuts, stickers, lights, speakers, EQ, profiles, announcements and
@@ -209,7 +214,5 @@ details and the other open-source components used.
 Bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section to `CHANGELOG.md`,
 then push a tag `v<versionName>`. GitHub Actions builds, tests and publishes the release.
 
-Navigation needs the repository secret `MAPS_API_KEY` (or `MAPS_API_KEY=` in `local.properties` for a local
-build): a Google Maps Platform key with Maps SDK for Android, Routes API and Places API (New) enabled.
-Restrict it to Android apps with package `lab.sevenx.dash` and the release signing certificate's SHA-1;
-7xDash sends both with each Routes and Places call so the restriction also covers them.
+Navigation needs the repository secret `TOMTOM_API_KEY` (or `TOMTOM_API_KEY=` in `local.properties` for a
+local build): a TomTom key for the map, routing and search.

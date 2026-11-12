@@ -51,6 +51,12 @@ public final class WhereParked implements Telemetry.Listener {
     private static final int PHOTO_W = 640;
     private static final int PHOTO_H = 360;
     private static final int PHOTO_QUALITY = 60;
+    /** No floor or bay read: the photos are all the web has, so send them bigger. */
+    private static final int BLANK_W = 960;
+    private static final int BLANK_H = 540;
+    private static final int BLANK_QUALITY = 65;
+    /** The hub drops a photo over 256 KB of base64; stay under it or fall back to the small size. */
+    private static final int MAX_PHOTO_B64 = 240 * 1024;
     private static final int MAX_LINES = 30;
     /** Pillar scan runs below this speed. */
     private static final float CREEP_KMH = 3f;
@@ -225,7 +231,7 @@ public final class WhereParked implements Telemetry.Listener {
             }
             worker.execute(() -> {
                 try {
-                    remember(ctx, readLanes(channels));
+                    remember(ctx, readLanes(channels, false));
                 } catch (RuntimeException e) {
                     AppLog.w(TAG, "pillar scan failed: " + e.getMessage());
                 } finally {
@@ -302,7 +308,7 @@ public final class WhereParked implements Telemetry.Listener {
             worker.execute(() -> {
                 ScanResult result;
                 try {
-                    Reading reading = readLanes(channels);
+                    Reading reading = readLanes(channels, true);
                     remember(ctx, reading);
                     long at = System.currentTimeMillis();
                     // Scanned by hand: the web shows it as where the car is, gaps from memory
@@ -472,8 +478,11 @@ public final class WhereParked implements Telemetry.Listener {
         Bitmap picture;
     }
 
-    /** Worker thread. */
-    private Reading readLanes(Bitmap[] channels) {
+    /**
+     * Worker thread. {@code withPhotos}: also encode each lane for 7xDash web, bigger when no
+     * floor or bay is known (this read and the pillar scan memory both blank).
+     */
+    private Reading readLanes(Bitmap[] channels, boolean withPhotos) {
         List<String> all = new ArrayList<>();
         int best = -1;
         int bestScore = -1;
@@ -491,10 +500,24 @@ public final class WhereParked implements Telemetry.Listener {
                 bestScore = score;
                 best = i;
             }
-            photos[i] = jpegBase64(frame);
         }
         Reading reading = new Reading();
         reading.spot = ParkingText.pick(all);
+        if (withPhotos) {
+            boolean blank = withMemory(reading.spot).isEmpty();
+            for (int i = 0; i < LANES.length; i++) {
+                Bitmap frame = LANES[i] < channels.length ? channels[LANES[i]] : null;
+                if (frame == null) {
+                    continue;
+                }
+                String big = blank ? jpegBase64(frame, BLANK_W, BLANK_H, BLANK_QUALITY) : null;
+                photos[i] = big != null && big.length() <= MAX_PHOTO_B64
+                        ? big : jpegBase64(frame, PHOTO_W, PHOTO_H, PHOTO_QUALITY);
+            }
+            if (blank) {
+                AppLog.d(TAG, "no sign read: sending the cameras' photos at " + BLANK_W + "x" + BLANK_H);
+            }
+        }
         reading.lines = all;
         reading.photos = photos;
         reading.best = best;
@@ -506,7 +529,7 @@ public final class WhereParked implements Telemetry.Listener {
 
     /** Worker thread. */
     private void read(Context ctx, Bitmap[] channels) {
-        Reading reading = readLanes(channels);
+        Reading reading = readLanes(channels, true);
         List<String> all = reading.lines;
         String[] photos = reading.photos;
         int best = reading.best;
@@ -576,11 +599,11 @@ public final class WhereParked implements Telemetry.Listener {
         return out;
     }
 
-    private static String jpegBase64(Bitmap frame) {
-        Bitmap small = Bitmap.createScaledBitmap(frame, PHOTO_W, PHOTO_H, true);
+    private static String jpegBase64(Bitmap frame, int w, int h, int quality) {
+        Bitmap small = Bitmap.createScaledBitmap(frame, w, h, true);
         try {
             ByteArrayOutputStream out = new ByteArrayOutputStream(48 * 1024);
-            if (!small.compress(Bitmap.CompressFormat.JPEG, PHOTO_QUALITY, out)) {
+            if (!small.compress(Bitmap.CompressFormat.JPEG, quality, out)) {
                 return null;
             }
             return Base64.encodeToString(out.toByteArray(), Base64.NO_WRAP);

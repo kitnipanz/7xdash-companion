@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.8.32-beta] - 2026-11-13
+
+### Fixed
+- A unit test that sometimes failed the build now checks its results safely. No change to the app itself; same features as 1.8.31-beta.
+
 ## [1.8.31-beta] - 2026-11-13
 
 ### Browser (beta)

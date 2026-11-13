@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.8.33-beta] - 2026-11-13
+
+### Where I parked
+- **Photos come out flat and fill the frame.** In the car, the left, front and right photos came out shrunk, with bent lines, black on the right and a black arc at the bottom. Fixed.
+- Parking photos are always straightened flat (110°), whatever the screen's straightening setting is.
+- Remote view's straightened cameras get the same fix.
+
+### Automation
+- **Time** under "And only if": **After** or **Before** a time, on a 24-hour clock. For example: the car turns on and after 18:00 → close the sunroof shade.
+
+### Shortcuts
+- New action **Minimise and open the app 60 times** (Car tab): opens 7xDash on Home and goes to the home screen in turn, every 0.5 seconds, 30 times each. Press it again to stop.
+
+### Netflix
+- The Netflix card on Home, the Netflix button in the browser and the Open Netflix shortcut are removed. The browser starts on Google. The Netflix app's picture is still hidden while driving.
+
 ## [1.8.32-beta] - 2026-11-13
 
 ### Fixed

@@ -346,6 +346,8 @@ Then reopen this app.</string>
     <string name="drm_lab_summary">How Widevine works on this car: its security level (L1 or L3) and HD support, and each step of playing Google\'s protected test videos</string>
     <string name="drm_lab_stop">Stop</string>
     <string name="drm_lab_device">Device info</string>
+    <string name="stream_lab_title">Netflix and YouTube lab (beta)</string>
+    <string name="stream_lab_summary">Every way to play Netflix and YouTube on this car (apps, web, TV page, embedded) and how smoothly each plays: decoders, Widevine, web player checks and a frame-drop meter</string>
     <string name="browser_title">Browser</string>
     <string name="home_card_browser_sub">Desktop sites, such as YouTube. Hold for a floating window</string>
     <string name="browser_move">Move. Double-tap: small or large</string>

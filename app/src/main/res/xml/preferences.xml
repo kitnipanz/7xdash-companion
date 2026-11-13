@@ -768,6 +768,12 @@
             android:title="@string/drm_lab_title"
             android:summary="@string/drm_lab_summary" />
 
+        <!-- Netflix and YouTube lab (beta): every route to play them, and how smoothly -->
+        <Preference
+            android:key="pref_stream_lab"
+            android:title="@string/stream_lab_title"
+            android:summary="@string/stream_lab_summary" />
+
     </PreferenceScreen>
 
     <!--

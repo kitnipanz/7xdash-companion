@@ -344,6 +344,8 @@
     <string name="drm_lab_summary">ดูว่า Widevine ในรถทำงานอย่างไร: ระดับความปลอดภัย (L1 หรือ L3) รองรับ HD ไหม และแต่ละขั้นตอนตอนเล่นวิดีโอทดสอบที่ป้องกันไว้ของ Google</string>
     <string name="drm_lab_stop">หยุด</string>
     <string name="drm_lab_device">ข้อมูลเครื่อง</string>
+    <string name="stream_lab_title">ทดลอง Netflix และ YouTube (เบต้า)</string>
+    <string name="stream_lab_summary">ทุกวิธีที่จะเล่น Netflix และ YouTube บนรถ (แอป เว็บ หน้า TV ตัวเล่นฝัง) และเล่นลื่นแค่ไหน: ตัวถอดรหัสวิดีโอ Widevine การตรวจตัวเล่นบนเว็บ และมาตรวัดเฟรมตก</string>
     <string name="browser_title">เบราว์เซอร์</string>
     <string name="home_card_browser_sub">เว็บแบบเดสก์ท็อป เช่น YouTube กดค้างเพื่อเปิดหน้าต่างลอย</string>
     <string name="browser_move">ย้าย แตะสองครั้ง: เล็กหรือใหญ่</string>

@@ -297,6 +297,15 @@
             android:exported="false" />
 
         <activity
+            android:name=".browser.StreamLabActivity"
+            android:label="@string/stream_lab_title"
+            android:theme="@style/Theme.Cam"
+            android:screenOrientation="landscape"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboard|keyboardHidden|navigation|uiMode|density"
+            android:hardwareAccelerated="true"
+            android:exported="false" />
+
+        <activity
             android:name=".browser.BrowserActivity"
             android:label="@string/browser_title"
             android:theme="@style/Theme.Cam"

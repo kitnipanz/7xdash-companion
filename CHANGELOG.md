@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.8.34-beta] - 2026-11-14
+
+### Netflix and YouTube lab (beta)
+- **A new screen that tries every way to play Netflix and YouTube on the car, and shows how smoothly each one plays.** Settings → System → Netflix and YouTube lab.
+- **Check this car**: screen and refresh rate, the WebView's version, Widevine level (L1 or L3), which video formats (H.264, HEVC, VP9, AV1) the car decodes in hardware and whether they reach 1080p60, and which player apps are installed. It ends with a verdict for each route.
+- **Check the web player**: which video formats web pages can play, whether each plays smoothly at 720p, 1080p and 4K, and which Widevine levels a page can get (what netflix.com needs).
+- **Routes**: Netflix app, netflix.com, YouTube app, other YouTube apps (SmartTube, NewPipe…), the YouTube TV page (light, made for slow chips), desktop, mobile and embedded YouTube.
+- **Smooth meter**: while a page plays, a line every 2 seconds with resolution, frames per second, dropped frames and buffer. Leaving a route shows its average.
+- **Force H.264**: makes YouTube send H.264, which almost every car decodes in hardware, for smoother video.
+- The picture is hidden while driving, like the browser.
+
 ## [1.8.33-beta] - 2026-11-13
 
 ### Where I parked

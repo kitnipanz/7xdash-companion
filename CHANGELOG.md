@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.8.31-beta] - 2026-11-13
+
+### Browser (beta)
+- **A web browser, full screen or floating.** Home → Browser (hold the card for the floating window), or the new shortcut action. Sites see a desktop computer, so they show their desktop pages.
+- Toolbar: back, forward, reload, address, Netflix, YouTube, floating/full screen, hide toolbar and close. Hide the toolbar for a bigger video; the round button brings it back, also during full-screen video.
+- Floating window: drag the bar on top to move it, the corner at the top left to resize it. It remembers where it was.
+- The picture is hidden while driving. **Show for passengers** (hold it) or Settings → Floating → Show the picture while driving shows it.
+
+### Netflix
+- Netflix plays only in the Netflix app on Android, so the Netflix button, the new Home card and the new shortcut open the Netflix app (or netflix.com in the browser when the app is not installed).
+- While driving, 7xDash covers the Netflix app's picture, the same as the browser; the sound keeps playing. It uses the accessibility service to know where Netflix's windows are, nothing inside them.
+
+### DRM lab (experimental)
+- **Settings → System → DRM lab** shows how Widevine works on this car: its security level (L1 hardware or L3 software), HDCP and secure video decoders, which decide whether apps like Netflix can play HD.
+- Plays Google's Widevine test videos (SD, HD, UHD) through Google's test license server, and shows each step: license request, answer, keys loaded, decoder and resolution.
+
 ## [1.8.30-beta] - 2026-11-13
 
 ### Stargate lab (experimental)

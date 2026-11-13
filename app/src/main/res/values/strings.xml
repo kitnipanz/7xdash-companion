@@ -337,6 +337,34 @@ Then reopen this app.</string>
     <string name="button_lab_any_no_value">Type a value to send, such as 1 or 0x1A</string>
     <string name="button_lab_any_no_zone">no zone</string>
     <string name="button_lab_any_confirm">This sends %1$d to %2$s (%3$s) on the car. Only in P. Anything the car has can be reached from here: send only values you have seen it take.</string>
+    <string name="netflix_title">Netflix</string>
+    <string name="home_card_netflix_sub">Opens the Netflix app. The picture hides while driving</string>
+    <string name="netflix_paused_driving">Netflix is hidden while driving. Sound keeps playing.</string>
+    <string name="shortcut_action_netflix">Open Netflix</string>
+    <string name="browser_show_for_passengers">Show for passengers</string>
+    <string name="browser_show_hold_hint">Hold to show the picture while driving</string>
+    <string name="set_browser_while_driving_title">Browser and Netflix: show the picture while driving</string>
+    <string name="drm_lab_title">DRM lab (experimental)</string>
+    <string name="drm_lab_summary">How Widevine works on this car: its security level (L1 or L3) and HD support, and each step of playing Google\'s protected test videos</string>
+    <string name="drm_lab_stop">Stop</string>
+    <string name="drm_lab_device">Device info</string>
+    <string name="browser_title">Browser</string>
+    <string name="home_card_browser_sub">Desktop sites such as Netflix. Hold for a floating window</string>
+    <string name="browser_move">Move. Double-tap: small or large</string>
+    <string name="browser_back">Back</string>
+    <string name="browser_forward">Forward</string>
+    <string name="browser_reload">Reload</string>
+    <string name="browser_address_hint">Type a web address or search</string>
+    <string name="browser_netflix">Netflix</string>
+    <string name="browser_youtube">YouTube</string>
+    <string name="browser_full">Full screen</string>
+    <string name="browser_float">Floating window</string>
+    <string name="browser_hide_toolbar">Hide the toolbar</string>
+    <string name="browser_show_toolbar">Show the toolbar</string>
+    <string name="browser_close">Close</string>
+    <string name="browser_paused_driving">The picture is hidden while driving. Sound keeps playing.</string>
+    <string name="browser_need_overlay">Allow 7xDash to show over other apps, then try again</string>
+    <string name="shortcut_action_browser">Floating browser on / off</string>
     <string name="stargate_lab_title">Stargate lab (experimental)</string>
     <string name="stargate_lab_summary">Find out whether 7xDash can draw on the Stargate light curtain: names, car API, light apps, Listen and capture</string>
     <string name="stargate_lab_intro">For the 7X AWD Performance light curtain. 1. Find lists the car functions whose names match the words, with what they read now. Car API lists what the car interface can do; a ★ marks calls that take bytes, text or arrays, which drawing a picture would need. Light apps lists the car\'s light apps and what they offer. 2. Press Listen, then go to the car\'s Light Studio and change things one at a time: Drive light on and off, pick patterns, save a custom pattern. Each change shows here: a car function that changed, a push from the car (any zone, raw data included), or a system log line about lights. Everything is saved to a file and Copy all copies it. 3. Read any function, or Send one in P after asking.</string>
@@ -753,7 +781,7 @@ Then reopen this app.</string>
 
     <!-- Main interface -->
     <string name="about_title">About &amp; credits</string>
-    <string name="accessibility_service_description">Used by Start on boot to help keep the app running.\n\nIt does not read or control anything on screen and collects no data.</string>
+    <string name="accessibility_service_description">Used by Start on boot to help keep the app running.\n\nFor Netflix it checks where the Netflix app\'s windows are on the screen, and nothing else, to hide the picture while driving. It does not read what is on screen and collects no data.</string>
     <string name="zeekr_composite_not_found">No surround composite stream found. This head unit may not be supported.</string>
     <string name="msg_no_camera_available">No camera available</string>
     <string name="zeekr_lane_front">Front</string>

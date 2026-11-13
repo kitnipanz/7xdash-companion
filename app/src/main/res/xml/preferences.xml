@@ -532,6 +532,12 @@
             android:title="@string/macro_pad_title"
             android:summary="@string/set_macro_pad_summary" />
 
+        <!-- Browser and Netflix: show the picture while driving, for passengers. Off by default -->
+        <SwitchPreferenceCompat
+            android:key="pref_browser_while_driving"
+            android:title="@string/set_browser_while_driving_title"
+            android:summary="@string/airplay_drive_warning" />
+
         <Preference
             android:key="pref_reset_floating"
             android:title="@string/set_reset_floating_title"
@@ -755,6 +761,12 @@
             android:key="pref_save_moment_drive"
             android:title="@string/set_save_moment_drive_title"
             android:summary="@string/set_save_moment_drive_summary" />
+
+        <!-- DRM lab: how Widevine works on this head unit, with Google's test streams -->
+        <Preference
+            android:key="pref_drm_lab"
+            android:title="@string/drm_lab_title"
+            android:summary="@string/drm_lab_summary" />
 
     </PreferenceScreen>
 

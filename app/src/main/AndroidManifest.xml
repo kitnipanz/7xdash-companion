@@ -289,6 +289,23 @@
             android:exported="false" />
 
         <activity
+            android:name=".drm.DrmLabActivity"
+            android:label="@string/drm_lab_title"
+            android:theme="@style/Theme.Cam"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden"
+            android:screenOrientation="landscape"
+            android:exported="false" />
+
+        <activity
+            android:name=".browser.BrowserActivity"
+            android:label="@string/browser_title"
+            android:theme="@style/Theme.Cam"
+            android:screenOrientation="landscape"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboard|keyboardHidden|navigation|uiMode|density"
+            android:windowSoftInputMode="adjustResize"
+            android:exported="false" />
+
+        <activity
             android:name=".light.StargateLabActivity"
             android:label="@string/stargate_lab_title"
             android:theme="@style/Theme.Cam"

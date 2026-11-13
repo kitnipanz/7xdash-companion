@@ -335,6 +335,34 @@
     <string name="button_lab_any_no_value">พิมพ์ค่าที่จะส่ง เช่น 1 หรือ 0x1A</string>
     <string name="button_lab_any_no_zone">ไม่มีโซน</string>
     <string name="button_lab_any_confirm">จะส่ง %1$d ไปที่ %2$s (%3$s) ของรถ เฉพาะเกียร์ P จากตรงนี้ไปถึงทุกอย่างที่รถมี: ส่งเฉพาะค่าที่เคยเห็นรถรับเท่านั้น</string>
+    <string name="netflix_title">Netflix</string>
+    <string name="home_card_netflix_sub">เปิดแอป Netflix ภาพจะซ่อนขณะขับรถ</string>
+    <string name="netflix_paused_driving">ซ่อน Netflix ขณะขับรถ เสียงยังเล่นต่อ</string>
+    <string name="shortcut_action_netflix">เปิด Netflix</string>
+    <string name="browser_show_for_passengers">แสดงให้ผู้โดยสาร</string>
+    <string name="browser_show_hold_hint">กดค้างเพื่อแสดงภาพขณะขับขี่</string>
+    <string name="set_browser_while_driving_title">เบราว์เซอร์และ Netflix: แสดงภาพขณะขับขี่</string>
+    <string name="drm_lab_title">ทดลอง DRM</string>
+    <string name="drm_lab_summary">ดูว่า Widevine ในรถทำงานอย่างไร: ระดับความปลอดภัย (L1 หรือ L3) รองรับ HD ไหม และแต่ละขั้นตอนตอนเล่นวิดีโอทดสอบที่ป้องกันไว้ของ Google</string>
+    <string name="drm_lab_stop">หยุด</string>
+    <string name="drm_lab_device">ข้อมูลเครื่อง</string>
+    <string name="browser_title">เบราว์เซอร์</string>
+    <string name="home_card_browser_sub">เว็บแบบเดสก์ท็อป เช่น Netflix กดค้างเพื่อเปิดหน้าต่างลอย</string>
+    <string name="browser_move">ย้าย แตะสองครั้ง: เล็กหรือใหญ่</string>
+    <string name="browser_back">ย้อนกลับ</string>
+    <string name="browser_forward">ไปข้างหน้า</string>
+    <string name="browser_reload">โหลดใหม่</string>
+    <string name="browser_address_hint">พิมพ์ที่อยู่เว็บหรือคำค้นหา</string>
+    <string name="browser_netflix">Netflix</string>
+    <string name="browser_youtube">YouTube</string>
+    <string name="browser_full">เต็มจอ</string>
+    <string name="browser_float">หน้าต่างลอย</string>
+    <string name="browser_hide_toolbar">ซ่อนแถบเครื่องมือ</string>
+    <string name="browser_show_toolbar">แสดงแถบเครื่องมือ</string>
+    <string name="browser_close">ปิด</string>
+    <string name="browser_paused_driving">ซ่อนภาพขณะขับรถ เสียงยังเล่นต่อ</string>
+    <string name="browser_need_overlay">อนุญาตให้ 7xDash แสดงทับแอปอื่นก่อน แล้วลองใหม่</string>
+    <string name="shortcut_action_browser">เปิด/ปิดเบราว์เซอร์ลอย</string>
     <string name="stargate_lab_title">ทดลองไฟ Stargate</string>
     <string name="stargate_lab_summary">หาว่า 7xDash วาดบนม่านไฟ Stargate ได้ไหม: ชื่อ คำสั่งของรถ แอปไฟ ฟังสัญญาณ และบันทึก</string>
     <string name="stargate_lab_intro">สำหรับม่านไฟของ 7X AWD Performance 1. หา แสดงฟังก์ชันของรถที่ชื่อตรงกับคำ พร้อมค่าตอนนี้ คำสั่งรถ แสดงสิ่งที่ระบบรถทำได้ ★ คือคำสั่งที่รับข้อมูลแบบไบต์ ข้อความ หรืออาร์เรย์ ซึ่งการวาดรูปต้องใช้ แอปไฟ แสดงแอปไฟของรถและสิ่งที่แอปเปิดให้ใช้ 2. กด ฟัง แล้วไปที่ Light Studio ของรถ เปลี่ยนทีละอย่าง: เปิดปิดไฟขณะขับ เลือกลาย บันทึกลายของตัวเอง ทุกการเปลี่ยนจะขึ้นที่นี่: ฟังก์ชันรถที่เปลี่ยน ข้อมูลที่รถส่งมา (ทุกโซน รวมข้อมูลดิบ) หรือบรรทัดในล็อกระบบเรื่องไฟ ทุกอย่างบันทึกลงไฟล์ และ คัดลอกทั้งหมด จะคัดลอกให้ 3. อ่านฟังก์ชันใดก็ได้ หรือส่งค่าเฉพาะเกียร์ P หลังยืนยัน</string>
@@ -749,7 +777,7 @@
 
     <!-- Main interface -->
     <string name="about_title">เกี่ยวกับและเครดิต</string>
-    <string name="accessibility_service_description">ใช้โดย เริ่มเมื่อเปิดเครื่อง เพื่อช่วยให้แอปทำงานต่อเนื่อง\n\nบริการนี้ไม่อ่านหรือควบคุมสิ่งใดบนหน้าจอ และไม่เก็บข้อมูลใดๆ</string>
+    <string name="accessibility_service_description">ใช้โดย เริ่มเมื่อเปิดเครื่อง เพื่อช่วยให้แอปทำงานต่อเนื่อง\n\nสำหรับ Netflix จะดูเพียงว่าหน้าต่างของแอป Netflix อยู่ตรงไหนบนจอ เพื่อซ่อนภาพขณะขับขี่ ไม่อ่านสิ่งที่อยู่บนจอและไม่เก็บข้อมูลใดๆ</string>
     <string name="zeekr_composite_not_found">ไม่พบสตรีมภาพรวมรอบคัน หัวเครื่องนี้อาจไม่รองรับ</string>
     <string name="msg_no_camera_available">ไม่มีกล้องที่ใช้ได้</string>
     <string name="zeekr_lane_front">หน้า</string>

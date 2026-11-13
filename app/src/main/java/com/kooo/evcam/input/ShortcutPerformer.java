@@ -130,6 +130,13 @@ public final class ShortcutPerformer {
             case AIRPLAY:
                 toggleAirPlay(context);
                 return;
+            case OPEN_NETFLIX:
+                com.kooo.evcam.browser.NetflixApp.open(context.getApplicationContext());
+                return;
+            case BROWSER_FLOAT:
+                new android.os.Handler(android.os.Looper.getMainLooper())
+                        .post(() -> com.kooo.evcam.browser.BrowserFloat.toggle(context.getApplicationContext()));
+                return;
             case EQ:
                 toggleEq(context);
                 return;

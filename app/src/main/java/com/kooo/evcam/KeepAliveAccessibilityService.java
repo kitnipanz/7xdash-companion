@@ -147,9 +147,15 @@ public class KeepAliveAccessibilityService extends AccessibilityService {
 
     @Override
     public void onAccessibilityEvent(AccessibilityEvent event) {
-        // 不处理任何无障碍事件，仅用于保活
-        // 虽然配置允许获取窗口内容，但代码中不会实际读取
-        // 这样既能获得高优先级，又能保护用户隐私
+        // 保活为主。唯一用到的事件：窗口变了，看 Netflix 的窗口在屏幕哪里（只看位置和属于哪个应用，
+        // 不读窗口里的内容），开车时盖住它的画面（见 NetflixGuard）
+        if (event == null) {
+            return;
+        }
+        int type = event.getEventType();
+        if (type == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED || type == AccessibilityEvent.TYPE_WINDOWS_CHANGED) {
+            com.kooo.evcam.browser.NetflixGuard.get().onWindowsChanged(this);
+        }
     }
 
     @Override

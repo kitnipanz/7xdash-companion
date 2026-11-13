@@ -29,6 +29,10 @@ public enum ShortcutAction {
     PHOTO_SURROUND("photo_surround", R.string.shortcut_action_photo_surround, R.drawable.ic_surround),
     /** Start or stop the AirPlay receiver. */
     AIRPLAY("toggle_airplay", R.string.shortcut_action_airplay, R.drawable.ic_airplay),
+    /** Beta: open or close the floating browser. */
+    BROWSER_FLOAT("toggle_browser_float", R.string.shortcut_action_browser, R.drawable.ic_browser),
+    /** Beta: open the Netflix app (its picture hides while driving). */
+    OPEN_NETFLIX("open_netflix", R.string.shortcut_action_netflix, R.drawable.ic_play),
     /** Turn the cabin equalizer on or off. */
     EQ("toggle_eq", R.string.shortcut_action_eq, R.drawable.ic_eq),
     /** 只拍座舱（前、后座舱），不换页。 */

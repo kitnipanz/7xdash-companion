@@ -200,14 +200,6 @@ public final class BrowserView extends FrameLayout {
         fieldParams.setMarginEnd(dp(6));
         toolbar.addView(address, fieldParams);
 
-        // Netflix plays only in its own app on Android: open the app when it is there
-        toolbar.addView(word(R.string.browser_netflix, v -> {
-            if (NetflixApp.installed(getContext())) {
-                NetflixApp.open(getContext());
-            } else {
-                load("https://www.netflix.com/browse");
-            }
-        }));
         toolbar.addView(word(R.string.browser_youtube, v -> load("https://www.youtube.com/")));
         toolbar.addView(icon(host.floating() ? R.drawable.ic_fullscreen : R.drawable.ic_floating,
                 host.floating() ? R.string.browser_full : R.string.browser_float,

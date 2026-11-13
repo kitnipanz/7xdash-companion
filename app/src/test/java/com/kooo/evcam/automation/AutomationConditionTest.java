@@ -143,4 +143,59 @@ public class AutomationConditionTest {
         s.gear = gear;
         return !watch.step(Collections.singletonList(rule), s).isEmpty();
     }
+
+    private boolean stepAt(AutomationRule rule, String gear, int minute) {
+        AutomationWatch.Sample s = new AutomationWatch.Sample();
+        now += 1_000L;
+        s.at = now;
+        s.gear = gear;
+        s.dayBit = monday;
+        s.minute = minute;
+        return !watch.step(Collections.singletonList(rule), s).isEmpty();
+    }
+
+    @Test
+    public void afterSixPm_runsInTheEvening_notInTheAfternoon() {
+        AutomationRule d = rule(AutomationTrigger.GEAR_D, 0);
+        d.setCondition(AutomationCondition.Group.TIME, AutomationCondition.AFTER_TIME, 18 * 60);
+        stepAt(d, "P", 17 * 60 + 59);
+        assertFalse("17:59", stepAt(d, "D", 17 * 60 + 59));
+        stepAt(d, "P", 18 * 60);
+        assertTrue("18:00", stepAt(d, "D", 18 * 60));
+        stepAt(d, "P", 23 * 60 + 59);
+        assertTrue("23:59", stepAt(d, "D", 23 * 60 + 59));
+    }
+
+    @Test
+    public void beforeNine_runsInTheMorning_notAfter() {
+        AutomationRule d = rule(AutomationTrigger.GEAR_D, 0);
+        d.setCondition(AutomationCondition.Group.TIME, AutomationCondition.BEFORE_TIME, 9 * 60);
+        stepAt(d, "P", 8 * 60 + 59);
+        assertTrue("08:59", stepAt(d, "D", 8 * 60 + 59));
+        stepAt(d, "P", 9 * 60);
+        assertFalse("09:00", stepAt(d, "D", 9 * 60));
+    }
+
+    @Test
+    public void unknownTime_doesNotHold() {
+        assertFalse(AutomationCondition.timeHolds(AutomationCondition.AFTER_TIME, 0, -1));
+        assertFalse(AutomationCondition.timeHolds(AutomationCondition.BEFORE_TIME, 24 * 60, -1));
+    }
+
+    @Test
+    public void timeCondition_survivesSaving() {
+        AutomationRule d = rule(AutomationTrigger.CAR_ON, 0);
+        d.setCondition(AutomationCondition.Group.TIME, AutomationCondition.AFTER_TIME, 18 * 60);
+        AutomationRule back = AutomationRule.parseAll(AutomationRule.toJson(Collections.singletonList(d))).get(0);
+        AutomationRule.Condition c = back.condition(AutomationCondition.Group.TIME);
+        assertEquals(AutomationCondition.AFTER_TIME, c.kind());
+        assertEquals(18 * 60, c.value);
+    }
+
+    @Test
+    public void clock_is24Hour() {
+        assertEquals("18:00", AutomationCondition.clock(null, 18 * 60));
+        assertEquals("07:05", AutomationCondition.clock(null, 7 * 60 + 5));
+        assertEquals("00:00", AutomationCondition.clock(null, 0));
+    }
 }

@@ -146,7 +146,9 @@ public final class Automation implements Telemetry.Listener {
         s.rain = readings.bool(Signal.RAIN);
         s.at = SystemClock.elapsedRealtime();
         s.justBooted = s.at < BOOT_MS;
-        s.dayBit = AutomationCondition.dayBit(java.util.Calendar.getInstance().get(java.util.Calendar.DAY_OF_WEEK));
+        java.util.Calendar now = java.util.Calendar.getInstance();
+        s.dayBit = AutomationCondition.dayBit(now.get(java.util.Calendar.DAY_OF_WEEK));
+        s.minute = now.get(java.util.Calendar.HOUR_OF_DAY) * 60 + now.get(java.util.Calendar.MINUTE);
         if (located) {
             s.lat = car.latitude;
             s.lng = car.longitude;

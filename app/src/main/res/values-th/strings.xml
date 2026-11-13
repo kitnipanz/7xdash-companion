@@ -201,6 +201,7 @@
     <string name="msg_no_hud">ไม่พบ HUD</string>
     <string name="shortcut_action_both_mirrors">เปิด/ปิดกระจกข้างทั้งสองด้าน</string>
     <string name="shortcut_action_app">เปิดแอป</string>
+    <string name="shortcut_action_app_bounce">ย่อและขยายแอป 60 ครั้ง</string>
     <string name="shortcut_action_dim">หรี่หน้าจอ</string>
     <string name="shortcut_action_hud">เปิด/ปิด HUD</string>
     <string name="shortcut_hud_on">เปิด HUD แล้ว</string>
@@ -335,10 +336,7 @@
     <string name="button_lab_any_no_value">พิมพ์ค่าที่จะส่ง เช่น 1 หรือ 0x1A</string>
     <string name="button_lab_any_no_zone">ไม่มีโซน</string>
     <string name="button_lab_any_confirm">จะส่ง %1$d ไปที่ %2$s (%3$s) ของรถ เฉพาะเกียร์ P จากตรงนี้ไปถึงทุกอย่างที่รถมี: ส่งเฉพาะค่าที่เคยเห็นรถรับเท่านั้น</string>
-    <string name="netflix_title">Netflix</string>
-    <string name="home_card_netflix_sub">เปิดแอป Netflix ภาพจะซ่อนขณะขับรถ</string>
     <string name="netflix_paused_driving">ซ่อน Netflix ขณะขับรถ เสียงยังเล่นต่อ</string>
-    <string name="shortcut_action_netflix">เปิด Netflix</string>
     <string name="browser_show_for_passengers">แสดงให้ผู้โดยสาร</string>
     <string name="browser_show_hold_hint">กดค้างเพื่อแสดงภาพขณะขับขี่</string>
     <string name="set_browser_while_driving_title">เบราว์เซอร์และ Netflix: แสดงภาพขณะขับขี่</string>
@@ -347,13 +345,12 @@
     <string name="drm_lab_stop">หยุด</string>
     <string name="drm_lab_device">ข้อมูลเครื่อง</string>
     <string name="browser_title">เบราว์เซอร์</string>
-    <string name="home_card_browser_sub">เว็บแบบเดสก์ท็อป เช่น Netflix กดค้างเพื่อเปิดหน้าต่างลอย</string>
+    <string name="home_card_browser_sub">เว็บแบบเดสก์ท็อป เช่น YouTube กดค้างเพื่อเปิดหน้าต่างลอย</string>
     <string name="browser_move">ย้าย แตะสองครั้ง: เล็กหรือใหญ่</string>
     <string name="browser_back">ย้อนกลับ</string>
     <string name="browser_forward">ไปข้างหน้า</string>
     <string name="browser_reload">โหลดใหม่</string>
     <string name="browser_address_hint">พิมพ์ที่อยู่เว็บหรือคำค้นหา</string>
-    <string name="browser_netflix">Netflix</string>
     <string name="browser_youtube">YouTube</string>
     <string name="browser_full">เต็มจอ</string>
     <string name="browser_float">หน้าต่างลอย</string>
@@ -2021,6 +2018,11 @@
     <string name="automation_and_hint">ไม่บังคับ ทุกอย่างที่เลือกตรงนี้ต้องเป็นจริงด้วย ไม่อย่างนั้นจะไม่ทำงาน</string>
     <string name="automation_and">%1$s และ %2$s</string>
     <string name="automation_group_days">วัน</string>
+    <string name="automation_group_time">เวลา</string>
+    <string name="automation_if_after">หลัง %1$s</string>
+    <string name="automation_if_before">ก่อน %1$s</string>
+    <string name="automation_chip_after">หลัง</string>
+    <string name="automation_chip_before">ก่อน</string>
     <string name="automation_days_workdays_chip">วันทำงาน</string>
     <string name="automation_days_weekend_chip">วันหยุดสุดสัปดาห์</string>
     <string name="automation_days_workdays">วันทำงาน</string>

@@ -6,7 +6,7 @@ import android.content.SharedPreferences;
 /** What the browser remembers: the last page, and whether the picture shows while driving. */
 public final class BrowserPrefs {
 
-    static final String HOME = "https://www.netflix.com/browse";
+    static final String HOME = "https://www.google.com/";
     private static final String PREFS = "browser";
     private static final String KEY_LAST = "last_url";
     private static final String KEY_WHILE_DRIVING = "show_while_driving";

@@ -88,6 +88,9 @@ public final class ShortcutPerformer {
                         | Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
                 context.startActivity(open);
                 return;
+            case APP_BOUNCE:
+                AppBounce.toggle(context);
+                return;
             case DIM:
                 AppConfig dim = new AppConfig(context);
                 boolean dimOn = !dim.isDimOverlayEnabled();
@@ -129,9 +132,6 @@ public final class ShortcutPerformer {
                 return;
             case AIRPLAY:
                 toggleAirPlay(context);
-                return;
-            case OPEN_NETFLIX:
-                com.kooo.evcam.browser.NetflixApp.open(context.getApplicationContext());
                 return;
             case BROWSER_FLOAT:
                 new android.os.Handler(android.os.Looper.getMainLooper())

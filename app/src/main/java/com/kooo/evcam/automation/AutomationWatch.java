@@ -48,6 +48,8 @@ final class AutomationWatch {
         Double lng;
         /** Today, as a {@link AutomationCondition} day bit; 0 when not known. */
         int dayBit;
+        /** Now, in minutes after midnight; -1 when not known. */
+        int minute = -1;
         /** The saved places, by id. */
         Map<Integer, SavedPlaces.Place> places = Collections.emptyMap();
     }
@@ -151,6 +153,9 @@ final class AutomationWatch {
         switch (kind) {
             case DAYS:
                 return (value & s.dayBit) != 0;
+            case AFTER_TIME:
+            case BEFORE_TIME:
+                return AutomationCondition.timeHolds(kind, value, s.minute);
             case DARK:
                 return dayNight != null && dayNight == Signal.NIGHT;
             case LIGHT:

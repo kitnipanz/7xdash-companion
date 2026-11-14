@@ -2030,6 +2030,9 @@ Then reopen this app.</string>
     <string name="automation_tailgate_bad">Tailgate height must be 50 to 100%</string>
     <string name="automation_do_rear_fog">Rear fog light</string>
     <string name="automation_do_lock_feedback">Lock / unlock feedback</string>
+    <string name="automation_do_sentry">Sentry Mode</string>
+    <string name="automation_sentry_parked">Sentry Mode turns on only in P</string>
+    <string name="automation_sentry_ignored">the car did not turn Sentry Mode on or off</string>
     <string name="automation_lock_hazard">Hazard lights only</string>
     <string name="automation_lock_hazard_sound">Hazard lights + sound</string>
     <string name="automation_lock_hazard_headlight">Hazard lights + headlights</string>

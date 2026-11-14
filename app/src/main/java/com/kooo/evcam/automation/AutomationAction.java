@@ -35,6 +35,8 @@ public enum AutomationAction {
     STEERING_FEEL("steering_feel", R.string.automation_do_steering_feel, R.drawable.ic_steering),
     /** Rear fog lamp on or off. */
     REAR_FOG("rear_fog", R.string.automation_do_rear_fog, R.drawable.ic_fog),
+    /** Sentry Mode on or off ({@link CarControls#sentry}); on is sent only in P. */
+    SENTRY("sentry", R.string.automation_do_sentry, R.drawable.ic_automation_sentry),
     /** What the car does outside when it locks or unlocks; the choice is the car's value. */
     LOCK_FEEDBACK("lock_feedback", R.string.automation_do_lock_feedback, R.drawable.ic_automation_lock_feedback),
     /** Start guiding to a saved place; the choice is its id. Leaves a trip already on alone. */
@@ -107,6 +109,7 @@ public enum AutomationAction {
             case MOOD_LIGHT:
             case AC:
             case REAR_FOG:
+            case SENTRY:
                 addOnOff(context, out);
                 break;
             case TEMP_ZONES:

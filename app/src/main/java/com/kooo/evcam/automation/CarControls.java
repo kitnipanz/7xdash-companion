@@ -26,6 +26,13 @@ final class CarControls {
     private static final int REAR_FOG_ID = 0x21050500;
     /** Seen with the button lab; its number is looked up by name only. */
     private static final String LOCK_FEEDBACK_NAME = "SETTING_FUNC_LOCK_AND_UNLOCK_FBSET";
+    /** Sentry Mode (SETTING_FUNC_VSTD_MODE_STS): 0 off, 1 on, 2 armed after locking. */
+    private static final String SENTRY_NAME = "SETTING_FUNC_VSTD_MODE_STS";
+    private static final int SENTRY_ID = 0x20240100;
+    static final int SENTRY_OFF = 0;
+    static final int SENTRY_ON = 1;
+    static final int SENTRY_ARMED = 2;
+    private static final long SENTRY_READ_BACK_MS = 1_500L;
     static final int TAILGATE_MIN = 50;
     static final int TAILGATE_MAX = 100;
 
@@ -124,6 +131,50 @@ final class CarControls {
         String failed = CarAmbientLab.write(context, id(GLOVEBOX_NAME, GLOVEBOX_ID), GLOVEBOX_OPEN);
         BlackBox.note("Glovebox open" + (failed == null ? " sent" : ": " + failed));
         return failed;
+    }
+
+    /**
+     * Sentry Mode on or off. On counts as done when the car already reads on (1) or armed (2), so
+     * an armed car is not knocked back to 1. On is not sent while a driving gear is in: the car
+     * turns Sentry Mode off itself when it goes into D. The value is read back after a moment and
+     * both go to the black box, because writing this function has not been seen working on a car.
+     */
+    static String sentry(Context context, boolean on) {
+        int id = id(SENTRY_NAME, SENTRY_ID);
+        Integer before = CarAmbientLab.value(context, id);
+        if (!sentryNeedsSend(before, on)) {
+            return null;
+        }
+        String gear = Telemetry.get().latest().gear;
+        if (on && !sentryGearAllows(gear)) {
+            BlackBox.note("Sentry Mode: not sent, gear " + gear);
+            return context.getString(com.kooo.evcam.R.string.automation_sentry_parked);
+        }
+        String failed = CarAmbientLab.write(context, id, on ? SENTRY_ON : SENTRY_OFF);
+        if (failed != null) {
+            BlackBox.note("Sentry Mode " + before + " -> " + (on ? SENTRY_ON : SENTRY_OFF) + ": " + failed);
+            return failed;
+        }
+        android.os.SystemClock.sleep(SENTRY_READ_BACK_MS);
+        Integer after = CarAmbientLab.value(context, id);
+        BlackBox.note("Sentry Mode " + before + " -> " + (on ? SENTRY_ON : SENTRY_OFF) + " sent, reads " + after);
+        if (sentryNeedsSend(after, on)) {
+            return context.getString(com.kooo.evcam.R.string.automation_sentry_ignored);
+        }
+        return null;
+    }
+
+    /** Whether the car's reading is not yet what was asked; armed counts as on. */
+    static boolean sentryNeedsSend(Integer reading, boolean on) {
+        if (on) {
+            return reading == null || (reading != SENTRY_ON && reading != SENTRY_ARMED);
+        }
+        return reading == null || reading != SENTRY_OFF;
+    }
+
+    /** P, or no gear read (the car is asleep or off). */
+    static boolean sentryGearAllows(String gear) {
+        return gear == null || "P".equals(gear);
     }
 
     private static int id(String name, int known) {

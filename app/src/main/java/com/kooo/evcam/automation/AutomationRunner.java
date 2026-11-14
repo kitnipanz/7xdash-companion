@@ -115,6 +115,8 @@ final class AutomationRunner {
                 return CarControls.openGlovebox(app);
             case REAR_FOG:
                 return CarControls.rearFog(app, AutomationAction.ON.equals(step.choice));
+            case SENTRY:
+                return CarControls.sentry(app, AutomationAction.ON.equals(step.choice));
             case LOCK_FEEDBACK:
                 return CarControls.lockFeedback(app, step.choice);
             case TAILGATE_HEIGHT:

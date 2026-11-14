@@ -2005,6 +2005,9 @@
     <string name="automation_tailgate_bad">ความสูงฝาท้ายต้องอยู่ระหว่าง 50 ถึง 100%</string>
     <string name="automation_do_rear_fog">ไฟตัดหมอกหลัง</string>
     <string name="automation_do_lock_feedback">การตอบสนองภายนอกสำหรับการล็อก/ปลดล็อก</string>
+    <string name="automation_do_sentry">โหมดเฝ้ารถ (Sentry Mode)</string>
+    <string name="automation_sentry_parked">เปิดโหมดเฝ้ารถได้เฉพาะเกียร์ P</string>
+    <string name="automation_sentry_ignored">รถไม่ได้เปิดหรือปิดโหมดเฝ้ารถตามที่สั่ง</string>
     <string name="automation_lock_hazard">ไฟฉุกเฉินเท่านั้น</string>
     <string name="automation_lock_hazard_sound">ไฟฉุกเฉิน + เอฟเฟกต์เสียง</string>
     <string name="automation_lock_hazard_headlight">ไฟฉุกเฉิน + ไฟหน้า</string>

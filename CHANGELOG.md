@@ -1,10 +1,18 @@
+# Changelog
+
+## [1.8.37-beta] - 2026-11-14
+
+### Automation
+- **New action: Sentry Mode on or off.** Pair it with "Car turns off" to have Sentry Mode come on every time you park. It leaves Sentry Mode alone when it's already on or armed, and only turns it on in P.
+
+### AirPlay
+- **Live YouTube no longer stops after a few seconds with a source error.** Live streams with ad markers lost the address of every chunk after the first marker, so the car couldn't load the live edge. Every chunk now keeps its address.
+
 ## [1.8.36-beta] - 2026-11-14
 
 ### AirPlay
 - **Live YouTube casts now play.** The car starts at the live edge instead of a spot the stream doesn't have, tells the iPhone the video is live (so it no longer stops "at the end" after a few seconds), and refreshes the live playlist as often as the stream needs, so low-latency streams keep going.
 - A live cast that falls behind after a network hiccup jumps back to live instead of stopping.
-
-# Changelog
 
 ## [1.8.35-beta] - 2026-11-14
 

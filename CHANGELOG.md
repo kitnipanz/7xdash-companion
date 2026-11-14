@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.9.1-beta] - 2026-11-14
+
+### Side view (blind spot camera)
+- **Smoother with a map on screen.** While the side view shows, every map (guiding or not, the HUD map too) slows to 5 frames a second, jumps instead of gliding and moves the route line once a second, so the camera gets the head unit. Full speed again when the side view closes.
+- Lighter while waiting in D: the hidden side view no longer straightens a picture nobody sees on every camera frame.
+- Straightening reuses its work from frame to frame instead of redoing it.
+
+### Mood lights
+- **Red only with the red edge.** The lights go red exactly when the side view's red edge is red, and hold red as long as the screen does. No red edge on screen, no red lights.
+- In N the lights go back to their usual colour after a blink instead of staying red.
+- The lights connect as soon as the app starts, not only once the gear is known.
+
+### Where I parked
+- **No more black photo** when another app is on screen as you shift into P: the photo now comes straight from the camera.
+
 ## [1.9.0] - 2026-11-14
 
 Everything since 1.8.29.

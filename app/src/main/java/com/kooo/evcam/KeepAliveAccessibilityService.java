@@ -216,4 +216,12 @@ public class KeepAliveAccessibilityService extends AccessibilityService {
     public static boolean isRunning() {
         return isServiceRunning && instance != null;
     }
+
+    /**
+     * The running service, or null. The Netflix and YouTube lab uses it to press Home (which sends
+     * a playing Netflix into picture-in-picture) and to see where Netflix's windows are.
+     */
+    public static KeepAliveAccessibilityService running() {
+        return isRunning() ? instance : null;
+    }
 }

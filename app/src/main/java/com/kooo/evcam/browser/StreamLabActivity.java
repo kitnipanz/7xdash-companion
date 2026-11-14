@@ -1,11 +1,17 @@
 package com.kooo.evcam.browser;
 
+import android.accessibilityservice.AccessibilityService;
 import android.annotation.SuppressLint;
+import android.app.AppOpsManager;
+import android.app.PictureInPictureParams;
 import android.content.ActivityNotFoundException;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.Configuration;
+import android.graphics.Rect;
+import android.content.pm.ActivityInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.media.MediaCodecInfo;
@@ -17,11 +23,15 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
+import android.provider.Settings;
 import android.util.DisplayMetrics;
+import android.util.Rational;
 import android.view.Display;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.accessibility.AccessibilityNodeInfo;
+import android.view.accessibility.AccessibilityWindowInfo;
 import android.webkit.ConsoleMessage;
 import android.webkit.CookieManager;
 import android.webkit.PermissionRequest;
@@ -37,6 +47,7 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import androidx.webkit.ScriptHandler;
@@ -45,6 +56,7 @@ import androidx.webkit.WebViewFeature;
 
 import com.google.android.material.button.MaterialButton;
 import com.kooo.evcam.AppLog;
+import com.kooo.evcam.KeepAliveAccessibilityService;
 import com.kooo.evcam.R;
 import com.kooo.evcam.airplay.DrivingGate;
 import com.kooo.evcam.telemetry.Readings;
@@ -54,7 +66,9 @@ import com.kooo.evcam.telemetry.Telemetry;
 import org.json.JSONObject;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Date;
 import java.util.Locale;
 import java.util.UUID;
@@ -89,6 +103,11 @@ public class StreamLabActivity extends AppCompatActivity {
     private static final String TELEMETRY_USER = "stream-lab";
     private static final String PROBE_BASE = "https://stream-lab.7xdash.invalid/";
     private static final long METER_MS = 2000;
+    /** Hidden ActivityInfo.FLAG_SUPPORTS_PICTURE_IN_PICTURE: the activity can shrink into a small window. */
+    private static final int FLAG_PIP = 0x400000;
+    /** Time to start a Netflix video before the PiP test presses Home. */
+    private static final int PIP_COUNTDOWN_S = 20;
+
     /** A short, public, embeddable video (Big Buck Bunny, Blender Foundation). */
     private static final String YT_TEST_ID = "aqz-KE-bpKQ";
 
@@ -155,6 +174,11 @@ public class StreamLabActivity extends AppCompatActivity {
     private ScriptHandler h264Script;
     private boolean forceH264;
     private int dp;
+    /** Everything but the video: hidden while the lab itself is in picture-in-picture. */
+    private final List<View> chrome = new ArrayList<>();
+    private int pipLeft;
+    /** The PiP test pressed Home: an empty window list now means Netflix did not shrink. */
+    private boolean pipPressed;
 
     // What the checks found, for the verdict
     private int widevineLevel; // 1 or 3, 0: none or unknown
@@ -587,6 +611,192 @@ public class StreamLabActivity extends AppCompatActivity {
         }
     }
 
+    // ================================================================= Netflix picture-in-picture
+
+    /** Whether Netflix can shrink into a small window on this car, and what it needs. */
+    private void netflixPipCheck() {
+        line("═══ Netflix picture-in-picture: check ═══");
+        boolean feature = getPackageManager().hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE);
+        line("  System supports picture-in-picture: " + (feature ? "yes" : "NO (the car's Android has it turned off: no app can use PiP)"));
+        String v = version(NETFLIX);
+        if (v == null) {
+            line("  Netflix app: not installed");
+        } else {
+            line("  Netflix app " + v);
+            try {
+                PackageInfo p = getPackageManager().getPackageInfo(NETFLIX, PackageManager.GET_ACTIVITIES);
+                int pip = 0;
+                StringBuilder names = new StringBuilder();
+                if (p.activities != null) {
+                    for (ActivityInfo a : p.activities) {
+                        if ((a.flags & FLAG_PIP) != 0) {
+                            pip++;
+                            String n = a.name.substring(a.name.lastIndexOf('.') + 1);
+                            if (names.length() < 120) {
+                                names.append(names.length() == 0 ? "" : ", ").append(n);
+                            }
+                        }
+                    }
+                }
+                line("  Netflix screens that can go PiP: " + (pip == 0 ? "none found" : pip + " (" + names + ")"));
+                AppOpsManager ops = getSystemService(AppOpsManager.class);
+                int mode = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
+                        ? ops.unsafeCheckOpNoThrow(AppOpsManager.OPSTR_PICTURE_IN_PICTURE, p.applicationInfo.uid, NETFLIX)
+                        : ops.checkOpNoThrow(AppOpsManager.OPSTR_PICTURE_IN_PICTURE, p.applicationInfo.uid, NETFLIX);
+                line("  Netflix allowed to use PiP (Settings → Apps → Netflix → Picture-in-picture): "
+                        + (mode == AppOpsManager.MODE_ALLOWED || mode == AppOpsManager.MODE_DEFAULT ? "yes"
+                        : "NO, turn it on with PiP settings"));
+            } catch (Exception e) {
+                line("  Netflix details: cannot read (" + e + ")");
+            }
+        }
+        line("  Accessibility service (presses Home for the test, finds Netflix's window): "
+                + (KeepAliveAccessibilityService.running() != null ? "on" : "off, the test will ask you to press Home yourself"));
+        line("  Show over other apps (the driving cover over the small window): "
+                + (Settings.canDrawOverlays(this) ? "allowed" : "NOT allowed"));
+        line("  How Netflix does PiP: only while a video plays, when you leave it (Home). Netflix itself picks the"
+                + " size; the small window can be dragged, and tapped for play/pause and full screen.");
+        netflixWindows();
+    }
+
+    /** Opens the Netflix app, waits for a video to start, presses Home and looks for the small window. */
+    private void netflixPipTest() {
+        main.removeCallbacks(pipStep);
+        line("═══ Netflix picture-in-picture: test ═══");
+        if (version(NETFLIX) == null) {
+            line("  Netflix app not installed: nothing to test.");
+            return;
+        }
+        if (!getPackageManager().hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE)) {
+            line("  ⚠ The system says it has no picture-in-picture; trying anyway.");
+        }
+        boolean service = KeepAliveAccessibilityService.running() != null;
+        line("  Start any video in Netflix within " + PIP_COUNTDOWN_S + " s. "
+                + (service ? "Then 7xDash presses Home and comes back here."
+                : "Then press Home yourself (accessibility service is off) and open this lab again."));
+        openApp("Netflix app", NETFLIX, null);
+        pipLeft = PIP_COUNTDOWN_S;
+        pipPressed = false;
+        main.postDelayed(pipStep, 1000);
+    }
+
+    private final Runnable pipStep = new Runnable() {
+        @Override
+        public void run() {
+            pipLeft--;
+            if (pipLeft > 0) {
+                if (pipLeft % 5 == 0) {
+                    line("  … Home in " + pipLeft + " s");
+                }
+                main.postDelayed(this, 1000);
+                return;
+            }
+            KeepAliveAccessibilityService service = KeepAliveAccessibilityService.running();
+            if (service == null) {
+                line("  Time's up: press Home now, then come back to see the result (PiP check lists windows).");
+                return;
+            }
+            line("  Pressing Home…");
+            pipPressed = true;
+            service.performGlobalAction(AccessibilityService.GLOBAL_ACTION_HOME);
+            main.postDelayed(() -> {
+                netflixWindows();
+                // Back to the lab: a PiP window floats over it, the log shows the result
+                startActivity(new Intent(StreamLabActivity.this, StreamLabActivity.class)
+                        .addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT));
+                main.postDelayed(StreamLabActivity.this::netflixWindows, 1500);
+            }, 1500);
+        }
+    };
+
+    /** Netflix's windows on screen now: where, how big, and whether they are picture-in-picture. */
+    private void netflixWindows() {
+        KeepAliveAccessibilityService service = KeepAliveAccessibilityService.running();
+        if (service == null) {
+            return;
+        }
+        List<AccessibilityWindowInfo> windows;
+        try {
+            windows = service.getWindows();
+        } catch (RuntimeException e) {
+            line("  Windows: cannot read (" + e + ")");
+            return;
+        }
+        int found = 0;
+        for (AccessibilityWindowInfo w : windows) {
+            AccessibilityNodeInfo root = w.getRoot();
+            CharSequence pkg = root == null ? null : root.getPackageName();
+            if (pkg == null || !NETFLIX.contentEquals(pkg)) {
+                continue;
+            }
+            found++;
+            Rect r = new Rect();
+            w.getBoundsInScreen(r);
+            line("  Netflix window: " + r.width() + "×" + r.height() + " at " + r.left + "," + r.top
+                    + (w.isInPictureInPictureMode() ? " · ✓ PICTURE-IN-PICTURE" : " · normal"));
+        }
+        if (found == 0) {
+            line("  Netflix window: none on screen" + (pipPressed
+                    ? " → Netflix did not go PiP (no video playing, PiP not allowed, or the car blocks it)" : ""));
+        }
+    }
+
+    private void openPipSettings(String pkg) {
+        Intent i = new Intent("android.settings.PICTURE_IN_PICTURE_SETTINGS", Uri.parse("package:" + pkg));
+        if (i.resolveActivity(getPackageManager()) == null) {
+            i = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:" + pkg));
+        }
+        try {
+            startActivity(i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+            line("Opened PiP settings for " + pkg);
+        } catch (ActivityNotFoundException e) {
+            line("PiP settings: this car has no settings screen for it");
+        }
+    }
+
+    // ================================================================= the lab's own picture-in-picture
+
+    /** Shrinks the lab into a small window with only the web video, over other apps. */
+    private void enterLabPip() {
+        if (!getPackageManager().hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE)) {
+            line("PiP this page: the car's Android has picture-in-picture turned off");
+            return;
+        }
+        try {
+            boolean ok = enterPictureInPictureMode(new PictureInPictureParams.Builder()
+                    .setAspectRatio(new Rational(16, 9)).build());
+            line("PiP this page: " + (ok ? "small window. Drag it, tap it for controls, or close it."
+                    : "refused by the system"));
+        } catch (IllegalStateException | IllegalArgumentException e) {
+            line("PiP this page: refused (" + e.getMessage() + ")");
+        }
+    }
+
+    @Override
+    protected void onUserLeaveHint() {
+        super.onUserLeaveHint();
+        // Like Netflix: leaving while a web video plays shrinks it instead of stopping it
+        if (route != null && lastShown.equals("playing") && !isInPictureInPictureMode()
+                && getPackageManager().hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE)) {
+            enterLabPip();
+        }
+    }
+
+    @Override
+    public void onPictureInPictureModeChanged(boolean pip, @NonNull Configuration config) {
+        super.onPictureInPictureModeChanged(pip, config);
+        for (View v : chrome) {
+            v.setVisibility(pip ? View.GONE : View.VISIBLE);
+        }
+        View root = (View) frame.getParent().getParent();
+        int pad = pip ? 0 : 16 * dp;
+        root.setPadding(pad, pad, pad, pad);
+        View body = (View) frame.getParent();
+        ((LinearLayout.LayoutParams) body.getLayoutParams()).topMargin = pip ? 0 : 12 * dp;
+        body.requestLayout();
+        line(pip ? "Lab is in picture-in-picture" : "Lab back to full screen");
+    }
+
     // ================================================================= smooth meter
 
     private final Runnable meter = new Runnable() {
@@ -800,6 +1010,7 @@ public class StreamLabActivity extends AppCompatActivity {
         title.setPadding(14 * dp, 0, 0, 0);
         bar.addView(title);
         root.addView(bar);
+        chrome.add(bar);
 
         web = buildWeb();
 
@@ -807,6 +1018,7 @@ public class StreamLabActivity extends AppCompatActivity {
         add(checks, "Check this car", v -> checkDevice());
         add(checks, "Check the web player", v -> checkWeb());
         h264Button = add(checks, "Force H.264: off", v -> setForceH264(!forceH264));
+        add(checks, "PiP this page", v -> enterLabPip());
         add(checks, "Stop", v -> stop());
         add(checks, getString(R.string.stargate_lab_copy_all), v -> copyAll());
 
@@ -814,6 +1026,9 @@ public class StreamLabActivity extends AppCompatActivity {
         label(netflix, "Netflix");
         add(netflix, "Netflix app", v -> openApp("Netflix app", NETFLIX, null));
         add(netflix, "netflix.com (web)", v -> openWeb("netflix.com", "https://www.netflix.com/browse", desktopAgent));
+        add(netflix, "PiP check", v -> netflixPipCheck());
+        add(netflix, "PiP test", v -> netflixPipTest());
+        add(netflix, "PiP settings", v -> openPipSettings(NETFLIX));
 
         LinearLayout yt = row(root);
         label(yt, "YouTube");
@@ -860,6 +1075,7 @@ public class StreamLabActivity extends AppCompatActivity {
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 2f);
         lp.setMarginStart(12 * dp);
         body.addView(logScroll, lp);
+        chrome.add(logScroll);
         return root;
     }
 
@@ -873,6 +1089,7 @@ public class StreamLabActivity extends AppCompatActivity {
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         p.topMargin = 8 * dp;
         root.addView(scroll, p);
+        chrome.add(scroll);
         return row;
     }
 

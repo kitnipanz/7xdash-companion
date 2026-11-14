@@ -57,8 +57,16 @@ public final class FisheyeMesh {
     private final float[] point = new float[2];
     private final float[] source = new float[8];
     private final float[] dest = new float[8];
-    /** 第一次画的时候才建：算网格的那部分要能在没有 Android 的 JVM 上跑。 */
-    private Matrix matrix;
+    /**
+     * One matrix per cell, worked out once and kept until the grid or the target changes: solving
+     * them again on every camera frame (a hundred and more a frame) was main-thread time for nothing.
+     * Built at the first draw: the grid maths must run on a JVM without Android.
+     */
+    private Matrix[] cellMatrices;
+    /** False: that cell's corners are squeezed onto a line, it cannot be drawn. */
+    private boolean[] cellOk = new boolean[0];
+    private boolean cellsStale = true;
+    private final float[] cellsFor = new float[4];
 
     /** 校正用哪种投影、多大视野。含义和 {@link FisheyeProjection#sourcePoint} 一样。 */
     public void setCorrection(float fovDegrees, String projection) {
@@ -96,6 +104,7 @@ public final class FisheyeMesh {
                         float laneLeft, float laneTop, float laneWidth, float laneHeight,
                         float windowLeft, float windowTop, float windowWidth, float windowHeight) {
         this.divisions = Math.max(1, divisions);
+        cellsStale = true;
         int side = this.divisions + 1;
         if (grid.length != side * side * 2) {
             grid = new float[side * side * 2];
@@ -125,6 +134,7 @@ public final class FisheyeMesh {
     public void prepare(int divisions, float laneLeft, float laneTop, float laneWidth, float laneHeight,
                         SourceMap map) {
         this.divisions = Math.max(1, divisions);
+        cellsStale = true;
         int side = this.divisions + 1;
         if (grid.length != side * side * 2) {
             grid = new float[side * side * 2];
@@ -165,10 +175,41 @@ public final class FisheyeMesh {
      */
     public int draw(Canvas canvas, float targetLeft, float targetTop,
                     float targetWidth, float targetHeight, Painter painter) {
-        if (matrix == null) {
-            matrix = new Matrix();
+        if (cellsStale || cellMatrices == null || cellMatrices.length != divisions * divisions
+                || cellsFor[0] != targetLeft || cellsFor[1] != targetTop
+                || cellsFor[2] != targetWidth || cellsFor[3] != targetHeight) {
+            buildCells(targetLeft, targetTop, targetWidth, targetHeight);
         }
         int drawn = 0;
+        for (int row = 0; row < divisions; row++) {
+            float top = targetTop + targetHeight * row / divisions;
+            float bottom = targetTop + targetHeight * (row + 1) / divisions;
+            for (int column = 0; column < divisions; column++) {
+                if (!cellOk[row * divisions + column]) {
+                    continue;
+                }
+                Matrix matrix = cellMatrices[row * divisions + column];
+                float left = targetLeft + targetWidth * column / divisions;
+                float right = targetLeft + targetWidth * (column + 1) / divisions;
+                int save = canvas.save();
+                canvas.clipRect(left, top, right, bottom);
+                canvas.concat(matrix);
+                painter.paint(canvas);
+                canvas.restoreToCount(save);
+                drawn++;
+            }
+        }
+        return drawn;
+    }
+
+    private void buildCells(float targetLeft, float targetTop, float targetWidth, float targetHeight) {
+        if (cellMatrices == null || cellMatrices.length != divisions * divisions) {
+            cellMatrices = new Matrix[divisions * divisions];
+            cellOk = new boolean[divisions * divisions];
+            for (int i = 0; i < cellMatrices.length; i++) {
+                cellMatrices[i] = new Matrix();
+            }
+        }
         for (int row = 0; row < divisions; row++) {
             float top = targetTop + targetHeight * row / divisions;
             float bottom = targetTop + targetHeight * (row + 1) / divisions;
@@ -186,18 +227,15 @@ public final class FisheyeMesh {
                 source[4] = sourceX(row + 1, column + 1); source[5] = sourceY(row + 1, column + 1);
                 source[6] = sourceX(row + 1, column);     source[7] = sourceY(row + 1, column);
 
+                Matrix matrix = cellMatrices[row * divisions + column];
                 matrix.reset();
-                if (!matrix.setPolyToPoly(source, 0, dest, 0, 4)) {
-                    continue;
-                }
-                int save = canvas.save();
-                canvas.clipRect(left, top, right, bottom);
-                canvas.concat(matrix);
-                painter.paint(canvas);
-                canvas.restoreToCount(save);
-                drawn++;
+                cellOk[row * divisions + column] = matrix.setPolyToPoly(source, 0, dest, 0, 4);
             }
         }
-        return drawn;
+        cellsFor[0] = targetLeft;
+        cellsFor[1] = targetTop;
+        cellsFor[2] = targetWidth;
+        cellsFor[3] = targetHeight;
+        cellsStale = false;
     }
 }

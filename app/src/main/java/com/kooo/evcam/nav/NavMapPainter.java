@@ -151,6 +151,8 @@ final class NavMapPainter {
         // moved by hand: keep the car pointing the right way on screen
         map.addOnCameraMoveListener(this::placeCar);
         map.addOnMapClickListener(this::tapRoute);
+        MapPace.addListener(paceChanged);
+        setPace(MapPace.yielding());
     }
 
     /** A tap near a grey route chooses it. */
@@ -432,7 +434,12 @@ final class NavMapPainter {
         } else {
             stopFollowing();
             if (following && s.phase == Navigator.Phase.IDLE) {
-                map.animateCamera(CameraUpdateFactory.newLatLng(at));
+                if (MapPace.yielding()) {
+                    // no glide while the side view shows: one move, not a third of a second of frames
+                    map.moveCamera(CameraUpdateFactory.newLatLng(at));
+                } else {
+                    map.animateCamera(CameraUpdateFactory.newLatLng(at));
+                }
             }
             curLat = at.getLatitude();
             curLng = at.getLongitude();
@@ -475,7 +482,7 @@ final class NavMapPainter {
             if (yielding != paceYielding) {
                 setPace(yielding);
             }
-            float dt = lastFrameNanos == 0 ? 0.016f : Math.min(0.1f, (now - lastFrameNanos) / 1e9f);
+            float dt = lastFrameNanos == 0 ? 0.016f : Math.min(MapPace.FRAME_MAX_S, (now - lastFrameNanos) / 1e9f);
             // a little under the wanted gap: frames come on the screen's beat, not exactly on ours
             if (lastFrameNanos == 0 || dt >= MapPace.frameMinSeconds(yielding) - 0.004f) {
                 lastFrameNanos = now;
@@ -487,6 +494,11 @@ final class NavMapPainter {
 
     /** The map engine draws at the pace the camera moves: slower while the side view shows ({@link MapPace}). */
     private boolean paceYielding;
+    /**
+     * The side view came or went: change pace now. Not only from the following frames: a map that
+     * is not guiding (panned, flying to the car, on the HUD) draws too, and must give way as well.
+     */
+    private final Runnable paceChanged = () -> setPace(MapPace.yielding());
 
     private void setPace(boolean yielding) {
         paceYielding = yielding;
@@ -507,10 +519,6 @@ final class NavMapPainter {
         if (ticking) {
             ticking = false;
             android.view.Choreographer.getInstance().removeFrameCallback(frame);
-        }
-        if (paceYielding) {
-            // nothing checks the pace once the frames stop: back to full before a pinch or a fly-to
-            setPace(false);
         }
         setViewScale(1f);
     }
@@ -584,7 +592,11 @@ final class NavMapPainter {
 
     /** The owner is going: no more frames. */
     void release() {
+        MapPace.removeListener(paceChanged);
         stopFollowing();
+        if (paceYielding) {
+            setPace(false);
+        }
         if (car != null && car.getParent() instanceof ViewGroup) {
             ((ViewGroup) car.getParent()).removeView(car);
         }
@@ -884,9 +896,18 @@ final class NavMapPainter {
         if (here.equals(head.get(0))) {
             return;
         }
+        // Each move rebuilds the line in the map engine. While the side view shows, do it rarely:
+        // the car covers the line's start anyway
+        long now = android.os.SystemClock.uptimeMillis();
+        if (paceYielding && now - headDrawnAt < MapPace.BUSY_LINE_MS) {
+            return;
+        }
+        headDrawnAt = now;
         head.set(0, here);
         drawHead();
     }
+
+    private long headDrawnAt;
 
     /** Before starting: the other routes in grey, under the chosen one; a tap on one chooses it. */
     private void drawChoices(Navigator.Snapshot s) {

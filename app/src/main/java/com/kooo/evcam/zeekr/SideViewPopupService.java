@@ -417,6 +417,8 @@ public class SideViewPopupService extends Service {
         Context host = popupContext(target);
         boolean onHud = target != null && host != this;
         popup = new SideViewPopupView(host, appConfig);
+        // the lights go red with this window's edge (the HUD copy blinks on the same clock)
+        popup.setReportsEdge(true);
         if (onHud) {
             Point size = HudDisplay.sizeOf(target);
             popup.setHudSize(size.x, size.y);

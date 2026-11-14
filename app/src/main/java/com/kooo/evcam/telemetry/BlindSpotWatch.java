@@ -49,10 +49,35 @@ public final class BlindSpotWatch implements Telemetry.Listener {
         return edgeSides;
     }
 
+    private static volatile boolean edgeRed;
+
+    /**
+     * The red edge is drawn on screen right now (false in the other half of its blink). The lights
+     * follow this, not a clock of their own: red exactly while the screen is red, held as long as
+     * the screen holds it.
+     */
+    public static boolean edgeRed() {
+        return edgeRed;
+    }
+
+    /** Main thread: the side view drew its edge red, or drew it without the red. */
+    public static void setEdgeRed(boolean red) {
+        boolean now = red && edgeSides != 0;
+        if (now != edgeRed) {
+            edgeRed = now;
+            for (Runnable listener : edgeListeners) {
+                listener.run();
+            }
+        }
+    }
+
     /** Main thread: the side view says which red edges are on screen now. */
     public static void setEdgeShown(int sides) {
         if (sides != edgeSides) {
             edgeSides = sides;
+            if (sides == 0) {
+                edgeRed = false;
+            }
             for (Runnable listener : edgeListeners) {
                 listener.run();
             }

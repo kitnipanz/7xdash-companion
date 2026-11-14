@@ -107,6 +107,25 @@ public class SideViewPopupView extends ViewGroup {
         readConfig();
     }
 
+    /** This window tells the lights when its red edge is drawn (the main one of the two; see the service). */
+    private boolean reportsEdge;
+    private boolean reportedRed;
+    private final Runnable reportEdge = () ->
+            com.kooo.evcam.telemetry.BlindSpotWatch.setEdgeRed(reportedRed && isShowing() && warning);
+
+    public void setReportsEdge(boolean on) {
+        reportsEdge = on;
+    }
+
+    /** After a draw: the lights go red or back in step with what was just drawn. */
+    private void noteEdge(boolean red) {
+        boolean shown = red && visible;
+        if (reportsEdge && shown != reportedRed) {
+            reportedRed = shown;
+            post(reportEdge);
+        }
+    }
+
     /** 盲区报警时在车来的那一侧画红光，像 Tesla 一样闪；不报了就去掉。 */
     public void setWarning(boolean on) {
         if (warning != on) {
@@ -144,6 +163,8 @@ public class SideViewPopupView extends ViewGroup {
     @Override
     protected void onDetachedFromWindow() {
         removeCallbacks(warnBlink);
+        removeCallbacks(reportEdge);
+        reportedRed = false;
         super.onDetachedFromWindow();
     }
 
@@ -274,7 +295,8 @@ public class SideViewPopupView extends ViewGroup {
             if (sideChanged || visibilityChanged) {
                 update();
             }
-            if (sideChanged) {
+            if (sideChanged || visibilityChanged) {
+                // standing by draws the plain picture: coming on screen needs the real one at once
                 invalidate();
             }
             if (show) {
@@ -472,6 +494,15 @@ public class SideViewPopupView extends ViewGroup {
         if (width <= 0 || height <= 0) {
             return;
         }
+        if (!visible) {
+            // Standing by, fully transparent: the picture only has to be drawn so the camera's frames
+            // keep being taken. Once, plain, not the hundred straightened pieces nobody can see;
+            // covered black, so the whole four-camera strip never flashes as the window comes on
+            super.dispatchDraw(canvas);
+            canvas.drawColor(0xFF000000);
+            noteEdge(false);
+            return;
+        }
         if (!hasGeometry()) {
             // 还不知道几何：子视图照画（TextureView 不画就不取帧，onSurfaceTextureUpdated 也不来，
             // 服务就没机会补上尺寸 —— 窗口会一直黑），再盖成黑的，不露出四路挤在一起的整条合成流
@@ -486,7 +517,7 @@ public class SideViewPopupView extends ViewGroup {
                 canvas.drawColor(0xFF000000);
             }
             // the warning shows even before the first picture arrives
-            drawWarning(canvas, hudFrame, width, height);
+            noteEdge(drawWarning(canvas, hudFrame, width, height));
             return;
         }
         int save = canvas.save();
@@ -533,7 +564,7 @@ public class SideViewPopupView extends ViewGroup {
             drawTextureOnce(canvas);
         }
         canvas.restoreToCount(save);
-        drawWarning(canvas, hudFrame, width, height);
+        noteEdge(drawWarning(canvas, hudFrame, width, height));
     }
 
     private float glowEdge = Float.NaN;
@@ -557,9 +588,9 @@ public class SideViewPopupView extends ViewGroup {
      * the left camera, right for the right one), strongest at the edge and fading inward, blinking
      * with {@link #warnBlink}.
      */
-    private void drawWarning(Canvas canvas, boolean hudFrame, int width, int height) {
+    private boolean drawWarning(Canvas canvas, boolean hudFrame, int width, int height) {
         if (!warning || !com.kooo.evcam.telemetry.BlindSpotWatch.redHalfAt(android.os.SystemClock.uptimeMillis())) {
-            return;
+            return false;
         }
         float x = hudFrame ? frameX : 0f;
         float y = hudFrame ? frameY : 0f;
@@ -583,6 +614,7 @@ public class SideViewPopupView extends ViewGroup {
         float line = WARN_DP * density();
         canvas.drawRect(leftSide ? x : x + width - line, y, leftSide ? x + line : x + width, y + height, warnPaint);
         canvas.restoreToCount(save);
+        return true;
     }
 
     private void drawTextureOnce(Canvas canvas) {

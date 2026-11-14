@@ -22,7 +22,7 @@ public class MapPaceTest {
 
     @Test
     public void slowGapStaysUnderTheLongestFrameTheMapCounts() {
-        // the follow loop caps a frame's time at 0.1 s: a longer gap would never be reached
-        assertTrue(MapPace.frameMinSeconds(true) < 0.1f);
+        // the follow loop caps a frame's time: a longer gap would never be reached
+        assertTrue(MapPace.frameMinSeconds(true) < MapPace.FRAME_MAX_S);
     }
 }

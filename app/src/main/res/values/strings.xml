@@ -288,7 +288,7 @@ Then reopen this app.</string>
     <string name="set_mood_light_title">Mood light</string>
     <string name="set_mood_light_summary">Set the color of a cheap Bluetooth RGB light, like ELK-BLEDOM or Happy Lighting ones</string>
     <string name="set_mood_light_blind_spot_title">Red for a car in the blind spot</string>
-    <string name="set_mood_light_blind_spot_summary">Like Tesla: when the car warns of a vehicle in the blind spot, the mood lights blink between red and their usual color, in step with the red edge of the side view. The warning alone blinks from the warning speed set under Side mirror (60 km/h by default); with your turn signal on towards that side it blinks at any speed. Add Car ambient light to a group to use the car\'s own ambient light too</string>
+    <string name="set_mood_light_blind_spot_summary">Like Tesla: when the car warns of a vehicle in the blind spot, the mood lights blink between red and their usual color, exactly when the red edge of the side view is red. They only go red while that red edge is on screen. Add Car ambient light to a group to use the car\'s own ambient light too</string>
     <string name="mood_light_subtitle">Close the light\'s own phone app first. The light takes one connection at a time</string>
     <string name="mood_light_pick">Scan, then tap Connect on your light.</string>
     <string name="mood_light_none">No light yet.\n1. Plug in the light and close its own phone app.\n2. Tap Scan.\n3. Tap Connect on your light.</string>

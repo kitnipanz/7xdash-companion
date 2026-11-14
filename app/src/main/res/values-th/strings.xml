@@ -347,7 +347,7 @@
     <string name="stream_lab_title">ทดลอง Netflix และ YouTube (เบต้า)</string>
     <string name="stream_lab_summary">ทุกวิธีที่จะเล่น Netflix และ YouTube บนรถ (แอป เว็บ หน้า TV ตัวเล่นฝัง) และเล่นลื่นแค่ไหน: ตัวถอดรหัสวิดีโอ Widevine การตรวจตัวเล่นบนเว็บ และมาตรวัดเฟรมตก</string>
     <string name="browser_title">เบราว์เซอร์</string>
-    <string name="home_card_browser_sub">เว็บแบบเดสก์ท็อป เช่น YouTube กดค้างเพื่อเปิดหน้าต่างลอย</string>
+    <string name="home_card_browser_sub">เบต้า · เว็บแบบเดสก์ท็อป เช่น YouTube กดค้างเพื่อเปิดหน้าต่างลอย</string>
     <string name="browser_move">ย้าย แตะสองครั้ง: เล็กหรือใหญ่</string>
     <string name="browser_back">ย้อนกลับ</string>
     <string name="browser_forward">ไปข้างหน้า</string>
@@ -361,7 +361,7 @@
     <string name="browser_close">ปิด</string>
     <string name="browser_paused_driving">ซ่อนภาพขณะขับรถ เสียงยังเล่นต่อ</string>
     <string name="browser_need_overlay">อนุญาตให้ 7xDash แสดงทับแอปอื่นก่อน แล้วลองใหม่</string>
-    <string name="shortcut_action_browser">เปิด/ปิดเบราว์เซอร์ลอย</string>
+    <string name="shortcut_action_browser">เปิด/ปิดเบราว์เซอร์ลอย (เบต้า)</string>
     <string name="stargate_lab_title">ทดลองไฟ Stargate</string>
     <string name="stargate_lab_summary">หาว่า 7xDash วาดบนม่านไฟ Stargate ได้ไหม: ชื่อ คำสั่งของรถ แอปไฟ ฟังสัญญาณ และบันทึก</string>
     <string name="stargate_lab_intro">สำหรับม่านไฟของ 7X AWD Performance 1. หา แสดงฟังก์ชันของรถที่ชื่อตรงกับคำ พร้อมค่าตอนนี้ คำสั่งรถ แสดงสิ่งที่ระบบรถทำได้ ★ คือคำสั่งที่รับข้อมูลแบบไบต์ ข้อความ หรืออาร์เรย์ ซึ่งการวาดรูปต้องใช้ แอปไฟ แสดงแอปไฟของรถและสิ่งที่แอปเปิดให้ใช้ 2. กด ฟัง แล้วไปที่ Light Studio ของรถ เปลี่ยนทีละอย่าง: เปิดปิดไฟขณะขับ เลือกลาย บันทึกลายของตัวเอง ทุกการเปลี่ยนจะขึ้นที่นี่: ฟังก์ชันรถที่เปลี่ยน ข้อมูลที่รถส่งมา (ทุกโซน รวมข้อมูลดิบ) หรือบรรทัดในล็อกระบบเรื่องไฟ ทุกอย่างบันทึกลงไฟล์ และ คัดลอกทั้งหมด จะคัดลอกให้ 3. อ่านฟังก์ชันใดก็ได้ หรือส่งค่าเฉพาะเกียร์ P หลังยืนยัน</string>
@@ -1109,7 +1109,7 @@
     <!-- Interface section · first-launch side question · record unavailable · status bar -->
     <string name="set_section_interface">อินเทอร์เฟซ</string>
     <string name="set_beta_features_title">ฟีเจอร์เบต้า</string>
-    <string name="set_beta_features_summary">แสดงและเปิดใช้ฟีเจอร์ที่ยังทดลองในรถอยู่ ตอนนี้มี: จอดไว้ที่ไหน (การ์ดในหน้าหลัก และอ่านป้ายเมื่อเข้าเกียร์ P) แบตเมื่อถึงที่หมาย และ OBD2 ปุ่มลัดจอดไว้ที่ไหนยังใช้ได้</string>
+    <string name="set_beta_features_summary">แสดงและเปิดใช้ฟีเจอร์ที่ยังทดลองในรถอยู่ ตอนนี้มี: จอดไว้ที่ไหน (การ์ดในหน้าหลัก และอ่านป้ายเมื่อเข้าเกียร์ P) แบตเมื่อถึงที่หมาย เบราว์เซอร์ และ OBD2 ปุ่มลัดจอดไว้ที่ไหนยังใช้ได้</string>
     <string name="set_usage_stats_title">สถิติการใช้งาน (ไม่ระบุตัวตน)</string>
     <string name="set_usage_stats_summary">ฟีเจอร์ที่ใช้ เช่น การเปิดแอป การ์ดหน้าหลัก หน้าที่เปิด การทำงานที่ใช้และกดจากตรงไหน ปุ่มที่ตั้งค่าไว้ การบันทึก และการควบคุมจาก 7xDash เว็บ ใช้แค่รหัสสุ่มที่สร้างตอนติดตั้งแอป ไม่มีอีเมล ป้ายทะเบียน หรือตำแหน่ง ประมาณ 20–50 KB ต่อวัน</string>
     <string name="usage_consent_title">ช่วยให้ 7xDash ดีขึ้นไหม?</string>

@@ -349,7 +349,7 @@ Then reopen this app.</string>
     <string name="stream_lab_title">Netflix and YouTube lab (beta)</string>
     <string name="stream_lab_summary">Every way to play Netflix and YouTube on this car (apps, web, TV page, embedded) and how smoothly each plays: decoders, Widevine, web player checks and a frame-drop meter</string>
     <string name="browser_title">Browser</string>
-    <string name="home_card_browser_sub">Desktop sites, such as YouTube. Hold for a floating window</string>
+    <string name="home_card_browser_sub">Beta · Desktop sites, such as YouTube. Hold for a floating window</string>
     <string name="browser_move">Move. Double-tap: small or large</string>
     <string name="browser_back">Back</string>
     <string name="browser_forward">Forward</string>
@@ -363,7 +363,7 @@ Then reopen this app.</string>
     <string name="browser_close">Close</string>
     <string name="browser_paused_driving">The picture is hidden while driving. Sound keeps playing.</string>
     <string name="browser_need_overlay">Allow 7xDash to show over other apps, then try again</string>
-    <string name="shortcut_action_browser">Floating browser on / off</string>
+    <string name="shortcut_action_browser">Floating browser on / off (beta)</string>
     <string name="stargate_lab_title">Stargate lab (experimental)</string>
     <string name="stargate_lab_summary">Find out whether 7xDash can draw on the Stargate light curtain: names, car API, light apps, Listen and capture</string>
     <string name="stargate_lab_intro">For the 7X AWD Performance light curtain. 1. Find lists the car functions whose names match the words, with what they read now. Car API lists what the car interface can do; a ★ marks calls that take bytes, text or arrays, which drawing a picture would need. Light apps lists the car\'s light apps and what they offer. 2. Press Listen, then go to the car\'s Light Studio and change things one at a time: Drive light on and off, pick patterns, save a custom pattern. Each change shows here: a car function that changed, a push from the car (any zone, raw data included), or a system log line about lights. Everything is saved to a file and Copy all copies it. 3. Read any function, or Send one in P after asking.</string>
@@ -1124,7 +1124,7 @@ Then reopen this app.</string>
     <!-- Interface section · first-launch side question · record unavailable · status bar -->
     <string name="set_section_interface">Interface</string>
     <string name="set_beta_features_title">Beta features</string>
-    <string name="set_beta_features_summary">Show features that are still being tried on the car, and let them run. Now: Where I parked (home card, and reading the signs when the car goes into P) Battery at arrival and OBD2. The Where I parked shortcut still works.</string>
+    <string name="set_beta_features_summary">Show features that are still being tried on the car, and let them run. Now: Where I parked (home card, and reading the signs when the car goes into P) Battery at arrival, Browser and OBD2. The Where I parked shortcut still works.</string>
     <string name="set_usage_stats_title">Anonymous usage stats</string>
     <string name="set_usage_stats_summary">Which features get used: app start, home cards, pages, actions and what ran them, buttons you set up, recording, 7xDash web controls. A random install id only: no email, plate or location. About 20–50 KB a day</string>
     <string name="usage_consent_title">Help fix and improve 7xDash?</string>

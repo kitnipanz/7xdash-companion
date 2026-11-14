@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.8.35-beta] - 2026-11-14
+
+### Netflix and YouTube lab (beta)
+- **Netflix in a small window (picture-in-picture).** New buttons in the Netflix row:
+  - **PiP check**: whether the car allows small windows at all, whether Netflix can and is allowed to use one, and where Netflix's windows are now.
+  - **PiP test**: opens Netflix; start a video within 20 seconds. 7xDash then presses Home, Netflix shrinks into a small window, and the lab comes back and shows whether it worked.
+  - **PiP settings**: turns Netflix's small window on or off.
+- **PiP this page**: the lab's own web video (YouTube) goes into a small window. Pressing Home while a page video plays does the same.
+- While driving, the small Netflix window is covered too; the sound keeps playing.
+
 ## [1.8.34-beta] - 2026-11-14
 
 ### Netflix and YouTube lab (beta)

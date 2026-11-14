@@ -1389,7 +1389,16 @@ char *adjust_yt_condensed_playlist(const char *media_playlist) {
             }
         }
         if (ptr && old_pos != ptr) {
-            goto stop_rewriting_chunks;
+            /* tag lines between this chunk and the next (YouTube live puts ad cue points here:
+               #EXT-X-DATERANGE, #EXT-X-CUEPOINT): copy them unchanged and keep expanding,
+               instead of leaving every later chunk as a relative "s/..." uri */
+            if (ptr < old_pos || strncmp(old_pos, "#EXT", 4)) {
+                goto stop_rewriting_chunks;
+            }
+            len = ptr - old_pos;
+            memcpy(new_pos, old_pos, len);
+            new_pos += len;
+            old_pos += len;
         }
     }
  stop_rewriting_chunks:

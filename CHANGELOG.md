@@ -1,5 +1,40 @@
 # Changelog
 
+## [1.9.0] - 2026-11-14
+
+Everything since 1.8.29.
+
+### AirPlay
+- **Live YouTube casts now play.** The car starts at the live edge, tells the iPhone the video is live (so it no longer stops "at the end" after a few seconds), and refreshes the live playlist as often as the stream needs, so low-latency streams keep going.
+- Live streams with ad markers no longer stop after a few seconds with a source error.
+- A live cast that falls behind after a network hiccup jumps back to live instead of stopping.
+
+### Automation
+- **New action: Sentry Mode on or off.** Pair it with "Car turns off" to have Sentry Mode come on every time you park. It leaves Sentry Mode alone when it's already on or armed, and only turns it on in P.
+- **Time** under "And only if": **After** or **Before** a time, on a 24-hour clock. For example: the car turns on and after 18:00 → close the sunroof shade.
+
+### Where I parked
+- **Photos come out flat and fill the frame.** The left, front and right photos no longer come out shrunk, with bent lines, black on the right and a black arc at the bottom.
+- Parking photos are always straightened flat (110°), whatever the screen's straightening setting is.
+- Remote view's straightened cameras get the same fix.
+
+### Netflix
+- While driving, 7xDash covers the Netflix app's picture, including its small picture-in-picture window; the sound keeps playing. It uses the accessibility service to know where Netflix's windows are, nothing inside them.
+
+### Shortcuts
+- New action **Minimise and open the app 60 times** (Car tab): opens 7xDash on Home and goes to the home screen in turn, every 0.5 seconds, 30 times each. Press it again to stop.
+
+### Labs (experimental)
+- **Netflix and YouTube lab** (Settings → System): tries every way to play Netflix and YouTube on the car and shows how smoothly each plays.
+  - **Check this car**: screen and refresh rate, WebView version, Widevine level (L1 or L3), which video formats the car decodes in hardware and whether they reach 1080p60, and installed player apps, with a verdict for each route.
+  - **Check the web player**: which formats web pages can play, whether each is smooth at 720p, 1080p and 4K, and which Widevine levels a page can get.
+  - **Routes**: Netflix app, netflix.com, YouTube app, other YouTube apps (SmartTube, NewPipe…), the YouTube TV page, and desktop, mobile and embedded YouTube.
+  - **Smooth meter**: resolution, frames per second, dropped frames and buffer every 2 seconds, with an average when you leave a route.
+  - **Force H.264**: makes YouTube send H.264 for smoother video.
+  - **Picture-in-picture**: check whether the car and Netflix allow a small window, test it, turn it on or off, and put the lab's own web video into a small window.
+- **DRM lab** (Settings → System): shows Widevine on this car (L1 or L3, HDCP, secure decoders) and plays Google's Widevine test videos (SD, HD, UHD), showing each step.
+- **Stargate lab** (Settings → Mood light): looks for a way to draw on the Stargate light curtain of the 7X AWD Performance: finds matching car settings, lists the car interface and light apps, saves an app's APK to the USB drive, and listens while you change Light Studio. Every line is saved to `7xDash/stargate_logs` on the USB drive.
+
 ## [1.8.37-beta] - 2026-11-14
 
 ### Automation

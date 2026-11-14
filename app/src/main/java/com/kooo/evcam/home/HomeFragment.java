@@ -347,6 +347,14 @@ public class HomeFragment extends Fragment {
                             () -> config.isParkingCreepEnabled(), this::toggleParkingCreep);
         }
 
+        // Beta: a browser that asks for desktop sites. Tap: full screen; hold: floating
+        if (betaShown) {
+            addCard(R.drawable.ic_browser, R.string.browser_title, R.string.home_card_browser_sub,
+                    () -> com.kooo.evcam.browser.BrowserActivity.open(requireContext()),
+                    () -> com.kooo.evcam.browser.BrowserFloat.toggle(requireContext()));
+        }
+
+
         // Beta: live values and trouble codes through an ELM327 adapter
         if (betaShown) {
             addCard(R.drawable.ic_obd, R.string.obd_title, R.string.home_card_obd_sub,

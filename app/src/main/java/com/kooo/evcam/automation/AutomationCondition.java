@@ -20,6 +20,10 @@ public enum AutomationCondition {
 
     /** Value: the days it may run, a bit per day, {@link #MONDAY} first. */
     DAYS("days", Group.DAYS, R.string.automation_if_days),
+    /** Value: minutes after midnight. From that time until midnight. */
+    AFTER_TIME("after_time", Group.TIME, R.string.automation_if_after),
+    /** Value: minutes after midnight. From midnight until that time. */
+    BEFORE_TIME("before_time", Group.TIME, R.string.automation_if_before),
     DARK("is_dark", Group.DAYLIGHT, R.string.automation_if_dark),
     LIGHT("is_light", Group.DAYLIGHT, R.string.automation_if_light),
     RAINING("is_raining", Group.RAIN, R.string.automation_if_raining),
@@ -31,6 +35,7 @@ public enum AutomationCondition {
     /** A rule has at most one condition from each group. */
     public enum Group {
         DAYS(R.string.automation_group_days, R.drawable.ic_automation_days),
+        TIME(R.string.automation_group_time, R.drawable.ic_automation_time),
         DAYLIGHT(R.string.automation_group_daylight, R.drawable.ic_automation_daylight),
         RAIN(R.string.automation_group_rain, R.drawable.ic_automation_rain),
         PLACE(R.string.automation_group_place, R.drawable.ic_automation_place);
@@ -70,6 +75,27 @@ public enum AutomationCondition {
         return null;
     }
 
+    /** Picked when a time condition is first chosen: early evening, the common case. */
+    public static final int DEFAULT_MINUTE = 18 * 60;
+
+    /** Is this a time one, where the value is minutes after midnight. */
+    public boolean isTime() {
+        return group == Group.TIME;
+    }
+
+    /** Does a time condition hold at {@code minute} (minutes after midnight; below 0 when not known)? */
+    static boolean timeHolds(AutomationCondition kind, int value, int minute) {
+        if (minute < 0) {
+            return false;
+        }
+        return kind == AFTER_TIME ? minute >= value : minute < value;
+    }
+
+    /** Always the 24-hour clock: "18:00", "07:30". */
+    static String clock(Context context, int minute) {
+        return String.format(java.util.Locale.ROOT, "%02d:%02d", (minute / 60) % 24, minute % 60);
+    }
+
     /** Is this a place one, where the value is a saved place. */
     public boolean isPlace() {
         return group == Group.PLACE;
@@ -90,6 +116,9 @@ public enum AutomationCondition {
         switch (kind) {
             case DAYS:
                 return context.getString(kind.textRes, days(context, condition.value));
+            case AFTER_TIME:
+            case BEFORE_TIME:
+                return context.getString(kind.textRes, clock(context, condition.value));
             case AT_PLACE:
             case AWAY_FROM_PLACE:
                 SavedPlaces.Place place = SavedPlaces.find(SavedPlaces.load(context), condition.value);

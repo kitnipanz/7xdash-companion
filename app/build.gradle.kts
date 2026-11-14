@@ -69,8 +69,8 @@ android {
         // versionName 会成为 Release 名称与 APK 文件名
         //
         // 7xDash 用自己的 applicationId，可以和 zeekr-shortcut-car 并排装。版本号从 1 重新起。
-        versionCode = 132
-        versionName = "1.8.29"
+        versionCode = 141
+        versionName = "1.9.0"
 
         buildConfigField("String", "DRIVE_CLIENT_ID", gradleStringLiteral(driveCredential("DRIVE_CLIENT_ID")))
         buildConfigField("String", "DRIVE_CLIENT_SECRET", gradleStringLiteral(driveCredential("DRIVE_CLIENT_SECRET")))
@@ -156,6 +156,8 @@ dependencies {
 
     // 设置界面（PreferenceScreen）
     implementation("androidx.preference:preference:1.2.1")
+    // Browser: desktop client hints and a document-start script, so sites see a desktop
+    implementation("androidx.webkit:webkit:1.12.1")
     // 两栏设置的左右分栏（androidx 自己的 PreferenceHeaderFragmentCompat 也用它）
     implementation("androidx.slidingpanelayout:slidingpanelayout:1.2.0")
 
@@ -164,6 +166,8 @@ dependencies {
     // AirPlay 只投视频（App 里的 AirPlay 按钮）：iPhone 给一个 HLS 地址，用 ExoPlayer 播
     implementation("androidx.media3:media3-exoplayer:1.5.1")
     implementation("androidx.media3:media3-exoplayer-hls:1.5.1")
+    // DRM lab: Google's Widevine test streams are DASH
+    implementation("androidx.media3:media3-exoplayer-dash:1.5.1")
     // 投视频时 YouTube 的分段走车机的 Wi-Fi（有的话），不走车机自己的流量：用 OkHttp 绑到 Wi-Fi 网络
     implementation("androidx.media3:media3-datasource-okhttp:1.5.1")
 

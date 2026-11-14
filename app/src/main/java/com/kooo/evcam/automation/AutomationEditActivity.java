@@ -165,6 +165,7 @@ public class AutomationEditActivity extends AppCompatActivity {
         whenPane.addView(heading);
         whenPane.addView(AutomationActivity.text(this, getString(R.string.automation_and_hint), false));
         drawDays();
+        drawTime();
         drawStates(AutomationCondition.Group.DAYLIGHT);
         drawStates(AutomationCondition.Group.RAIN);
         drawPlaceCondition();
@@ -189,6 +190,51 @@ public class AutomationEditActivity extends AppCompatActivity {
             day.setPadding(dp(10), 0, dp(10), 0);
             days.addView(day);
         }
+    }
+
+    /**
+     * After or before a time of day: pick which, then the time ("After 18:00"). A second tap on
+     * After or Before takes it back; the time chip opens the clock.
+     */
+    private void drawTime() {
+        AutomationCondition.Group group = AutomationCondition.Group.TIME;
+        ChipGroup chips = addSection(whenPane, group.iconRes, getString(group.labelRes));
+        AutomationRule.Condition current = draft.condition(group);
+        AutomationCondition picked = current == null ? null : current.kind();
+        for (AutomationCondition kind : new AutomationCondition[]{
+                AutomationCondition.AFTER_TIME, AutomationCondition.BEFORE_TIME}) {
+            boolean on = kind == picked;
+            int label = kind == AutomationCondition.AFTER_TIME
+                    ? R.string.automation_chip_after : R.string.automation_chip_before;
+            chips.addView(chip(getString(label), on, v -> {
+                if (on) {
+                    draft.setCondition(group, null, 0);
+                    draw();
+                } else if (current != null) {
+                    draft.setCondition(group, kind, current.value);
+                    draw();
+                } else {
+                    pickTime(kind, AutomationCondition.DEFAULT_MINUTE);
+                }
+            }));
+        }
+        if (picked == null) {
+            return;
+        }
+        ChipGroup row = chipRow(whenPane);
+        row.setPaddingRelative(dp(34), dp(8), 0, 0);
+        TextView time = chip(AutomationCondition.clock(this, current.value), true,
+                v -> pickTime(picked, current.value));
+        time.setMinWidth(dp(96));
+        row.addView(time);
+    }
+
+    /** A 24-hour clock picker; the condition is set only when a time is chosen. */
+    private void pickTime(AutomationCondition kind, int minute) {
+        new android.app.TimePickerDialog(this, (view, hour, min) -> {
+            draft.setCondition(AutomationCondition.Group.TIME, kind, hour * 60 + min);
+            draw();
+        }, minute / 60, minute % 60, true).show();
     }
 
     /** No day at all, or every day, is the same as not asking. */

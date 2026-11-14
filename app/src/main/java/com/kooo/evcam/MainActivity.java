@@ -1950,8 +1950,9 @@ public class MainActivity extends AppCompatActivity {
             com.kooo.evcam.zeekr.RemoteFrame.equalVerticalLanes(parkingLanes);
         }
         final float[] lanes = parkingLanes.clone();
-        final float fov = appConfig.getFisheyeFov();
-        final String projection = appConfig.getFisheyeProjection();
+        // Flat, not the screen's setting: see WhereParked.PHOTO_PROJECTION
+        final float fov = com.kooo.evcam.parking.WhereParked.PHOTO_FOV;
+        final String projection = com.kooo.evcam.parking.WhereParked.PHOTO_PROJECTION;
         remoteCompose.execute(() -> {
             android.graphics.Bitmap[] channels = null;
             try {

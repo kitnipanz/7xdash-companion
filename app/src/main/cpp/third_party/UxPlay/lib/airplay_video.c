@@ -28,7 +28,19 @@
 #include "raop.h"
 #include "airplay_video.h"
 
-#define MEDIA_PLAYLIST_REFRESH_SECS 5
+/* 7xDash: a live media playlist is re-fetched through the iPhone once it is older than half
+   its target duration (1 s floor, 5 s ceiling): YouTube's low-latency streams have 1-2 s
+   segments, and a 5 s old copy leaves the player with nothing new to load. A fetch whose
+   reply never came is asked for again after FETCH_RETRY_SECS. */
+#define MEDIA_PLAYLIST_REFRESH_SECS 5.0
+#define MEDIA_PLAYLIST_REFRESH_MIN_SECS 1.0
+#define FETCH_RETRY_SECS 4.0
+
+static double now_secs(void) {
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    return (double) ts.tv_sec + ts.tv_nsec / 1e9;
+}
 
 typedef enum playlist_type_e {
     NONE,
@@ -47,7 +59,9 @@ struct media_item_s {
     int hls_version;
     int media_sequence;
     bool fetch_pending;
-    time_t last_fetched;
+    double last_fetched;
+    double fetch_requested;
+    double target_duration;
 };
 
 struct airplay_video_s {
@@ -1032,7 +1046,11 @@ int store_media_playlist(airplay_video_t *airplay_video, char * media_playlist, 
     media_item->count = *count;
     media_item->duration = *duration;
     media_item->endlist = *endlist;
-    media_item->last_fetched = time(NULL);
+    media_item->last_fetched = now_secs();
+    {
+        const char *td = strstr(media_playlist, "#EXT-X-TARGETDURATION:");
+        media_item->target_duration = td ? strtod(td + strlen("#EXT-X-TARGETDURATION:"), NULL) : 0.0;
+    }
     parse_media_playlist(media_item);
     pthread_mutex_unlock(&airplay_video->media_data_store_lock);
     return 0;
@@ -1055,11 +1073,16 @@ char * get_media_playlist(airplay_video_t *airplay_video, int *count, float *dur
                 *count = item->count;
                 *duration = item->duration;
                 copy = _raw_copy_playlist(item->playlist);
-                stale = !item->endlist &&
-                        time(NULL) - item->last_fetched >= MEDIA_PLAYLIST_REFRESH_SECS;
+                double refresh = item->target_duration > 0.0
+                        ? item->target_duration / 2.0 : MEDIA_PLAYLIST_REFRESH_SECS;
+                if (refresh < MEDIA_PLAYLIST_REFRESH_MIN_SECS) refresh = MEDIA_PLAYLIST_REFRESH_MIN_SECS;
+                if (refresh > MEDIA_PLAYLIST_REFRESH_SECS) refresh = MEDIA_PLAYLIST_REFRESH_SECS;
+                stale = !item->endlist && now_secs() - item->last_fetched >= refresh;
             }
-            if (stale && !item->fetch_pending) {
+            double now = now_secs();
+            if (stale && (!item->fetch_pending || now - item->fetch_requested >= FETCH_RETRY_SECS)) {
                 item->fetch_pending = true;
+                item->fetch_requested = now;
                 *should_fetch = true;
                 *remote_uri = item->uri;
             }
@@ -1366,7 +1389,16 @@ char *adjust_yt_condensed_playlist(const char *media_playlist) {
             }
         }
         if (ptr && old_pos != ptr) {
-            goto stop_rewriting_chunks;
+            /* tag lines between this chunk and the next (YouTube live puts ad cue points here:
+               #EXT-X-DATERANGE, #EXT-X-CUEPOINT): copy them unchanged and keep expanding,
+               instead of leaving every later chunk as a relative "s/..." uri */
+            if (ptr < old_pos || strncmp(old_pos, "#EXT", 4)) {
+                goto stop_rewriting_chunks;
+            }
+            len = ptr - old_pos;
+            memcpy(new_pos, old_pos, len);
+            new_pos += len;
+            old_pos += len;
         }
     }
  stop_rewriting_chunks:

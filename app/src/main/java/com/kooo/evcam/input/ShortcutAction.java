@@ -11,6 +11,8 @@ public enum ShortcutAction {
     MIRROR_HUD("toggle_mirror_hud", R.string.shortcut_action_mirror_hud, R.drawable.ic_mirror_hud),
     BOTH_MIRRORS("toggle_both_mirrors", R.string.shortcut_action_both_mirrors, R.drawable.ic_mirrors),
     APP("open_app", R.string.shortcut_action_app, R.drawable.ic_home),
+    /** Open the app and minimise it, 60 times half a second apart ({@link AppBounce}); again stops it. */
+    APP_BOUNCE("app_bounce", R.string.shortcut_action_app_bounce, R.drawable.ic_refresh),
     DIM("toggle_dim", R.string.shortcut_action_dim, R.drawable.ic_dim),
     HUD("toggle_hud", R.string.shortcut_action_hud, R.drawable.ic_hud),
     SAVE("save_moment", R.string.shortcut_action_save, R.drawable.ic_bookmark),
@@ -29,6 +31,8 @@ public enum ShortcutAction {
     PHOTO_SURROUND("photo_surround", R.string.shortcut_action_photo_surround, R.drawable.ic_surround),
     /** Start or stop the AirPlay receiver. */
     AIRPLAY("toggle_airplay", R.string.shortcut_action_airplay, R.drawable.ic_airplay),
+    /** Beta: open or close the floating browser. */
+    BROWSER_FLOAT("toggle_browser_float", R.string.shortcut_action_browser, R.drawable.ic_browser),
     /** Turn the cabin equalizer on or off. */
     EQ("toggle_eq", R.string.shortcut_action_eq, R.drawable.ic_eq),
     /** 只拍座舱（前、后座舱），不换页。 */

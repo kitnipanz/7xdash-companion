@@ -57,6 +57,8 @@ final class CastPlayer {
     private Surface surface;
     /** The audio language picked on the iPhone; null lets the stream's own default play. */
     private String audioLanguage;
+    /** A live stream starts at its live edge, not at the position the iPhone sent with /play. */
+    private boolean liveEdgePending;
 
     private final Runnable report = new Runnable() {
         @Override
@@ -69,6 +71,13 @@ final class CastPlayer {
     private final Player.Listener events = new Player.Listener() {
         @Override
         public void onPlayerError(PlaybackException error) {
+            // live: fell behind the window after a stall; rejoin at the live edge
+            if (error.errorCode == PlaybackException.ERROR_CODE_BEHIND_LIVE_WINDOW && player != null) {
+                AirPlayLog.i("cast: behind live window, back to live edge");
+                player.seekToDefaultPosition();
+                player.prepare();
+                return;
+            }
             listener.onEnded("player error: " + error.getErrorCodeName() + " " + error.getMessage());
         }
 
@@ -81,6 +90,18 @@ final class CastPlayer {
 
         @Override
         public void onTimelineChanged(Timeline timeline, int reason) {
+            // a live stream: the iPhone's start position means nothing in our window (it can lie
+            // past the window's end, where the player waits forever), so jump to the live edge
+            if (liveEdgePending && player != null && !timeline.isEmpty()) {
+                Timeline.Window w = timeline.getWindow(player.getCurrentMediaItemIndex(), new Timeline.Window());
+                if (!w.isPlaceholder) {
+                    liveEdgePending = false;
+                    if (w.isLive()) {
+                        AirPlayLog.i("cast: live stream, window " + (w.getDurationMs() / 1000) + " s, to live edge");
+                        player.seekToDefaultPosition();
+                    }
+                }
+            }
             // the length is usually known from here on (HLS): report it so the iPhone's /play goes on
             reportNow();
         }
@@ -132,6 +153,7 @@ final class CastPlayer {
                 p.setVideoSurface(surface);
             }
             player = p;
+            liveEdgePending = true;
             p.setMediaItem(MediaItem.fromUri(location), (long) (startSeconds * 1000));
             p.setPlayWhenReady(true);
             p.prepare();
@@ -263,11 +285,14 @@ final class CastPlayer {
             return;
         }
         long durationMs = p.getDuration();
-        float duration = durationMs == C.TIME_UNSET ? 0f : durationMs / 1000f;
+        boolean live = p.isCurrentMediaItemLive();
+        // live: duration 0 (the contract above). The window length would look to the iPhone
+        // like a short video whose end is a few seconds away, and it stops "at the end".
+        float duration = live || durationMs == C.TIME_UNSET ? 0f : durationMs / 1000f;
         boolean playing = p.getPlayWhenReady() && p.getPlaybackState() == Player.STATE_READY;
         float rate = playing ? p.getPlaybackParameters().speed : 0f;
         // "ready" = the timeline is known (the iPhone holds its controls until then)
-        boolean ready = p.isCurrentMediaItemLive()
+        boolean ready = live
                 ? p.getPlaybackState() == Player.STATE_READY
                 : durationMs != C.TIME_UNSET;
         listener.onInfo(p.getCurrentPosition() / 1000f, duration, rate, ready);

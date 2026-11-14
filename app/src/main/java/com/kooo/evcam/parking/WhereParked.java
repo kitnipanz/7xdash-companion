@@ -48,6 +48,15 @@ public final class WhereParked implements Telemetry.Listener {
     private static final String USER = "where-parked";
     /** Let the picture settle after the shift (the side mirrors fold, the car rocks). */
     private static final long SETTLE_MS = 2000L;
+    /**
+     * Parking photos are straightened flat, whatever the screen's straightening is set to: the
+     * straight-line projection keeps parking lines, kerbs and pillars straight. 110° rather than
+     * the widest (140°): closer, and the edges are not stretched much.
+     */
+    public static final String PHOTO_PROJECTION =
+            com.kooo.evcam.zeekr.FisheyeProjection.PROJECTION_RECTILINEAR;
+    public static final float PHOTO_FOV = com.kooo.evcam.zeekr.FisheyeProjection.DEFAULT_FOV_DEGREES;
+
     private static final int PHOTO_W = 640;
     private static final int PHOTO_H = 360;
     private static final int PHOTO_QUALITY = 60;

@@ -28,6 +28,30 @@ public class CarControlsTest {
     }
 
     @Test
+    public void sentryOnLeavesOnAndArmedAlone() {
+        org.junit.Assert.assertFalse(CarControls.sentryNeedsSend(CarControls.SENTRY_ON, true));
+        org.junit.Assert.assertFalse(CarControls.sentryNeedsSend(CarControls.SENTRY_ARMED, true));
+        org.junit.Assert.assertTrue(CarControls.sentryNeedsSend(CarControls.SENTRY_OFF, true));
+        org.junit.Assert.assertTrue(CarControls.sentryNeedsSend(null, true));
+    }
+
+    @Test
+    public void sentryOffSendsUnlessAlreadyOff() {
+        org.junit.Assert.assertFalse(CarControls.sentryNeedsSend(CarControls.SENTRY_OFF, false));
+        org.junit.Assert.assertTrue(CarControls.sentryNeedsSend(CarControls.SENTRY_ARMED, false));
+        org.junit.Assert.assertTrue(CarControls.sentryNeedsSend(null, false));
+    }
+
+    @Test
+    public void sentryTurnsOnOnlyInParkOrWithNoGear() {
+        org.junit.Assert.assertTrue(CarControls.sentryGearAllows("P"));
+        org.junit.Assert.assertTrue(CarControls.sentryGearAllows(null));
+        org.junit.Assert.assertFalse(CarControls.sentryGearAllows("D"));
+        org.junit.Assert.assertFalse(CarControls.sentryGearAllows("R"));
+        org.junit.Assert.assertEquals(AutomationAction.SENTRY, AutomationAction.fromKey("sentry"));
+    }
+
+    @Test
     public void lockFeedbackTakesOnlyTheCarsValues() {
         for (int value : AutomationAction.LOCK_FEEDBACK_VALUES) {
             assertEquals(Integer.valueOf(value), CarControls.lockFeedbackValue(Integer.toString(value)));

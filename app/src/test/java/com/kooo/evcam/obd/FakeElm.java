@@ -17,7 +17,7 @@ import java.util.Queue;
 final class FakeElm implements ObdLink {
 
     final Map<String, String> replies = Collections.synchronizedMap(new HashMap<>());
-    final List<String> received = Collections.synchronizedList(new ArrayList<>());
+    final List<String> received = new java.util.concurrent.CopyOnWriteArrayList<>();
     private final Queue<Integer> toRead = new ArrayDeque<>();
     private final ByteArrayOutputStream line = new ByteArrayOutputStream();
     volatile boolean failOpen;

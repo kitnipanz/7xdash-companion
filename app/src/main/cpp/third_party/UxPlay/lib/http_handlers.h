@@ -371,7 +371,9 @@ http_handler_playback_info(raop_conn_t *conn, http_request_t *request, http_resp
     playback_info.num_loaded_time_ranges = 1; 
     time_range_t time_ranges_loaded[1];
     time_ranges_loaded[0].start = playback_info.position;
-    time_ranges_loaded[0].duration = playback_info.duration - playback_info.position;
+    /* 7xDash: live reports duration 0; never send a negative loaded range */
+    time_ranges_loaded[0].duration = playback_info.duration > playback_info.position
+            ? playback_info.duration - playback_info.position : 0.0;
     playback_info.loadedTimeRanges = (void *) &time_ranges_loaded;
 
     playback_info.num_seekable_time_ranges = 1;

@@ -146,7 +146,9 @@ public final class RemoteFrame {
         if (straighten) {
             mesh.setCorrection(fovDegrees, projection, strength);
             correctedWindow((float) CELL_WIDTH / CELL_HEIGHT, window);
-            FisheyeMesh.Painter painter = c -> c.drawBitmap(source, 0f, 0f, paint);
+            // Into a rectangle, so the bitmaps' densities do not rescale it (see RemoteSnap)
+            RectF whole = new RectF(0f, 0f, sw, sh);
+            FisheyeMesh.Painter painter = c -> c.drawBitmap(source, null, whole, paint);
             if (onlyLane >= 0 && onlyLane < CompositeStreamGeometry.LANE_COUNT) {
                 drawLaneMesh(canvas, use, onlyLane, sw, sh, 0f, 0f, width, height, 12, painter);
                 return frame;

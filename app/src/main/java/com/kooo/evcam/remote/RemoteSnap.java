@@ -158,7 +158,11 @@ public final class RemoteSnap {
         // One camera, not the whole strip. Each mesh cell redraws this bitmap.
         Bitmap laneBmp = Bitmap.createBitmap(source, x, y, w, h);
         try {
-            FisheyeMesh.Painter lanePainter = c -> c.drawBitmap(laneBmp, 0f, 0f, paint);
+            // Into a rectangle, pixel for pixel. drawBitmap(bitmap, x, y) rescales by the two bitmaps'
+            // densities: the grab carries its screen's density, the cell the app's default. Where
+            // those differ (the car), the lane came out at 3/4 size, black on the right and bottom.
+            RectF whole = new RectF(0f, 0f, w, h);
+            FisheyeMesh.Painter lanePainter = c -> c.drawBitmap(laneBmp, null, whole, paint);
             mesh.prepare(FisheyeMesh.divisionsFor(Math.max(dw, dh)), 0f, 0f, w, h,
                     window[0], window[1], window[2], window[3]);
             mesh.draw(canvas, dx, dy, dw, dh, lanePainter);

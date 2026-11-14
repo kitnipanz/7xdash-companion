@@ -1933,26 +1933,57 @@ public class MainActivity extends AppCompatActivity {
      * Where did I park: every surround lane, defished, handed to {@code done} on the remote
      * thread (0 front, 1 back, 2 left, 3 right; {@code done} recycles them). {@code done} gets
      * null when the surround camera is not up.
+     *
+     * <p>Off screen (another app in front when the car goes into P) the surround view holds a
+     * black or stale frame, so then the picture comes from the camera's JPEG channel instead,
+     * like remote watch does.</p>
      */
     public void grabParkingLanes(java.util.function.Consumer<android.graphics.Bitmap[]> done) {
-        if (textureFront == null || !textureFront.isAvailable()) {
-            done.accept(null);
-            return;
-        }
-        int[] grab = remoteGrabSize(textureFront);
-        final android.graphics.Bitmap source = grab == null ? null : textureFront.getBitmap(grab[0], grab[1]);
-        if (source == null) {
-            done.accept(null);
-            return;
-        }
         boolean hasLanes = compositeContainer != null && compositeContainer.copyLaneWindows(parkingLanes);
         if (!hasLanes) {
             com.kooo.evcam.zeekr.RemoteFrame.equalVerticalLanes(parkingLanes);
         }
         final float[] lanes = parkingLanes.clone();
+        android.view.TextureView live = isInBackground ? null : textureFront;
+        if (live == null || !live.isAvailable()) {
+            com.kooo.evcam.camera.SingleCamera cam = cameraManager == null
+                    ? null : cameraManager.getCamera(com.kooo.evcam.camera.CameraSlots.KEY_SURROUND);
+            // The surround buffer is a tall stack of fisheyes: keep it full size for the sign reader
+            boolean asked = cam != null && cam.requestRemoteStill(PARKING_STILL_MAX_SIDE, still -> {
+                if (still == null) {
+                    done.accept(null);
+                    return;
+                }
+                defishParking(still, lanes, done);
+            });
+            if (!asked) {
+                AppLog.w(TAG, "parking grab: no live surround view and no camera still");
+                done.accept(null);
+            }
+            return;
+        }
+        int[] grab = remoteGrabSize(live);
+        final android.graphics.Bitmap source = grab == null ? null : live.getBitmap(grab[0], grab[1]);
+        if (source == null) {
+            done.accept(null);
+            return;
+        }
+        defishParking(source, lanes, done);
+    }
+
+    private static final int PARKING_STILL_MAX_SIDE = 4096;
+
+    /** Defish {@code source} into lanes on the remote thread, then recycle it. */
+    private void defishParking(android.graphics.Bitmap source, float[] lanes,
+                               java.util.function.Consumer<android.graphics.Bitmap[]> done) {
         // Flat, not the screen's setting: see WhereParked.PHOTO_PROJECTION
         final float fov = com.kooo.evcam.parking.WhereParked.PHOTO_FOV;
         final String projection = com.kooo.evcam.parking.WhereParked.PHOTO_PROJECTION;
+        if (remoteCompose.isShutdown()) {
+            source.recycle();
+            done.accept(null);
+            return;
+        }
         remoteCompose.execute(() -> {
             android.graphics.Bitmap[] channels = null;
             try {

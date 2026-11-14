@@ -1,3 +1,9 @@
+## [1.8.36-beta] - 2026-11-14
+
+### AirPlay
+- **Live YouTube casts now play.** The car starts at the live edge instead of a spot the stream doesn't have, tells the iPhone the video is live (so it no longer stops "at the end" after a few seconds), and refreshes the live playlist as often as the stream needs, so low-latency streams keep going.
+- A live cast that falls behind after a network hiccup jumps back to live instead of stopping.
+
 # Changelog
 
 ## [1.8.35-beta] - 2026-11-14

@@ -1,5 +1,26 @@
 # Changelog
 
+## [1.9.2-beta] - 2026-11-16
+
+### Equalizer
+- **Tone and dynamics** under the faders: Bass, Treble, Loudness, Compressor (night mode), Pre-amp and left/right Balance. Tap a value to reset it. They apply on top of every preset.
+- **More presets**, in two rows: Flat, Natural, Warm, Vocal, Bass, Live, V-Shape; and Rock, Pop, K-Pop, Hip-hop, Jazz, Classical, Dance, Acoustic, Electronic, Podcast.
+- **The real response is drawn over the faders** as a smooth line, bass, treble and loudness included.
+- **Live spectrum** behind the faders (needs the microphone permission; it only reads levels, nothing is recorded). Some head units do not share one.
+- **Hold A/B** to hear the music untouched; let go for the EQ.
+- **Floating EQ** over any app: on/off, presets, bass, treble and A/B. Drag it by its title.
+- Double-tap a fader for 0 dB. Hold a My preset to rename it.
+
+### Announcements
+- **Speed and pitch for each announcement**, with a Play preview. Your own recordings and the built-in sounds play like a tape: faster is also higher.
+- **Choose a voice** for English phrases: Standard, or a man or woman, deeper and older to lighter and younger (needs the English voice download).
+- **Play checks it inside the car** on the normal speakers; hold Play to hear it on the outside speaker.
+- **Less echo in recordings**: low rumble is cut, the room echo between and after words fades out, and silence at both ends is trimmed. Re-record older phrases to get it.
+
+### Automation
+- **Gear P → Where I parked** is offered as an example even with no Home saved.
+- Examples you have not added yet stay offered under your own automations.
+
 ## [1.9.1-beta] - 2026-11-14
 
 ### Side view (blind spot camera)

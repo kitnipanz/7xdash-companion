@@ -118,6 +118,86 @@ public final class Wav {
     }
 
     /**
+     * Speed and pitch apart, for a voice recording: {@code speed} 1.5 is half again as fast at the
+     * same pitch, {@code pitch} 1.2 is higher at the same speed. Stretches the time first
+     * ({@link #timeStretch}), then plays it {@code pitch} times faster ({@link #resample}).
+     */
+    static short[] speedPitch(short[] in, int rate, float speed, float pitch) {
+        if (in == null) {
+            return null;
+        }
+        boolean samePitch = Math.abs(pitch - 1f) < 0.001f;
+        float tempo = speed / pitch;
+        short[] stretched = Math.abs(tempo - 1f) < 0.001f ? in : timeStretch(in, rate, tempo);
+        return samePitch ? stretched : resample(stretched, pitch);
+    }
+
+    /**
+     * Changes how long the sound lasts without changing its pitch (WSOLA): {@code tempo} 2 is half
+     * as long. 30 ms pieces, half overlapped with a Hann window; each piece is moved up to 10 ms to
+     * where it lines up best with the last, so voices do not warble.
+     */
+    static short[] timeStretch(short[] in, int rate, float tempo) {
+        if (in == null || in.length == 0 || tempo <= 0 || Math.abs(tempo - 1f) < 0.001f) {
+            return in;
+        }
+        int frame = Math.max(64, rate * 30 / 1000) & ~1;
+        int hopOut = frame / 2;
+        float hopIn = hopOut * tempo;
+        int seek = Math.max(1, rate * 10 / 1000);
+        int overlap = hopOut;
+        int outLen = Math.max(1, Math.round(in.length / tempo));
+        float[] out = new float[outLen + frame];
+        float[] window = new float[frame];
+        for (int i = 0; i < frame; i++) {
+            window[i] = (float) (0.5 - 0.5 * Math.cos(2 * Math.PI * i / frame));
+        }
+        // Correlate on every 4th sample and try every 2nd offset: close enough, eight times cheaper
+        int stride = 4;
+        int prevStart = 0;
+        for (int k = 0; ; k++) {
+            int outAt = k * hopOut;
+            if (outAt >= outLen) {
+                break;
+            }
+            int nominal = Math.round(k * hopIn);
+            int start = nominal;
+            if (k > 0) {
+                int natural = prevStart + hopOut;
+                double best = -Double.MAX_VALUE;
+                for (int d = -seek; d <= seek; d += 2) {
+                    int cand = nominal + d;
+                    if (cand < 0 || cand + overlap >= in.length || natural + overlap >= in.length) {
+                        continue;
+                    }
+                    double c = 0;
+                    for (int i = 0; i < overlap; i += stride) {
+                        c += (double) in[cand + i] * in[natural + i];
+                    }
+                    if (c > best) {
+                        best = c;
+                        start = cand;
+                    }
+                }
+            }
+            start = Math.max(0, start);
+            for (int i = 0; i < frame; i++) {
+                int src = start + i;
+                if (src >= in.length) {
+                    break;
+                }
+                out[outAt + i] += in[src] * window[i];
+            }
+            prevStart = start;
+        }
+        short[] result = new short[outLen];
+        for (int i = 0; i < outLen; i++) {
+            result[i] = (short) Math.max(-32768, Math.min(32767, Math.round(out[i])));
+        }
+        return result;
+    }
+
+    /**
      * Cleans a cabin recording before it is raised: cuts the rumble under 100 Hz, then pulls down the
      * room's echo and hiss between and after words (a soft gate that opens on the voice and closes
      * over the reverb tail), then trims the quiet at both ends. Returns the frames kept, moved to the start.

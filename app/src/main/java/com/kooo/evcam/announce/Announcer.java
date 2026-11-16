@@ -104,8 +104,8 @@ public final class Announcer {
             if (store.hasRecording(a.id)) {
                 wav = read(store.recording(a.id));
                 if (wav != null) {
-                    // the driver's own voice plays like a tape: faster is higher
-                    wav = Wav.of(wav.rate, Wav.resample(wav.mono, speed));
+                    // the driver's own voice: speed and pitch each on their own
+                    wav = Wav.of(wav.rate, Wav.speedPitch(wav.mono, wav.rate, speed, pitch));
                 }
             } else {
                 wav = !a.isThai() && OfflineVoice.isReady(context)

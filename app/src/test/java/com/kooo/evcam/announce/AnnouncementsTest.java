@@ -223,4 +223,48 @@ public class AnnouncementsTest {
         int n = Wav.clean(pcm, pcm.length, rate);
         assertTrue("kept " + n, n > rate && n < rate * 1.5);
     }
+
+    /** Upward zero crossings per second: the pitch of a pure tone. */
+    private static double hz(short[] pcm, int rate) {
+        int crossings = 0;
+        for (int i = 1; i < pcm.length; i++) {
+            if (pcm[i - 1] < 0 && pcm[i] >= 0) {
+                crossings++;
+            }
+        }
+        return crossings * (double) rate / pcm.length;
+    }
+
+    private static short[] tone(int rate, double freq, double seconds) {
+        short[] pcm = new short[(int) (rate * seconds)];
+        for (int i = 0; i < pcm.length; i++) {
+            pcm[i] = (short) (12000 * Math.sin(2 * Math.PI * freq * i / rate));
+        }
+        return pcm;
+    }
+
+    @Test
+    public void timeStretchChangesLengthNotPitch() {
+        int rate = 48000;
+        short[] in = tone(rate, 220, 2);
+        short[] slow = Wav.timeStretch(in, rate, 0.5f);
+        short[] fast = Wav.timeStretch(in, rate, 2f);
+        assertEquals(in.length * 2, slow.length, rate / 100);
+        assertEquals(in.length / 2, fast.length, rate / 100);
+        assertEquals(220, hz(slow, rate), 6);
+        assertEquals(220, hz(fast, rate), 6);
+    }
+
+    @Test
+    public void speedPitchMovesPitchAndKeepsLength() {
+        int rate = 48000;
+        short[] in = tone(rate, 200, 2);
+        short[] higher = Wav.speedPitch(in, rate, 1f, 1.25f);
+        assertEquals(in.length, higher.length, rate / 50);
+        assertEquals(250, hz(higher, rate), 8);
+        short[] slowLow = Wav.speedPitch(in, rate, 0.8f, 0.8f);
+        assertEquals(in.length / 0.8, slowLow.length, rate / 50);
+        assertEquals(160, hz(slowLow, rate), 8);
+        assertTrue(in == Wav.speedPitch(in, rate, 1f, 1f));
+    }
 }

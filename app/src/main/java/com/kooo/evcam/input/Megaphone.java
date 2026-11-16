@@ -184,6 +184,7 @@ public final class Megaphone {
         }
         AudioRecord record = null;
         SpeakerSet out = null;
+        java.util.List<android.media.audiofx.AudioEffect> effects = java.util.Collections.emptyList();
         try {
             record = new AudioRecord(MediaRecorder.AudioSource.MIC, RATE, AudioFormat.CHANNEL_IN_MONO,
                     AudioFormat.ENCODING_PCM_16BIT, Math.max(inMin, CHUNK_BYTES) * 2);
@@ -199,6 +200,8 @@ public final class Megaphone {
                 com.kooo.evcam.blackbox.BlackBox.note("Megaphone: " + out.describe());
             }
             mic = record;
+            effects = cleanup(record.getAudioSessionId());
+            MegaphoneVoice voice = new MegaphoneVoice(RATE);
             record.startRecording();
             byte[] buf = new byte[CHUNK_BYTES];
             long deadline = SystemClock.elapsedRealtime() + MAX_MS;
@@ -216,7 +219,7 @@ public final class Megaphone {
                     }
                     continue;
                 }
-                int heard = boost(buf, read, gain);
+                int heard = voice.process(buf, read, gain);
                 if (!out.write(buf, read)) {
                     return R.string.megaphone_open;
                 }
@@ -236,12 +239,44 @@ public final class Megaphone {
         } catch (IllegalArgumentException | IllegalStateException e) {
             return R.string.megaphone_open;
         } finally {
+            for (android.media.audiofx.AudioEffect effect : effects) {
+                try {
+                    effect.release();
+                } catch (RuntimeException ignored) {
+                    // already gone
+                }
+            }
             mic = null;
             release(record);
             if (out != null) {
                 out.release();
             }
         }
+    }
+
+    /** The head unit's own echo canceller and noise suppressor on the mic, where it has them. */
+    private static java.util.List<android.media.audiofx.AudioEffect> cleanup(int session) {
+        java.util.List<android.media.audiofx.AudioEffect> out = new java.util.ArrayList<>();
+        try {
+            if (android.media.audiofx.AcousticEchoCanceler.isAvailable()) {
+                android.media.audiofx.AcousticEchoCanceler aec =
+                        android.media.audiofx.AcousticEchoCanceler.create(session);
+                if (aec != null) {
+                    aec.setEnabled(true);
+                    out.add(aec);
+                }
+            }
+            if (android.media.audiofx.NoiseSuppressor.isAvailable()) {
+                android.media.audiofx.NoiseSuppressor ns = android.media.audiofx.NoiseSuppressor.create(session);
+                if (ns != null) {
+                    ns.setEnabled(true);
+                    out.add(ns);
+                }
+            }
+        } catch (RuntimeException ignored) {
+            // optional: the cleanup in MegaphoneVoice runs either way
+        }
+        return out;
     }
 
     private static void release(AudioRecord record) {

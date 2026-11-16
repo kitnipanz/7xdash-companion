@@ -14,8 +14,8 @@ public final class Announcement {
     /** Playback speed, percent of normal ({@link #MIN_TUNE}-{@link #MAX_TUNE}). */
     public final int speed;
     /**
-     * Voice pitch, percent of normal. Only a phrase read by a voice uses it; a recording or a sound
-     * plays like a tape, its pitch following {@link #speed}.
+     * Pitch, percent of normal, for a phrase read by a voice or the driver's own recording. A
+     * built-in sound plays like a tape, its pitch following {@link #speed}.
      */
     public final int pitch;
     /**

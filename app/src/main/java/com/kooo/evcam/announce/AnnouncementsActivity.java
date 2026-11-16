@@ -88,7 +88,7 @@ public class AnnouncementsActivity extends AppCompatActivity {
             if (a.isTuned()) {
                 label = playsLikeTape(a) ? getString(R.string.announce_tune_badge_tape, label, a.speed)
                         : getString(R.string.announce_tune_badge_voice, label, a.speed, a.pitch);
-                if (!playsLikeTape(a) && a.voice != Announcement.VOICE_STANDARD) {
+                if (!playsLikeTape(a) && !store.hasRecording(a.id) && a.voice != Announcement.VOICE_STANDARD) {
                     label += "  ·  " + voiceName(a.voice);
                 }
             }
@@ -115,9 +115,9 @@ public class AnnouncementsActivity extends AppCompatActivity {
         sentryValue.setText(sentry == null ? getString(R.string.announce_sentry_none) : Labels.of(this, sentry));
     }
 
-    /** A recording or a sound has no separate pitch: speed changes both, like a tape. */
+    /** A built-in sound has no separate pitch: speed changes both, like a tape. */
     private boolean playsLikeTape(Announcement a) {
-        return a.isSound() || store.hasRecording(a.id);
+        return a.isSound();
     }
 
     /** Speed and pitch for one announcement, with a preview; saved only on Save. */
@@ -134,7 +134,7 @@ public class AnnouncementsActivity extends AppCompatActivity {
         com.google.android.material.slider.Slider pitch = tuneSlider(tape ? 100 : a.pitch);
         int[] voice = {a.voice};
         Runnable[] repaintVoice = {() -> { }};
-        if (!tape && !a.isThai()) {
+        if (!tape && !a.isThai() && !store.hasRecording(a.id)) {
             TextView voiceRow = tuneLabel();
             voiceRow.setBackgroundResource(R.drawable.bg_pref_row);
             int rowPad = Math.round(14 * density);
@@ -241,6 +241,7 @@ public class AnnouncementsActivity extends AppCompatActivity {
         slider.setStepSize(5);
         slider.setValue(Math.round(value / 5f) * 5);
         slider.setLabelFormatter(v -> Math.round(v) + "%");
+        slider.setTickVisible(false);
         return slider;
     }
 

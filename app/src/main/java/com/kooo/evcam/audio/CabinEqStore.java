@@ -18,6 +18,8 @@ public final class CabinEqStore {
     private static final String KEY_CHOICE = "choice";
     private static final String KEY_LAST_MY = "last_my";
     private static final String KEY_PRESET = "preset_";
+    private static final String KEY_NAME = "name_";
+    private static final String KEY_TONE = "tone";
 
     public static final String BUILTIN = "builtin:";
     public static final String MY = "my:";
@@ -78,6 +80,28 @@ public final class CabinEqStore {
 
     public void setMy(int index, float[] gains) {
         prefs.edit().putString(KEY_PRESET + clampMy(index), CabinEq.write(gains)).apply();
+    }
+
+    /** Bass, treble, loudness, compressor, pre-amp and balance; the same for every preset. */
+    public EqTone tone() {
+        return EqTone.read(prefs.getString(KEY_TONE, ""));
+    }
+
+    public void setTone(EqTone tone) {
+        prefs.edit().putString(KEY_TONE, tone.write()).apply();
+    }
+
+    /** The name the driver gave a "My" preset, or empty for the default "My n". */
+    public String myName(int index) {
+        return prefs.getString(KEY_NAME + clampMy(index), "");
+    }
+
+    public void setMyName(int index, String name) {
+        String clean = name == null ? "" : name.trim();
+        if (clean.length() > 16) {
+            clean = clean.substring(0, 16);
+        }
+        prefs.edit().putString(KEY_NAME + clampMy(index), clean).apply();
     }
 
     public static CabinEq.Builtin builtinOf(String choice) {

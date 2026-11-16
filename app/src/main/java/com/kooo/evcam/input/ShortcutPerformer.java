@@ -328,7 +328,7 @@ public final class ShortcutPerformer {
     private static void toggleEq(Context context) {
         com.kooo.evcam.audio.CabinEqStore store = new com.kooo.evcam.audio.CabinEqStore(context);
         boolean on = !store.enabled();
-        if (!com.kooo.evcam.audio.CabinEqEngine.apply(on, store.currentGains())) {
+        if (!com.kooo.evcam.audio.CabinEqEngine.apply(on, store.currentGains(), store.tone())) {
             com.kooo.evcam.ui.Notice.makeText(context, R.string.eq_refused, Toast.LENGTH_SHORT).show();
             return;
         }

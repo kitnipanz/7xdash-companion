@@ -11,7 +11,8 @@ import java.nio.file.Files;
 /**
  * Records the driver saying a phrase with the cabin mic (the one the megaphone uses), so the phrase
  * plays in their own voice when the head unit has none. Mono 16-bit at {@link #RATE}, at most
- * {@link #MAX_SECONDS}, raised to a usable level when saved.
+ * {@link #MAX_SECONDS}. On save the cabin's echo and rumble are pulled down and the quiet ends
+ * trimmed ({@link Wav#clean}), then it is raised to a usable level.
  */
 final class VoiceRecorder {
 
@@ -29,6 +30,42 @@ final class VoiceRecorder {
     private volatile boolean go;
     private volatile int frames;
     private Thread worker;
+    private java.util.List<android.media.audiofx.AudioEffect> effects = new java.util.ArrayList<>();
+
+    /** The head unit's own echo and noise cleanup on the mic, where it has them; none is fine. */
+    private static java.util.List<android.media.audiofx.AudioEffect> attachEffects(int session) {
+        java.util.List<android.media.audiofx.AudioEffect> out = new java.util.ArrayList<>();
+        try {
+            if (android.media.audiofx.AcousticEchoCanceler.isAvailable()) {
+                android.media.audiofx.AcousticEchoCanceler aec = android.media.audiofx.AcousticEchoCanceler.create(session);
+                if (aec != null) {
+                    aec.setEnabled(true);
+                    out.add(aec);
+                }
+            }
+            if (android.media.audiofx.NoiseSuppressor.isAvailable()) {
+                android.media.audiofx.NoiseSuppressor ns = android.media.audiofx.NoiseSuppressor.create(session);
+                if (ns != null) {
+                    ns.setEnabled(true);
+                    out.add(ns);
+                }
+            }
+        } catch (RuntimeException ignored) {
+            // effects are a bonus; the cleanup on save still runs
+        }
+        return out;
+    }
+
+    private void releaseEffects() {
+        for (android.media.audiofx.AudioEffect effect : effects) {
+            try {
+                effect.release();
+            } catch (RuntimeException ignored) {
+                // already gone
+            }
+        }
+        effects = new java.util.ArrayList<>();
+    }
 
     /** False when the mic would not open (permission, or another app holds it). */
     boolean start(Level level) {
@@ -44,8 +81,10 @@ final class VoiceRecorder {
                 record.release();
                 return false;
             }
+            effects = attachEffects(record.getAudioSessionId());
             record.startRecording();
         } catch (RuntimeException e) {
+            releaseEffects();
             return false;
         }
         go = true;
@@ -77,6 +116,7 @@ final class VoiceRecorder {
                     // never started
                 }
                 record.release();
+                releaseEffects();
             }
         }, "announce-record");
         worker.start();
@@ -105,6 +145,10 @@ final class VoiceRecorder {
         stop();
         int n = frames;
         if (n < RATE / 2) {
+            return false;
+        }
+        n = Wav.clean(pcm, n, RATE);
+        if (n < RATE / 4) {
             return false;
         }
         Wav.normalize(pcm, n, MAX_GAIN);

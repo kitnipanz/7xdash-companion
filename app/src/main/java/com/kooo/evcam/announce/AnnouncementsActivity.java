@@ -83,12 +83,28 @@ public class AnnouncementsActivity extends AppCompatActivity {
             View row = inflater.inflate(R.layout.item_announce_row, rows, false);
             ImageView icon = row.findViewById(R.id.announce_row_icon);
             icon.setImageResource(a.isSound() ? R.drawable.ic_speaker : R.drawable.ic_megaphone);
-            ((TextView) row.findViewById(R.id.announce_row_text)).setText(store.hasRecording(a.id)
-                    ? getString(R.string.announce_in_your_voice, Labels.of(this, a)) : Labels.of(this, a));
+            String label = store.hasRecording(a.id)
+                    ? getString(R.string.announce_in_your_voice, Labels.of(this, a)) : Labels.of(this, a);
+            if (a.isTuned()) {
+                label = playsLikeTape(a) ? getString(R.string.announce_tune_badge_tape, label, a.speed)
+                        : getString(R.string.announce_tune_badge_voice, label, a.speed, a.pitch);
+                if (!playsLikeTape(a) && a.voice != Announcement.VOICE_STANDARD) {
+                    label += "  ·  " + voiceName(a.voice);
+                }
+            }
+            ((TextView) row.findViewById(R.id.announce_row_text)).setText(label);
+            row.findViewById(R.id.announce_row_tune).setOnClickListener(v -> tune(a));
             View mic = row.findViewById(R.id.announce_row_record);
             mic.setVisibility(a.isSound() ? View.GONE : View.VISIBLE);
             mic.setOnClickListener(v -> record(a));
-            row.findViewById(R.id.announce_row_play).setOnClickListener(v -> Announcer.play(this, a, "settings"));
+            View play = row.findViewById(R.id.announce_row_play);
+            // Tap checks it inside the car; long-press plays it outside, as it will be heard
+            play.setOnClickListener(v -> Announcer.preview(this, a, "settings"));
+            play.setOnLongClickListener(v -> {
+                Announcer.play(this, a, "settings, outside");
+                com.kooo.evcam.ui.Notice.makeText(this, R.string.announce_play_outside, Toast.LENGTH_SHORT).show();
+                return true;
+            });
             row.findViewById(R.id.announce_row_delete).setOnClickListener(v -> {
                 store.remove(a.id);
                 show();
@@ -97,6 +113,135 @@ public class AnnouncementsActivity extends AppCompatActivity {
         }
         Announcement sentry = store.find(store.sentryId());
         sentryValue.setText(sentry == null ? getString(R.string.announce_sentry_none) : Labels.of(this, sentry));
+    }
+
+    /** A recording or a sound has no separate pitch: speed changes both, like a tape. */
+    private boolean playsLikeTape(Announcement a) {
+        return a.isSound() || store.hasRecording(a.id);
+    }
+
+    /** Speed and pitch for one announcement, with a preview; saved only on Save. */
+    private void tune(Announcement a) {
+        boolean tape = playsLikeTape(a);
+        float density = getResources().getDisplayMetrics().density;
+        int pad = Math.round(24 * density);
+        LinearLayout box = new LinearLayout(this);
+        box.setOrientation(LinearLayout.VERTICAL);
+        box.setPadding(pad, pad / 2, pad, 0);
+        TextView speedLabel = tuneLabel();
+        com.google.android.material.slider.Slider speed = tuneSlider(a.speed);
+        TextView pitchLabel = tuneLabel();
+        com.google.android.material.slider.Slider pitch = tuneSlider(tape ? 100 : a.pitch);
+        int[] voice = {a.voice};
+        Runnable[] repaintVoice = {() -> { }};
+        if (!tape && !a.isThai()) {
+            TextView voiceRow = tuneLabel();
+            voiceRow.setBackgroundResource(R.drawable.bg_pref_row);
+            int rowPad = Math.round(14 * density);
+            voiceRow.setPadding(rowPad, rowPad, rowPad, rowPad);
+            Runnable paintVoice = () -> voiceRow.setText(OfflineVoice.isReady(this)
+                    ? getString(R.string.announce_voice_pick, voiceName(voice[0]))
+                    : getString(R.string.announce_voice_needs));
+            paintVoice.run();
+            repaintVoice[0] = paintVoice;
+            voiceRow.setOnClickListener(v -> {
+                if (OfflineVoice.isReady(this)) {
+                    pickVoice(voice[0], picked -> {
+                        voice[0] = picked;
+                        paintVoice.run();
+                        Announcer.preview(this, a.withTune(Math.round(speed.getValue()),
+                                Math.round(pitch.getValue()), picked), "tune");
+                    });
+                }
+            });
+            box.addView(voiceRow);
+        }
+        box.addView(speedLabel);
+        box.addView(speed);
+        if (tape) {
+            TextView note = tuneLabel();
+            note.setTextColor(getColor(R.color.text_secondary));
+            note.setText(R.string.announce_tune_tape);
+            box.addView(note);
+        } else {
+            box.addView(pitchLabel);
+            box.addView(pitch);
+        }
+        Runnable paint = () -> {
+            speedLabel.setText(getString(R.string.announce_tune_speed, Math.round(speed.getValue())));
+            pitchLabel.setText(getString(R.string.announce_tune_pitch, Math.round(pitch.getValue())));
+        };
+        paint.run();
+        speed.addOnChangeListener((s, value, fromUser) -> paint.run());
+        pitch.addOnChangeListener((s, value, fromUser) -> paint.run());
+        androidx.appcompat.app.AlertDialog dialog = com.kooo.evcam.ui.CamDialogs.show(
+                new MaterialAlertDialogBuilder(this, R.style.Theme_Cam_MaterialAlertDialog)
+                        .setTitle(getString(R.string.announce_tune_title) + ": " + Labels.of(this, a))
+                        .setView(box)
+                        .setPositiveButton(R.string.announce_tune_save, (d, w) -> {
+                            Announcer.stop();
+                            store.setTune(a.id, Math.round(speed.getValue()), Math.round(pitch.getValue()),
+                                    voice[0]);
+                            show();
+                        })
+                        .setNeutralButton(R.string.announce_tune_preview, null)
+                        .setNegativeButton(R.string.announce_tune_reset, null)
+                        .setOnDismissListener(d -> Announcer.stop()));
+        // Play and Reset keep the dialog open
+        dialog.getButton(android.content.DialogInterface.BUTTON_NEUTRAL).setOnClickListener(v ->
+                Announcer.preview(this, a.withTune(Math.round(speed.getValue()), Math.round(pitch.getValue()),
+                        voice[0]), "tune"));
+        dialog.getButton(android.content.DialogInterface.BUTTON_NEGATIVE).setOnClickListener(v -> {
+            speed.setValue(100);
+            pitch.setValue(100);
+            voice[0] = Announcement.VOICE_STANDARD;
+            repaintVoice[0].run();
+        });
+    }
+
+    private String voiceName(int voice) {
+        for (int[] v : OfflineVoice.VOICES) {
+            if (v[0] == voice) {
+                return getString(v[1]);
+            }
+        }
+        return getString(R.string.announce_voice_standard);
+    }
+
+    /** One of 7xDash's English voices; each pick plays a sample. */
+    private void pickVoice(int current, java.util.function.IntConsumer picked) {
+        String[] names = new String[OfflineVoice.VOICES.length + 1];
+        names[0] = getString(R.string.announce_voice_standard);
+        int checked = 0;
+        for (int i = 0; i < OfflineVoice.VOICES.length; i++) {
+            names[i + 1] = getString(OfflineVoice.VOICES[i][1]);
+            if (OfflineVoice.VOICES[i][0] == current) {
+                checked = i + 1;
+            }
+        }
+        com.kooo.evcam.ui.CamDialogs.show(new MaterialAlertDialogBuilder(this, R.style.Theme_Cam_MaterialAlertDialog)
+                .setTitle(R.string.announce_voice_title)
+                .setSingleChoiceItems(names, checked, (d, which) ->
+                        picked.accept(which == 0 ? Announcement.VOICE_STANDARD : OfflineVoice.VOICES[which - 1][0]))
+                .setPositiveButton(android.R.string.ok, null));
+    }
+
+    private TextView tuneLabel() {
+        TextView label = new TextView(this);
+        label.setTextAppearance(R.style.TextAppearance_Cam_Body);
+        label.setTextColor(getColor(R.color.text_primary));
+        label.setPadding(0, Math.round(8 * getResources().getDisplayMetrics().density), 0, 0);
+        return label;
+    }
+
+    private com.google.android.material.slider.Slider tuneSlider(int value) {
+        com.google.android.material.slider.Slider slider = new com.google.android.material.slider.Slider(this);
+        slider.setValueFrom(Announcement.MIN_TUNE);
+        slider.setValueTo(Announcement.MAX_TUNE);
+        slider.setStepSize(5);
+        slider.setValue(Math.round(value / 5f) * 5);
+        slider.setLabelFormatter(v -> Math.round(v) + "%");
+        return slider;
     }
 
     /** Records the driver saying the phrase; it then plays instead of the speech engine. */

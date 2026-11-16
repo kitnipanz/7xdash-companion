@@ -18,11 +18,22 @@ public final class CabinEq {
     /** Built-in curves. Read only: moving a slider on one of them saves the result into a "My" preset. */
     public enum Builtin {
         FLAT(new float[]{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}),
+        NATURAL(new float[]{2, 2, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 2, 2}),
+        WARM(new float[]{3, 3, 3, 2, 2, 1, 0, 0, -1, -1, -2, -2, -2, -3, -3}),
+        VOCAL(new float[]{-3, -3, -2, -1, 0, 1, 2, 3, 4, 4, 3, 2, 1, 0, -1}),
+        BASS(new float[]{8, 7, 6, 5, 3, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0}),
+        LIVE(new float[]{2, 2, 1, 0, -1, 0, 1, 2, 2, 2, 2, 1, 1, 2, 2}),
+        VSHAPE(new float[]{6, 5, 4, 2, 1, -1, -2, -3, -3, -2, 0, 2, 4, 5, 5}),
         ROCK(new float[]{5, 5, 4, 3, 1, -1, -2, -2, -1, 1, 3, 4, 4, 4, 3}),
-        JAZZ(new float[]{3, 3, 2, 2, 1, 0, -1, -1, 0, 1, 1, 2, 2, 3, 3}),
-        HIPHOP(new float[]{6, 6, 5, 4, 2, 0, -1, -1, 0, 1, 1, 1, 2, 2, 2}),
         POP(new float[]{-1, 0, 1, 2, 3, 3, 2, 1, 0, 0, 1, 2, 2, 2, 1}),
-        KPOP(new float[]{3, 4, 4, 3, 1, 0, -1, 0, 1, 2, 3, 4, 4, 4, 3});
+        KPOP(new float[]{3, 4, 4, 3, 1, 0, -1, 0, 1, 2, 3, 4, 4, 4, 3}),
+        HIPHOP(new float[]{6, 6, 5, 4, 2, 0, -1, -1, 0, 1, 1, 1, 2, 2, 2}),
+        JAZZ(new float[]{3, 3, 2, 2, 1, 0, -1, -1, 0, 1, 1, 2, 2, 3, 3}),
+        CLASSICAL(new float[]{3, 3, 2, 1, 0, 0, 0, 0, 0, 0, -1, -1, 0, 2, 3}),
+        DANCE(new float[]{7, 6, 5, 3, 1, 0, -1, -1, 0, 1, 2, 3, 3, 3, 2}),
+        ACOUSTIC(new float[]{2, 2, 2, 1, 1, 0, 1, 1, 2, 2, 2, 2, 2, 1, 1}),
+        ELECTRONIC(new float[]{6, 5, 4, 2, 0, -1, -1, 0, 1, 2, 2, 3, 4, 4, 4}),
+        PODCAST(new float[]{-6, -5, -4, -2, 0, 1, 2, 3, 3, 3, 2, 1, 0, -1, -2});
 
         private final float[] gains;
 

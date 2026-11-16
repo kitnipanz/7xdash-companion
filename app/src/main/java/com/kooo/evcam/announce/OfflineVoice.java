@@ -44,6 +44,23 @@ public final class OfflineVoice {
 
     private static OfflineTts engine;
 
+    /** The speaker 7xDash has always used. */
+    static final int STANDARD_SPEAKER = 0;
+
+    /**
+     * Speakers offered by name, picked out of the voice's 904 by measured pitch and pace (the voice
+     * itself labels none of them). Order: the list shown after "Standard".
+     */
+    static final int[][] VOICES = {
+            // {speaker id, label}: median pitch, time for a test sentence (standard: 181 Hz, 2.96 s)
+            {870, com.kooo.evcam.R.string.announce_voice_man_older},      //  95 Hz, 3.53 s
+            {203, com.kooo.evcam.R.string.announce_voice_man},            // 111 Hz, 3.17 s
+            {53, com.kooo.evcam.R.string.announce_voice_man_younger},     // 127 Hz, 2.93 s
+            {535, com.kooo.evcam.R.string.announce_voice_woman_older},    // 178 Hz, 3.60 s
+            {103, com.kooo.evcam.R.string.announce_voice_woman},          // 193 Hz, 3.36 s
+            {850, com.kooo.evcam.R.string.announce_voice_woman_younger},  // 219 Hz, 3.05 s
+    };
+
     private OfflineVoice() {
     }
 
@@ -113,12 +130,20 @@ public final class OfflineVoice {
     }
 
     /** Worker thread. The phrase in the English voice, or null when the voice is missing or fails. */
-    public static synchronized Wav speak(Context context, String text) {
+    /**
+     * The voice has a speed but no pitch, so a pitch other than normal is made like a tape: spoken
+     * at speed/pitch, then played pitch times faster, which lands back on the speed asked for.
+     */
+    public static synchronized Wav speak(Context context, String text, float speed, float pitch, int voice) {
+        int sid = voice < 0 ? STANDARD_SPEAKER : voice;
         if (!isReady(context)) {
             return null;
         }
         File cached = new File(new File(context.getCacheDir(), "announce"),
-                "en-" + Integer.toHexString(text.hashCode()) + ".wav");
+                "en-" + Integer.toHexString(text.hashCode())
+                        + (speed == 1f && pitch == 1f ? ""
+                                : "-" + Math.round(speed * 100) + "-" + Math.round(pitch * 100))
+                        + (sid == STANDARD_SPEAKER ? "" : "-v" + sid) + ".wav");
         if (cached.length() > 44) {
             try {
                 Wav wav = Wav.parse(java.nio.file.Files.readAllBytes(cached.toPath()));
@@ -143,12 +168,12 @@ public final class OfflineVoice {
                 config.setModel(model);
                 engine = new OfflineTts(null, config);
             }
-            GeneratedAudio audio = engine.generate(text, 0, 1.0f);
+            GeneratedAudio audio = engine.generate(text, sid, speed / pitch);
             float[] samples = audio.getSamples();
             if (samples == null || samples.length == 0) {
                 return null;
             }
-            short[] pcm = toPcm(samples);
+            short[] pcm = Wav.resample(toPcm(samples), pitch);
             try {
                 cached.getParentFile().mkdirs();
                 java.nio.file.Files.write(cached.toPath(), Wav.write(audio.getSampleRate(), pcm, pcm.length));

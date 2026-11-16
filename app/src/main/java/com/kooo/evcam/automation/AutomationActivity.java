@@ -84,6 +84,20 @@ public class AutomationActivity extends AppCompatActivity {
         for (AutomationRule rule : rules) {
             list.addView(ruleRow(rule));
         }
+        // Examples not added yet stay offered under the driver's own
+        boolean headed = false;
+        for (AutomationRule example : AutomationExamples.all(SavedPlaces.load(this))) {
+            if (AutomationExamples.alreadyHave(rules, example)) {
+                continue;
+            }
+            if (!headed) {
+                TextView heading = text(this, getString(R.string.automation_more_examples), false);
+                heading.setPadding(dp(8), dp(20), 0, dp(8));
+                list.addView(heading);
+                headed = true;
+            }
+            list.addView(exampleRow(example));
+        }
     }
 
     private View ruleRow(AutomationRule rule) {

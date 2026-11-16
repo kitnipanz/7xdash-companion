@@ -3,6 +3,7 @@ package com.kooo.evcam.automation;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
@@ -25,21 +26,62 @@ public class AutomationExamplesTest {
     }
 
     @Test
-    public void leaveHomeExample_onlyWithASavedPlace() {
-        assertEquals(2, AutomationExamples.all().size());
+    public void homeExamples_onlyWithASavedPlace() {
+        List<AutomationRule> noHome = AutomationExamples.all();
+        assertEquals(4, noHome.size());
+        // with no home saved, P remembers where the car is every time (no condition)
+        AutomationRule anyP = noHome.get(1);
+        assertEquals(AutomationTrigger.GEAR_P, anyP.trigger());
+        assertTrue(anyP.conditions.isEmpty());
+        assertEquals(com.kooo.evcam.input.ShortcutAction.WHERE_PARKED.key, anyP.steps.get(0).choice);
+        assertEquals(AutomationTrigger.RAIN_START, noHome.get(2).trigger());
+        assertEquals(AutomationCondition.DARK,
+                noHome.get(2).condition(AutomationCondition.Group.DAYLIGHT).kind());
+        assertEquals(AutomationAction.REAR_FOG.key, noHome.get(2).steps.get(0).action);
+
         java.util.List<com.kooo.evcam.nav.SavedPlaces.Place> places = new java.util.ArrayList<>();
+        com.kooo.evcam.nav.SavedPlaces.add(places, "Office", 13.8, 100.6);
         com.kooo.evcam.nav.SavedPlaces.Place home = com.kooo.evcam.nav.SavedPlaces.add(places, "Home", 13.7, 100.5);
         List<AutomationRule> examples = AutomationExamples.all(places);
-        assertEquals(3, examples.size());
-        assertEquals(AutomationTrigger.PLACE_LEAVE, examples.get(0).trigger());
-        assertEquals(home.id, examples.get(0).value);
-        assertEquals(AutomationAction.TAILGATE_HEIGHT.key, examples.get(0).steps.get(0).action);
-        AutomationRule fog = examples.get(1);
-        assertEquals(AutomationTrigger.RAIN_START, fog.trigger());
-        assertEquals(AutomationCondition.DARK, fog.condition(AutomationCondition.Group.DAYLIGHT).kind());
-        assertEquals(AutomationAction.REAR_FOG.key, fog.steps.get(0).action);
-        assertEquals(AutomationTrigger.DARK, examples.get(2).trigger());
-        assertEquals(AutomationAction.MOOD_LIGHT.key, examples.get(2).steps.get(0).action);
+        assertEquals(6, examples.size());
+
+        AutomationRule evening = examples.get(0);
+        assertEquals(AutomationTrigger.GEAR_D, evening.trigger());
+        AutomationRule.Condition after = evening.condition(AutomationCondition.Group.TIME);
+        assertEquals(AutomationCondition.AFTER_TIME, after.kind());
+        assertEquals(18 * 60, after.value);
+        assertEquals(AutomationAction.SUNROOF_SHADE.key, evening.steps.get(0).action);
+        assertEquals("100", evening.steps.get(0).choice);
+        assertEquals(AutomationAction.DIM.key, evening.steps.get(1).action);
+        assertEquals("30", evening.steps.get(1).choice);
+
+        // "Home" is found by name, not just the first place
+        assertEquals(AutomationTrigger.PLACE_ARRIVE, examples.get(1).trigger());
+        assertEquals(home.id, examples.get(1).value);
+        assertEquals("100", examples.get(1).steps.get(0).choice);
+        assertEquals(AutomationTrigger.PLACE_LEAVE, examples.get(2).trigger());
+        assertEquals(home.id, examples.get(2).value);
+        assertEquals("60", examples.get(2).steps.get(0).choice);
+
+        AutomationRule parked = examples.get(3);
+        assertEquals(AutomationTrigger.GEAR_P, parked.trigger());
+        assertEquals(AutomationCondition.AWAY_FROM_PLACE, parked.condition(AutomationCondition.Group.PLACE).kind());
+        assertEquals(home.id, parked.condition(AutomationCondition.Group.PLACE).value);
+        assertEquals(com.kooo.evcam.input.ShortcutAction.WHERE_PARKED.key, parked.steps.get(0).choice);
+
+        assertEquals(AutomationTrigger.RAIN_START, examples.get(4).trigger());
+        assertEquals(AutomationTrigger.DARK, examples.get(5).trigger());
+    }
+
+    @Test
+    public void anExampleAlreadyAddedIsNotOfferedAgain() {
+        List<AutomationRule> examples = AutomationExamples.all();
+        List<AutomationRule> mine = new java.util.ArrayList<>();
+        mine.add(AutomationRule.parseAll(AutomationRule.toJson(java.util.Collections.singletonList(examples.get(0)))).get(0));
+        assertTrue(AutomationExamples.alreadyHave(mine, examples.get(0)));
+        assertFalse(AutomationExamples.alreadyHave(mine, examples.get(1)));
+        mine.get(0).steps.get(1).choice = "50";
+        assertFalse(AutomationExamples.alreadyHave(mine, examples.get(0)));
     }
 
     @Test

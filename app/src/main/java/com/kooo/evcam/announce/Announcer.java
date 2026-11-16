@@ -63,6 +63,18 @@ public final class Announcer {
 
     /** {@code why} goes to the black box: "picker", "settings", "sentry", "web"… */
     public static void play(Context context, Announcement announcement, String why) {
+        play(context, announcement, why, false);
+    }
+
+    /**
+     * Plays it inside the car, on the head unit's normal media output at the media volume, so the
+     * driver can check a phrase or a recording without the street hearing it.
+     */
+    public static void preview(Context context, Announcement announcement, String why) {
+        play(context, announcement, why, true);
+    }
+
+    private static void play(Context context, Announcement announcement, String why, boolean cabin) {
         if (context == null || announcement == null) {
             return;
         }
@@ -70,25 +82,37 @@ public final class Announcer {
         int mine = ++generation;
         WORKER.execute(() -> {
             Process.setThreadPriority(Process.THREAD_PRIORITY_URGENT_AUDIO);
-            int failure = run(app, announcement, why, mine);
+            int failure = run(app, announcement, why, mine, cabin);
             if (failure != 0) {
                 MAIN.post(() -> com.kooo.evcam.ui.Notice.makeText(app, failure, Toast.LENGTH_SHORT).show());
             }
         });
     }
 
-    private static int run(Context context, Announcement a, String why, int mine) {
+    private static int run(Context context, Announcement a, String why, int mine, boolean cabin) {
         int rate;
         short[] pcm;
+        float speed = a.speed / 100f;
+        float pitch = a.pitch / 100f;
         if (a.isSound()) {
-            pcm = Tones.render(a.sound);
+            // a sound plays like a tape: faster is higher
+            pcm = Wav.resample(Tones.render(a.sound), speed);
             rate = Tones.RATE;
         } else {
             AnnouncementStore store = new AnnouncementStore(context);
-            Wav wav = store.hasRecording(a.id) ? read(store.recording(a.id))
-                    : !a.isThai() && OfflineVoice.isReady(context) ? OfflineVoice.speak(context, a.text) : null;
-            if (wav == null) {
-                wav = speak(context, a);
+            Wav wav;
+            if (store.hasRecording(a.id)) {
+                wav = read(store.recording(a.id));
+                if (wav != null) {
+                    // the driver's own voice plays like a tape: faster is higher
+                    wav = Wav.of(wav.rate, Wav.resample(wav.mono, speed));
+                }
+            } else {
+                wav = !a.isThai() && OfflineVoice.isReady(context)
+                        ? OfflineVoice.speak(context, a.text, speed, pitch, a.voice) : null;
+                if (wav == null) {
+                    wav = speak(context, a, speed, pitch);
+                }
             }
             if (wav == null) {
                 return a.isThai() ? R.string.announce_record_needed : R.string.announce_no_voice;
@@ -99,9 +123,18 @@ public final class Announcer {
         if (pcm == null || mine != generation) {
             return 0;
         }
+        if (cabin) {
+            BlackBox.note("Announcement (" + why + ", in the car): "
+                    + (a.isSound() ? "sound " + a.sound : "\"" + a.text + "\""));
+            return playCabin(pcm, rate, mine);
+        }
         AppConfig config = new AppConfig(context);
         List<AudioDeviceInfo> devices = SpeakerSet.find(context.getSystemService(AudioManager.class),
                 config.getSpeakSpeakers());
+        if (devices.isEmpty() && com.kooo.evcam.BuildConfig.DEBUG && isEmulator()) {
+            // Test only: an emulator has no car speakers to pick, so play on its own speaker
+            devices = emulatorSpeaker(context.getSystemService(AudioManager.class));
+        }
         if (devices.isEmpty()) {
             return R.string.megaphone_no_speaker;
         }
@@ -136,14 +169,90 @@ public final class Announcer {
         return 0;
     }
 
+    /** Worker thread. One track on the default media output (the cabin speakers). */
+    private static int playCabin(short[] pcm, int rate, int mine) {
+        int min = android.media.AudioTrack.getMinBufferSize(rate, android.media.AudioFormat.CHANNEL_OUT_MONO,
+                android.media.AudioFormat.ENCODING_PCM_16BIT);
+        android.media.AudioTrack track;
+        try {
+            track = new android.media.AudioTrack.Builder()
+                    .setAudioAttributes(new android.media.AudioAttributes.Builder()
+                            .setUsage(android.media.AudioAttributes.USAGE_MEDIA)
+                            .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SPEECH)
+                            .build())
+                    .setAudioFormat(new android.media.AudioFormat.Builder()
+                            .setSampleRate(rate)
+                            .setEncoding(android.media.AudioFormat.ENCODING_PCM_16BIT)
+                            .setChannelMask(android.media.AudioFormat.CHANNEL_OUT_MONO)
+                            .build())
+                    .setTransferMode(android.media.AudioTrack.MODE_STREAM)
+                    .setBufferSizeInBytes(Math.max(min, CHUNK * 2 * 4))
+                    .build();
+        } catch (RuntimeException e) {
+            return R.string.megaphone_route;
+        }
+        if (track.getState() != android.media.AudioTrack.STATE_INITIALIZED) {
+            track.release();
+            return R.string.megaphone_route;
+        }
+        playing = true;
+        try {
+            track.play();
+            for (int at = 0; at < pcm.length && mine == generation; at += CHUNK) {
+                int n = Math.min(CHUNK, pcm.length - at);
+                if (track.write(pcm, at, n) < 0) {
+                    break;
+                }
+            }
+            if (mine == generation) {
+                Thread.sleep(300);
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        } catch (IllegalStateException ignored) {
+            // track died
+        } finally {
+            try {
+                track.stop();
+            } catch (IllegalStateException ignored) {
+                // never started
+            }
+            track.release();
+            playing = false;
+        }
+        return 0;
+    }
+
+    private static boolean isEmulator() {
+        String hw = android.os.Build.HARDWARE;
+        return "ranchu".equals(hw) || "goldfish".equals(hw)
+                || android.os.Build.FINGERPRINT.startsWith("generic") || android.os.Build.PRODUCT.startsWith("sdk");
+    }
+
+    private static List<AudioDeviceInfo> emulatorSpeaker(AudioManager manager) {
+        List<AudioDeviceInfo> out = new java.util.ArrayList<>();
+        if (manager == null) {
+            return out;
+        }
+        for (AudioDeviceInfo device : manager.getDevices(AudioManager.GET_DEVICES_OUTPUTS)) {
+            if (device.getType() == AudioDeviceInfo.TYPE_BUILTIN_SPEAKER) {
+                out.add(device);
+                break;
+            }
+        }
+        return out;
+    }
+
     /** Worker thread. The phrase as a WAV from the first speech engine with a voice for it, or null. */
-    private static Wav speak(Context context, Announcement a) {
+    private static Wav speak(Context context, Announcement a, float speed, float pitch) {
         File cache = new File(context.getCacheDir(), "announce");
         if (!cache.isDirectory() && !cache.mkdirs()) {
             return null;
         }
-        // Same name as 1.3.0-1.3.2 gave English phrases, so their cached speech is kept
-        File file = new File(cache, Integer.toHexString((a.text + "false").hashCode()) + ".wav");
+        // Same name as 1.3.0-1.3.2 gave English phrases at normal speed, so their cached speech is kept
+        String key = speed == 1f && pitch == 1f ? a.text + "false"
+                : a.text + "false@" + Math.round(speed * 100) + "/" + Math.round(pitch * 100);
+        File file = new File(cache, Integer.toHexString(key.hashCode()) + ".wav");
         if (file.isFile() && file.length() > 44) {
             return read(file);
         }
@@ -165,7 +274,7 @@ public final class Announcer {
             if (locale == null) {
                 continue;
             }
-            Wav wav = synthesize(engineTts, locale, a.text, cache, file);
+            Wav wav = synthesize(engineTts, locale, speed, pitch, a.text, cache, file);
             if (wav != null) {
                 return wav;
             }
@@ -189,8 +298,11 @@ public final class Announcer {
         return null;
     }
 
-    private static Wav synthesize(TextToSpeech engineTts, Locale locale, String text, File cache, File file) {
+    private static Wav synthesize(TextToSpeech engineTts, Locale locale, float speed, float pitch, String text,
+            File cache, File file) {
         engineTts.setLanguage(locale);
+        engineTts.setSpeechRate(speed);
+        engineTts.setPitch(pitch);
         CountDownLatch done = new CountDownLatch(1);
         String utterance = "announce-" + System.nanoTime();
         engineTts.setOnUtteranceProgressListener(new UtteranceProgressListener() {

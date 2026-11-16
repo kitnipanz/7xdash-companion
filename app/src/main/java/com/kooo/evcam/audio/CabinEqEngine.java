@@ -28,18 +28,29 @@ public final class CabinEqEngine {
     /** Apply whatever was saved. Called when the process starts, so the curve survives a screen close. */
     public static void applySaved(Context context) {
         CabinEqStore store = new CabinEqStore(context);
-        apply(store.enabled(), store.currentGains());
+        apply(store.enabled(), store.currentGains(), store.tone());
+    }
+
+    /** The curve with no tone controls (kept for callers that only know the sliders). */
+    public static boolean apply(boolean enabled, float[] gains) {
+        return apply(enabled, gains, tone);
     }
 
     /**
      * @return true when the output mix accepted the curve, or when the equalizer was turned off
      */
-    public static synchronized boolean apply(boolean enabled, float[] gains) {
+    public static synchronized boolean apply(boolean enabled, float[] gains, EqTone newTone) {
         if (!enabled) {
             release();
             return true;
         }
         float[] curve = CabinEq.copy(gains);
+        EqTone previous = tone;
+        tone = newTone == null ? EqTone.NEUTRAL : newTone;
+        if (effect != null && profile != null && profile.limiter && previous.compressor != tone.compressor) {
+            // the limiter's settings are fixed when the effect is made: make it again
+            release();
+        }
         try {
             if (effect == null) {
                 effect = open(curve);
@@ -52,7 +63,7 @@ public final class CabinEqEngine {
                     effect = open(curve);
                 }
             }
-            effect.setEnabled(true);
+            effect.setEnabled(!bypassed);
             return true;
         } catch (RuntimeException e) {
             AppLog.w(TAG, "equalizer refused: " + e);
@@ -60,6 +71,33 @@ public final class CabinEqEngine {
             return false;
         }
     }
+
+    /** Tone controls in use; kept across {@link #release()} so a reopen uses them. */
+    private static EqTone tone = EqTone.NEUTRAL;
+    private static boolean bypassed;
+
+    /**
+     * A/B compare: while bypassed the music plays untouched; the curve stays loaded so letting go
+     * brings it straight back.
+     */
+    public static synchronized void setBypassed(boolean bypass) {
+        bypassed = bypass;
+        if (effect != null) {
+            try {
+                effect.setEnabled(!bypass);
+            } catch (RuntimeException e) {
+                AppLog.w(TAG, "bypass refused: " + e);
+            }
+        }
+    }
+
+    /** True when the compressor can run (the engine took a limiter). */
+    public static synchronized boolean hasDynamics() {
+        return profile == null || profile.limiter;
+    }
+
+    /** Session the output-mix effect runs on, for the spectrum (0: the whole mix). */
+    public static final int MIX_SESSION = 0;
 
     public static synchronized void release() {
         if (effect != null) {
@@ -101,8 +139,17 @@ public final class CabinEqEngine {
             return blended ? CabinEq.engineCutoffs() : CabinEq.cutoffs();
         }
 
-        float[] curve(float[] gains) {
-            return blended ? CabinEq.engineGains(gains) : CabinEq.copy(gains);
+        float[] curve(float[] gains, EqTone tone) {
+            return blended ? tone.shape(CabinEq.engineGains(gains), CabinEq.engineCentres())
+                    : tone.shape(CabinEq.copy(gains), centres());
+        }
+
+        private static float[] centres() {
+            float[] hz = new float[CabinEq.BANDS];
+            for (int i = 0; i < CabinEq.BANDS; i++) {
+                hz[i] = CabinEq.CENTRES_HZ[i];
+            }
+            return hz;
         }
     }
 
@@ -130,7 +177,9 @@ public final class CabinEqEngine {
                     created = new DynamicsProcessing(0, 0, config(p, channels, gains));
                     if (p.headroom) {
                         // some builds take the config but refuse a live input-gain change
-                        created.setInputGainAllChannelsTo(-CabinEq.headroomDb(gains));
+                        for (int ch = 0; ch < channels; ch++) {
+                            created.setInputGainbyChannel(ch, inputGain(p, gains, ch, channels));
+                        }
                     }
                     profile = p;
                     firstTry = i;
@@ -166,7 +215,7 @@ public final class CabinEqEngine {
                 false, 0,
                 p.limiter).build();
         float[] edges = p.edges();
-        float[] curve = p.curve(gains);
+        float[] curve = p.curve(gains, tone);
         for (int channel = 0; channel < channels; channel++) {
             DynamicsProcessing.Eq eq = config.getPreEqByChannelIndex(channel);
             eq.setEnabled(true);
@@ -175,26 +224,50 @@ public final class CabinEqEngine {
             }
             config.setPreEqByChannelIndex(channel, eq);
             if (p.headroom) {
-                config.setInputGainByChannelIndex(channel, -CabinEq.headroomDb(gains));
+                config.setInputGainByChannelIndex(channel, inputGain(p, gains, channel, channels));
             }
             if (p.limiter) {
-                config.setLimiterByChannelIndex(channel, limiter());
+                config.setLimiterByChannelIndex(channel, limiter(tone));
             }
         }
         return config;
     }
 
-    /** Soft safety limiter at -1 dBFS: fast attack, quick release, no make-up gain. */
-    private static DynamicsProcessing.Limiter limiter() {
-        return new DynamicsProcessing.Limiter(true, true, 0, 1f, 60f, 10f, -1f, 0f);
+    /**
+     * Input gain for a channel: down by the biggest boost in the shaped curve (headroom), plus
+     * pre-amp, plus balance. With one channel balance does nothing.
+     */
+    private static float inputGain(Profile p, float[] gains, int channel, int channels) {
+        float max = 0f;
+        for (float g : p.curve(gains, tone)) {
+            max = Math.max(max, g);
+        }
+        float balance = channels > 1 ? tone.balanceDb(channel) : 0f;
+        return -max + tone.preamp + balance;
+    }
+
+    /**
+     * Compressor 0: soft safety limiter at -1 dBFS (fast attack, quick release, no make-up).
+     * Higher: the same stage as a compressor, threshold down to -30 dBFS, gentler ratio, slower
+     * release, and make-up gain so quiet parts come up ("night mode").
+     */
+    private static DynamicsProcessing.Limiter limiter(EqTone t) {
+        if (t.compressor == 0) {
+            return new DynamicsProcessing.Limiter(true, true, 0, 1f, 60f, 10f, -1f, 0f);
+        }
+        return new DynamicsProcessing.Limiter(true, true, 0, 5f, 150f, t.compressorRatio(),
+                t.compressorThresholdDb(), t.compressorMakeupDb());
     }
 
     private static void push(DynamicsProcessing effect, float[] gains) {
         Profile p = profile;
         float[] edges = p.edges();
-        float[] curve = p.curve(gains);
+        float[] curve = p.curve(gains, tone);
         if (p.headroom) {
-            effect.setInputGainAllChannelsTo(-CabinEq.headroomDb(gains));
+            int channels = effect.getChannelCount();
+            for (int ch = 0; ch < channels; ch++) {
+                effect.setInputGainbyChannel(ch, inputGain(p, gains, ch, channels));
+            }
         }
         for (int band = 0; band < p.bands(); band++) {
             effect.setPreEqBandAllChannelsTo(band,

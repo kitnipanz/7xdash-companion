@@ -94,6 +94,121 @@ public final class Wav {
         return gain;
     }
 
+    /**
+     * Plays the sound {@code factor} times faster, like a tape: shorter and higher (or longer and
+     * lower below 1). Linear interpolation; 1 returns the input as it is.
+     */
+    static short[] resample(short[] in, float factor) {
+        if (in == null || factor <= 0 || Math.abs(factor - 1f) < 0.001f) {
+            return in;
+        }
+        int n = Math.max(1, (int) (in.length / factor));
+        short[] out = new short[n];
+        for (int i = 0; i < n; i++) {
+            float at = i * factor;
+            int j = (int) at;
+            if (j >= in.length - 1) {
+                out[i] = in[in.length - 1];
+                continue;
+            }
+            float f = at - j;
+            out[i] = (short) Math.round(in[j] + (in[j + 1] - in[j]) * f);
+        }
+        return out;
+    }
+
+    /**
+     * Cleans a cabin recording before it is raised: cuts the rumble under 100 Hz, then pulls down the
+     * room's echo and hiss between and after words (a soft gate that opens on the voice and closes
+     * over the reverb tail), then trims the quiet at both ends. Returns the frames kept, moved to the start.
+     */
+    static int clean(short[] pcm, int frames, int rate) {
+        if (frames <= 0) {
+            return frames;
+        }
+        // one-pole high-pass at ~100 Hz
+        float a = (float) Math.exp(-2 * Math.PI * 100 / rate);
+        float prevIn = 0;
+        float prevOut = 0;
+        float[] x = new float[frames];
+        for (int i = 0; i < frames; i++) {
+            float in = pcm[i];
+            float out = a * (prevOut + in - prevIn);
+            prevIn = in;
+            prevOut = out;
+            x[i] = out;
+        }
+        // loudness of 20 ms blocks: the quiet ones are the room, the loud ones the voice
+        int block = Math.max(1, rate / 50);
+        int blocks = (frames + block - 1) / block;
+        float[] rms = new float[blocks];
+        float loudest = 0;
+        for (int b = 0; b < blocks; b++) {
+            int from = b * block;
+            int to = Math.min(frames, from + block);
+            double sum = 0;
+            for (int i = from; i < to; i++) {
+                sum += x[i] * x[i];
+            }
+            rms[b] = (float) Math.sqrt(sum / Math.max(1, to - from));
+            loudest = Math.max(loudest, rms[b]);
+        }
+        if (loudest <= 0) {
+            return frames;
+        }
+        float[] sorted = rms.clone();
+        java.util.Arrays.sort(sorted);
+        float floor = sorted[blocks / 5];
+        // opens on speech; the echo that follows a word sits well under it
+        float threshold = Math.max(floor * 3f, loudest * 0.08f);
+        float attack = 1f - (float) Math.exp(-1.0 / (rate * 0.002));
+        float release = 1f - (float) Math.exp(-1.0 / (rate * 0.060));
+        // loudness the same way the threshold was measured (RMS over ~10 ms), not peaks:
+        // noise peaks sit ~10 dB over its RMS and would hold the gate open
+        float meanAttack = 1f - (float) Math.exp(-1.0 / (rate * 0.005));
+        float meanRelease = 1f - (float) Math.exp(-1.0 / (rate * 0.030));
+        float meanSquare = 0;
+        float gain = 0;
+        for (int i = 0; i < frames; i++) {
+            float sq = x[i] * x[i];
+            meanSquare += (sq > meanSquare ? meanAttack : meanRelease) * (sq - meanSquare);
+            float env = (float) Math.sqrt(meanSquare);
+            float want;
+            if (env >= threshold) {
+                want = 1f;
+            } else {
+                float r = env / threshold;
+                want = r * r * r; // 1:4 downward expansion: the tail fades instead of clicking off
+            }
+            gain += (want > gain ? attack : release) * (want - gain);
+            x[i] *= gain;
+        }
+        // trim quiet ends, keeping 150 ms around the voice
+        int first = -1;
+        int last = -1;
+        for (int b = 0; b < blocks; b++) {
+            if (rms[b] >= threshold) {
+                if (first < 0) {
+                    first = b;
+                }
+                last = b;
+            }
+        }
+        int start = 0;
+        int end = frames;
+        if (first >= 0) {
+            int pad = rate * 150 / 1000;
+            start = Math.max(0, first * block - pad);
+            end = Math.min(frames, (last + 1) * block + pad);
+        }
+        int n = end - start;
+        for (int i = 0; i < n; i++) {
+            float v = x[start + i];
+            pcm[i] = (short) Math.max(-32768, Math.min(32767, Math.round(v)));
+        }
+        return n;
+    }
+
     private static boolean tag(byte[] b, int at, String s) {
         for (int i = 0; i < 4; i++) {
             if (b[at + i] != s.charAt(i)) {

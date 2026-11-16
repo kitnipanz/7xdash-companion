@@ -17,6 +17,12 @@ public final class AnnouncementStore {
     private static final String PREFS = "announcements";
     private static final String KEY_LIST = "list";
     private static final String KEY_SENTRY = "sentry";
+    /**
+     * Speed and pitch per announcement, apart from the list so a build that reads only the list
+     * keeps working: "id\tspeed\tpitch\tvoice" per line (voice added in 1.9.2; a line without
+     * it is the standard voice), only for ones changed from normal.
+     */
+    private static final String KEY_TUNE = "tune";
     /** Sounds already offered to this list, so ones added in a later version show up once, after the others. */
     private static final String KEY_SOUNDS_OFFERED = "sounds_offered";
     /** Thai phrases shipped in 1.3.0 to 1.3.2; dropped since no voice could read them. */
@@ -37,7 +43,7 @@ public final class AnnouncementStore {
     public List<Announcement> all() {
         String saved = prefs.getString(KEY_LIST, null);
         if (saved == null) {
-            return defaults();
+            return tuned(defaults());
         }
         List<Announcement> list = decode(saved);
         String offered = prefs.getString(KEY_SOUNDS_OFFERED, Tones.CHIME + "," + Tones.BEEP + "," + Tones.SIREN);
@@ -50,7 +56,63 @@ public final class AnnouncementStore {
         if (changed) {
             save(list);
         }
+        return tuned(list);
+    }
+
+    private List<Announcement> tuned(List<Announcement> list) {
+        java.util.Map<String, int[]> tune = decodeTune(prefs.getString(KEY_TUNE, ""));
+        if (tune.isEmpty()) {
+            return list;
+        }
+        for (int i = 0; i < list.size(); i++) {
+            int[] t = tune.get(list.get(i).id);
+            if (t != null) {
+                list.set(i, list.get(i).withTune(t[0], t[1], t[2]));
+            }
+        }
         return list;
+    }
+
+    /** Saves one announcement's speed, pitch and voice (100/100/standard clears it). */
+    public void setTune(String id, int speed, int pitch, int voice) {
+        java.util.Map<String, int[]> tune = decodeTune(prefs.getString(KEY_TUNE, ""));
+        speed = Announcement.clampTune(speed);
+        pitch = Announcement.clampTune(pitch);
+        voice = voice < 0 ? Announcement.VOICE_STANDARD : voice;
+        if (speed == 100 && pitch == 100 && voice == Announcement.VOICE_STANDARD) {
+            tune.remove(id);
+        } else {
+            tune.put(id, new int[] {speed, pitch, voice});
+        }
+        prefs.edit().putString(KEY_TUNE, encodeTune(tune)).apply();
+    }
+
+    static String encodeTune(java.util.Map<String, int[]> tune) {
+        StringBuilder sb = new StringBuilder();
+        for (java.util.Map.Entry<String, int[]> e : tune.entrySet()) {
+            sb.append(escape(e.getKey())).append('\t').append(e.getValue()[0]).append('\t')
+                    .append(e.getValue()[1]).append('\t').append(e.getValue()[2]).append('\n');
+        }
+        return sb.toString();
+    }
+
+    static java.util.Map<String, int[]> decodeTune(String saved) {
+        java.util.Map<String, int[]> out = new java.util.LinkedHashMap<>();
+        for (String line : saved.split("\n")) {
+            String[] parts = line.split("\t", -1);
+            if ((parts.length != 3 && parts.length != 4) || parts[0].isEmpty()) {
+                continue;
+            }
+            try {
+                int voice = parts.length == 4 ? Integer.parseInt(parts[3]) : Announcement.VOICE_STANDARD;
+                out.put(unescape(parts[0]), new int[] {Announcement.clampTune(Integer.parseInt(parts[1])),
+                        Announcement.clampTune(Integer.parseInt(parts[2])),
+                        voice < 0 ? Announcement.VOICE_STANDARD : voice});
+            } catch (NumberFormatException ignored) {
+                // skip a damaged line
+            }
+        }
+        return out;
     }
 
     /**
@@ -105,6 +167,7 @@ public final class AnnouncementStore {
         list.removeIf(a -> a.id.equals(id));
         save(list);
         recording(id).delete();
+        setTune(id, 100, 100, Announcement.VOICE_STANDARD);
         if (id.equals(sentryId())) {
             setSentryId("");
         }

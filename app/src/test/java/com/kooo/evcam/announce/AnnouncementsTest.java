@@ -176,4 +176,51 @@ public class AnnouncementsTest {
         }
         return b.array();
     }
+
+    @Test
+    public void tuneRoundTripsAndClamps() {
+        java.util.Map<String, int[]> tune = new java.util.LinkedHashMap<>();
+        tune.put("a\tb", new int[] {70, 120, 5});
+        java.util.Map<String, int[]> back = AnnouncementStore.decodeTune(AnnouncementStore.encodeTune(tune));
+        assertEquals(1, back.size());
+        assertEquals(70, back.get("a\tb")[0]);
+        assertEquals(120, back.get("a\tb")[1]);
+        assertEquals(150, AnnouncementStore.decodeTune("x\t999\t10\n").get("x")[0]);
+        assertEquals(50, AnnouncementStore.decodeTune("x\t999\t10\n").get("x")[1]);
+        assertTrue(AnnouncementStore.decodeTune("bad\tline\nx\tnot\tnum\n").isEmpty());
+        assertFalse(Announcement.phrase("p", "Hi").isTuned());
+        assertTrue(Announcement.phrase("p", "Hi").withTune(100, 90, Announcement.VOICE_STANDARD).isTuned());
+        assertTrue(Announcement.phrase("p", "Hi").withTune(100, 100, 12).isTuned());
+        // lines saved before voices existed read as the standard voice
+        assertEquals(Announcement.VOICE_STANDARD, AnnouncementStore.decodeTune("x\t80\t90\n").get("x")[2]);
+        assertEquals(12, AnnouncementStore.decodeTune("x\t80\t90\t12\n").get("x")[2]);
+    }
+
+    @Test
+    public void resampleLikeATape() {
+        short[] in = new short[1000];
+        for (int i = 0; i < in.length; i++) {
+            in[i] = (short) i;
+        }
+        assertEquals(500, Wav.resample(in, 2f).length);
+        assertEquals(2000, Wav.resample(in, 0.5f).length);
+        assertEquals(10, Wav.resample(in, 0.5f)[20]);
+        assertTrue(in == Wav.resample(in, 1f));
+    }
+
+    @Test
+    public void cleanTrimsSilenceAndKeepsVoice() {
+        int rate = 48000;
+        short[] pcm = new short[rate * 4];
+        java.util.Random noise = new java.util.Random(1);
+        for (int i = 0; i < pcm.length; i++) {
+            pcm[i] = (short) (noise.nextGaussian() * 30);
+        }
+        // one second of "voice" in the middle
+        for (int i = rate; i < rate * 2; i++) {
+            pcm[i] += (short) (8000 * Math.sin(2 * Math.PI * 300 * i / rate));
+        }
+        int n = Wav.clean(pcm, pcm.length, rate);
+        assertTrue("kept " + n, n > rate && n < rate * 1.5);
+    }
 }

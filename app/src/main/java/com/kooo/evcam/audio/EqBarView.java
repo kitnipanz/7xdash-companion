@@ -35,6 +35,10 @@ public class EqBarView extends View {
     private final float density;
     private float value;
     private OnChange listener;
+    /** Double tap puts the band back to 0 dB. */
+    private long lastTapUp;
+    private float downY;
+    private long downTime;
 
     public EqBarView(Context context) {
         this(context, null);
@@ -79,6 +83,11 @@ public class EqBarView extends View {
         return 14 * density;
     }
 
+    /** Y of value {@code v} in this view (for drawing lined up with the fader). */
+    public float yForValue(float v) {
+        return yFor(v);
+    }
+
     private float yFor(float v) {
         float top = inset();
         float bottom = getHeight() - inset();
@@ -116,12 +125,28 @@ public class EqBarView extends View {
         switch (event.getActionMasked()) {
             case MotionEvent.ACTION_DOWN:
                 getParent().requestDisallowInterceptTouchEvent(true);
+                downY = event.getY();
+                downTime = event.getEventTime();
+                if (downTime - lastTapUp < 300) {
+                    // second tap of a double tap: wait for the lift, do not jump to the finger
+                    return true;
+                }
                 set(valueFor(event.getY()), true);
                 return true;
             case MotionEvent.ACTION_MOVE:
                 set(valueFor(event.getY()), true);
                 return true;
             case MotionEvent.ACTION_UP:
+                getParent().requestDisallowInterceptTouchEvent(false);
+                boolean tap = event.getEventTime() - downTime < 250
+                        && Math.abs(event.getY() - downY) < 12 * density;
+                if (tap && downTime - lastTapUp < 300) {
+                    set(0, true);
+                    lastTapUp = 0;
+                } else {
+                    lastTapUp = tap ? event.getEventTime() : 0;
+                }
+                return true;
             case MotionEvent.ACTION_CANCEL:
                 getParent().requestDisallowInterceptTouchEvent(false);
                 return true;

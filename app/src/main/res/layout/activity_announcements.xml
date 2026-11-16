@@ -163,6 +163,14 @@
                 android:textColor="@color/text_secondary"
                 android:textStyle="bold" />
 
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                android:text="@string/announce_play_hint"
+                android:textAppearance="@style/TextAppearance.Cam.Caption"
+                android:textColor="@color/text_secondary" />
+
             <LinearLayout
                 android:id="@+id/announce_rows"
                 android:layout_width="match_parent"

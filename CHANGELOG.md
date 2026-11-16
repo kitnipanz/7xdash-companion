@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.9.3-beta] - 2026-11-16
+
+### Megaphone
+- **Less echo in hold mode.** The outside speaker no longer feeds back into the cabin mic: the mic uses the car's echo canceller and noise suppressor where it has them, only the voice band goes out (no rumble or hiss), the sound drops 24 dB a moment after you stop talking so the echo cannot keep going round, and loud words are rounded off instead of crackling.
+
+### Announcements
+- **Pitch for your own recordings**, separate from speed: higher or lower without getting faster or slower. Built-in sounds still play like a tape.
+
 ## [1.9.2-beta] - 2026-11-16
 
 ### Equalizer

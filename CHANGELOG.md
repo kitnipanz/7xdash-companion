@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.9.6-beta] - 2026-11-17
+
+### Netflix and YouTube
+- **Netflix and YouTube cards on Home**: tap to open the app in a floating window on the right (on head units with floating windows; split screen or full screen where those are all there is). Each card shows only when its app is installed.
+- **YouTube** opens Google's app, or the first installed of ReVanced, SmartTube, NewPipe, LibreTube and YouTube for Android TV.
+- **Shortcut actions**: "Netflix in a floating window" and "YouTube in a floating window", for the Macro pad and steering keys.
+
+### Navigation
+- **No more crash with microG**: on head units where microG's map can't draw (a part of its maps package missing), the app crashed on the first route line. Now the map switches to TomTom's on the spot, and that microG version isn't tried again. Navigation settings → Map says when this is why the map is TomTom's; turn "Google map when available" off and on to try again.
+
 ## [1.9.5-beta] - 2026-11-17
 
 ### Navigation

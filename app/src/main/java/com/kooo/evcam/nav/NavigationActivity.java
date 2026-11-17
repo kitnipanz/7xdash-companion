@@ -28,14 +28,12 @@ import com.kooo.evcam.trip.Arrival;
 import com.kooo.evcam.trip.DestinationLink;
 import com.kooo.evcam.trip.Trip;
 
-import org.maplibre.android.maps.MapLibreMap;
-import org.maplibre.android.maps.SupportMapFragment;
 
 /**
  * Navigation: search a place (or take the one shared from the iPhone, or hold on the map),
  * see the route with its time, distance and battery at arrival, then Start for turn-by-turn.
- * The map is Google's (Maps SDK, needs Google Play services); without it the screen still
- * guides, just with no map. The guiding itself is {@link Navigator}'s and goes on when this closes.
+ * The map is Google's where Play services or microG is on the head unit, otherwise TomTom's
+ * ({@link MapHost}); without a key the screen still guides, just with no map. The guiding itself is {@link Navigator}'s and goes on when this closes.
  * The map can also go into a floating window ({@link NavFloatWindow}) over other apps, and while
  * guiding the sheet shows what the HUD shows ({@link HudTurnCard}).
  */
@@ -70,7 +68,7 @@ public class NavigationActivity extends AppCompatActivity implements Navigator.L
     private TextView hudPreviewLabel;
     private HudTurnCard hudCard;
 
-    private MapLibreMap map;
+    private MapHost mapHost;
     /** Null until the map is ready (and stays null without one). */
     private NavMapPainter painter;
     private Navigator.Phase shownPhase;
@@ -186,35 +184,25 @@ public class NavigationActivity extends AppCompatActivity implements Navigator.L
             findViewById(R.id.nav_no_map).setVisibility(View.VISIBLE);
             return;
         }
-        NavMap.start(this);
-        SupportMapFragment fragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.nav_map);
-        if (fragment == null) {
-            fragment = SupportMapFragment.newInstance(NavMap.options(this));
-            getSupportFragmentManager().beginTransaction().replace(R.id.nav_map, fragment).commitNow();
-        }
-        fragment.getMapAsync(this::onMap);
+        mapHost = new MapHost(this, findViewById(R.id.nav_map), this::onMap);
     }
 
-    private void onMap(MapLibreMap m) {
-        map = m;
+    private void onMap(MapEngine map) {
         float d = getResources().getDisplayMetrics().density;
         // the cards cover the left and the top: keep the route and the compass clear of them
-        painter = new NavMapPainter(this, map, findViewById(R.id.nav_map), Math.round(540 * d), 0);
+        painter = new NavMapPainter(this, map, mapHost.view(), Math.round(540 * d), 0);
         painter.onRouteTapped = r -> Navigator.get().choose(r);
-        map.getUiSettings().setCompassEnabled(true);
-        map.addOnCameraMoveStartedListener(reason -> {
-            if (reason == MapLibreMap.OnCameraMoveStartedListener.REASON_API_GESTURE) {
-                painter.following = false;
-                recenter.setVisibility(View.VISIBLE);
-            }
+        map.setCompassEnabled(true);
+        map.addOnGestureMove(() -> {
+            painter.following = false;
+            recenter.setVisibility(View.VISIBLE);
         });
-        map.addOnMapLongClickListener(at -> {
+        map.addOnLongClick(at -> {
             if (!Navigator.get().isGuiding()) {
                 Navigator.get().preview(this, new DestinationLink.Place(at.getLatitude(), at.getLongitude(),
                         getString(R.string.nav_dropped_pin)));
                 painter.following = false;
             }
-            return true;
         });
         onNavChanged(Navigator.get().snapshot());
     }
@@ -451,6 +439,33 @@ public class NavigationActivity extends AppCompatActivity implements Navigator.L
         NavFloatWindow.get().hide();
         Navigator.get().attach(this);
         Navigator.get().addListener(this);
+        if (mapHost != null) {
+            mapHost.start();
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (mapHost != null) {
+            mapHost.resume();
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        if (mapHost != null) {
+            mapHost.pause();
+        }
+        super.onPause();
+    }
+
+    @Override
+    public void onLowMemory() {
+        super.onLowMemory();
+        if (mapHost != null) {
+            mapHost.lowMemory();
+        }
     }
 
     @Override
@@ -458,11 +473,17 @@ public class NavigationActivity extends AppCompatActivity implements Navigator.L
         if (painter != null) {
             painter.release();
         }
+        if (mapHost != null) {
+            mapHost.destroy();
+        }
         super.onDestroy();
     }
 
     @Override
     protected void onStop() {
+        if (mapHost != null) {
+            mapHost.stop();
+        }
         Navigator.get().removeListener(this);
         Navigator.get().detach();
         super.onStop();

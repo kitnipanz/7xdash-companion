@@ -12,7 +12,6 @@ import android.view.ViewOutlineProvider;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
 
-import org.maplibre.android.maps.MapView;
 import com.kooo.evcam.AppConfig;
 import com.kooo.evcam.AppLog;
 import com.kooo.evcam.overlay.OverlayCoordinator;
@@ -32,7 +31,7 @@ final class HudMapWindow implements Navigator.Listener {
     private FrameLayout root;
     private WindowManager.LayoutParams lp;
     private Point hudSize;
-    private MapView mapView;
+    private MapHost mapHost;
     private NavMapPainter painter;
     private boolean failed;
 
@@ -67,11 +66,6 @@ final class HudMapWindow implements Navigator.Listener {
                 }
             });
             frame.setClipToOutline(true);
-            NavMap.start(window);
-            mapView = new MapView(window, NavMap.options(window));
-            mapView.onCreate(null);
-            frame.addView(mapView, new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT,
-                    FrameLayout.LayoutParams.MATCH_PARENT));
 
             lp = new WindowManager.LayoutParams(box[2], box[3],
                     WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
@@ -83,21 +77,21 @@ final class HudMapWindow implements Navigator.Listener {
             manager.addView(frame, lp);
             wm = manager;
             root = frame;
-            mapView.onStart();
-            mapView.onResume();
-            mapView.getMapAsync(map -> {
-                if (root == null) {
+            mapHost = new MapHost(window, frame, map -> {
+                if (root == null || mapHost == null) {
                     return;
                 }
-                painter = new NavMapPainter(window, map, mapView, 0, 0);
+                painter = new NavMapPainter(window, map, mapHost.view(), 0, 0);
                 painter.forHud();
                 // the HUD stays dark (bright light on the windscreen dazzles); the space map keeps its own look
                 painter.applyScheme(new AppConfig(window).getNavMapScheme() == AppConfig.NAV_MAP_SPACE
                         ? AppConfig.NAV_MAP_SPACE : AppConfig.NAV_MAP_DARK);
-                map.getUiSettings().setAllGesturesEnabled(false);
-                map.getUiSettings().setCompassEnabled(false);
+                map.setGesturesEnabled(false);
+                map.setCompassEnabled(false);
                 painter.draw(Navigator.get().snapshot());
             });
+            mapHost.start();
+            mapHost.resume();
             Navigator.get().addListener(this);
             AppLog.i(TAG, "map on the HUD " + box[2] + "x" + box[3] + " at " + box[0] + "," + box[1]);
         } catch (RuntimeException e) {
@@ -112,11 +106,9 @@ final class HudMapWindow implements Navigator.Listener {
         if (painter != null) {
             painter.release();
         }
-        if (mapView != null) {
+        if (mapHost != null) {
             try {
-                mapView.onPause();
-                mapView.onStop();
-                mapView.onDestroy();
+                mapHost.destroy();
             } catch (RuntimeException ignored) {
                 // already torn down with the display
             }
@@ -131,7 +123,7 @@ final class HudMapWindow implements Navigator.Listener {
         wm = null;
         root = null;
         lp = null;
-        mapView = null;
+        mapHost = null;
         painter = null;
     }
 

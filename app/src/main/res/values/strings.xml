@@ -1944,6 +1944,10 @@ Then reopen this app.</string>
     <string name="nav_settings_button">Settings</string>
     <string name="nav_section_voice_hud">Voice and HUD</string>
     <string name="nav_section_map">Map</string>
+    <string name="nav_google_map_switch">Google map when available</string>
+    <string name="nav_google_map_on">Google Play services or microG found: the map is Google\'s. Takes effect the next time the map opens.</string>
+    <string name="nav_google_map_missing">No Google Play services or microG (or no Google key in this build): the map is TomTom\'s.</string>
+    <string name="nav_google_map_off">The map is TomTom\'s. Takes effect the next time the map opens.</string>
     <string name="nav_section_iphone">iPhone</string>
     <string name="nav_map_colours">Map colours</string>
     <string name="nav_scheme_auto">Follow screen</string>
@@ -2263,4 +2267,10 @@ Then reopen this app.</string>
     <string name="home_edit_tab_beta">Beta (%1$d)</string>
     <string name="home_edit_drag">Move</string>
     <string name="home_edit_done">Done</string>
+    <string name="app_window_title">Open an app in a window</string>
+    <string name="app_window_summary">Another app beside what is on screen: floating or split screen, where the head unit allows it</string>
+    <string name="app_window_mode_floating">This head unit has floating windows: tap an app to open it in a window on the right.</string>
+    <string name="app_window_mode_split">This head unit has split screen: tap an app to open it beside 7xDash.</string>
+    <string name="app_window_mode_full">This head unit reports no floating windows or split screen: apps open full screen. Tap one to try anyway.</string>
+    <string name="app_window_opened_full">Opened full screen: the head unit doesn\'t allow floating windows or split screen</string>
 </resources>

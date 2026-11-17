@@ -33,8 +33,6 @@ import com.kooo.evcam.overlay.OverlayCoordinator;
 import com.kooo.evcam.zeekr.FloatingWindowGestures;
 import com.kooo.evcam.zeekr.RearViewTouchModel;
 
-import org.maplibre.android.maps.MapLibreMap;
-import org.maplibre.android.maps.MapView;
 
 /**
  * Navigation in a floating window over whatever else is on the head unit: the map, with the next
@@ -71,7 +69,7 @@ public final class NavFloatWindow implements Navigator.Listener {
     private float density;
     private FrameLayout root;
     private WindowManager.LayoutParams lp;
-    private MapView mapView;
+    private MapHost mapHost;
     private NavMapPainter painter;
     private ManeuverIcon.ArrowView arrow;
     private TextView title;
@@ -213,9 +211,9 @@ public final class NavFloatWindow implements Navigator.Listener {
             dropViews();
             return;
         }
-        if (mapView != null) {
-            mapView.onStart();
-            mapView.onResume();
+        if (mapHost != null) {
+            mapHost.start();
+            mapHost.resume();
         }
         Navigator.get().attach(context);
         Navigator.get().addListener(this);
@@ -240,10 +238,8 @@ public final class NavFloatWindow implements Navigator.Listener {
         if (painter != null) {
             painter.release();
         }
-        if (mapView != null) {
-            mapView.onPause();
-            mapView.onStop();
-            mapView.onDestroy();
+        if (mapHost != null) {
+            mapHost.destroy();
         }
         try {
             wm.removeView(root);
@@ -395,19 +391,14 @@ public final class NavFloatWindow implements Navigator.Listener {
                     FrameLayout.LayoutParams.MATCH_PARENT));
             return;
         }
-        NavMap.start(context);
-        mapView = new MapView(context, NavMap.options(context));
-        mapView.onCreate(null);
-        root.addView(mapView, new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT,
-                FrameLayout.LayoutParams.MATCH_PARENT));
-        mapView.getMapAsync(map -> {
-            if (root == null) {
+        mapHost = new MapHost(context, root, map -> {
+            if (root == null || mapHost == null) {
                 return;
             }
-            painter = new NavMapPainter(context, map, mapView, 0, bar);
-            map.getUiSettings().setCompassEnabled(false);
-            map.addOnCameraMoveStartedListener(reason -> {
-                if (reason == MapLibreMap.OnCameraMoveStartedListener.REASON_API_GESTURE && painter != null) {
+            painter = new NavMapPainter(context, map, mapHost.view(), 0, bar);
+            map.setCompassEnabled(false);
+            map.addOnGestureMove(() -> {
+                if (painter != null) {
                     painter.following = false;
                     recenter.setVisibility(View.VISIBLE);
                 }
@@ -549,7 +540,7 @@ public final class NavFloatWindow implements Navigator.Listener {
 
     private void dropViews() {
         root = null;
-        mapView = null;
+        mapHost = null;
         painter = null;
         arrow = null;
         title = null;

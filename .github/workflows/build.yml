@@ -25,6 +25,7 @@ jobs:
       GA_MEASUREMENT_ID: ${{ secrets.GA_MEASUREMENT_ID }}
       GA_API_SECRET: ${{ secrets.GA_API_SECRET }}
       TOMTOM_API_KEY: ${{ secrets.TOMTOM_API_KEY }}
+      MAPS_API_KEY: ${{ secrets.MAPS_API_KEY }}
 
     steps:
       - name: Checkout

@@ -3217,6 +3217,17 @@ public class AppConfig {
         prefs.edit().putBoolean(KEY_NAV_HUD, on).apply();
     }
 
+    private static final String KEY_NAV_GOOGLE_MAP = "nav_google_map";
+
+    /** Navigation: Google's map where Play services or microG is there (else TomTom's). On by default. */
+    public boolean isNavGoogleMapEnabled() {
+        return prefs.getBoolean(KEY_NAV_GOOGLE_MAP, true);
+    }
+
+    public void setNavGoogleMapEnabled(boolean on) {
+        prefs.edit().putBoolean(KEY_NAV_GOOGLE_MAP, on).apply();
+    }
+
     private static final String KEY_NAV_MAP_SCHEME = "nav_map_scheme";
     /** The map's colours follow the head unit's day / night. */
     public static final int NAV_MAP_AUTO = 0;

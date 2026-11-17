@@ -61,6 +61,17 @@ final class NavSettings {
             Navigator.get().relayoutHud();
         });
 
+        SwitchMaterial google = box.findViewById(R.id.nav_google_map_switch);
+        TextView googleHint = box.findViewById(R.id.nav_google_map_hint);
+        google.setChecked(config.isNavGoogleMapEnabled());
+        googleHint.setText(MapHost.wantGoogle(context) ? R.string.nav_google_map_on
+                : config.isNavGoogleMapEnabled() ? R.string.nav_google_map_missing : R.string.nav_google_map_off);
+        google.setOnCheckedChangeListener((b, on) -> {
+            config.setNavGoogleMapEnabled(on);
+            googleHint.setText(on ? (MapHost.wantGoogle(context) ? R.string.nav_google_map_on
+                    : R.string.nav_google_map_missing) : R.string.nav_google_map_off);
+        });
+
         MaterialButtonToggleGroup scheme = box.findViewById(R.id.nav_scheme_group);
         int[] schemeIds = {R.id.nav_scheme_auto, R.id.nav_scheme_light, R.id.nav_scheme_dark, R.id.nav_scheme_space};
         scheme.check(schemeIds[config.getNavMapScheme()]);

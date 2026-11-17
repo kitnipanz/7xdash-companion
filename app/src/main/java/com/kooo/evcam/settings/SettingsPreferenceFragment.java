@@ -978,6 +978,13 @@ public class SettingsPreferenceFragment extends PreferenceFragmentCompat {
         bindOverlaySwitch("pref_macro_pad", appConfig.isMacroPadEnabled(),
                 OverlayCoordinator::setMacroPadEnabled, null);
 
+        onClick("pref_app_window", pref -> {
+            if (getContext() != null) {
+                startActivity(new android.content.Intent(getContext(),
+                        com.kooo.evcam.screen.AppWindowActivity.class));
+            }
+        });
+
         onClick("pref_reset_floating", pref -> {
             if (getContext() == null) {
                 return;

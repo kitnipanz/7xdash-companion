@@ -38,6 +38,16 @@
         <TextView
             style="@style/NavSettingsHeader"
             android:text="@string/nav_section_map" />
+        <com.google.android.material.switchmaterial.SwitchMaterial
+            android:id="@+id/nav_google_map_switch"
+            style="@style/NavSettingsSwitch"
+            android:text="@string/nav_google_map_switch" />
+        <TextView
+            android:id="@+id/nav_google_map_hint"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textAppearance="@style/TextAppearance.Cam.Caption"
+            android:textColor="@color/text_secondary" />
         <TextView
             style="@style/NavSettingsLabel"
             android:text="@string/nav_map_colours" />

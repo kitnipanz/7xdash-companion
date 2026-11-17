@@ -95,6 +95,12 @@
         android:usesCleartextTraffic="true"
         android:theme="@style/Theme.Cam">
 
+        <!-- Navigation: the Google map's key (MAPS_API_KEY), used where Play services or microG is there -->
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="${mapsApiKey}" />
+
+
         <!-- Car Android's own API (CarAudioManager) for the Volume lab; absent on phones and tablets -->
         <uses-library
             android:name="android.car"
@@ -391,6 +397,13 @@
             android:label="@string/macro_pad_title"
             android:theme="@style/Theme.Cam"
             android:screenOrientation="landscape"
+            android:exported="false" />
+        <activity
+            android:name=".screen.AppWindowActivity"
+            android:label="@string/app_window_title"
+            android:theme="@style/Theme.Cam"
+            android:screenOrientation="landscape"
+            android:resizeableActivity="true"
             android:exported="false" />
         <activity
             android:name=".overlay.DashGaugesActivity"

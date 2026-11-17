@@ -1914,6 +1914,10 @@
     <string name="nav_settings_button">ตั้งค่า</string>
     <string name="nav_section_voice_hud">เสียงและ HUD</string>
     <string name="nav_section_map">แผนที่</string>
+    <string name="nav_google_map_switch">ใช้แผนที่ Google เมื่อใช้ได้</string>
+    <string name="nav_google_map_on">พบ Google Play services หรือ microG: ใช้แผนที่ของ Google มีผลเมื่อเปิดแผนที่ครั้งถัดไป</string>
+    <string name="nav_google_map_missing">ไม่พบ Google Play services หรือ microG (หรือแอปนี้ไม่มีคีย์ Google): ใช้แผนที่ของ TomTom</string>
+    <string name="nav_google_map_off">ใช้แผนที่ของ TomTom มีผลเมื่อเปิดแผนที่ครั้งถัดไป</string>
     <string name="nav_section_iphone">iPhone</string>
     <string name="nav_map_colours">สีแผนที่</string>
     <string name="nav_scheme_auto">ตามหน้าจอ</string>
@@ -2238,4 +2242,10 @@
     <string name="home_edit_tab_beta">เบต้า (%1$d)</string>
     <string name="home_edit_drag">ย้าย</string>
     <string name="home_edit_done">เสร็จ</string>
+    <string name="app_window_title">เปิดแอปในหน้าต่าง</string>
+    <string name="app_window_summary">เปิดแอปอื่นข้างสิ่งที่อยู่บนจอ: หน้าต่างลอยหรือแบ่งจอ ถ้าเครื่องเสียงรถรองรับ</string>
+    <string name="app_window_mode_floating">เครื่องนี้รองรับหน้าต่างลอย: แตะแอปเพื่อเปิดในหน้าต่างทางขวา</string>
+    <string name="app_window_mode_split">เครื่องนี้รองรับแบ่งจอ: แตะแอปเพื่อเปิดข้าง 7xDash</string>
+    <string name="app_window_mode_full">เครื่องนี้แจ้งว่าไม่รองรับหน้าต่างลอยหรือแบ่งจอ: แอปจะเปิดเต็มจอ แตะเพื่อลองได้</string>
+    <string name="app_window_opened_full">เปิดเต็มจอแล้ว: เครื่องเสียงรถไม่อนุญาตหน้าต่างลอยหรือแบ่งจอ</string>
 </resources>

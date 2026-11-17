@@ -549,6 +549,11 @@
             android:summary="@string/set_macro_pad_summary" />
 
         <Preference
+            android:key="pref_app_window"
+            android:title="@string/app_window_title"
+            android:summary="@string/app_window_summary" />
+
+        <Preference
             android:key="pref_reset_floating"
             android:title="@string/set_reset_floating_title"
             android:summary="@string/set_reset_floating_summary" />

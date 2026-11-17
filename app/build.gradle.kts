@@ -81,6 +81,11 @@ android {
         // (Routes API) and the search (Places API (New)). Same lookup; empty = Navigation says it has no key
         val mapsKey = driveCredential("TOMTOM_API_KEY")
         buildConfigField("String", "TOMTOM_API_KEY", gradleStringLiteral(mapsKey))
+        // The Google map (Maps SDK for Android), drawn instead of TomTom's where Google Play services
+        // or microG is on the head unit. Same lookup; empty = always TomTom's map
+        val googleMapsKey = driveCredential("MAPS_API_KEY")
+        buildConfigField("String", "MAPS_API_KEY", gradleStringLiteral(googleMapsKey))
+        manifestPlaceholders["mapsApiKey"] = googleMapsKey
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -183,6 +188,8 @@ dependencies {
     // Navigation: the Google map (needs Google Play services on the head unit; without it the
     // Navigation screen still guides, with no map)
     implementation("org.maplibre.gl:android-sdk:13.6.1")
+    // The Google map where Play services (or microG) is there; otherwise the MapLibre map above
+    implementation("com.google.android.gms:play-services-maps:19.2.0")
 
     testImplementation(libs.junit)
     // the real org.json for the JVM tests (android.jar's is a stub that returns nothing)

@@ -2249,4 +2249,8 @@
     <string name="app_window_mode_split">เครื่องนี้รองรับแบ่งจอ: แตะแอปเพื่อเปิดข้าง 7xDash</string>
     <string name="app_window_mode_full">เครื่องนี้แจ้งว่าไม่รองรับหน้าต่างลอยหรือแบ่งจอ: แอปจะเปิดเต็มจอ แตะเพื่อลองได้</string>
     <string name="app_window_opened_full">เปิดเต็มจอแล้ว: เครื่องเสียงรถไม่อนุญาตหน้าต่างลอยหรือแบ่งจอ</string>
+    <string name="home_card_netflix">Netflix</string>
+    <string name="home_card_netflix_sub">เปิดในหน้าต่างลอย</string>
+    <string name="shortcut_action_netflix_window">Netflix ในหน้าต่างลอย</string>
+    <string name="netflix_not_installed">เครื่องนี้ยังไม่ได้ติดตั้ง Netflix</string>
 </resources>

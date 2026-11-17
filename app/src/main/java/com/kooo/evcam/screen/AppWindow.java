@@ -1,8 +1,8 @@
 package com.kooo.evcam.screen;
 
-import android.app.Activity;
 import android.app.ActivityOptions;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Rect;
 import android.util.DisplayMetrics;
@@ -49,8 +49,8 @@ public final class AppWindow {
         return new Rect(right - w, top, right, top + h);
     }
 
-    /** Opens {@code app}; returns how it was asked to open. */
-    public static Mode open(Activity from, ComponentName app) {
+    /** Opens {@code app}; returns how it was asked to open. Split screen sits beside {@code from} when it is an activity. */
+    public static Mode open(Context from, ComponentName app) {
         Mode mode = modeFor(MultiWindowProbe.probe(from));
         Intent intent = new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
                 .setComponent(app).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);

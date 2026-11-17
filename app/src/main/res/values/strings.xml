@@ -2274,4 +2274,8 @@ Then reopen this app.</string>
     <string name="app_window_mode_split">This head unit has split screen: tap an app to open it beside 7xDash.</string>
     <string name="app_window_mode_full">This head unit reports no floating windows or split screen: apps open full screen. Tap one to try anyway.</string>
     <string name="app_window_opened_full">Opened full screen: the head unit doesn\'t allow floating windows or split screen</string>
+    <string name="home_card_netflix">Netflix</string>
+    <string name="home_card_netflix_sub">Opens in a floating window</string>
+    <string name="shortcut_action_netflix_window">Netflix in a floating window</string>
+    <string name="netflix_not_installed">Netflix isn\'t installed on this head unit</string>
 </resources>

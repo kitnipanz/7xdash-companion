@@ -146,6 +146,9 @@ public final class ShortcutPerformer {
             case OUTSIDE_SPEAKER:
                 com.kooo.evcam.audio.OutsideSpeaker.toggle(context);
                 return;
+            case NETFLIX_WINDOW:
+                com.kooo.evcam.browser.NetflixApp.openInWindow(context);
+                return;
             case DASH_PANEL:
                 AppConfig dash = new AppConfig(context);
                 boolean dashOn = !dash.isDashPanelEnabled();

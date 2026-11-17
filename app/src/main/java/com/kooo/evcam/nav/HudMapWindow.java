@@ -81,6 +81,10 @@ final class HudMapWindow implements Navigator.Listener {
                 if (root == null || mapHost == null) {
                     return;
                 }
+                // again after Google's map failed: TomTom's replaces it
+                if (painter != null) {
+                    painter.release();
+                }
                 painter = new NavMapPainter(window, map, mapHost.view(), 0, 0);
                 painter.forHud();
                 // the HUD stays dark (bright light on the windscreen dazzles); the space map keeps its own look

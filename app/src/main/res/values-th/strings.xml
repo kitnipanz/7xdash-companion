@@ -1917,6 +1917,7 @@
     <string name="nav_google_map_switch">ใช้แผนที่ Google เมื่อใช้ได้</string>
     <string name="nav_google_map_on">พบ Google Play services หรือ microG: ใช้แผนที่ของ Google มีผลเมื่อเปิดแผนที่ครั้งถัดไป</string>
     <string name="nav_google_map_missing">ไม่พบ Google Play services หรือ microG (หรือแอปนี้ไม่มีคีย์ Google): ใช้แผนที่ของ TomTom</string>
+    <string name="nav_google_map_broken">แผนที่ Google ใช้กับ Play services / microG รุ่นนี้ไม่ได้ จึงใช้แผนที่ของ TomTom จะลองใหม่หลังอัปเดต หรือปิดแล้วเปิดสวิตช์นี้</string>
     <string name="nav_google_map_off">ใช้แผนที่ของ TomTom มีผลเมื่อเปิดแผนที่ครั้งถัดไป</string>
     <string name="nav_section_iphone">iPhone</string>
     <string name="nav_map_colours">สีแผนที่</string>

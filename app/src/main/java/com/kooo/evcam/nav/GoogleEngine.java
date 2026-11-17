@@ -30,6 +30,10 @@ import java.util.function.IntConsumer;
  * ({@link MapHost}). The route is polylines; Google's own traffic layer stands in for TomTom's
  * incidents. The map can't be drawn bigger than its plain size, so the zoom is moved up by
  * {@link NavMap#SCALE} instead.
+ *
+ * <p>The map's code may be microG's, running in this process: any call can throw (an Error too, such
+ * as a class missing from its maps package). Every call is guarded; the first failure turns the
+ * engine off (all later calls do nothing) and tells {@link MapHost}, which puts TomTom's map in its place.
  */
 final class GoogleEngine implements MapEngine {
 
@@ -58,10 +62,14 @@ final class GoogleEngine implements MapEngine {
     private final List<Runnable> onMove = new ArrayList<>();
     private final List<Runnable> onGesture = new ArrayList<>();
     private final List<Consumer<LatLng>> onLong = new ArrayList<>();
+    /** Told once, on the first failure. */
+    private final Consumer<Throwable> onBroken;
+    private boolean broken;
 
-    GoogleEngine(Context context, GoogleMap map) {
+    GoogleEngine(Context context, GoogleMap map, Consumer<Throwable> onBroken) {
         this.context = context;
         this.map = map;
+        this.onBroken = onBroken;
         density = context.getResources().getDisplayMetrics().density;
         map.setMaxZoomPreference(22);
         map.setBuildingsEnabled(true);
@@ -93,6 +101,32 @@ final class GoogleEngine implements MapEngine {
                 onOther.accept((Integer) line.getTag());
             }
         });
+    }
+
+    /** The map failed: no more calls into it. */
+    private void broke(Throwable t) {
+        if (broken) {
+            return;
+        }
+        broken = true;
+        com.kooo.evcam.AppLog.w("GoogleEngine", "Google map failed: " + t);
+        onBroken.accept(t);
+    }
+
+    /** Runs a call into the map unless it has failed; a failure turns the engine off. */
+    private void guard(Runnable call) {
+        if (broken) {
+            return;
+        }
+        try {
+            call.run();
+        } catch (Throwable t) {
+            broke(t);
+        }
+    }
+
+    boolean isBroken() {
+        return broken;
     }
 
     private static com.google.android.gms.maps.model.LatLng g(LatLng p) {
@@ -129,61 +163,98 @@ final class GoogleEngine implements MapEngine {
 
     @Override
     public void moveCamera(LatLng target, float bearing, float tilt, float zoom) {
-        unpad();
-        map.moveCamera(CameraUpdateFactory.newCameraPosition(position(target, bearing, tilt, zoom)));
+        guard(() -> {
+            unpad();
+            map.moveCamera(CameraUpdateFactory.newCameraPosition(position(target, bearing, tilt, zoom)));
+        });
     }
 
     @Override
     public void animateTo(LatLng target) {
-        unpad();
-        if (MapPace.yielding()) {
-            map.moveCamera(CameraUpdateFactory.newLatLng(g(target)));
-        } else {
-            map.animateCamera(CameraUpdateFactory.newLatLng(g(target)));
-        }
+        guard(() -> {
+            unpad();
+            if (MapPace.yielding()) {
+                map.moveCamera(CameraUpdateFactory.newLatLng(g(target)));
+            } else {
+                map.animateCamera(CameraUpdateFactory.newLatLng(g(target)));
+            }
+        });
     }
 
     @Override
     public void animateCamera(LatLng target, float bearing, float tilt, float zoom) {
-        unpad();
-        map.animateCamera(CameraUpdateFactory.newCameraPosition(position(target, bearing, tilt, zoom)));
+        guard(() -> {
+            unpad();
+            map.animateCamera(CameraUpdateFactory.newCameraPosition(position(target, bearing, tilt, zoom)));
+        });
     }
 
     @Override
     public void zoomBy(float levels, int ms) {
-        map.animateCamera(CameraUpdateFactory.zoomBy(levels), ms, null);
+        guard(() -> {
+            map.animateCamera(CameraUpdateFactory.zoomBy(levels), ms, null);
+        });
     }
 
     @Override
     public void fitBounds(List<LatLng> points, int left, int top, int edge) {
-        LatLngBounds.Builder b = new LatLngBounds.Builder();
-        for (LatLng p : points) {
-            b.include(g(p));
-        }
-        try {
-            map.setPadding(left, top, 0, 0);
-            padded = left != 0 || top != 0;
-            map.animateCamera(CameraUpdateFactory.newLatLngBounds(b.build(), edge));
-        } catch (IllegalStateException e) {
-            // map not laid out yet
-            unpad();
-        }
+        guard(() -> {
+            LatLngBounds.Builder b = new LatLngBounds.Builder();
+            for (LatLng p : points) {
+                b.include(g(p));
+            }
+            try {
+                map.setPadding(left, top, 0, 0);
+                padded = left != 0 || top != 0;
+                map.animateCamera(CameraUpdateFactory.newLatLngBounds(b.build(), edge));
+            } catch (IllegalStateException e) {
+                // map not laid out yet
+                unpad();
+            }
+        });
     }
 
     @Override
     public PointF toScreen(LatLng at) {
-        android.graphics.Point p = map.getProjection().toScreenLocation(g(at));
-        return new PointF(p.x, p.y);
+        if (broken) {
+            throw new IllegalStateException("Google map off");
+        }
+        try {
+            android.graphics.Point p = map.getProjection().toScreenLocation(g(at));
+            return new PointF(p.x, p.y);
+        } catch (RuntimeException e) {
+            // no projection yet: the caller tries again
+            throw e;
+        } catch (Throwable t) {
+            broke(t);
+            throw new IllegalStateException(t);
+        }
     }
 
     @Override
     public float cameraBearing() {
-        return map.getCameraPosition().bearing;
+        if (broken) {
+            return 0f;
+        }
+        try {
+            return map.getCameraPosition().bearing;
+        } catch (Throwable t) {
+            broke(t);
+            return 0f;
+        }
     }
 
     @Override
     public float maxZoom() {
-        return map.getMaxZoomLevel() - ZOOM_SHIFT;
+        if (broken) {
+            return 20f;
+        }
+        try {
+            return map.getMaxZoomLevel() - ZOOM_SHIFT;
+        } catch (Throwable t) {
+            broke(t);
+            return 20f;
+        }
     }
 
     @Override
@@ -221,12 +292,16 @@ final class GoogleEngine implements MapEngine {
 
     @Override
     public void setCompassEnabled(boolean on) {
-        map.getUiSettings().setCompassEnabled(on);
+        guard(() -> {
+            map.getUiSettings().setCompassEnabled(on);
+        });
     }
 
     @Override
     public void setGesturesEnabled(boolean on) {
-        map.getUiSettings().setAllGesturesEnabled(on);
+        guard(() -> {
+            map.getUiSettings().setAllGesturesEnabled(on);
+        });
     }
 
     // ---- drawing ----
@@ -236,20 +311,28 @@ final class GoogleEngine implements MapEngine {
         if (shownDark != null && shownDark == dark && space == nowSpace) {
             return false;
         }
+        if (broken) {
+            return false;
+        }
         shownDark = dark;
         space = nowSpace;
-        try {
-            map.setMapStyle(dark ? MapStyleOptions.loadRawResourceStyle(context, R.raw.gmap_night) : null);
-        } catch (RuntimeException e) {
-            com.kooo.evcam.AppLog.w("GoogleEngine", "map style refused: " + e.getMessage());
-        }
-        // the route's paint changes with the scheme: the painter draws it all again
-        removeAll(rest);
-        removeAll(head);
-        removeAll(others);
-        if (pin != null) {
-            pin.remove();
-            pin = null;
+        guard(() -> {
+            try {
+                map.setMapStyle(dark ? MapStyleOptions.loadRawResourceStyle(context, R.raw.gmap_night) : null);
+            } catch (RuntimeException e) {
+                com.kooo.evcam.AppLog.w("GoogleEngine", "map style refused: " + e.getMessage());
+            }
+            // the route's paint changes with the scheme: the painter draws it all again
+            removeAll(rest);
+            removeAll(head);
+            removeAll(others);
+            if (pin != null) {
+                pin.remove();
+                pin = null;
+            }
+        });
+        if (broken) {
+            return false;
         }
         ready.run();
         return true;
@@ -257,7 +340,7 @@ final class GoogleEngine implements MapEngine {
 
     @Override
     public boolean isReady() {
-        return shownDark != null;
+        return shownDark != null && !broken;
     }
 
     private static void removeAll(List<Polyline> lines) {
@@ -292,10 +375,12 @@ final class GoogleEngine implements MapEngine {
 
     @Override
     public void drawRest(List<List<LatLng>> runs, List<String> colors) {
-        removeAll(rest);
-        for (int i = 0; i < runs.size(); i++) {
-            addRoute(rest, runs.get(i), colors.get(i));
-        }
+        guard(() -> {
+            removeAll(rest);
+            for (int i = 0; i < runs.size(); i++) {
+                addRoute(rest, runs.get(i), colors.get(i));
+            }
+        });
     }
 
     /** The head moves every frame: its lines keep their paint and only take the new points. */
@@ -303,64 +388,74 @@ final class GoogleEngine implements MapEngine {
 
     @Override
     public void drawHead(List<LatLng> pts, String color) {
-        if (!head.isEmpty() && color.equals(headColor)) {
-            List<com.google.android.gms.maps.model.LatLng> g = g(pts);
-            for (Polyline l : head) {
-                l.setPoints(g);
+        guard(() -> {
+            if (!head.isEmpty() && color.equals(headColor)) {
+                List<com.google.android.gms.maps.model.LatLng> g = g(pts);
+                for (Polyline l : head) {
+                    l.setPoints(g);
+                }
+                return;
             }
-            return;
-        }
-        removeAll(head);
-        headColor = color;
-        addRoute(head, pts, color);
+            removeAll(head);
+            headColor = color;
+            addRoute(head, pts, color);
+        });
     }
 
     @Override
     public void clearLine() {
-        removeAll(rest);
-        removeAll(head);
+        guard(() -> {
+            removeAll(rest);
+            removeAll(head);
+        });
     }
 
     @Override
     public void drawOthers(List<List<LatLng>> routes) {
-        removeAll(others);
-        int edge = Color.parseColor(space ? SPACE_OTHER_EDGE : OTHER_EDGE);
-        int fill = Color.parseColor(space ? SPACE_OTHER : OTHER_ROUTE);
-        for (int i = 0; i < routes.size(); i++) {
-            List<com.google.android.gms.maps.model.LatLng> g = g(routes.get(i));
-            others.add(line(g, 13f, edge, 1));
-            Polyline top = line(g, 9f, fill, 2);
-            top.setClickable(true);
-            top.setTag(i);
-            others.add(top);
-        }
+        guard(() -> {
+            removeAll(others);
+            int edge = Color.parseColor(space ? SPACE_OTHER_EDGE : OTHER_EDGE);
+            int fill = Color.parseColor(space ? SPACE_OTHER : OTHER_ROUTE);
+            for (int i = 0; i < routes.size(); i++) {
+                List<com.google.android.gms.maps.model.LatLng> g = g(routes.get(i));
+                others.add(line(g, 13f, edge, 1));
+                Polyline top = line(g, 9f, fill, 2);
+                top.setClickable(true);
+                top.setTag(i);
+                others.add(top);
+            }
+        });
     }
 
     @Override
     public void drawPin(LatLng at, android.graphics.Bitmap icon) {
-        if (at == null) {
-            if (pin != null) {
-                pin.remove();
-                pin = null;
+        guard(() -> {
+            if (at == null) {
+                if (pin != null) {
+                    pin.remove();
+                    pin = null;
+                }
+                return;
             }
-            return;
-        }
-        if (pin == null || pinIcon != icon) {
-            if (pin != null) {
-                pin.remove();
+            if (pin == null || pinIcon != icon) {
+                if (pin != null) {
+                    pin.remove();
+                }
+                pinIcon = icon;
+                pin = map.addMarker(new MarkerOptions().position(g(at)).anchor(0.5f, 1f).zIndex(10)
+                        .icon(BitmapDescriptorFactory.fromBitmap(icon)));
+            } else {
+                pin.setPosition(g(at));
             }
-            pinIcon = icon;
-            pin = map.addMarker(new MarkerOptions().position(g(at)).anchor(0.5f, 1f).zIndex(10)
-                    .icon(BitmapDescriptorFactory.fromBitmap(icon)));
-        } else {
-            pin.setPosition(g(at));
-        }
+        });
     }
 
     @Override
     public void showTraffic(boolean on) {
-        if (map.isTrafficEnabled() != on) {
-            map.setTrafficEnabled(on);
-        }
+        guard(() -> {
+            if (map.isTrafficEnabled() != on) {
+                map.setTrafficEnabled(on);
+            }
+        });
     }
 }

@@ -3228,6 +3228,20 @@ public class AppConfig {
         prefs.edit().putBoolean(KEY_NAV_GOOGLE_MAP, on).apply();
     }
 
+    private static final String KEY_NAV_GOOGLE_MAP_BROKEN = "nav_google_map_broken";
+
+    /**
+     * The Play services / microG version the Google map last failed with (0 = none): that version
+     * isn't tried again; an update, or turning the setting back on, tries it again.
+     */
+    public long getNavGoogleMapBrokenVersion() {
+        return prefs.getLong(KEY_NAV_GOOGLE_MAP_BROKEN, 0L);
+    }
+
+    public void setNavGoogleMapBrokenVersion(long version) {
+        prefs.edit().putLong(KEY_NAV_GOOGLE_MAP_BROKEN, version).apply();
+    }
+
     private static final String KEY_NAV_MAP_SCHEME = "nav_map_scheme";
     /** The map's colours follow the head unit's day / night. */
     public static final int NAV_MAP_AUTO = 0;

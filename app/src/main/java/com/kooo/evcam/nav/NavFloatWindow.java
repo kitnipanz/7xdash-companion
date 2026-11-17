@@ -395,6 +395,10 @@ public final class NavFloatWindow implements Navigator.Listener {
             if (root == null || mapHost == null) {
                 return;
             }
+            // again after Google's map failed: TomTom's replaces it
+            if (painter != null) {
+                painter.release();
+            }
             painter = new NavMapPainter(context, map, mapHost.view(), 0, bar);
             map.setCompassEnabled(false);
             map.addOnGestureMove(() -> {

@@ -65,9 +65,14 @@ final class NavSettings {
         TextView googleHint = box.findViewById(R.id.nav_google_map_hint);
         google.setChecked(config.isNavGoogleMapEnabled());
         googleHint.setText(MapHost.wantGoogle(context) ? R.string.nav_google_map_on
-                : config.isNavGoogleMapEnabled() ? R.string.nav_google_map_missing : R.string.nav_google_map_off);
+                : !config.isNavGoogleMapEnabled() ? R.string.nav_google_map_off
+                : MapHost.googleBroken(context) ? R.string.nav_google_map_broken : R.string.nav_google_map_missing);
         google.setOnCheckedChangeListener((b, on) -> {
             config.setNavGoogleMapEnabled(on);
+            if (on) {
+                // turned back on: try Google's map again, even with the version it failed with
+                config.setNavGoogleMapBrokenVersion(0);
+            }
             googleHint.setText(on ? (MapHost.wantGoogle(context) ? R.string.nav_google_map_on
                     : R.string.nav_google_map_missing) : R.string.nav_google_map_off);
         });

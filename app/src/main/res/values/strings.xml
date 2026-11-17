@@ -1947,6 +1947,7 @@ Then reopen this app.</string>
     <string name="nav_google_map_switch">Google map when available</string>
     <string name="nav_google_map_on">Google Play services or microG found: the map is Google\'s. Takes effect the next time the map opens.</string>
     <string name="nav_google_map_missing">No Google Play services or microG (or no Google key in this build): the map is TomTom\'s.</string>
+    <string name="nav_google_map_broken">Google\'s map failed with this Play services / microG, so the map is TomTom\'s. It is tried again after an update, or turn this off and on.</string>
     <string name="nav_google_map_off">The map is TomTom\'s. Takes effect the next time the map opens.</string>
     <string name="nav_section_iphone">iPhone</string>
     <string name="nav_map_colours">Map colours</string>

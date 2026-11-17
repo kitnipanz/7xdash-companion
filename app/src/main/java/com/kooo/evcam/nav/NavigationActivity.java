@@ -187,7 +187,11 @@ public class NavigationActivity extends AppCompatActivity implements Navigator.L
         mapHost = new MapHost(this, findViewById(R.id.nav_map), this::onMap);
     }
 
+    /** The map is ready, or replaced by TomTom's after Google's failed: build on the new one. */
     private void onMap(MapEngine map) {
+        if (painter != null) {
+            painter.release();
+        }
         float d = getResources().getDisplayMetrics().density;
         // the cards cover the left and the top: keep the route and the compass clear of them
         painter = new NavMapPainter(this, map, mapHost.view(), Math.round(540 * d), 0);

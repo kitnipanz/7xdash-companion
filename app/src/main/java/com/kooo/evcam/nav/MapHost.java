@@ -16,9 +16,11 @@ import java.util.function.Consumer;
 /**
  * The map view of one screen (the full screen, the floating window, the HUD) and its engine: Google's
  * map where Google Play services or microG answers and the setting allows it, otherwise TomTom's map
- * drawn by MapLibre. A Google map that fails to start, or doesn't come up within {@link #GOOGLE_WAIT_MS},
- * gives way to TomTom's in the same place, and Google isn't tried again until the app restarts. The
- * owner passes on its lifecycle. Main thread.
+ * drawn by MapLibre. A Google map that fails to start, doesn't come up within {@link #GOOGLE_WAIT_MS},
+ * or fails later while drawing (microG's maps code runs in this process and can throw), gives way to
+ * TomTom's in the same place: the owner's ready callback then runs again with the new engine. The
+ * Play services / microG version it failed with isn't tried again ({@link AppConfig#getNavGoogleMapBrokenVersion}).
+ * The owner passes on its lifecycle. Main thread.
  */
 final class MapHost {
 
@@ -27,6 +29,7 @@ final class MapHost {
     private static final long GOOGLE_WAIT_MS = 8_000L;
     /** Google failed once in this run: straight to TomTom's map from now on. */
     private static boolean googleFailed;
+    private static final String GMS = "com.google.android.gms";
 
     private final Context context;
     private final ViewGroup parent;
@@ -40,7 +43,10 @@ final class MapHost {
     private boolean resumed;
     private boolean destroyed;
 
-    /** The map fills {@code parent}; {@code ready} gets its engine once it can be drawn on. */
+    /**
+     * The map fills {@code parent}; {@code ready} gets its engine once it can be drawn on, and again
+     * with TomTom's if Google's fails later (the owner drops what it built on the old one).
+     */
     MapHost(Context context, ViewGroup parent, Consumer<MapEngine> ready) {
         this.context = context;
         this.parent = parent;
@@ -61,7 +67,12 @@ final class MapHost {
 
     /** Google's map can be tried: the setting is on, the build has its key, and Play services (or microG) answers. */
     static boolean wantGoogle(Context context) {
-        if (googleFailed || BuildConfig.MAPS_API_KEY.isEmpty() || !new AppConfig(context).isNavGoogleMapEnabled()) {
+        AppConfig config = new AppConfig(context);
+        if (googleFailed || BuildConfig.MAPS_API_KEY.isEmpty() || !config.isNavGoogleMapEnabled()) {
+            return false;
+        }
+        long broken = config.getNavGoogleMapBrokenVersion();
+        if (broken != 0 && broken == gmsVersion(context)) {
             return false;
         }
         try {
@@ -78,6 +89,29 @@ final class MapHost {
         }
     }
 
+    /** Whether the Google map failed with the Play services / microG installed now. */
+    static boolean googleBroken(Context context) {
+        long broken = new AppConfig(context).getNavGoogleMapBrokenVersion();
+        return googleFailed || (broken != 0 && broken == gmsVersion(context));
+    }
+
+    private static long gmsVersion(Context context) {
+        try {
+            return context.getPackageManager().getPackageInfo(GMS, 0).getLongVersionCode();
+        } catch (Throwable t) {
+            return -1;
+        }
+    }
+
+    /** Google's map failed: not again in this run, nor with this Play services / microG. */
+    private void markGoogleFailed() {
+        googleFailed = true;
+        long v = gmsVersion(context);
+        if (v > 0) {
+            new AppConfig(context).setNavGoogleMapBrokenVersion(v);
+        }
+    }
+
     private final Runnable googleTooSlow = () -> {
         if (engine == null && googleView != null && !destroyed) {
             fallBack("not ready after " + GOOGLE_WAIT_MS + " ms");
@@ -89,8 +123,8 @@ final class MapHost {
             com.google.android.gms.maps.GoogleMapOptions options = new com.google.android.gms.maps.GoogleMapOptions()
                     .compassEnabled(false).mapToolbarEnabled(false).zoomControlsEnabled(false);
             com.google.android.gms.maps.MapView v = new com.google.android.gms.maps.MapView(context, options);
-            v.onCreate(null);
             googleView = v;
+            v.onCreate(null);
             view = v;
             parent.addView(v, 0, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.MATCH_PARENT));
@@ -101,9 +135,14 @@ final class MapHost {
                 }
                 main.removeCallbacks(googleTooSlow);
                 try {
-                    engine = new GoogleEngine(context, map);
-                } catch (RuntimeException e) {
-                    fallBack("map refused: " + e.getMessage());
+                    // a failure while drawing: switch after the call that failed has unwound
+                    engine = new GoogleEngine(context, map, t -> main.post(() -> {
+                        if (!destroyed && googleView == v) {
+                            fallBack("failed while drawing: " + t);
+                        }
+                    }));
+                } catch (Throwable t) {
+                    fallBack("map refused: " + t);
                     return;
                 }
                 AppLog.i(TAG, "Google map");
@@ -112,7 +151,7 @@ final class MapHost {
             return true;
         } catch (Throwable t) {
             AppLog.w(TAG, "no Google map: " + t);
-            googleFailed = true;
+            markGoogleFailed();
             dropGoogle();
             return false;
         }
@@ -120,8 +159,9 @@ final class MapHost {
 
     private void fallBack(String why) {
         AppLog.w(TAG, "Google map failed (" + why + "): TomTom's map instead");
-        googleFailed = true;
+        markGoogleFailed();
         main.removeCallbacks(googleTooSlow);
+        engine = null;
         dropGoogle();
         openLibre();
     }
@@ -174,10 +214,8 @@ final class MapHost {
     }
 
     private void deliver() {
-        Consumer<MapEngine> r = ready;
-        ready = null;
-        if (r != null) {
-            r.accept(engine);
+        if (ready != null && engine != null) {
+            ready.accept(engine);
         }
     }
 

@@ -2617,6 +2617,49 @@ public class AppConfig {
         prefs.edit().putBoolean(KEY_DASH_PANEL_MINIMIZED, minimized).apply();
     }
 
+    private static final String KEY_DASH_GAUGES = "dash_gauges";
+    private static final String KEY_DASH_GAUGE_SLOTS = "dash_gauge_slots";
+
+    /** Three gauges under the Dash panel (overlay.DashGaugesView). Off by default. */
+    public boolean isDashGaugesEnabled() {
+        return prefs.getBoolean(KEY_DASH_GAUGES, false);
+    }
+
+    public void setDashGaugesEnabled(boolean on) {
+        prefs.edit().putBoolean(KEY_DASH_GAUGES, on).apply();
+    }
+
+    /** The gauges as stored by {@link com.kooo.evcam.overlay.DashGauge#write}; empty = the defaults. */
+    public String getDashGaugeSlots() {
+        return prefs.getString(KEY_DASH_GAUGE_SLOTS, "");
+    }
+
+    public void setDashGaugeSlots(String slots) {
+        prefs.edit().putString(KEY_DASH_GAUGE_SLOTS, slots).apply();
+    }
+
+    private static final String KEY_DASH_GAUGES_BOUNDS = "dash_gauges_bounds";
+
+    /** Where the gauges float on their own (no Dash panel): x, y, width, height in pixels; width 0 = never moved. */
+    public int[] getDashGaugesBounds() {
+        int[] out = new int[4];
+        String[] parts = prefs.getString(KEY_DASH_GAUGES_BOUNDS, "").split(",");
+        if (parts.length == 4) {
+            try {
+                for (int i = 0; i < 4; i++) {
+                    out[i] = Integer.parseInt(parts[i].trim());
+                }
+            } catch (NumberFormatException e) {
+                return new int[4];
+            }
+        }
+        return out;
+    }
+
+    public void setDashGaugesBounds(int x, int y, int width, int height) {
+        prefs.edit().putString(KEY_DASH_GAUGES_BOUNDS, x + "," + y + "," + width + "," + height).apply();
+    }
+
     // ==================== Macro pad ====================
 
     private static final String KEY_HOME_CARD_ORDER = "home_card_order";

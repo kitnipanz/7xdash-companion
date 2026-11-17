@@ -528,15 +528,25 @@
             android:summary="@string/set_dash_panel_summary" />
 
         <SwitchPreferenceCompat
+            android:key="pref_dash_gauges"
+            android:title="@string/gauges_title"
+            android:summary="@string/set_gauges_summary" />
+
+        <SwitchPreferenceCompat
+            android:key="pref_dash_gauges_only"
+            android:dependency="pref_dash_gauges"
+            android:title="@string/gauges_only_title"
+            android:summary="@string/gauges_only_summary" />
+
+        <Preference
+            android:key="pref_dash_gauges_pick"
+            android:title="@string/gauges_pick_title"
+            android:summary="@string/gauges_pick_summary" />
+
+        <SwitchPreferenceCompat
             android:key="pref_macro_pad"
             android:title="@string/macro_pad_title"
             android:summary="@string/set_macro_pad_summary" />
-
-        <!-- Browser and Netflix: show the picture while driving, for passengers. Off by default -->
-        <SwitchPreferenceCompat
-            android:key="pref_browser_while_driving"
-            android:title="@string/set_browser_while_driving_title"
-            android:summary="@string/airplay_drive_warning" />
 
         <Preference
             android:key="pref_reset_floating"
@@ -615,6 +625,12 @@
             android:key="pref_language"
             android:title="@string/set_language_title"
             android:summary="%s" />
+
+        <!-- Browser and Netflix: show the picture while driving, for passengers. Off by default -->
+        <SwitchPreferenceCompat
+            android:key="pref_browser_while_driving"
+            android:title="@string/set_browser_while_driving_title"
+            android:summary="@string/airplay_drive_warning" />
 
         <!-- 7xDash：侧边菜单左右（主页控制栏、抽屉、设置分区列表一起） -->
         <com.kooo.evcam.settings.SegmentedPreference

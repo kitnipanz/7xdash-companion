@@ -79,7 +79,28 @@ public class DashPanelService extends Service implements Telemetry.Listener {
         if (svc == null || svc.view == null || svc.view.getParent() == null || svc.params == null) {
             return null;
         }
-        return new int[]{svc.params.x, svc.params.y, svc.params.width, svc.params.height};
+        int[] panel = {svc.params.x, svc.params.y, svc.params.width, svc.params.height};
+        if (svc.gaugeView == null || svc.gaugeView.getParent() == null) {
+            return panel;
+        }
+        // the gauges hang under (or over) the panel: the pad goes under both
+        WindowManager.LayoutParams g = svc.gaugeParams;
+        int top = Math.min(panel[1], g.y);
+        int bottom = Math.max(panel[1] + panel[3], g.y + g.height);
+        return new int[]{panel[0], top, panel[2], bottom - top};
+    }
+
+    /** The gauges were switched on or off, or a gauge changed: show them as chosen. */
+    public static void gaugesChanged() {
+        DashPanelService svc = instance;
+        if (svc != null) {
+            svc.main.post(() -> {
+                if (svc.gaugeView != null) {
+                    svc.gaugeView.setGauges(DashGauge.parse(svc.config.getDashGaugeSlots()));
+                }
+                svc.moved();
+            });
+        }
     }
 
     private final Handler main = new Handler(Looper.getMainLooper());
@@ -95,6 +116,12 @@ public class DashPanelService extends Service implements Telemetry.Listener {
     /** The whole panel's size; the window is smaller while {@link #minimized}. */
     private int fullWidth;
     private int fullHeight;
+    /** Three dials under the panel ({@link DashGaugesView}), or null when off or minimized. */
+    private DashGaugesView gaugeView;
+    private WindowManager.LayoutParams gaugeParams;
+    private final GaugeFeed feed = new GaugeFeed();
+    /** Space between the panel and the gauges, in dp. */
+    private static final int GAUGE_GAP_DP = 6;
     private final Runnable disarmQuit = () -> {
         quitArmed = false;
         refresh();
@@ -154,7 +181,7 @@ public class DashPanelService extends Service implements Telemetry.Listener {
             if (view != null) {
                 place();
                 windowManager.updateViewLayout(view, params);
-                OverlayCoordinator.dashPanelMoved();
+                moved();
             }
         } else {
             attach();
@@ -201,7 +228,7 @@ public class DashPanelService extends Service implements Telemetry.Listener {
             public void apply() {
                 if (view != null && view.isAttachedToWindow()) {
                     windowManager.updateViewLayout(view, params);
-                    OverlayCoordinator.dashPanelMoved();
+                    moved();
                 }
             }
 
@@ -238,7 +265,7 @@ public class DashPanelService extends Service implements Telemetry.Listener {
             stopSelf();
             return;
         }
-        OverlayCoordinator.dashPanelMoved();
+        moved();
         Telemetry.get().acquire(this, TELEMETRY_USER);
         Telemetry.get().addListener(this);
         main.post(tick);
@@ -326,7 +353,101 @@ public class DashPanelService extends Service implements Telemetry.Listener {
             AppLog.w(TAG, "resize: " + e.getMessage());
         }
         config.setDashPanelBounds(params.x, params.y, fullWidth, fullHeight);
+        moved();
+    }
+
+    /** The panel moved, resized, minimized or expanded: the gauges follow it, then the Macro pad follows both. */
+    private void moved() {
+        updateGauges();
         OverlayCoordinator.dashPanelMoved();
+    }
+
+    /**
+     * Gauges up when switched on and the panel is whole (not the pill), as wide as the panel, right
+     * under it (over it when there is no room below).
+     */
+    private void updateGauges() {
+        boolean want = view != null && view.getParent() != null && !minimized && config.isDashGaugesEnabled();
+        if (!want) {
+            removeGauges();
+            return;
+        }
+        boolean add = gaugeView == null;
+        if (add) {
+            gaugeView = new DashGaugesView(this);
+            gaugeView.setGauges(DashGauge.parse(config.getDashGaugeSlots()));
+            gaugeParams = new WindowManager.LayoutParams(
+                    WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.WRAP_CONTENT,
+                    WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+                    WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
+                    PixelFormat.TRANSLUCENT);
+            gaugeParams.gravity = Gravity.TOP | Gravity.START;
+            gaugeView.setOnTouchListener(this::gaugeTouch);
+        }
+        gaugeParams.width = params.width;
+        gaugeParams.height = Math.round(params.width / DashGaugesView.ASPECT);
+        int[] at = MacroPadDock.place(new int[]{params.x, params.y, params.width, params.height},
+                gaugeParams.width, gaugeParams.height, screenHeight(), dp(GAUGE_GAP_DP));
+        gaugeParams.x = at[0];
+        gaugeParams.y = at[1];
+        try {
+            if (add) {
+                windowManager.addView(gaugeView, gaugeParams);
+                refresh();
+            } else {
+                windowManager.updateViewLayout(gaugeView, gaugeParams);
+            }
+        } catch (Exception e) {
+            AppLog.w(TAG, "gauges: " + e.getMessage());
+            if (add) {
+                gaugeView = null;
+            }
+        }
+    }
+
+    private void removeGauges() {
+        if (gaugeView != null) {
+            try {
+                windowManager.removeViewImmediate(gaugeView);
+            } catch (Exception ignored) {
+            }
+            gaugeView = null;
+        }
+    }
+
+    private float gaugeDownX;
+    private float gaugeDownY;
+    private boolean gaugeMoved;
+
+    /** A tap on a gauge opens the screen to choose what it shows. */
+    private boolean gaugeTouch(android.view.View v, MotionEvent e) {
+        switch (e.getActionMasked()) {
+            case MotionEvent.ACTION_DOWN:
+                gaugeDownX = e.getRawX();
+                gaugeDownY = e.getRawY();
+                gaugeMoved = false;
+                return true;
+            case MotionEvent.ACTION_MOVE:
+                if (Math.abs(e.getRawX() - gaugeDownX) > dp(10) || Math.abs(e.getRawY() - gaugeDownY) > dp(10)) {
+                    gaugeMoved = true;
+                }
+                return true;
+            case MotionEvent.ACTION_UP:
+                int slot = gaugeView == null || gaugeMoved ? -1 : gaugeView.gaugeAt(e);
+                if (slot >= 0) {
+                    gaugeView.flash(slot);
+                    try {
+                        startActivity(new Intent(this, DashGaugesActivity.class)
+                                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                .putExtra(DashGaugesActivity.EXTRA_SLOT, slot));
+                    } catch (Exception ex) {
+                        AppLog.w(TAG, "open gauges: " + ex.getMessage());
+                    }
+                }
+                return true;
+            default:
+                return true;
+        }
     }
 
     private void press(int button) {
@@ -366,6 +487,10 @@ public class DashPanelService extends Service implements Telemetry.Listener {
         try {
             windowManager.removeViewImmediate(view);
             windowManager.addView(view, params);
+            if (gaugeView != null) {
+                windowManager.removeViewImmediate(gaugeView);
+                windowManager.addView(gaugeView, gaugeParams);
+            }
         } catch (Exception e) {
             AppLog.w(TAG, "raise above the dim: " + e.getMessage());
         }
@@ -445,6 +570,7 @@ public class DashPanelService extends Service implements Telemetry.Listener {
 
     @Override
     public void onReadingsChanged(Readings readings) {
+        feed.onReadings(readings);
         refresh();
     }
 
@@ -460,6 +586,10 @@ public class DashPanelService extends Service implements Telemetry.Listener {
         view.controls(config.isDimOverlayEnabled(), quitArmed);
         view.show(Telemetry.get().latest(),
                 RecordingCoordinator.get(this).isRecordingOrResuming(), blink);
+        if (gaugeView != null) {
+            gaugeView.setValues(feed.values(DashGauge.parse(config.getDashGaugeSlots()),
+                    Telemetry.get().readings()));
+        }
     }
 
     private int dp(int value) {
@@ -482,6 +612,7 @@ public class DashPanelService extends Service implements Telemetry.Listener {
         main.removeCallbacksAndMessages(null);
         Telemetry.get().removeListener(this);
         Telemetry.get().release(TELEMETRY_USER);
+        removeGauges();
         if (view != null) {
             try {
                 windowManager.removeView(view);

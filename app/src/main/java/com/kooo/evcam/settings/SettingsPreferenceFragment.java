@@ -957,7 +957,24 @@ public class SettingsPreferenceFragment extends PreferenceFragmentCompat {
         // 1.9: the floating button is folded into the Dash panel (record, dim, quit on its right edge),
         // so its own switch and look settings are gone
         bindOverlaySwitch("pref_dash_panel", appConfig.isDashPanelEnabled(),
-                OverlayCoordinator::setDashPanelEnabled, null);
+                OverlayCoordinator::setDashPanelEnabled, on -> syncGaugesOnly());
+        bindOverlaySwitch("pref_dash_gauges", appConfig.isDashGaugesEnabled(),
+                OverlayCoordinator::setDashGaugesEnabled, on -> syncGaugesOnly());
+        // Gauges only = the gauges float on their own and the Dash panel is off
+        bindOverlaySwitch("pref_dash_gauges_only",
+                appConfig.isDashGaugesEnabled() && !appConfig.isDashPanelEnabled(),
+                (context, on) -> OverlayCoordinator.setDashPanelEnabled(context, !on), on -> {
+                    SwitchPreferenceCompat panel = findPreference("pref_dash_panel");
+                    if (panel != null) {
+                        panel.setChecked(!on);
+                    }
+                });
+        onClick("pref_dash_gauges_pick", pref -> {
+            if (getContext() != null) {
+                startActivity(new android.content.Intent(getContext(),
+                        com.kooo.evcam.overlay.DashGaugesActivity.class));
+            }
+        });
         bindOverlaySwitch("pref_macro_pad", appConfig.isMacroPadEnabled(),
                 OverlayCoordinator::setMacroPadEnabled, null);
 
@@ -966,8 +983,17 @@ public class SettingsPreferenceFragment extends PreferenceFragmentCompat {
                 return;
             }
             com.kooo.evcam.overlay.DashPanelService.resetPosition(getContext());
+            appConfig.setDashGaugesBounds(0, 0, 0, 0);
             toast(getString(R.string.msg_floating_reset));
         });
+    }
+
+    /** The Dash panel or gauges switch moved: "Gauges only" shows whether the gauges are now alone. */
+    private void syncGaugesOnly() {
+        SwitchPreferenceCompat only = findPreference("pref_dash_gauges_only");
+        if (only != null) {
+            only.setChecked(appConfig.isDashGaugesEnabled() && !appConfig.isDashPanelEnabled());
+        }
     }
 
     // ------------------------------------------------------------------ 屏幕遮罩

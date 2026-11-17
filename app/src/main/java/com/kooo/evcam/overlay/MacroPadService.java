@@ -212,16 +212,19 @@ public class MacroPadService extends Service {
         if (params == null) {
             return false;
         }
-        int[] panel = DashPanelService.windowBounds();
+        int[] panel = OverlayCoordinator.dockTarget();
         int x = params.x;
         int y = params.y;
         int w = params.width;
         if (panel != null) {
             docked = true;
             // as wide as the panel's window: the whole panel, or the pill and its row of buttons
-            params.width = panel[2];
+            // never narrower than the pad itself (the gauges folded to their buttons are narrow);
+            // wider than what it hangs under, it lines up on the right instead
+            int own = Math.round(params.height * MacroPadView.ASPECT);
+            params.width = Math.max(panel[2], own);
             int[] at = MacroPadDock.place(panel, params.width, params.height, screenHeight(), dp(DOCK_GAP_DP));
-            params.x = at[0];
+            params.x = params.width > panel[2] ? Math.max(0, panel[0] + panel[2] - params.width) : at[0];
             params.y = at[1];
         } else if (docked) {
             docked = false;

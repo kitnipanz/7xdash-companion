@@ -174,6 +174,7 @@ public class DimOverlayService extends Service {
     /** The Dash panel was added first, so this window would cover it. Put the panel back on top. */
     private void raiseDashPanel() {
         DashPanelService.raiseAboveShade();
+        GaugesService.raiseAboveShade();
     }
 
     private int color(AppConfig config) {

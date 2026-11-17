@@ -1824,6 +1824,32 @@
     <string name="macro_pad_empty">ว่าง</string>
     <string name="macro_pad_button">ปุ่ม %1$d</string>
     <string name="macro_pad_clear">ล้าง</string>
+    <!-- Gauges under the Dash panel (overlay.DashGaugesView) -->
+    <string name="gauges_title">เกจวัด</string>
+    <string name="gauges_switch">แสดงเกจวัดสามตัว</string>
+    <string name="gauges_hint">แตะเกจด้านล่าง หรือแตะบนหน้าจอขณะขับ เพื่อเลือกค่าที่จะแสดง ขีดสีขาวคือจุดที่เข็มไปไกลที่สุด ถ้าเปิด Dash panel เกจจะอยู่ใต้ panel ถ้าปิด เกจจะลอยแยกเอง Macro pad จะอยู่ใต้เกจวัด</string>
+    <string name="gauges_gauge">เกจ %1$d</string>
+    <string name="set_gauges_summary">เกจกลมสามตัว: คันเร่ง แรง G แบตเตอรี่ และอื่นๆ อยู่ใต้ Dash panel หรือลอยแยกเอง</string>
+    <string name="gauges_only_title">แสดงเฉพาะเกจวัด</string>
+    <string name="gauges_only_summary">ซ่อน Dash panel แล้วลอยเฉพาะเกจวัด ลากและจีบนิ้วปรับขนาดได้เหมือน panel</string>
+    <string name="gauges_pick_title">เลือกเกจวัด</string>
+    <string name="gauges_pick_summary">เลือกค่าที่เกจแต่ละตัวแสดง</string>
+    <string name="gauge_speed">ความเร็ว</string>
+    <string name="gauge_throttle">คันเร่ง</string>
+    <string name="gauge_brake">เบรก</string>
+    <string name="gauge_g">แรง G</string>
+    <string name="gauge_steering">พวงมาลัย</string>
+    <string name="gauge_battery">แบตเตอรี่</string>
+    <string name="gauge_range">ระยะทาง</string>
+    <string name="gauge_battery_temp">อุณหภูมิแบต</string>
+    <string name="gauge_outside_temp">นอกรถ</string>
+    <string name="gauge_cabin_temp">ในห้องโดยสาร</string>
+    <string name="gauge_unit_kmh">กม./ชม.</string>
+    <string name="gauge_unit_percent">%</string>
+    <string name="gauge_unit_g">g</string>
+    <string name="gauge_unit_degrees">°</string>
+    <string name="gauge_unit_km">กม.</string>
+    <string name="gauge_unit_celsius">°C</string>
     <string name="shortcut_action_macro_pad">เปิด / ปิดแผงปุ่มลัด</string>
     <string name="shortcut_action_nav_float">เปิด / ปิดแผนที่ลอย</string>
     <!-- Navigation -->

@@ -104,6 +104,11 @@ public final class OverlayCoordinator {
             AppLog.d(TAG, "Dash panel shown from settings");
         }
 
+        if (config.isDashGaugesEnabled() && !config.isDashPanelEnabled() && allowed) {
+            GaugesService.show(context);
+            AppLog.d(TAG, "Gauges shown on their own from settings");
+        }
+
         if (config.isMacroPadEnabled() && allowed) {
             MacroPadService.show(context);
             AppLog.d(TAG, "Macro pad shown from settings");
@@ -128,6 +133,40 @@ public final class OverlayCoordinator {
         } else {
             DashPanelService.hide(context);
         }
+        syncGauges(context);
+        return true;
+    }
+
+    /** Gauges on with the Dash panel off: they float on their own; otherwise that window goes. */
+    private static void syncGauges(Context context) {
+        AppConfig config = new AppConfig(context);
+        if (config.isDashGaugesEnabled() && !config.isDashPanelEnabled()) {
+            GaugesService.show(context);
+        } else {
+            GaugesService.hide(context);
+        }
+    }
+
+    /**
+     * What the Macro pad docks under: the Dash panel (with its gauges), else the gauges on their
+     * own, else nothing. Main thread.
+     */
+    static int[] dockTarget() {
+        int[] panel = DashPanelService.windowBounds();
+        return panel != null ? panel : GaugesService.windowBounds();
+    }
+
+    /**
+     * Gauges on / off: under the Dash panel when it is on, on their own when it is off. Same
+     * return value as {@link #setDashPanelEnabled}.
+     */
+    public static boolean setDashGaugesEnabled(Context context, boolean enabled) {
+        if (enabled && !canShowOverlay(context)) {
+            return false;
+        }
+        new AppConfig(context).setDashGaugesEnabled(enabled);
+        DashPanelService.gaugesChanged();
+        syncGauges(context);
         return true;
     }
 

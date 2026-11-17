@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.9.5-beta] - 2026-11-17
+
+### Navigation
+- **Google's map where the head unit has Google Play services or microG**: the full screen, the floating window and the HUD draw Google's map; routes and search still come from TomTom. Without Play services or microG it stays TomTom's map.
+- **Falls back by itself**: a Google map that fails or isn't up within 8 seconds gives way to TomTom's map in the same place, until the app restarts.
+- **Google map when available**: Navigation settings → Map; turn it off to keep TomTom's map. It says whether Google was found.
+
+### Floating windows
+- **Open an app in a window**: Settings → Floating windows. Tap any app to open it in a floating window on the right where the head unit has floating windows, else in split screen beside 7xDash, else full screen with a note that the head unit allows neither. The top line says which this head unit allows.
+
 ## [1.9.4-beta] - 2026-11-17
 
 ### Gauges

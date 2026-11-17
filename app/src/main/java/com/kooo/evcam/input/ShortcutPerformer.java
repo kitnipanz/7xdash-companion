@@ -149,6 +149,9 @@ public final class ShortcutPerformer {
             case NETFLIX_WINDOW:
                 com.kooo.evcam.browser.NetflixApp.openInWindow(context);
                 return;
+            case YOUTUBE_WINDOW:
+                com.kooo.evcam.browser.YouTubeApp.openInWindow(context);
+                return;
             case DASH_PANEL:
                 AppConfig dash = new AppConfig(context);
                 boolean dashOn = !dash.isDashPanelEnabled();

@@ -79,7 +79,9 @@ public enum ShortcutAction {
     STEERING_HEAVY("steering_heavy", R.string.shortcut_action_steering_heavy, R.drawable.ic_steering),
     STEERING_CYCLE("steering_cycle", R.string.shortcut_action_steering_cycle, R.drawable.ic_steering),
     /** Netflix in a floating window over what is on screen (browser.NetflixApp#openInWindow). */
-    NETFLIX_WINDOW("netflix_window", R.string.shortcut_action_netflix_window, R.drawable.ic_float_window);
+    NETFLIX_WINDOW("netflix_window", R.string.shortcut_action_netflix_window, R.drawable.ic_float_window),
+    /** YouTube (or the installed stand-in) in a floating window (browser.YouTubeApp#openInWindow). */
+    YOUTUBE_WINDOW("youtube_window", R.string.shortcut_action_youtube_window, R.drawable.ic_float_window);
 
     /** The tabs actions are picked from, in tab order. */
     public enum Group {

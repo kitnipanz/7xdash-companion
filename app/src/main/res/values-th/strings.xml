@@ -2253,4 +2253,7 @@
     <string name="home_card_netflix_sub">เปิดในหน้าต่างลอย</string>
     <string name="shortcut_action_netflix_window">Netflix ในหน้าต่างลอย</string>
     <string name="netflix_not_installed">เครื่องนี้ยังไม่ได้ติดตั้ง Netflix</string>
+    <string name="home_card_youtube">YouTube</string>
+    <string name="shortcut_action_youtube_window">YouTube ในหน้าต่างลอย</string>
+    <string name="youtube_not_installed">เครื่องนี้ไม่มีแอป YouTube</string>
 </resources>

@@ -352,6 +352,11 @@ public class HomeFragment extends Fragment {
             addCard(R.drawable.ic_float_window, R.string.home_card_netflix, R.string.home_card_netflix_sub,
                     () -> com.kooo.evcam.browser.NetflixApp.openInWindow(requireContext()), null);
         }
+        // YouTube (or the installed stand-in) in a floating window
+        if (com.kooo.evcam.browser.YouTubeApp.isInstalled(requireContext())) {
+            addCard(R.drawable.ic_float_window, R.string.home_card_youtube, R.string.home_card_netflix_sub,
+                    () -> com.kooo.evcam.browser.YouTubeApp.openInWindow(requireContext()), null);
+        }
 
         // Beta: a browser that asks for desktop sites. Tap: full screen; hold: floating
         if (betaShown) {

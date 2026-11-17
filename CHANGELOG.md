@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.9.4-beta] - 2026-11-17
+
+### Gauges
+- **Three round gauges**, like a car-scanner app: a 270° dial with a needle, the number and unit, a red zone, and a white notch where the needle has gone furthest. Settings → Floating windows → Gauges.
+- **Choose what each shows**: speed, throttle, brake, G-force (worked out from the speed), steering angle, battery, range, battery temperature, outside and cabin temperature. Tap a gauge to change it.
+- **Under the Dash panel**, as wide as it, with the Macro pad under the gauges. They hide when the panel is minimized.
+- **Gauges only**: turn off the Dash panel and the gauges float on their own, with the panel's buttons (surround photo, instant capture, Super mirror, open 7xDash along the bottom; minimize, record, dim and quit on the right). Move, pinch and dock them like the panel; minimize folds them to the buttons.
+
+### Settings
+- **Browser and Netflix while driving** moved from Floating windows to Interface.
+
 ## [1.9.3-beta] - 2026-11-16
 
 ### Megaphone

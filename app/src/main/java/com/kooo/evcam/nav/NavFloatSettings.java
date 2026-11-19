@@ -63,7 +63,7 @@ final class NavFloatSettings {
         lp.x = place(mapX, mapW, w, screenW, margin);
         lp.y = Math.max(margin, Math.min(mapY, screenH - h - margin));
         try {
-            wm.addView(box, lp);
+            com.kooo.evcam.overlay.OverlayAccess.add(wm, box, lp);
             root = box;
         } catch (RuntimeException e) {
             com.kooo.evcam.AppLog.w("NavFloatSettings", "refused: " + e.getMessage());

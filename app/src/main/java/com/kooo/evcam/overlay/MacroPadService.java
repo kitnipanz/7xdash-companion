@@ -192,7 +192,7 @@ public class MacroPadService extends Service {
         });
         view.setOnTouchListener((v, event) -> gestures.onTouch(event));
         try {
-            windowManager.addView(view, params);
+            com.kooo.evcam.overlay.OverlayAccess.add(windowManager, view, params);
         } catch (Exception e) {
             AppLog.e(TAG, "add window failed", e);
             view = null;

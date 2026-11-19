@@ -205,7 +205,7 @@ public final class NavFloatWindow implements Navigator.Listener {
                 lp.width, dm.widthPixels, FloatingWindowGestures.PEEK_WIDTH_PX);
         lp.y = RearViewTouchModel.clampY(prefs.getInt("y", Math.round(90 * density)), lp.height, dm.heightPixels);
         try {
-            wm.addView(root, lp);
+            com.kooo.evcam.overlay.OverlayAccess.add(wm, root, lp);
         } catch (RuntimeException e) {
             AppLog.w(TAG, "floating window refused: " + e.getMessage());
             dropViews();

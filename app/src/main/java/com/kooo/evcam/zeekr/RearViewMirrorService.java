@@ -144,8 +144,7 @@ public class RearViewMirrorService extends Service {
             return this;
         }
         try {
-            return createWindowContext(hud,
-                    android.view.WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY, null);
+            return com.kooo.evcam.overlay.OverlayAccess.windowContext(this, hud);
         } catch (RuntimeException e) {
             AppLog.w(TAG, "后视镜投抬头显示失败: " + e.getMessage());
             return this;

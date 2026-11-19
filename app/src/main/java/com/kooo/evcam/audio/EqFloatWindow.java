@@ -46,7 +46,7 @@ public final class EqFloatWindow {
     /** Opens it, or asks for the draw-over-apps permission first. */
     public static void show(Activity activity) {
         Context app = activity.getApplicationContext();
-        if (!Settings.canDrawOverlays(app)) {
+        if (!com.kooo.evcam.overlay.OverlayAccess.canDraw(app)) {
             Notice.makeText(activity, R.string.eq_float_permission, Toast.LENGTH_LONG).show();
             try {
                 activity.startActivity(new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
@@ -71,7 +71,7 @@ public final class EqFloatWindow {
         params.gravity = Gravity.TOP | Gravity.START;
         params.x = Math.round(80 * density);
         params.y = Math.round(120 * density);
-        wm.addView(panel, params);
+        com.kooo.evcam.overlay.OverlayAccess.add(wm, panel, params);
         shown = panel;
     }
 

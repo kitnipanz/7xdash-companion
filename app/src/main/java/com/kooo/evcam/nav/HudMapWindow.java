@@ -50,8 +50,7 @@ final class HudMapWindow implements Navigator.Listener {
             return;
         }
         try {
-            Context window = context.getApplicationContext().createWindowContext(hud,
-                    WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY, null);
+            Context window = com.kooo.evcam.overlay.OverlayAccess.windowContext(context.getApplicationContext(), hud);
             WindowManager manager = window.getSystemService(WindowManager.class);
             Point size = HudDisplay.sizeOf(hud);
             hudSize = size;
@@ -74,7 +73,7 @@ final class HudMapWindow implements Navigator.Listener {
             lp.gravity = Gravity.TOP | Gravity.START;
             lp.x = box[0];
             lp.y = box[1];
-            manager.addView(frame, lp);
+            com.kooo.evcam.overlay.OverlayAccess.add(manager, frame, lp);
             wm = manager;
             root = frame;
             mapHost = new MapHost(window, frame, map -> {

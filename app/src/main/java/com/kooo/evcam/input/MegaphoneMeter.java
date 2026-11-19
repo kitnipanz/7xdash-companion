@@ -30,7 +30,7 @@ final class MegaphoneMeter {
         if (root != null) {
             return;
         }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(context)) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !com.kooo.evcam.overlay.OverlayAccess.canDraw(context)) {
             return;
         }
         WindowManager windows = context.getSystemService(WindowManager.class);
@@ -54,7 +54,7 @@ final class MegaphoneMeter {
                             | WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
                     PixelFormat.TRANSLUCENT);
             params.gravity = Gravity.CENTER;
-            windows.addView(inflated, params);
+            com.kooo.evcam.overlay.OverlayAccess.add(windows, inflated, params);
             root = inflated;
             bar = meter;
             number = label;

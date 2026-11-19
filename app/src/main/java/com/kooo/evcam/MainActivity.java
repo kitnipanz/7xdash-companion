@@ -3908,11 +3908,15 @@ public class MainActivity extends AppCompatActivity {
      */
     public void showImageAdjustFloatingWindow() {
         // 检查悬浮窗权限
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !android.provider.Settings.canDrawOverlays(this)) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !com.kooo.evcam.overlay.OverlayAccess.canDraw(this)) {
             com.kooo.evcam.ui.Notice.makeText(this, R.string.msg_need_overlay_adjust, Toast.LENGTH_SHORT).show();
             Intent intent = new Intent(android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
                     android.net.Uri.parse("package:" + getPackageName()));
-            startActivityForResult(intent, REQUEST_OVERLAY_PERMISSION);
+            try {
+                startActivityForResult(intent, REQUEST_OVERLAY_PERMISSION);
+            } catch (android.content.ActivityNotFoundException e) {
+                // The car has no overlay settings page
+            }
             return;
         }
         
@@ -3947,7 +3951,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == REQUEST_OVERLAY_PERMISSION) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && android.provider.Settings.canDrawOverlays(this)) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && com.kooo.evcam.overlay.OverlayAccess.canDraw(this)) {
                 // 权限已授予，打开悬浮窗
                 showImageAdjustFloatingWindow();
             } else {

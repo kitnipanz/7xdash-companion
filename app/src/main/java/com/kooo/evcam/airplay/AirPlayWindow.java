@@ -137,7 +137,7 @@ final class AirPlayWindow {
                 prefs.getInt("y", (dm.heightPixels - lp.height) / 2), lp.height, dm.heightPixels);
         paintStatus();
         try {
-            wm.addView(root, lp);
+            com.kooo.evcam.overlay.OverlayAccess.add(wm, root, lp);
             AirPlayLog.i("floating window shown " + lp.width + "x" + lp.height + " at " + lp.x + "," + lp.y);
         } catch (RuntimeException e) {
             AirPlayLog.w("floating window refused: " + e);

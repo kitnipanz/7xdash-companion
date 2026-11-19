@@ -103,7 +103,7 @@ public final class AnnouncePicker {
             scroll.setLayoutParams(sp);
         }
         try {
-            app.getSystemService(WindowManager.class).addView(root, lp);
+            com.kooo.evcam.overlay.OverlayAccess.add(app.getSystemService(WindowManager.class), root, lp);
             shown = root;
             touched();
         } catch (RuntimeException e) {

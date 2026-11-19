@@ -318,7 +318,7 @@ public class SideViewPopupView extends ViewGroup {
         applyVisibility(show);
         place(side);
         try {
-            windowManager.addView(this, params);
+            com.kooo.evcam.overlay.OverlayAccess.add(windowManager, this, params);
             attached = true;
             visible = show;
             if (show) {
@@ -340,7 +340,7 @@ public class SideViewPopupView extends ViewGroup {
         }
         try {
             windowManager.removeView(this);
-            windowManager.addView(this, params);
+            com.kooo.evcam.overlay.OverlayAccess.add(windowManager, this, params);
             AppLog.i(TAG, "侧视窗：提到遮罩上面");
         } catch (Exception e) {
             attached = false;

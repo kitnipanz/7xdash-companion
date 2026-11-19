@@ -52,7 +52,7 @@ final class StickerArrived {
     }
 
     private static void present(Context context, String which) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(context)) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !com.kooo.evcam.overlay.OverlayAccess.canDraw(context)) {
             return;
         }
         WindowManager windows = context.getSystemService(WindowManager.class);
@@ -77,7 +77,7 @@ final class StickerArrived {
                             | WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
                     PixelFormat.TRANSLUCENT);
             params.gravity = Gravity.CENTER;
-            windows.addView(card, params);
+            com.kooo.evcam.overlay.OverlayAccess.add(windows, card, params);
             root = card;
             MAIN.removeCallbacks(HIDE);
             MAIN.postDelayed(HIDE, SHOW_MS);

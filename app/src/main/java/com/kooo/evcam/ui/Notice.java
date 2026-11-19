@@ -68,7 +68,7 @@ public final class Notice {
     }
 
     private static void showNow(Context context, String text, long ms) {
-        if (!Settings.canDrawOverlays(context)) {
+        if (!com.kooo.evcam.overlay.OverlayAccess.canDraw(context)) {
             Toast.makeText(context, text, ms > SHORT_MS ? Toast.LENGTH_LONG : Toast.LENGTH_SHORT).show();
             return;
         }
@@ -85,7 +85,7 @@ public final class Notice {
             lp.gravity = Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
             lp.y = dp(context, 72);
             lp.windowAnimations = android.R.style.Animation_Toast;
-            wm.addView(card, lp);
+            com.kooo.evcam.overlay.OverlayAccess.add(wm, card, lp);
             shownIn = wm;
             shown = card;
             MAIN.postDelayed(HIDE, ms);

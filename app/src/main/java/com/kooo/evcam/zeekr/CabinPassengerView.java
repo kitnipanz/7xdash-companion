@@ -207,7 +207,7 @@ public class CabinPassengerView extends ViewGroup {
         params.x = RearViewTouchModel.clampX(savedX, width, screenWidth(), FloatingWindowGestures.PEEK_WIDTH_PX);
         params.y = RearViewTouchModel.clampY(savedY, height, screenHeight());
         try {
-            windowManager.addView(this, params);
+            com.kooo.evcam.overlay.OverlayAccess.add(windowManager, this, params);
             attached = true;
         } catch (Exception e) {
             AppLog.e(TAG, "cabin window failed to attach", e);

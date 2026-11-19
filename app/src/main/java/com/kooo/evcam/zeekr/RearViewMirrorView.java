@@ -297,7 +297,7 @@ public class RearViewMirrorView extends ViewGroup {
         }
 
         try {
-            windowManager.addView(this, params);
+            com.kooo.evcam.overlay.OverlayAccess.add(windowManager, this, params);
             attached = true;
             lastFrameUptimeMs = SystemClock.uptimeMillis();
             buttonMode = appConfig.isRearViewButtonMode();

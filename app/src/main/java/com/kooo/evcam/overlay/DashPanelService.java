@@ -258,7 +258,7 @@ public class DashPanelService extends Service implements Telemetry.Listener {
         });
         view.setOnTouchListener((v, event) -> dimTouch(event) || gestures.onTouch(event));
         try {
-            windowManager.addView(view, params);
+            com.kooo.evcam.overlay.OverlayAccess.add(windowManager, view, params);
         } catch (Exception e) {
             AppLog.e(TAG, "add window failed", e);
             view = null;
@@ -392,7 +392,7 @@ public class DashPanelService extends Service implements Telemetry.Listener {
         gaugeParams.y = at[1];
         try {
             if (add) {
-                windowManager.addView(gaugeView, gaugeParams);
+                com.kooo.evcam.overlay.OverlayAccess.add(windowManager, gaugeView, gaugeParams);
                 refresh();
             } else {
                 windowManager.updateViewLayout(gaugeView, gaugeParams);
@@ -486,10 +486,10 @@ public class DashPanelService extends Service implements Telemetry.Listener {
         raiseWhenLifted = false;
         try {
             windowManager.removeViewImmediate(view);
-            windowManager.addView(view, params);
+            com.kooo.evcam.overlay.OverlayAccess.add(windowManager, view, params);
             if (gaugeView != null) {
                 windowManager.removeViewImmediate(gaugeView);
-                windowManager.addView(gaugeView, gaugeParams);
+                com.kooo.evcam.overlay.OverlayAccess.add(windowManager, gaugeView, gaugeParams);
             }
         } catch (Exception e) {
             AppLog.w(TAG, "raise above the dim: " + e.getMessage());

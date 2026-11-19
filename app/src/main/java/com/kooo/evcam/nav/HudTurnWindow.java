@@ -62,8 +62,7 @@ final class HudTurnWindow {
             return false;
         }
         try {
-            Context window = context.getApplicationContext().createWindowContext(hud,
-                    WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY, null);
+            Context window = com.kooo.evcam.overlay.OverlayAccess.windowContext(context.getApplicationContext(), hud);
             WindowManager manager = window.getSystemService(WindowManager.class);
             Point size = HudDisplay.sizeOf(hud);
             AppConfig config = new AppConfig(context);
@@ -85,7 +84,7 @@ final class HudTurnWindow {
                     WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE,
                     PixelFormat.TRANSLUCENT);
             lp.gravity = Gravity.TOP | Gravity.START;
-            manager.addView(frame, lp);
+            com.kooo.evcam.overlay.OverlayAccess.add(manager, frame, lp);
             wm = manager;
             root = frame;
             return true;

@@ -65,7 +65,7 @@ public final class BrowserFloat implements BrowserView.Host {
 
     /** Opens the floating browser at {@code url} (null: the last page). False when 7xDash may not draw over apps yet. */
     public static boolean show(Context context, String url) {
-        if (!Settings.canDrawOverlays(context)) {
+        if (!com.kooo.evcam.overlay.OverlayAccess.canDraw(context)) {
             Toast.makeText(context, R.string.browser_need_overlay, Toast.LENGTH_LONG).show();
             Intent i = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
                     Uri.parse("package:" + context.getPackageName()));
@@ -166,7 +166,7 @@ public final class BrowserFloat implements BrowserView.Host {
         lp.y = RearViewTouchModel.clampY(prefs.getInt("y", (dm.heightPixels - lp.height) / 2), lp.height,
                 dm.heightPixels);
         try {
-            wm.addView(root, lp);
+            com.kooo.evcam.overlay.OverlayAccess.add(wm, root, lp);
             AppLog.i(TAG, "shown " + lp.width + "x" + lp.height + " at " + lp.x + "," + lp.y);
         } catch (RuntimeException e) {
             AppLog.w(TAG, "floating browser refused: " + e);

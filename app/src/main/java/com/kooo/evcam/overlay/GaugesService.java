@@ -66,7 +66,7 @@ public class GaugesService extends Service implements Telemetry.Listener {
                 }
                 try {
                     svc.windowManager.removeViewImmediate(svc.view);
-                    svc.windowManager.addView(svc.view, svc.params);
+                    com.kooo.evcam.overlay.OverlayAccess.add(svc.windowManager, svc.view, svc.params);
                 } catch (Exception e) {
                     AppLog.w(TAG, "raise above the dim: " + e.getMessage());
                 }
@@ -236,7 +236,7 @@ public class GaugesService extends Service implements Telemetry.Listener {
         });
         view.setOnTouchListener((v, event) -> gestures.onTouch(event));
         try {
-            windowManager.addView(view, params);
+            com.kooo.evcam.overlay.OverlayAccess.add(windowManager, view, params);
         } catch (Exception e) {
             AppLog.e(TAG, "add window failed", e);
             view = null;

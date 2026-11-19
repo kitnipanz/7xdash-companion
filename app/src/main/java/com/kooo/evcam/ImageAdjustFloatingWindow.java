@@ -119,7 +119,7 @@ public class ImageAdjustFloatingWindow {
         layoutParams.y = 100;
         
         try {
-            windowManager.addView(floatingView, layoutParams);
+            com.kooo.evcam.overlay.OverlayAccess.add(windowManager, floatingView, layoutParams);
             isShowing = true;
             AppLog.d(TAG, "Floating window shown");
         } catch (Exception e) {
@@ -633,7 +633,13 @@ public class ImageAdjustFloatingWindow {
             }
         }
         
-        dialog.show();
+        // Without the overlay permission (the window then runs through the accessibility
+        // service) a dialog of this type is refused; skip it rather than crash.
+        try {
+            dialog.show();
+        } catch (RuntimeException e) {
+            AppLog.w(TAG, "Option dialog not shown: " + e.getMessage());
+        }
     }
     
     /**

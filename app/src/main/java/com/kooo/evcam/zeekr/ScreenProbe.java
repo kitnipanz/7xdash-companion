@@ -289,18 +289,17 @@ public final class ScreenProbe {
             }
             WindowManager wm = (WindowManager) app.getSystemService(Context.WINDOW_SERVICE);
             TextView label = label(app, display, text);
-            wm.addView(label, band(app, display));
+            com.kooo.evcam.overlay.OverlayAccess.add(wm, label, band(app, display));
             ViewSlot held = new ViewSlot();
             held.windowManager = wm;
             held.overlay = label;
             slot = held;
             return true;
         }
-        Context windowContext = app.createWindowContext(
-                display, WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY, null);
+        Context windowContext = com.kooo.evcam.overlay.OverlayAccess.windowContext(app, display);
         WindowManager wm = (WindowManager) windowContext.getSystemService(Context.WINDOW_SERVICE);
         TextView label = label(windowContext, display, text);
-        wm.addView(label, band(windowContext, display));
+        com.kooo.evcam.overlay.OverlayAccess.add(wm, label, band(windowContext, display));
         ViewSlot held = new ViewSlot();
         held.windowManager = wm;
         held.overlay = label;

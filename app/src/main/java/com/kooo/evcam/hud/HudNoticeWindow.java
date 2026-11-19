@@ -56,8 +56,7 @@ public final class HudNoticeWindow {
         }
         hide();
         try {
-            Context window = context.createWindowContext(hud,
-                    WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY, null);
+            Context window = com.kooo.evcam.overlay.OverlayAccess.windowContext(context, hud);
             WindowManager wm = window.getSystemService(WindowManager.class);
             Point size = HudDisplay.sizeOf(hud);
             com.kooo.evcam.AppConfig config = new com.kooo.evcam.AppConfig(context);
@@ -83,7 +82,7 @@ public final class HudNoticeWindow {
             lp.gravity = Gravity.TOP | Gravity.START;
             lp.x = 0;
             lp.y = 0;
-            wm.addView(root, lp);
+            com.kooo.evcam.overlay.OverlayAccess.add(wm, root, lp);
             shownIn = wm;
             shown = root;
             MAIN.postDelayed(HIDE, HudNotice.SHOW_MS);

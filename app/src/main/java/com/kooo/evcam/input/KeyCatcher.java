@@ -87,7 +87,7 @@ public final class KeyCatcher {
                 PixelFormat.TRANSLUCENT);
         params.gravity = Gravity.TOP | Gravity.START;
         try {
-            windowManager.addView(view, params);
+            com.kooo.evcam.overlay.OverlayAccess.add(windowManager, view, params);
             AppLog.i(TAG, "按键捕捉窗已挂上");
         } catch (Exception e) {
             AppLog.e(TAG, "按键捕捉窗添加失败", e);

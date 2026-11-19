@@ -64,7 +64,7 @@ final class ObdSnifferWindow {
         }
         hide();
         Context app = context.getApplicationContext();
-        if (!Settings.canDrawOverlays(app)) {
+        if (!com.kooo.evcam.overlay.OverlayAccess.canDraw(app)) {
             return false;
         }
         shown = new ObdSnifferWindow(app, capture);
@@ -139,7 +139,7 @@ final class ObdSnifferWindow {
     }
 
     private void attach() {
-        windows.addView(root, params);
+        com.kooo.evcam.overlay.OverlayAccess.add(windows, root, params);
         tick();
     }
 

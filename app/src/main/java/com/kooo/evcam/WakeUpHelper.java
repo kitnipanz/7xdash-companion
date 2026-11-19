@@ -27,7 +27,7 @@ public class WakeUpHelper {
      */
     public static boolean hasOverlayPermission(Context context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            return Settings.canDrawOverlays(context);
+            return com.kooo.evcam.overlay.OverlayAccess.canDraw(context);
         }
         return true;
     }
@@ -40,7 +40,11 @@ public class WakeUpHelper {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION);
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            context.startActivity(intent);
+            try {
+                context.startActivity(intent);
+            } catch (android.content.ActivityNotFoundException e) {
+                // The car has no overlay settings page
+            }
         }
     }
 

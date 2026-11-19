@@ -127,7 +127,7 @@ public class DimOverlayService extends Service {
         }
         applyLook(config);
         try {
-            windowManager.addView(shade, layoutParams);
+            com.kooo.evcam.overlay.OverlayAccess.add(windowManager, shade, layoutParams);
             AppLog.i(TAG, "屏幕遮罩已打开 " + real.x + "x" + real.y);
             com.kooo.evcam.zeekr.SideViewPopupService.raiseAboveShade();
             com.kooo.evcam.zeekr.BothMirrorsService.raiseAboveShade();

@@ -128,7 +128,7 @@ public class BothMirrorsView extends ViewGroup {
         params.gravity = Gravity.TOP | Gravity.START;
         place();
         try {
-            windowManager.addView(this, params);
+            com.kooo.evcam.overlay.OverlayAccess.add(windowManager, this, params);
             attached = true;
         } catch (Exception e) {
             AppLog.e(TAG, "左右侧视添加失败", e);

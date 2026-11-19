@@ -148,7 +148,7 @@ public class BothMirrorsService extends Service {
             return this;
         }
         try {
-            return createWindowContext(hud, WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY, null);
+            return com.kooo.evcam.overlay.OverlayAccess.windowContext(this, hud);
         } catch (RuntimeException e) {
             hudFailed = true;
             AppLog.w(TAG, "抬头显示窗口建不了: " + e.getMessage());

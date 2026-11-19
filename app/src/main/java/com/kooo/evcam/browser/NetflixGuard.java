@@ -134,7 +134,7 @@ public final class NetflixGuard {
             }
         }
         removeCovers();
-        if (want.isEmpty() || app == null || !Settings.canDrawOverlays(app)) {
+        if (want.isEmpty() || app == null || !com.kooo.evcam.overlay.OverlayAccess.canDraw(app)) {
             return;
         }
         WindowManager wm = app.getSystemService(WindowManager.class);
@@ -153,7 +153,7 @@ public final class NetflixGuard {
             lp.x = r.left;
             lp.y = r.top;
             try {
-                wm.addView(cover, lp);
+                com.kooo.evcam.overlay.OverlayAccess.add(wm, cover, lp);
                 covers.add(cover);
             } catch (RuntimeException e) {
                 AppLog.w(TAG, "cover refused: " + e);

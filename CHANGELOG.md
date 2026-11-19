@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.9.7-beta] - 2026-11-19
+
+### Floating windows on the car
+- **No more "Grant the overlay permission first" on the car**: the head unit has no page to allow showing over other apps, so every floating window was refused. When that permission is missing, floating windows (Dash panel, gauges, mirrors, blind spot, navigation, HUD notices, messages and the rest) now open through 7xDash's accessibility service instead. The accessibility service must be on (it switches itself on once WRITE_SECURE_SETTINGS has been granted over ADB); the first tap after it starts can still show the message.
+- **Installs on the car**: camera, Bluetooth, GPS and other hardware are no longer required, so the car's installer doesn't refuse the app.
+
+### Netflix and YouTube
+- **Android TV builds** of Netflix and YouTube open from the cards too.
+- **Cards always shown**: a tap says when the app can't be found. Diagnostics → Video apps lists what was found.
+
 ## [1.9.6-beta] - 2026-11-17
 
 ### Netflix and YouTube

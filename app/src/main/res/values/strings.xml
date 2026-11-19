@@ -2277,8 +2277,8 @@ Then reopen this app.</string>
     <string name="home_card_netflix">Netflix</string>
     <string name="home_card_netflix_sub">Opens in a floating window</string>
     <string name="shortcut_action_netflix_window">Netflix in a floating window</string>
-    <string name="netflix_not_installed">Netflix isn\'t installed on this head unit</string>
+    <string name="netflix_not_installed">7xDash can\'t find Netflix on this head unit. An app installed inside a virtual-space app (a \"Box\") can\'t be opened from 7xDash. Diagnostics → Video apps shows what was found.</string>
     <string name="home_card_youtube">YouTube</string>
     <string name="shortcut_action_youtube_window">YouTube in a floating window</string>
-    <string name="youtube_not_installed">No YouTube app on this head unit</string>
+    <string name="youtube_not_installed">7xDash can\'t find a YouTube app on this head unit. An app installed inside a virtual-space app (a \"Box\") can\'t be opened from 7xDash. Diagnostics → Video apps shows what was found.</string>
 </resources>

@@ -32,16 +32,12 @@ public final class YouTubeApp {
     /** How to open the first installed YouTube player, or null when there is none. */
     static Intent launchIntent(Context context) {
         for (String p : PACKAGES) {
-            Intent launch = context.getPackageManager().getLaunchIntentForPackage(p);
-            if (launch != null && launch.getComponent() != null) {
+            Intent launch = AppWindow.launchIntent(context, p);
+            if (launch != null) {
                 return launch;
             }
         }
         return null;
-    }
-
-    public static boolean isInstalled(Context context) {
-        return launchIntent(context) != null;
     }
 
     /** YouTube in a floating window where the head unit has them ({@link AppWindow}), else as it allows. */

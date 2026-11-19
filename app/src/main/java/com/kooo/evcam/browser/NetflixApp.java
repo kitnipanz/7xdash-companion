@@ -15,12 +15,20 @@ import com.kooo.evcam.ui.Notice;
 public final class NetflixApp {
 
     public static final String PACKAGE = "com.netflix.mediaclient";
+    /** First installed wins: the phone / tablet app, then the Android TV one some head units carry. */
+    static final String[] PACKAGES = {PACKAGE, "com.netflix.ninja"};
 
     private NetflixApp() {
     }
 
-    public static boolean isInstalled(Context context) {
-        return context.getPackageManager().getLaunchIntentForPackage(PACKAGE) != null;
+    static Intent launchIntent(Context context) {
+        for (String p : PACKAGES) {
+            Intent launch = AppWindow.launchIntent(context, p);
+            if (launch != null) {
+                return launch;
+            }
+        }
+        return null;
     }
 
     /**
@@ -28,8 +36,8 @@ public final class NetflixApp {
      * head unit allows. Says so when Netflix isn't installed or could only open full screen.
      */
     public static void openInWindow(Context context) {
-        Intent launch = context.getPackageManager().getLaunchIntentForPackage(PACKAGE);
-        if (launch == null || launch.getComponent() == null) {
+        Intent launch = launchIntent(context);
+        if (launch == null) {
             Notice.makeText(context, R.string.netflix_not_installed, Toast.LENGTH_LONG).show();
             return;
         }

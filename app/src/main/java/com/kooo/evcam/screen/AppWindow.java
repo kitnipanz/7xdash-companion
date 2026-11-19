@@ -49,6 +49,60 @@ public final class AppWindow {
         return new Rect(right - w, top, right, top + h);
     }
 
+    /**
+     * How to open {@code pkg}: its launcher activity, or its Android TV one (the TV builds of
+     * Netflix and YouTube have only that). Null when it isn't installed or can't be opened.
+     */
+    public static Intent launchIntent(Context context, String pkg) {
+        android.content.pm.PackageManager pm = context.getPackageManager();
+        Intent launch = pm.getLaunchIntentForPackage(pkg);
+        if (launch == null) {
+            launch = pm.getLeanbackLaunchIntentForPackage(pkg);
+        }
+        return launch == null || launch.getComponent() == null ? null : launch;
+    }
+
+    /**
+     * For Diagnostics: what the system says about each Netflix and YouTube app, and any other app
+     * whose name says Netflix or YouTube, so a missing card can be explained.
+     */
+    public static void appendVideoApps(StringBuilder sb, Context context, String[] netflix, String[] youtube) {
+        sb.append("========== Video apps (Netflix / YouTube cards) ==========\n");
+        android.content.pm.PackageManager pm = context.getPackageManager();
+        java.util.Set<String> listed = new java.util.LinkedHashSet<>();
+        java.util.Collections.addAll(listed, netflix);
+        java.util.Collections.addAll(listed, youtube);
+        for (String p : listed) {
+            sb.append(p).append(": ").append(describe(pm, context, p)).append('\n');
+        }
+        try {
+            for (android.content.pm.PackageInfo info : pm.getInstalledPackages(0)) {
+                String p = info.packageName;
+                String lower = p.toLowerCase(java.util.Locale.ROOT);
+                if (!listed.contains(p) && (lower.contains("netflix") || lower.contains("youtube")
+                        || lower.contains("smarttube") || lower.contains("box"))) {
+                    sb.append("also installed: ").append(p).append(": ").append(describe(pm, context, p)).append('\n');
+                }
+            }
+        } catch (RuntimeException e) {
+            sb.append("installed list refused: ").append(e.getMessage()).append('\n');
+        }
+        sb.append('\n');
+    }
+
+    private static String describe(android.content.pm.PackageManager pm, Context context, String p) {
+        try {
+            android.content.pm.ApplicationInfo ai = pm.getApplicationInfo(p, 0);
+            String how = pm.getLaunchIntentForPackage(p) != null ? "launcher"
+                    : pm.getLeanbackLaunchIntentForPackage(p) != null ? "TV launcher" : "no launcher";
+            return "installed" + (ai.enabled ? "" : " (disabled)") + ", " + how;
+        } catch (android.content.pm.PackageManager.NameNotFoundException e) {
+            return "not installed";
+        } catch (RuntimeException e) {
+            return "unknown: " + e.getMessage();
+        }
+    }
+
     /** Opens {@code app}; returns how it was asked to open. Split screen sits beside {@code from} when it is an activity. */
     public static Mode open(Context from, ComponentName app) {
         Mode mode = modeFor(MultiWindowProbe.probe(from));

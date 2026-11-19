@@ -70,9 +70,23 @@
         android:usesPermissionFlags="neverForLocation"
         tools:targetApi="s" />
 
-    <!-- 声明使用摄像头功能 -->
-    <uses-feature android:name="android.hardware.camera" android:required="true" />
+    <!-- Hardware is declared optional so the car head unit installs the app even when it
+         does not advertise a given feature. A missing REQUIRED feature makes the automotive
+         package installer reject the apk with INSTALL_FAILED_MISSING_FEATURE. -->
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
     <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
+    <uses-feature android:name="android.hardware.bluetooth" android:required="false" />
+    <uses-feature android:name="android.hardware.location" android:required="false" />
+    <uses-feature android:name="android.hardware.location.gps" android:required="false" />
+    <uses-feature android:name="android.hardware.microphone" android:required="false" />
+    <uses-feature android:name="android.hardware.wifi" android:required="false" />
+    <uses-feature android:name="android.hardware.screen.landscape" android:required="false" />
+    <uses-feature android:name="android.hardware.screen.portrait" android:required="false" />
+    <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
+    <uses-feature android:name="android.hardware.faketouch" android:required="false" />
+    <!-- A dependency injects a required Vulkan feature; drop it so a car unit without
+         Vulkan is not refused the install. -->
+    <uses-feature android:name="android.hardware.vulkan.version" tools:node="remove" />
 
     <!-- Announcements read phrases with the head unit's text-to-speech. From Android 11 an app
          only sees the speech engines it declares it looks for -->

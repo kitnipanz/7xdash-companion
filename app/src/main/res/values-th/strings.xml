@@ -2252,8 +2252,8 @@
     <string name="home_card_netflix">Netflix</string>
     <string name="home_card_netflix_sub">เปิดในหน้าต่างลอย</string>
     <string name="shortcut_action_netflix_window">Netflix ในหน้าต่างลอย</string>
-    <string name="netflix_not_installed">เครื่องนี้ยังไม่ได้ติดตั้ง Netflix</string>
+    <string name="netflix_not_installed">7xDash หา Netflix ในเครื่องนี้ไม่เจอ แอปที่ติดตั้งไว้ในแอปพื้นที่เสมือน (เช่น Box) จะเปิดจาก 7xDash ไม่ได้ ดูสิ่งที่พบได้ที่ การวินิจฉัย → Video apps</string>
     <string name="home_card_youtube">YouTube</string>
     <string name="shortcut_action_youtube_window">YouTube ในหน้าต่างลอย</string>
-    <string name="youtube_not_installed">เครื่องนี้ไม่มีแอป YouTube</string>
+    <string name="youtube_not_installed">7xDash หาแอป YouTube ในเครื่องนี้ไม่เจอ แอปที่ติดตั้งไว้ในแอปพื้นที่เสมือน (เช่น Box) จะเปิดจาก 7xDash ไม่ได้ ดูสิ่งที่พบได้ที่ การวินิจฉัย → Video apps</string>
 </resources>

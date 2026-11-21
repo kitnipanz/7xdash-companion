@@ -732,6 +732,11 @@
             android:summary="@string/set_vehicle_info_summary" />
 
         <Preference
+            android:key="pref_car_access_check"
+            android:title="@string/cac_title"
+            android:summary="@string/cac_summary" />
+
+        <Preference
             android:key="pref_screen_probe"
             android:title="@string/set_screen_probe_title"
             android:summary="@string/set_screen_probe_summary" />

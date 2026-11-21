@@ -2182,4 +2182,34 @@ Then reopen this app.</string>
     <string name="home_edit_tab_beta">Beta (%1$d)</string>
     <string name="home_edit_drag">Move</string>
     <string name="home_edit_done">Done</string>
+
+    <!-- Car data access check (CarAccessCheck) -->
+    <string name="cac_title">Car data access check</string>
+    <string name="cac_summary">Tries every way 7xDash can read the car (ECARX, android.car, Zeekr services) and shows which work for this install</string>
+    <string name="cac_intro">Press Check. It tries each way into the car data and says what happened: the ECARX library, the standard android.car values, Zeekr setting_zeekr, and which Zeekr and ECARX services and permissions exist. Run it once with the App Lab install and once with the Zeekr Store install, press Copy all each time and send both. Nothing is written to the car. If a value needs a permission, press Ask for car permissions, then Check again.</string>
+    <string name="cac_run">Check</string>
+    <string name="cac_running">Checking… up to about half a minute</string>
+    <string name="cac_done">Done: %1$d OK, %2$d failed</string>
+    <string name="cac_ask">Ask for car permissions</string>
+    <string name="cac_ask_none">No car permission left to ask for</string>
+    <string name="cac_copy">Copy all</string>
+    <string name="cac_copied">Copied %1$d characters</string>
+    <string name="cac_empty">Not checked yet</string>
+    <string name="cac_sec_summary">Summary</string>
+    <string name="cac_sec_install">This install</string>
+    <string name="cac_sec_ecarx">1. ECARX library</string>
+    <string name="cac_sec_android_car">2–3. android.car (standard values and setting_zeekr)</string>
+    <string name="cac_sec_packages">4. Zeekr and ECARX services</string>
+    <string name="cac_sec_permissions">Car permissions</string>
+    <string name="cac_v_ecarx_ok">ECARX: works, %1$d of %2$d reads answered</string>
+    <string name="cac_v_ecarx_no_class">ECARX: this app cannot see the ECARX library</string>
+    <string name="cac_v_ecarx_hang">ECARX: Car.create did not answer within %1$d s</string>
+    <string name="cac_v_ecarx_null">ECARX: Car.create gave nothing back</string>
+    <string name="cac_v_ecarx_error">ECARX: Car.create failed</string>
+    <string name="cac_v_ecarx_silent">ECARX: connected, but no read answered</string>
+    <string name="cac_v_car_none">android.car: not available to this app</string>
+    <string name="cac_v_car_fail">android.car: could not connect</string>
+    <string name="cac_v_props">android.car standard values: %1$d of %2$d readable</string>
+    <string name="cac_v_setting_zeekr">android.car setting_zeekr</string>
+    <string name="cac_v_requestable">Zeekr / ECARX define %1$d permissions any app may ask for</string>
 </resources>

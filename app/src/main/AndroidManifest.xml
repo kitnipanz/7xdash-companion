@@ -13,6 +13,14 @@
     <!-- 车机没有无障碍设置页：adb 授权后应用自己打开无障碍服务，给快捷键用 -->
     <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS"
         tools:ignore="ProtectedPermissions" />
+    <!-- Car data access check (CarAccessCheck): standard Android Automotive values. Speed and energy
+         are asked at run time; the rest are granted at install where the head unit allows it -->
+    <uses-permission android:name="android.car.permission.CAR_SPEED" />
+    <uses-permission android:name="android.car.permission.CAR_ENERGY" />
+    <uses-permission android:name="android.car.permission.CAR_POWERTRAIN" />
+    <uses-permission android:name="android.car.permission.CAR_EXTERIOR_ENVIRONMENT" />
+    <uses-permission android:name="android.car.permission.CAR_ENERGY_PORTS" />
+    <uses-permission android:name="android.car.permission.CAR_INFO" />
     <!-- 定位：行驶信息条里的经纬度和 GPS 车速（试验项目，1.68.0） -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
@@ -314,6 +322,13 @@
             android:screenOrientation="landscape"
             android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboard|keyboardHidden|navigation|uiMode|density"
             android:windowSoftInputMode="adjustResize"
+            android:exported="false" />
+
+        <activity
+            android:name=".settings.CarAccessCheckActivity"
+            android:label="@string/cac_title"
+            android:theme="@style/Theme.Cam"
+            android:screenOrientation="landscape"
             android:exported="false" />
 
         <activity

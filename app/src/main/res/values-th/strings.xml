@@ -2157,4 +2157,34 @@
     <string name="home_edit_tab_beta">เบต้า (%1$d)</string>
     <string name="home_edit_drag">ย้าย</string>
     <string name="home_edit_done">เสร็จ</string>
+
+    <!-- Car data access check (CarAccessCheck) -->
+    <string name="cac_title">ตรวจการเข้าถึงข้อมูลรถ</string>
+    <string name="cac_summary">ลองทุกช่องทางที่ 7xDash อ่านข้อมูลรถได้ (ECARX, android.car, บริการของ Zeekr) แล้วบอกว่าช่องไหนใช้ได้กับการติดตั้งนี้</string>
+    <string name="cac_intro">กด ตรวจ แอปจะลองเข้าถึงข้อมูลรถทีละช่องทางแล้วบอกผล: ไลบรารี ECARX, ค่ามาตรฐานของ android.car, setting_zeekr ของ Zeekr และบริการกับสิทธิ์ของ Zeekr และ ECARX ที่มีในเครื่อง ลองหนึ่งรอบตอนลงผ่าน App Lab และอีกรอบตอนลงจาก Zeekr Store กด คัดลอกทั้งหมด ทุกครั้งแล้วส่งมาทั้งสองชุด ไม่มีการเขียนอะไรลงรถ ถ้าค่าไหนต้องใช้สิทธิ์ ให้กด ขอสิทธิ์อ่านข้อมูลรถ แล้วกด ตรวจ อีกครั้ง</string>
+    <string name="cac_run">ตรวจ</string>
+    <string name="cac_running">กำลังตรวจ… ไม่เกินประมาณครึ่งนาที</string>
+    <string name="cac_done">เสร็จ: ได้ %1$d ไม่ได้ %2$d</string>
+    <string name="cac_ask">ขอสิทธิ์อ่านข้อมูลรถ</string>
+    <string name="cac_ask_none">ไม่มีสิทธิ์ที่ต้องขอเพิ่มแล้ว</string>
+    <string name="cac_copy">คัดลอกทั้งหมด</string>
+    <string name="cac_copied">คัดลอกแล้ว %1$d ตัวอักษร</string>
+    <string name="cac_empty">ยังไม่ได้ตรวจ</string>
+    <string name="cac_sec_summary">สรุป</string>
+    <string name="cac_sec_install">การติดตั้งนี้</string>
+    <string name="cac_sec_ecarx">1. ไลบรารี ECARX</string>
+    <string name="cac_sec_android_car">2–3. android.car (ค่ามาตรฐานและ setting_zeekr)</string>
+    <string name="cac_sec_packages">4. บริการของ Zeekr และ ECARX</string>
+    <string name="cac_sec_permissions">สิทธิ์ของรถ</string>
+    <string name="cac_v_ecarx_ok">ECARX: ใช้ได้ อ่านได้ %1$d จาก %2$d ครั้ง</string>
+    <string name="cac_v_ecarx_no_class">ECARX: แอปนี้มองไม่เห็นไลบรารี ECARX</string>
+    <string name="cac_v_ecarx_hang">ECARX: Car.create ค้าง ไม่ตอบภายใน %1$d วินาที</string>
+    <string name="cac_v_ecarx_null">ECARX: Car.create ไม่คืนอะไรกลับมา</string>
+    <string name="cac_v_ecarx_error">ECARX: Car.create เกิดข้อผิดพลาด</string>
+    <string name="cac_v_ecarx_silent">ECARX: เชื่อมต่อได้ แต่อ่านค่าไม่ได้สักตัว</string>
+    <string name="cac_v_car_none">android.car: แอปนี้ใช้ไม่ได้</string>
+    <string name="cac_v_car_fail">android.car: เชื่อมต่อไม่ได้</string>
+    <string name="cac_v_props">android.car ค่ามาตรฐาน: อ่านได้ %1$d จาก %2$d ค่า</string>
+    <string name="cac_v_setting_zeekr">android.car setting_zeekr</string>
+    <string name="cac_v_requestable">Zeekr / ECARX มีสิทธิ์ที่แอปทั่วไปขอได้ %1$d ตัว</string>
 </resources>

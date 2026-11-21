@@ -1,6 +1,8 @@
 package com.kooo.evcam.telemetry;
 
+import android.app.AppOpsManager;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.InstallSourceInfo;
 import android.content.pm.PackageInfo;
@@ -8,11 +10,17 @@ import android.content.pm.PackageManager;
 import android.content.pm.PermissionInfo;
 import android.content.pm.ServiceInfo;
 import android.content.pm.Signature;
+import android.graphics.PixelFormat;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.os.Looper;
 import android.os.Process;
 import android.os.SystemClock;
+import android.provider.Settings;
+import android.view.View;
+import android.view.WindowManager;
 
 import com.kooo.evcam.R;
 import com.kooo.evcam.blackbox.BlackBox;
@@ -44,6 +52,8 @@ import java.util.concurrent.TimeUnit;
  *   <li><b>android.car</b> {@code CarPropertyManager}: the standard Android Automotive values
  *   (speed, gear, battery …), each read once.</li>
  *   <li><b>android.car</b> {@code setting_zeekr}: Zeekr's own manager ({@link SettingZeekrWatch}).</li>
+ *   <li><b>Special access</b> the rest of 7xDash needs (floating windows, usage access,
+ *   accessibility, secure settings): what Android says, and a real one-pixel floating window.</li>
  *   <li><b>Zeekr and ECARX packages</b>: which are installed, what services they export, and which
  *   of the permissions they define an app could ask for.</li>
  * </ol>
@@ -137,6 +147,7 @@ public final class CarAccessCheck {
         List<Line> summary = new ArrayList<>();
         List<Line> body = new ArrayList<>();
         install(app, body);
+        specialAccess(app, body, summary);
         ecarx(app, body, summary);
         androidCar(app, body, summary);
         packages(app, body, summary);
@@ -218,6 +229,121 @@ public final class CarAccessCheck {
         } catch (Throwable t) {
             return describe(t);
         }
+    }
+
+    // ================================================================= special access
+
+    /** Floating windows and the other special access 7xDash relies on, for this install. */
+    private static void specialAccess(Context app, List<Line> out, List<Line> summary) {
+        out.add(new Line(State.SECTION, app.getString(R.string.cac_sec_special), null));
+        String pkg = app.getPackageName();
+
+        boolean can = Settings.canDrawOverlays(app);
+        String op = appOp(app, AppOpsManager.OPSTR_SYSTEM_ALERT_WINDOW);
+        out.add(new Line(can ? State.OK : State.FAIL, "Settings.canDrawOverlays", can + ", app op " + op));
+        boolean page = resolves(app, new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:" + pkg)));
+        out.add(new Line(page ? State.INFO : State.WARN, "overlay permission page",
+                page ? "exists" : "this head unit has no page to allow it"));
+        String window = overlayWindow(app);
+        boolean shown = window == null;
+        out.add(new Line(shown ? State.OK : State.FAIL, "floating window test",
+                shown ? "a 1-pixel floating window was added and removed" : window));
+        if (shown) {
+            summary.add(new Line(State.OK, app.getString(R.string.cac_v_overlay_ok), null));
+        } else {
+            summary.add(new Line(State.FAIL, app.getString(page ? R.string.cac_v_overlay_off : R.string.cac_v_overlay_no_page),
+                    "canDrawOverlays " + can + ", app op " + op + "; " + window));
+        }
+
+        out.add(new Line(State.INFO, "usage access", "app op " + appOp(app, AppOpsManager.OPSTR_GET_USAGE_STATS)));
+        boolean secure = granted(app, "android.permission.WRITE_SECURE_SETTINGS");
+        out.add(new Line(secure ? State.OK : State.WARN, "WRITE_SECURE_SETTINGS",
+                secure ? "granted" : "not granted (needs adb)"));
+        String enabled = null;
+        try {
+            enabled = Settings.Secure.getString(app.getContentResolver(), Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);
+        } catch (Throwable ignored) {
+            // unreadable
+        }
+        boolean access = enabled != null && enabled.contains(pkg + "/");
+        out.add(new Line(access ? State.OK : State.WARN, "accessibility service", access ? "on" : "off"));
+        try {
+            android.os.PowerManager power = app.getSystemService(android.os.PowerManager.class);
+            boolean ignoring = power != null && power.isIgnoringBatteryOptimizations(pkg);
+            out.add(new Line(ignoring ? State.OK : State.INFO, "battery optimisation", ignoring ? "ignored" : "applies"));
+        } catch (Throwable t) {
+            out.add(new Line(State.INFO, "battery optimisation", describe(t)));
+        }
+    }
+
+    private static String appOp(Context app, String op) {
+        try {
+            AppOpsManager ops = app.getSystemService(AppOpsManager.class);
+            if (ops == null) {
+                return "?";
+            }
+            int mode = Build.VERSION.SDK_INT >= 29
+                    ? ops.unsafeCheckOpNoThrow(op, Process.myUid(), app.getPackageName())
+                    : legacyCheckOp(ops, op, app.getPackageName());
+            switch (mode) {
+                case AppOpsManager.MODE_ALLOWED:
+                    return "allowed";
+                case AppOpsManager.MODE_IGNORED:
+                    return "ignored (blocked)";
+                case AppOpsManager.MODE_ERRORED:
+                    return "errored (blocked)";
+                case AppOpsManager.MODE_DEFAULT:
+                    return "default";
+                default:
+                    return "mode " + mode;
+            }
+        } catch (Throwable t) {
+            return describe(t);
+        }
+    }
+
+    @SuppressWarnings("deprecation")
+    private static int legacyCheckOp(AppOpsManager ops, String op, String pkg) {
+        return ops.checkOpNoThrow(op, Process.myUid(), pkg);
+    }
+
+    private static boolean resolves(Context app, Intent intent) {
+        try {
+            return app.getPackageManager().resolveActivity(intent, 0) != null;
+        } catch (Throwable t) {
+            return false;
+        }
+    }
+
+    /** Adds and removes an invisible 1-pixel floating window on the main thread; null when it worked. */
+    private static String overlayWindow(Context app) {
+        String[] result = {"no answer within " + seconds(TIMEOUT_MS)};
+        CountDownLatch done = new CountDownLatch(1);
+        new Handler(Looper.getMainLooper()).post(() -> {
+            try {
+                WindowManager wm = app.getSystemService(WindowManager.class);
+                View dot = new View(app);
+                WindowManager.LayoutParams lp = new WindowManager.LayoutParams(1, 1,
+                        WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+                        WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE,
+                        PixelFormat.TRANSPARENT);
+                wm.addView(dot, lp);
+                wm.removeViewImmediate(dot);
+                result[0] = null;
+            } catch (Throwable t) {
+                result[0] = describe(t);
+            } finally {
+                done.countDown();
+            }
+        });
+        await(done);
+        return result[0];
+    }
+
+    /** The head unit's page that allows floating windows for this app, or null when it has none. */
+    public static Intent overlayPage(Context context) {
+        Intent i = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:" + context.getPackageName()));
+        return resolves(context, i) ? i : null;
     }
 
     // ================================================================= 1. ECARX

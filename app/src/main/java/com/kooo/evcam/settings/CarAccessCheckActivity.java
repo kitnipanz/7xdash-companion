@@ -21,7 +21,8 @@ import java.util.List;
 /**
  * Screen for {@link CarAccessCheck}: one button runs every check, the lines show what each way
  * into the car's data did for this install, Copy all puts the whole result on the clipboard.
- * Another button asks for the car permissions the user has to allow.
+ * Other buttons ask for the car permissions the user has to allow and open the head unit's page for
+ * floating windows.
  */
 public class CarAccessCheckActivity extends AppCompatActivity {
 
@@ -48,6 +49,7 @@ public class CarAccessCheckActivity extends AppCompatActivity {
         findViewById(R.id.cac_close).setOnClickListener(v -> finish());
         findViewById(R.id.cac_run).setOnClickListener(v -> check());
         findViewById(R.id.cac_ask).setOnClickListener(v -> ask());
+        findViewById(R.id.cac_overlay).setOnClickListener(v -> openOverlayPage());
         findViewById(R.id.cac_copy).setOnClickListener(v -> copyAll());
     }
 
@@ -166,6 +168,28 @@ public class CarAccessCheckActivity extends AppCompatActivity {
         t.setTextAppearance(appearance);
         t.setTextColor(getColor(color));
         return t;
+    }
+
+    private void openOverlayPage() {
+        android.content.Intent page = CarAccessCheck.overlayPage(this);
+        if (page == null) {
+            status.setText(R.string.cac_overlay_none);
+            return;
+        }
+        try {
+            startActivity(page);
+        } catch (Throwable t) {
+            status.setText(getString(R.string.cac_overlay_none) + " (" + t.getClass().getSimpleName() + ")");
+        }
+    }
+
+    @Override
+    protected void onRestart() {
+        super.onRestart();
+        // Back from the head unit's permission page: check again so the lines show the new state
+        if (!last.isEmpty()) {
+            check();
+        }
     }
 
     private void ask() {

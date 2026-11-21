@@ -2185,7 +2185,7 @@ Then reopen this app.</string>
 
     <!-- Car data access check (CarAccessCheck) -->
     <string name="cac_title">Car data access check</string>
-    <string name="cac_summary">Tries every way 7xDash can read the car (ECARX, android.car, Zeekr services) and shows which work for this install</string>
+    <string name="cac_summary">Tries every way 7xDash reads the car (ECARX, android.car, Zeekr services) and checks floating windows, and shows which work for this install</string>
     <string name="cac_intro">Press Check. It tries each way into the car data and says what happened: the ECARX library, the standard android.car values, Zeekr setting_zeekr, and which Zeekr and ECARX services and permissions exist. Run it once with the App Lab install and once with the Zeekr Store install, press Copy all each time and send both. Nothing is written to the car. If a value needs a permission, press Ask for car permissions, then Check again.</string>
     <string name="cac_run">Check</string>
     <string name="cac_running">Checking… up to about half a minute</string>
@@ -2212,4 +2212,10 @@ Then reopen this app.</string>
     <string name="cac_v_props">android.car standard values: %1$d of %2$d readable</string>
     <string name="cac_v_setting_zeekr">android.car setting_zeekr</string>
     <string name="cac_v_requestable">Zeekr / ECARX define %1$d permissions any app may ask for</string>
+    <string name="cac_sec_special">Special access (floating windows and more)</string>
+    <string name="cac_v_overlay_ok">Floating windows: work</string>
+    <string name="cac_v_overlay_off">Floating windows: blocked, can be allowed on the head unit page</string>
+    <string name="cac_v_overlay_no_page">Floating windows: blocked, and the head unit has no page to allow them</string>
+    <string name="cac_overlay">Allow floating windows</string>
+    <string name="cac_overlay_none">This head unit has no page to allow floating windows</string>
 </resources>

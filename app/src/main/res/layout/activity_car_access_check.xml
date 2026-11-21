@@ -71,6 +71,13 @@
                     android:layout_marginStart="12dp"
                     android:text="@string/cac_ask" />
                 <com.google.android.material.button.MaterialButton
+                    android:id="@+id/cac_overlay"
+                    style="@style/Widget.Cam.RailSmall"
+                    android:layout_width="wrap_content"
+                    android:layout_height="52dp"
+                    android:layout_marginStart="12dp"
+                    android:text="@string/cac_overlay" />
+                <com.google.android.material.button.MaterialButton
                     android:id="@+id/cac_copy"
                     style="@style/Widget.Cam.RailSmall"
                     android:layout_width="wrap_content"

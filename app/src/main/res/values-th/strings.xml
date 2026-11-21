@@ -2160,7 +2160,7 @@
 
     <!-- Car data access check (CarAccessCheck) -->
     <string name="cac_title">ตรวจการเข้าถึงข้อมูลรถ</string>
-    <string name="cac_summary">ลองทุกช่องทางที่ 7xDash อ่านข้อมูลรถได้ (ECARX, android.car, บริการของ Zeekr) แล้วบอกว่าช่องไหนใช้ได้กับการติดตั้งนี้</string>
+    <string name="cac_summary">ลองทุกช่องทางที่ 7xDash อ่านข้อมูลรถ (ECARX, android.car, บริการของ Zeekr) และตรวจหน้าต่างลอย แล้วบอกว่าอะไรใช้ได้กับการติดตั้งนี้</string>
     <string name="cac_intro">กด ตรวจ แอปจะลองเข้าถึงข้อมูลรถทีละช่องทางแล้วบอกผล: ไลบรารี ECARX, ค่ามาตรฐานของ android.car, setting_zeekr ของ Zeekr และบริการกับสิทธิ์ของ Zeekr และ ECARX ที่มีในเครื่อง ลองหนึ่งรอบตอนลงผ่าน App Lab และอีกรอบตอนลงจาก Zeekr Store กด คัดลอกทั้งหมด ทุกครั้งแล้วส่งมาทั้งสองชุด ไม่มีการเขียนอะไรลงรถ ถ้าค่าไหนต้องใช้สิทธิ์ ให้กด ขอสิทธิ์อ่านข้อมูลรถ แล้วกด ตรวจ อีกครั้ง</string>
     <string name="cac_run">ตรวจ</string>
     <string name="cac_running">กำลังตรวจ… ไม่เกินประมาณครึ่งนาที</string>
@@ -2187,4 +2187,10 @@
     <string name="cac_v_props">android.car ค่ามาตรฐาน: อ่านได้ %1$d จาก %2$d ค่า</string>
     <string name="cac_v_setting_zeekr">android.car setting_zeekr</string>
     <string name="cac_v_requestable">Zeekr / ECARX มีสิทธิ์ที่แอปทั่วไปขอได้ %1$d ตัว</string>
+    <string name="cac_sec_special">สิทธิ์พิเศษ (หน้าต่างลอย และอื่น ๆ)</string>
+    <string name="cac_v_overlay_ok">หน้าต่างลอย (overlay): ใช้ได้</string>
+    <string name="cac_v_overlay_off">หน้าต่างลอย (overlay): ถูกบล็อก เปิดได้จากหน้าตั้งค่าของรถ</string>
+    <string name="cac_v_overlay_no_page">หน้าต่างลอย (overlay): ถูกบล็อก และรถไม่มีหน้าตั้งค่าให้เปิด</string>
+    <string name="cac_overlay">อนุญาตหน้าต่างลอย</string>
+    <string name="cac_overlay_none">รถคันนี้ไม่มีหน้าตั้งค่าให้อนุญาตหน้าต่างลอย</string>
 </resources>

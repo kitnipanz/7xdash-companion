@@ -51,8 +51,8 @@ import java.util.Set;
  *
  * <p>信号表在 {@link Signal}；读数进 {@link Readings}，信息条那份快照由 {@link VehicleStateMapper} 推出来。</p>
  *
- * <p><b>连接的结果</b>（{@link Telemetry.CarLink}）：没有那个类、没有 {@code Car.create} 是这台车机没有（不再试）；
- * 别的连不上（出错、{@code Car.create} 给了 null、接口里没有能读的、连上那一遍一个值都读不到），以及连上之后连着
+ * <p><b>连接的结果</b>（{@link Telemetry.CarLink}）：没有那个类、{@link CarFactory} 一个能调的建法都没有是这台车机没有（不再试）；
+ * 别的连不上（出错、每个建法都给了 null 或抛了、接口里没有能读的、连上那一遍一个值都读不到），以及连上之后连着
  * {@link #DEAD_PASSES} 遍对账一个值都读不到（车机服务多半没了），都算连不上：这个来源就此不再读，
  * {@link Telemetry} 过一会儿换一个新的再连。占位值（255）算读到了：车回了话，只是这一项没数据。</p>
  *
@@ -331,20 +331,17 @@ final class EcarxSource {
         try {
             Class<?> carClass = Class.forName(CAR_CLASS);
             Object car = cachedCar;
+            String built = "";
             if (car == null) {
-                Method create = match(carClass.getMethods(), "create", Context.class);
-                if (create == null) {
-                    status = "no Car.create(Context)";
-                    report(Telemetry.CarLink.UNAVAILABLE);
+                CarFactory.Result made = buildCar(carClass, context);
+                if (made.car == null) {
+                    status = CarFactory.summary(made);
+                    // 一个能调的都没有：这台车机没有（不再试）；调了却拿不到（开机时车机服务还没起来也会这样）：过一会儿再试
+                    report(made.anyCandidate ? Telemetry.CarLink.FAILED : Telemetry.CarLink.UNAVAILABLE);
                     return;
                 }
-                car = create.invoke(null, context);
-                if (car == null) {
-                    // 开机时车机服务还没起来也会这样：算连不上，过一会儿再试（不当成这台车没有）
-                    status = "Car.create returned null";
-                    report(Telemetry.CarLink.FAILED);
-                    return;
-                }
+                car = made.car;
+                built = CarFactory.summary(made) + "; ";
                 cachedCar = car;
             }
             this.car = car;
@@ -360,7 +357,7 @@ final class EcarxSource {
             }
             if (getFunctionValue == null && getSensorEvent == null) {
                 // 同上：开机时可能只是还没好，算连不上、过一会儿再试
-                status = "no readable managers (function=" + (function != null) + ", sensor=" + (sensor != null) + ")";
+                status = built + "no readable managers (function=" + (function != null) + ", sensor=" + (sensor != null) + ")";
                 report(Telemetry.CarLink.FAILED);
                 return;
             }
@@ -378,12 +375,12 @@ final class EcarxSource {
                 // 起点、第一轮读数那两行也不写 —— 不然每次再连都多两行全是「?」的。细节不带耗时：
                 // 每次再连都一样的结果，黑匣子只记一次（Telemetry.carReported 按细节比）
                 connected = false;
-                status = "managers found but no read answered";
+                status = built + "managers found but no read answered";
                 report(Telemetry.CarLink.FAILED);
                 return;
             }
             sleptAtLastPass = sleptMs();
-            status = String.format(Locale.US,
+            status = built + String.format(Locale.US,
                     "connected in %d ms; function=%s zoned=%s sensorEvent=%s sensorValue=%s; driver %s; %s",
                     SystemClock.elapsedRealtime() - start, getFunctionValue != null, getFunctionValueZoned != null,
                     getSensorEvent != null, getSensorLatestValue != null, side, subscribed);
@@ -1134,8 +1131,12 @@ final class EcarxSource {
             return car;
         }
         try {
-            Method create = match(Class.forName(CAR_CLASS).getMethods(), "create", Context.class);
-            car = create == null ? null : create.invoke(null, context.getApplicationContext());
+            CarFactory.Result made = buildCar(Class.forName(CAR_CLASS), context.getApplicationContext());
+            car = made.car;
+            if (car == null) {
+                AppLog.w(TAG, "Car for the ambient lab: " + CarFactory.summary(made));
+                return null;
+            }
         } catch (Throwable t) {
             AppLog.w(TAG, "Car.create for the ambient lab failed: " + describe(t));
             return null;
@@ -1144,6 +1145,33 @@ final class EcarxSource {
             cachedCar = car;
         }
         return car;
+    }
+
+    /** 车辆的 API 只往黑匣子里写一次（一个进程）。 */
+    private static volatile boolean apiNoted;
+
+    /**
+     * 建车辆对象（{@link CarFactory}）：通常是 {@code Car.create(Context)}；没有它的车机（7X 海外 userdebug 版）挨个试别的建法。
+     * 没有 {@code create(Context)} 的，把这台车机上 {@code Car} 的整套公开方法记进黑匣子一次，下次导出就看得到该怎么建。
+     */
+    static CarFactory.Result buildCar(Class<?> carClass, Context context) {
+        if (!apiNoted && match(carClass.getMethods(), "create", Context.class) == null) {
+            apiNoted = true;
+            String api;
+            try {
+                api = CarFactory.describeApi(carClass);
+            } catch (Throwable t) {
+                api = carClass.getName() + " (listing failed: " + describe(t) + ")";
+            }
+            BlackBox.noteImportant("车辆接口没有 Car.create(Context)，这台车机上的 Car：" + api);
+            AppLog.i(TAG, "no Car.create(Context); Car API: " + api);
+        }
+        CarFactory.Result made = CarFactory.create(carClass, CarFactory.env(context));
+        if (made.car != null && !made.tries.isEmpty()) {
+            BlackBox.noteImportant("车辆对象换了建法：" + CarFactory.summary(made));
+        }
+        AppLog.i(TAG, "build car: " + CarFactory.summary(made));
+        return made;
     }
 
     // ================================================================= 反射小工具

@@ -34,4 +34,9 @@
     <external-files-path
         name="external_files"
         path="." />
+
+    <!-- USB drives (/storage/XXXX-XXXX): APKs downloaded to <usb>/APK are installed from there -->
+    <root-path
+        name="usb"
+        path="storage/" />
 </paths>

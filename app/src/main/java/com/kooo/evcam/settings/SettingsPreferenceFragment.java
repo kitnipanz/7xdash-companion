@@ -105,6 +105,7 @@ public class SettingsPreferenceFragment extends PreferenceFragmentCompat {
         bindStorage();
         bindRearView();
         bindHudNotice();
+        bindHudStatus();
         bindSidePopup();
         bindFloating();
         bindDim();
@@ -725,6 +726,71 @@ public class SettingsPreferenceFragment extends PreferenceFragmentCompat {
                 });
     }
 
+    /** The always-on HUD status card: on / off, which lines, and where it sits. */
+    private void bindHudStatus() {
+        bindSwitch("pref_hud_status", appConfig.isHudStatusEnabled(), on -> {
+            appConfig.setHudStatusEnabled(on);
+            com.kooo.evcam.hud.HudStatusWindow.sync(requireContext());
+        });
+        onClick("pref_hud_status_place", pref -> {
+            android.content.Context context = getContext();
+            if (context != null) {
+                startActivity(new android.content.Intent(context,
+                        com.kooo.evcam.hud.HudStatusPlaceActivity.class));
+            }
+        });
+        bindHudStatusItem("pref_hud_status_recording", com.kooo.evcam.hud.HudStatus.Item.RECORDING);
+        bindHudStatusItem("pref_hud_status_cameras", com.kooo.evcam.hud.HudStatus.Item.CAMERAS);
+        bindHudStatusItem("pref_hud_status_usb", com.kooo.evcam.hud.HudStatus.Item.USB);
+        bindHudStatusItem("pref_hud_status_capture", com.kooo.evcam.hud.HudStatus.Item.CAPTURE);
+        bindHudStatusItem("pref_hud_status_announce", com.kooo.evcam.hud.HudStatus.Item.ANNOUNCE);
+        bindHudStatusItem("pref_hud_status_clock", com.kooo.evcam.hud.HudStatus.Item.CLOCK);
+    }
+
+    private void bindHudStatusItem(String key, com.kooo.evcam.hud.HudStatus.Item item) {
+        bindSwitch(key, appConfig.isHudStatusItemOn(item), on -> appConfig.setHudStatusItemOn(item, on));
+    }
+
+    @Override
+    public void onDestroyView() {
+        com.kooo.evcam.overlay.DimRoutes.clearOnChange(dimRoutesChanged);
+        dimRouteRows.clear();
+        super.onDestroyView();
+    }
+
+    /** The dim test rows' summary refreshers, for when a test changes by itself. */
+    private final java.util.List<Runnable> dimRouteRows = new java.util.ArrayList<>();
+    private Runnable dimRoutesChanged;
+
+    /** One dim test: tap to dim that way at the Opacity strength, tap again to put the screen back. */
+    private void bindDimRoute(String key, com.kooo.evcam.overlay.DimRoutes.Route route, int about) {
+        Preference pref = findPreference(key);
+        if (pref == null) {
+            return;
+        }
+        Runnable show = () -> {
+            String result = com.kooo.evcam.overlay.DimRoutes.result(route);
+            String state = getString(com.kooo.evcam.overlay.DimRoutes.isOn(route)
+                    ? R.string.dim_route_state_on : R.string.dim_route_state_off);
+            pref.setSummary(result.isEmpty() ? getString(about)
+                    : state + "\n" + result);
+        };
+        show.run();
+        dimRouteRows.add(show);
+        pref.setOnPreferenceClickListener(p -> {
+            if (getContext() == null) {
+                return true;
+            }
+            pref.setSummary(R.string.dim_route_working);
+            com.kooo.evcam.overlay.DimRoutes.toggle(requireContext(), route, appConfig.getDimOpacity(), () -> {
+                if (isAdded()) {
+                    show.run();
+                }
+            });
+            return true;
+        });
+    }
+
     private void bindSidePopup() {
         bindOverlaySwitch("pref_side_popup", appConfig.isSidePopupEnabled(),
                 OverlayCoordinator::setSidePopupEnabled, on -> {
@@ -1008,6 +1074,22 @@ public class SettingsPreferenceFragment extends PreferenceFragmentCompat {
     private void bindDim() {
         bindOverlaySwitch("pref_dim", appConfig.isDimOverlayEnabled(),
                 OverlayCoordinator::setDimOverlayEnabled, null);
+        bindDimRoute("pref_dim_route_brightness", com.kooo.evcam.overlay.DimRoutes.Route.BRIGHTNESS,
+                R.string.dim_route_brightness_summary);
+        bindDimRoute("pref_dim_route_extra_dim", com.kooo.evcam.overlay.DimRoutes.Route.EXTRA_DIM,
+                R.string.dim_route_extra_dim_summary);
+        bindDimRoute("pref_dim_route_car", com.kooo.evcam.overlay.DimRoutes.Route.CAR,
+                R.string.dim_route_car_summary);
+        bindDimRoute("pref_dim_route_floating", com.kooo.evcam.overlay.DimRoutes.Route.FLOATING,
+                R.string.dim_route_floating_summary);
+        dimRoutesChanged = () -> {
+            if (isAdded()) {
+                for (Runnable row : dimRouteRows) {
+                    row.run();
+                }
+            }
+        };
+        com.kooo.evcam.overlay.DimRoutes.setOnChange(dimRoutesChanged);
 
         bindSlider("pref_dim_opacity", 10, 100, appConfig.getDimOpacity(), "%", value -> {
             appConfig.setDimOpacity(value);
@@ -1238,10 +1320,6 @@ public class SettingsPreferenceFragment extends PreferenceFragmentCompat {
                 startActivity(new Intent(getContext(), com.kooo.evcam.zeekr.BlindSpotFinderActivity.class)));
         onClick("pref_button_lab", pref ->
                 startActivity(new Intent(getContext(), com.kooo.evcam.input.ButtonLabActivity.class)));
-        onClick("pref_drm_lab", pref ->
-                startActivity(new Intent(getContext(), com.kooo.evcam.drm.DrmLabActivity.class)));
-        onClick("pref_stream_lab", pref ->
-                startActivity(new Intent(getContext(), com.kooo.evcam.browser.StreamLabActivity.class)));
         onClick("pref_stargate_lab", pref ->
                 startActivity(new Intent(getContext(), com.kooo.evcam.light.StargateLabActivity.class)));
         onClick("pref_ble_signal", pref ->
@@ -1350,8 +1428,12 @@ public class SettingsPreferenceFragment extends PreferenceFragmentCompat {
         // 于是下面四个入口一个都没接上，点了毫无反应，也不报错。
         onClick("pref_permissions",
                 pref -> openFragment(new PermissionsPreferenceFragment(), R.string.dev_permissions_title));
+        onClick("pref_inventory",
+                pref -> openFragment(new AppInventoryFragment(), R.string.dev_inventory_title));
         onClick("pref_speaker_probe",
                 pref -> openFragment(new SpeakerProbeFragment(), R.string.dev_speaker_probe_title));
+        onClick("pref_own_files",
+                pref -> openFragment(new OwnFilesFragment(), R.string.dev_own_files_title));
 
         bindSwitch("pref_raw_frame_dump", appConfig.isRawFrameDumpEnabled(),
                 appConfig::setRawFrameDumpEnabled);

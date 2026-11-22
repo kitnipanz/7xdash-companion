@@ -293,7 +293,7 @@ public class HomeFragment extends Fragment {
                         com.kooo.evcam.input.ShortcutListActivity.class)), null);
         addCard(R.drawable.ic_hud, R.string.home_card_hud_notice,
                 R.string.home_card_hud_notice_sub, this::toggleHudNotices,
-                () -> page(MainActivity.PAGE_SETTINGS_PREFIX + "screen_rearview"))
+                () -> page(MainActivity.PAGE_SETTINGS_PREFIX + "screen_hud"))
                 .onOff(() -> config.isHudNotificationsEnabled());
 
         // Outside speaker: AirPlay audio on the outside speaker too. Hold for its volume on the megaphone page
@@ -346,12 +346,6 @@ public class HomeFragment extends Fragment {
                                     config.isParkingCreepEnabled() ? R.string.home_state_on : R.string.home_state_off)),
                             () -> config.isParkingCreepEnabled(), this::toggleParkingCreep);
         }
-
-        // Netflix and YouTube in a floating window. Always there: a tap says so when the app can't be found
-        addCard(R.drawable.ic_float_window, R.string.home_card_netflix, R.string.home_card_netflix_sub,
-                () -> com.kooo.evcam.browser.NetflixApp.openInWindow(requireContext()), null);
-        addCard(R.drawable.ic_float_window, R.string.home_card_youtube, R.string.home_card_netflix_sub,
-                () -> com.kooo.evcam.browser.YouTubeApp.openInWindow(requireContext()), null);
 
         // Beta: a browser that asks for desktop sites. Tap: full screen; hold: floating
         if (betaShown) {
@@ -658,8 +652,11 @@ public class HomeFragment extends Fragment {
         Context context = requireContext();
         boolean hud = HudDisplay.find(context) != null;
         if (!config.isSidePopupEnabled()) {
-            setBlindSpotScreens(true, false);
+            boolean screenOk = com.kooo.evcam.overlay.OverlayAccess.canDraw(context);
+            boolean hudOk = hud && com.kooo.evcam.overlay.OverlayAccess.canDrawOnHud(context);
+            setBlindSpotScreens(screenOk || !hudOk, hudOk && !screenOk);
             if (!OverlayCoordinator.setSidePopupEnabled(context, true)) {
+                setBlindSpotScreens(false, false);
                 com.kooo.evcam.ui.Notice.makeText(context, R.string.msg_need_overlay, Toast.LENGTH_SHORT).show();
             }
             return;

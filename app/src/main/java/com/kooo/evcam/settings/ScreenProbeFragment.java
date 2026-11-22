@@ -13,6 +13,7 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import com.kooo.evcam.R;
+import com.kooo.evcam.zeekr.FloatingProbeActivity;
 import com.kooo.evcam.zeekr.ScreenProbe;
 
 import java.util.List;
@@ -36,6 +37,7 @@ public class ScreenProbeFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
+        FloatingProbeActivity.setOnChange(this::fill);
         fill();
     }
 
@@ -45,6 +47,7 @@ public class ScreenProbeFragment extends Fragment {
         }
         list.removeAllViews();
         LayoutInflater inflater = LayoutInflater.from(list.getContext());
+        addFloatingTest(inflater);
         List<ScreenProbe.Row> rows = ScreenProbe.list(requireContext());
         if (rows.isEmpty()) {
             TextView empty = new TextView(list.getContext());
@@ -62,6 +65,43 @@ public class ScreenProbeFragment extends Fragment {
             item.setOnClickListener(v -> onRow(row));
             list.addView(item);
         }
+    }
+
+    /** The main screen without overlay: try a small floating activity over another app. */
+    private void addFloatingTest(LayoutInflater inflater) {
+        View item = inflater.inflate(R.layout.pref_row_nav, list, false);
+        ((TextView) item.findViewById(android.R.id.title)).setText(R.string.floating_probe_row);
+        ((TextView) item.findViewById(android.R.id.summary)).setText(floatingSummary());
+        item.setOnClickListener(v -> {
+            if (FloatingProbeActivity.result() != FloatingProbeActivity.Result.WAITING) {
+                FloatingProbeActivity.launchLater(requireContext());
+            }
+        });
+        list.addView(item);
+    }
+
+    private String floatingSummary() {
+        String d = FloatingProbeActivity.detail();
+        switch (FloatingProbeActivity.result()) {
+            case WAITING:
+                return getString(R.string.floating_probe_waiting);
+            case OPENED_BACKGROUND:
+                return getString(R.string.floating_probe_opened_background, d);
+            case OPENED_FOREGROUND:
+                return getString(R.string.floating_probe_opened_foreground, d);
+            case BLOCKED:
+                return getString(R.string.floating_probe_blocked, d);
+            case FAILED:
+                return getString(R.string.floating_probe_failed, d);
+            default:
+                return getString(R.string.floating_probe_row_summary);
+        }
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        FloatingProbeActivity.setOnChange(null);
     }
 
     private void onRow(ScreenProbe.Row row) {

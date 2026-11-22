@@ -37,9 +37,42 @@ public final class OverlayCoordinator {
 
     // ------------------------------------------------------------------ 判断
 
-    /** 有没有悬浮窗权限。没有的话，下面这些一个都开不起来。 */
+    /** Overlay permission or the accessibility service. */
     public static boolean canShowOverlay(Context context) {
         return WakeUpHelper.hasOverlayPermission(context);
+    }
+
+    /**
+     * A window aimed at the HUD. The HUD is a presentation screen, so the overlay permission
+     * is not required. A centre-screen window still needs overlay or accessibility.
+     */
+    private static boolean canPlace(Context context, boolean onHud) {
+        if (onHud && OverlayAccess.canDrawOnHud(context)) {
+            return true;
+        }
+        return canShowFloating(context);
+    }
+
+    /** Blind spot: HUD, centre screen, or both. Starts when at least one of those can draw. */
+    private static boolean canPlaceSide(Context context) {
+        AppConfig config = new AppConfig(context);
+        boolean hud = config.isSidePopupOnHud();
+        boolean screen = config.isSidePopupOnScreen();
+        if (hud && !screen) {
+            return OverlayAccess.canDrawOnHud(context);
+        }
+        if (screen && !hud) {
+            return canShowFloating(context);
+        }
+        return (hud && OverlayAccess.canDrawOnHud(context)) || canShowFloating(context);
+    }
+
+    /**
+     * Mirrors, blind spot, cabin and gauges on the centre screen: the overlay permission or the
+     * accessibility service.
+     */
+    public static boolean canShowFloating(Context context) {
+        return OverlayAccess.canDraw(context);
     }
 
 
@@ -52,10 +85,12 @@ public final class OverlayCoordinator {
      */
     public static void restoreOnLaunch(Context context) {
         AppConfig config = new AppConfig(context);
-        boolean allowed = canShowOverlay(context);
+        boolean floating = canShowFloating(context);
         com.kooo.evcam.input.AccessibilityGate.ensureForShortcuts(context);
+        // The HUD status card: no overlay needed, the HUD is a presentation screen
+        com.kooo.evcam.hud.HudStatusWindow.sync(context);
 
-        if (config.isRearViewEnabled() && allowed) {
+        if (config.isRearViewEnabled() && canPlace(context, config.isRearViewOnHud())) {
             // 这一段以前没有：开关存着「开」，但没人在启动时把服务拉起来，
             // 于是每次重开应用都要去设置里关一次再开一次它才出现。
             main().postDelayed(() -> {
@@ -64,19 +99,19 @@ public final class OverlayCoordinator {
             }, REAR_VIEW_DELAY_MS);
         }
 
-        if (config.isDimOverlayEnabled() && allowed) {
+        if (config.isDimOverlayEnabled() && floating) {
             DimOverlayService.show(context);
             AppLog.d(TAG, "屏幕遮罩已按设置打开");
         }
 
-        if (config.isBothMirrorsEnabled() && allowed) {
+        if (config.isBothMirrorsEnabled() && canPlace(context, config.isBothMirrorsOnHud())) {
             main().postDelayed(() -> {
                 BothMirrorsService.start(context);
                 AppLog.d(TAG, "左右侧视已按设置自动开启");
             }, REAR_VIEW_DELAY_MS);
         }
 
-        if (config.isSidePopupEnabled() && allowed) {
+        if (config.isSidePopupEnabled() && canPlaceSide(context)) {
             // 和后视镜一样等相机开起来；它平时只听信号，弹的时候才接相机
             main().postDelayed(() -> {
                 SideViewPopupService.start(context);
@@ -84,7 +119,7 @@ public final class OverlayCoordinator {
             }, REAR_VIEW_DELAY_MS);
         }
 
-        if (config.isCabinPassengerEnabled() && allowed) {
+        if (config.isCabinPassengerEnabled() && floating) {
             main().postDelayed(() -> {
                 com.kooo.evcam.zeekr.CabinPassengerService.start(context);
                 AppLog.d(TAG, "座舱乘客窗口已按设置自动开启");
@@ -99,17 +134,17 @@ public final class OverlayCoordinator {
             AppLog.i(TAG, "Floating button setting moved to the Dash panel");
         }
 
-        if (config.isDashPanelEnabled() && allowed) {
+        if (config.isDashPanelEnabled() && floating) {
             DashPanelService.show(context);
             AppLog.d(TAG, "Dash panel shown from settings");
         }
 
-        if (config.isDashGaugesEnabled() && !config.isDashPanelEnabled() && allowed) {
+        if (config.isDashGaugesEnabled() && !config.isDashPanelEnabled() && floating) {
             GaugesService.show(context);
             AppLog.d(TAG, "Gauges shown on their own from settings");
         }
 
-        if (config.isMacroPadEnabled() && allowed) {
+        if (config.isMacroPadEnabled() && floating) {
             MacroPadService.show(context);
             AppLog.d(TAG, "Macro pad shown from settings");
         }
@@ -124,7 +159,7 @@ public final class OverlayCoordinator {
      *         调用方应当把开关保持在原位而不是拨上去
      */
     public static boolean setDashPanelEnabled(Context context, boolean enabled) {
-        if (enabled && !canShowOverlay(context)) {
+        if (enabled && !canShowFloating(context)) {
             return false;
         }
         new AppConfig(context).setDashPanelEnabled(enabled);
@@ -161,7 +196,7 @@ public final class OverlayCoordinator {
      * return value as {@link #setDashPanelEnabled}.
      */
     public static boolean setDashGaugesEnabled(Context context, boolean enabled) {
-        if (enabled && !canShowOverlay(context)) {
+        if (enabled && !canShowFloating(context)) {
             return false;
         }
         new AppConfig(context).setDashGaugesEnabled(enabled);
@@ -172,7 +207,7 @@ public final class OverlayCoordinator {
 
     /** Macro pad on / off. Same return value as {@link #setDashPanelEnabled}. */
     public static boolean setMacroPadEnabled(Context context, boolean enabled) {
-        if (enabled && !canShowOverlay(context)) {
+        if (enabled && !canShowFloating(context)) {
             return false;
         }
         new AppConfig(context).setMacroPadEnabled(enabled);
@@ -195,7 +230,7 @@ public final class OverlayCoordinator {
 
         /** 开 / 关全屏遮罩。返回值含义同 {@link #setDashPanelEnabled}。Dash panel 的月亮自己每半秒读一次。 */
     public static boolean setDimOverlayEnabled(Context context, boolean enabled) {
-        if (enabled && !canShowOverlay(context)) {
+        if (enabled && !canShowFloating(context)) {
             return false;
         }
         AppConfig config = new AppConfig(context);
@@ -214,7 +249,7 @@ public final class OverlayCoordinator {
      * <p>这里的权限检查是补上的 —— 原来没有，没授权时开关会拨上去而窗口不出现。</p>
      */
     public static boolean setRearViewEnabled(Context context, boolean enabled) {
-        if (enabled && !canShowOverlay(context)) {
+        if (enabled && !canPlace(context, new AppConfig(context).isRearViewOnHud())) {
             return false;
         }
         new AppConfig(context).setRearViewEnabled(enabled);
@@ -235,7 +270,7 @@ public final class OverlayCoordinator {
      * <p>和超级后视镜共用一路相机输出，开这边就关掉后视镜。</p>
      */
     public static boolean setBothMirrorsEnabled(Context context, boolean enabled) {
-        if (enabled && !canShowOverlay(context)) {
+        if (enabled && !canPlace(context, new AppConfig(context).isBothMirrorsOnHud())) {
             return false;
         }
         new AppConfig(context).setBothMirrorsEnabled(enabled);
@@ -261,7 +296,7 @@ public final class OverlayCoordinator {
                 + " requested, saved=" + new AppConfig(context).isCabinPassengerEnabled()
                 + " running=" + com.kooo.evcam.zeekr.CabinPassengerService.isRunning()
                 + " overlay=" + canShowOverlay(context));
-        if (enabled && !canShowOverlay(context)) {
+        if (enabled && !canShowFloating(context)) {
             return false;
         }
         new AppConfig(context).setCabinPassengerEnabled(enabled);
@@ -275,7 +310,7 @@ public final class OverlayCoordinator {
 
     /** 开 / 关打转向灯弹侧视。返回值含义同 {@link #setDashPanelEnabled}。 */
     public static boolean setSidePopupEnabled(Context context, boolean enabled) {
-        if (enabled && !canShowOverlay(context)) {
+        if (enabled && !canPlaceSide(context)) {
             return false;
         }
         new AppConfig(context).setSidePopupEnabled(enabled);

@@ -105,7 +105,7 @@ public final class Telemetry {
             }
             startCar(false);
         }
-        AppLog.i(TAG, "车辆信号开始收集（核心：只读离散信号）");
+        AppLog.i(TAG, "vehicle signals: collection started (core: discrete signals only)");
     }
 
     /**
@@ -126,7 +126,7 @@ public final class Telemetry {
             location = new LocationSource(this);
             location.start(app);
         }
-        AppLog.i(TAG, "车辆信号完整收集开始（" + who + "）：加上浮点传感器、定位");
+        AppLog.i(TAG, "vehicle signals: full collection started (" + who + "): adding float sensors and location");
     }
 
     /**
@@ -160,10 +160,10 @@ public final class Telemetry {
         if (stopped != null) {
             main.removeCallbacks(retry);
             stopped.stop();
-            AppLog.i(TAG, "车辆信号停止收集（" + who + " 是最后一个）");
+            AppLog.i(TAG, "vehicle signals: collection stopped (" + who + " was the last user)");
             notifyListeners(Readings.empty());
         } else {
-            AppLog.i(TAG, "车辆信号回到核心（" + who + " 是最后一个完整用户）：浮点传感器、定位停了");
+            AppLog.i(TAG, "vehicle signals: back to core (" + who + " was the last full user): float sensors and location stopped");
         }
     }
 
@@ -197,7 +197,7 @@ public final class Telemetry {
             car = new EcarxSource(this, users.full());
             car.start(app);
         }
-        AppLog.i(TAG, "车辆接口再连一次（上次：" + last + "）");
+        AppLog.i(TAG, "car API: reconnecting (last time: " + last + ")");
     }
 
     /**
@@ -365,10 +365,10 @@ public final class Telemetry {
             main.postDelayed(retry, RETRY_MS);
         }
         if (!key.equals(before)) {
-            BlackBox.noteImportant("车辆信号连接：" + (link == CarLink.CONNECTED ? "接上了（" + detail + "）"
-                    : link == CarLink.UNAVAILABLE ? "这台车机没有这套接口（" + detail + "），熄屏只看安卓"
-                    : (CarLink.CONNECTED.name().equals(before) ? "断了（" : "连不上（") + detail + "），熄屏只看安卓；"
-                    + (RETRY_MS / 60_000L) + " 分钟后、安卓亮屏时再试"));
+            BlackBox.noteImportant("Vehicle signal link: " + (link == CarLink.CONNECTED ? "connected (" + detail + ")"
+                    : link == CarLink.UNAVAILABLE ? "this head unit has no such API (" + detail + "); screen-off uses Android only"
+                    : (CarLink.CONNECTED.name().equals(before) ? "lost (" : "cannot connect (") + detail + "); screen-off uses Android only; retry in "
+                    + (RETRY_MS / 60_000L) + " min or when the Android screen turns on"));
         }
         notifyListeners(readings);
     }
@@ -381,7 +381,7 @@ public final class Telemetry {
             }
         }
         AppLog.i(TAG, "location: " + status);
-        BlackBox.note("行驶信息来源 location: " + status);
+        BlackBox.note("Drive info source location: " + status);
         // 页面上的状态行跟着换
         notifyListeners(readings);
     }

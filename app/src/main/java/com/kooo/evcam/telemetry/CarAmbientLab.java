@@ -155,7 +155,7 @@ public final class CarAmbientLab {
         classes.addAll(listClasses());
         for (String className : classes) {
             try {
-                Field f = Class.forName(className, false, CarAmbientLab.class.getClassLoader()).getField(name);
+                Field f = EcarxLoader.load(className, false).getField(name);
                 if (Modifier.isStatic(f.getModifiers()) && f.getType() == int.class) {
                     found = f.getInt(null);
                     break;
@@ -422,6 +422,42 @@ public final class CarAmbientLab {
         return n;
     }
 
+    /**
+     * Every int constant in the car's ECARX classes whose name matches {@code include} and not
+     * {@code exclude}, name to value, first one found wins. For the dim tests' car brightness.
+     * Blocking.
+     */
+    public static Map<String, Integer> constantsMatching(java.util.regex.Pattern include,
+                                                        java.util.regex.Pattern exclude) {
+        Set<String> classes = new LinkedHashSet<>();
+        for (String fallback : FALLBACK_CLASSES) {
+            classes.add(fallback);
+        }
+        classes.addAll(listClasses());
+        Map<String, Integer> out = new LinkedHashMap<>();
+        for (String name : classes) {
+            Class<?> c;
+            try {
+                c = EcarxLoader.load(name, false);
+            } catch (Throwable t) {
+                continue;
+            }
+            for (Field f : fields(c)) {
+                String n = f.getName();
+                if (!Modifier.isStatic(f.getModifiers()) || f.getType() != int.class || out.containsKey(n)
+                        || !include.matcher(n).find() || (exclude != null && exclude.matcher(n).find())) {
+                    continue;
+                }
+                try {
+                    out.put(n, f.getInt(null));
+                } catch (Throwable ignored) {
+                    // unreadable field
+                }
+            }
+        }
+        return out;
+    }
+
     /** Lists the constants and reads each from the car. */
     public static Scan scan(Context context) {
         Set<String> classes = new LinkedHashSet<>(listClasses());
@@ -436,7 +472,7 @@ public final class CarAmbientLab {
         for (String name : classes) {
             Class<?> c;
             try {
-                c = Class.forName(name, false, CarAmbientLab.class.getClassLoader());
+                c = EcarxLoader.load(name, false);
             } catch (Throwable t) {
                 continue;
             }
@@ -467,7 +503,7 @@ public final class CarAmbientLab {
             }
         }
         if (loaded == 0) {
-            return new Scan("This head unit has no ECARX car interface", found, neighbours,
+            return new Scan("This head unit has no ECARX car interface (" + EcarxLoader.note() + ")", found, neighbours,
                     new ArrayList<>(functions.values()), false);
         }
         Object car = EcarxSource.carForLab(context);

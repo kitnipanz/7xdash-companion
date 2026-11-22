@@ -62,6 +62,10 @@ public class PermissionsPreferenceFragment extends PreferenceFragmentCompat {
     public void onResume() {
         super.onResume();
         // 授权是在系统设置里点的，回来时要重新查
+        refresh();
+    }
+
+    private void refresh() {
         PreferenceScreen screen = getPreferenceScreen();
         if (screen != null && getContext() != null) {
             screen.removeAll();
@@ -85,6 +89,13 @@ public class PermissionsPreferenceFragment extends PreferenceFragmentCompat {
         // 行驶信息条的经纬度：LocationSource 认的就是精确定位这一条
         add(basic, context, R.string.dev_perm_location, R.string.dev_perm_location_why,
                 hasPermission(context, Manifest.permission.ACCESS_FINE_LOCATION), this::openAppSettings);
+
+        // Car data: only on a head unit whose Car service has runtime car permissions
+        if (!com.kooo.evcam.car.CarPermissions.runtime(context).isEmpty()) {
+            add(basic, context, R.string.dev_perm_car, R.string.dev_perm_car_why,
+                    com.kooo.evcam.car.CarPermissions.missing(context).length == 0,
+                    this::requestCar);
+        }
 
         PreferenceCategory advanced = category(screen, context, R.string.dev_perm_group_advanced);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
@@ -179,6 +190,14 @@ public class PermissionsPreferenceFragment extends PreferenceFragmentCompat {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             launch(new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION,
                     Uri.parse("package:" + requireContext().getPackageName())));
+        }
+    }
+
+    /** The system dialog; the screen refreshes in onResume once it closes. */
+    private void requestCar() {
+        String[] missing = com.kooo.evcam.car.CarPermissions.missing(requireContext());
+        if (missing.length > 0) {
+            requestPermissions(missing, 1);
         }
     }
 

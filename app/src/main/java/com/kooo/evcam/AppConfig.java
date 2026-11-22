@@ -3324,6 +3324,38 @@ public class AppConfig {
         prefs.edit().putString(KEY_NAV_HUD_PLACE, place == null ? "" : place).apply();
     }
 
+    private static final String KEY_HUD_STATUS = "hud_status";
+    private static final String KEY_HUD_STATUS_PLACE = "hud_status_place";
+    private static final String KEY_HUD_STATUS_ITEM = "hud_status_item_";
+
+    /** The always-on status card on the HUD (recording and the rest, {@link com.kooo.evcam.hud.HudStatusWindow}). */
+    public boolean isHudStatusEnabled() {
+        return prefs.getBoolean(KEY_HUD_STATUS, false);
+    }
+
+    public void setHudStatusEnabled(boolean on) {
+        prefs.edit().putBoolean(KEY_HUD_STATUS, on).apply();
+    }
+
+    /** Where the status card sits on the HUD, "x,y,w,h" as shares; empty = on the right. */
+    public String getHudStatusPlace() {
+        return prefs.getString(KEY_HUD_STATUS_PLACE, "");
+    }
+
+    public void setHudStatusPlace(String place) {
+        prefs.edit().putString(KEY_HUD_STATUS_PLACE, place == null ? "" : place).apply();
+    }
+
+    /** One line of the status card on or off. */
+    public boolean isHudStatusItemOn(com.kooo.evcam.hud.HudStatus.Item item) {
+        return prefs.getBoolean(KEY_HUD_STATUS_ITEM + item.name().toLowerCase(java.util.Locale.US),
+                com.kooo.evcam.hud.HudStatus.defaultOn(item));
+    }
+
+    public void setHudStatusItemOn(com.kooo.evcam.hud.HudStatus.Item item, boolean on) {
+        prefs.edit().putBoolean(KEY_HUD_STATUS_ITEM + item.name().toLowerCase(java.util.Locale.US), on).apply();
+    }
+
     private static final String KEY_NAV_HUD_MAP = "nav_hud_map";
     private static final String KEY_NAV_HUD_MAP_PLACE = "nav_hud_map_place";
 

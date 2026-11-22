@@ -425,7 +425,7 @@ public class NavigationActivity extends AppCompatActivity implements Navigator.L
 
     /** The map in a floating window over other apps; this screen closes. */
     private void openFloating() {
-        if (!OverlayCoordinator.canShowOverlay(this)) {
+        if (!OverlayCoordinator.canShowFloating(this)) {
             Toast.makeText(this, R.string.nav_float_need_overlay, Toast.LENGTH_LONG).show();
             startActivity(new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
                     Uri.parse("package:" + getPackageName())));

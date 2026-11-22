@@ -68,6 +68,7 @@ public final class InstantCapture {
                 } catch (Exception e) {
                     AppLog.e(TAG, "即时片段失败", e);
                     t("FAILED: crash " + e);
+                    com.kooo.evcam.hud.HudStatusWindow.noteCapture(false);
                     toast(app, app.getString(R.string.instant_capture_failed));
                 }
             }
@@ -129,6 +130,7 @@ public final class InstantCapture {
         if (sources.isEmpty()) {
             t("FAILED: no surround file contains the flash moment. candidates=" + names(before)
                     + " all surround files=" + names(candidatesAll(app)));
+            com.kooo.evcam.hud.HudStatusWindow.noteCapture(false);
             dropOpenCopies(repaired);
             toast(app, app.getString(R.string.instant_capture_failed));
             return;
@@ -145,19 +147,23 @@ public final class InstantCapture {
             clips.addAll(cut(app, cache, sources, window, momentMs));
             if (clips.isEmpty()) {
                 t("FAILED: cutting produced no clip (see the cut line above)");
+                com.kooo.evcam.hud.HudStatusWindow.noteCapture(false);
                 toast(app, app.getString(R.string.instant_capture_failed));
                 return;
             }
             int copied = copyToUsb(app, clips);
             if (copied > 0) {
                 t("SAVED " + copied + " clip(s)");
+                com.kooo.evcam.hud.HudStatusWindow.noteCapture(true);
                 final int count = copied;
                 toast(app, app.getString(R.string.instant_capture_saved, count));
             } else if (StorageHelper.getExternalSdCardRoot(app) == null) {
                 t("FAILED: no USB stick found");
+                com.kooo.evcam.hud.HudStatusWindow.noteCapture(false);
                 toast(app, app.getString(R.string.save_moment_no_usb));
             } else {
                 t("FAILED: copy to the USB stick (see the copy line above)");
+                com.kooo.evcam.hud.HudStatusWindow.noteCapture(false);
                 toast(app, app.getString(R.string.instant_capture_failed));
             }
             AppConfig config = new AppConfig(app);
@@ -300,8 +306,11 @@ public final class InstantCapture {
                         AppLog.w(TAG, "删不掉未拉直的片段: " + raw.getAbsolutePath());
                     }
                     payload = clip;
-                } else if (!raw.renameTo(clip)) {
-                    throw new java.io.IOException("rename " + raw.getAbsolutePath());
+                } else {
+                    if (!raw.renameTo(clip)) {
+                        throw new java.io.IOException("rename " + raw.getAbsolutePath());
+                    }
+                    payload = clip;
                 }
                 clips.add(payload);
             } catch (Exception e) {

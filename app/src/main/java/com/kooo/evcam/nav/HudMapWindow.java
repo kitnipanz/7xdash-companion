@@ -14,7 +14,6 @@ import android.widget.FrameLayout;
 
 import com.kooo.evcam.AppConfig;
 import com.kooo.evcam.AppLog;
-import com.kooo.evcam.overlay.OverlayCoordinator;
 import com.kooo.evcam.zeekr.HudDisplay;
 
 /**
@@ -41,7 +40,7 @@ final class HudMapWindow implements Navigator.Listener {
 
     void show(Context context) {
         if (root != null || failed || Build.VERSION.SDK_INT < Build.VERSION_CODES.R
-                || !OverlayCoordinator.canShowOverlay(context) || !Navigator.hasKey()) {
+                || !com.kooo.evcam.overlay.OverlayAccess.canDrawOnHud(context) || !Navigator.hasKey()) {
             return;
         }
         Display hud = HudDisplay.find(context);

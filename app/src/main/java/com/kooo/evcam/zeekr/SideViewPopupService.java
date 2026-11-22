@@ -198,8 +198,9 @@ public class SideViewPopupService extends Service {
             stopSelf();
             return START_NOT_STICKY;
         }
-        if (!WakeUpHelper.hasOverlayPermission(this)) {
-            AppLog.e(TAG, "没有悬浮窗权限，侧视弹窗无法显示");
+        if (!screenUsable() && hudDisplay() == null) {
+            // The HUD needs neither the overlay permission nor accessibility; the centre screen needs one
+            AppLog.e(TAG, "没有悬浮窗权限、无障碍也没开，也没有抬头显示：侧视弹窗无法显示");
             stopSelf();
             return START_NOT_STICKY;
         }
@@ -369,14 +370,22 @@ public class SideViewPopupService extends Service {
         }
     }
 
-    /** 主窗口挂在抬头显示上：只开了抬头显示，而且找得到那块屏。 */
+    /**
+     * 主窗口挂在抬头显示上：只开了抬头显示，或者中控画不了（没有悬浮窗权限、无障碍也没开），
+     * 而且找得到那块屏。
+     */
     boolean primaryOnHud(Display hud) {
-        return hud != null && !appConfig.isSidePopupOnScreen();
+        return hud != null && (!appConfig.isSidePopupOnScreen() || !screenUsable());
     }
 
-    /** 中控之外再在抬头显示上弹一块：两个都开，而且找得到那块屏。 */
+    /** 中控之外再在抬头显示上弹一块：两个都开、中控画得了，而且找得到那块屏。 */
     boolean wantsCopy(Display hud) {
-        return hud != null && appConfig.isSidePopupOnScreen();
+        return hud != null && appConfig.isSidePopupOnScreen() && screenUsable();
+    }
+
+    /** The centre screen can take the window: overlay permission or the accessibility service. */
+    private boolean screenUsable() {
+        return com.kooo.evcam.overlay.OverlayAccess.canDraw(this);
     }
 
     /** 抬头显示开着且找得到那块屏时返回它，否则 null。 */

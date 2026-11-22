@@ -182,7 +182,7 @@ public final class BrowserFloat implements BrowserView.Host {
         }
         browser.destroy();
         try {
-            wm.removeView(root);
+            com.kooo.evcam.overlay.OverlayAccess.remove(wm, root);
         } catch (RuntimeException ignored) {
             // already gone
         }
@@ -205,7 +205,7 @@ public final class BrowserFloat implements BrowserView.Host {
             return;
         }
         try {
-            wm.updateViewLayout(root, lp);
+            com.kooo.evcam.overlay.OverlayAccess.update(wm, root, lp);
         } catch (RuntimeException ignored) {
             // window went away
         }

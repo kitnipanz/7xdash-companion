@@ -11,7 +11,6 @@ import android.widget.FrameLayout;
 
 import com.kooo.evcam.AppConfig;
 import com.kooo.evcam.AppLog;
-import com.kooo.evcam.overlay.OverlayCoordinator;
 import com.kooo.evcam.zeekr.HudDisplay;
 
 /**
@@ -53,7 +52,7 @@ final class HudTurnWindow {
     }
 
     private boolean open(Context context) {
-        if (failed || Build.VERSION.SDK_INT < Build.VERSION_CODES.R || !OverlayCoordinator.canShowOverlay(context)) {
+        if (failed || Build.VERSION.SDK_INT < Build.VERSION_CODES.R || !com.kooo.evcam.overlay.OverlayAccess.canDrawOnHud(context)) {
             return false;
         }
         Display hud = HudDisplay.find(context);

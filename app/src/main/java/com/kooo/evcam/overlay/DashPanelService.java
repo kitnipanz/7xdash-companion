@@ -180,7 +180,7 @@ public class DashPanelService extends Service implements Telemetry.Listener {
         } else if (ACTION_RESET.equals(action)) {
             if (view != null) {
                 place();
-                windowManager.updateViewLayout(view, params);
+                com.kooo.evcam.overlay.OverlayAccess.update(windowManager, view, params);
                 moved();
             }
         } else {
@@ -227,7 +227,7 @@ public class DashPanelService extends Service implements Telemetry.Listener {
             @Override
             public void apply() {
                 if (view != null && view.isAttachedToWindow()) {
-                    windowManager.updateViewLayout(view, params);
+                    com.kooo.evcam.overlay.OverlayAccess.update(windowManager, view, params);
                     moved();
                 }
             }
@@ -348,7 +348,7 @@ public class DashPanelService extends Service implements Telemetry.Listener {
         }
         params.y = RearViewTouchModel.clampY(params.y, params.height, screenHeight());
         try {
-            windowManager.updateViewLayout(view, params);
+                    com.kooo.evcam.overlay.OverlayAccess.update(windowManager, view, params);
         } catch (Exception e) {
             AppLog.w(TAG, "resize: " + e.getMessage());
         }
@@ -395,7 +395,7 @@ public class DashPanelService extends Service implements Telemetry.Listener {
                 com.kooo.evcam.overlay.OverlayAccess.add(windowManager, gaugeView, gaugeParams);
                 refresh();
             } else {
-                windowManager.updateViewLayout(gaugeView, gaugeParams);
+                com.kooo.evcam.overlay.OverlayAccess.update(windowManager, gaugeView, gaugeParams);
             }
         } catch (Exception e) {
             AppLog.w(TAG, "gauges: " + e.getMessage());
@@ -408,7 +408,7 @@ public class DashPanelService extends Service implements Telemetry.Listener {
     private void removeGauges() {
         if (gaugeView != null) {
             try {
-                windowManager.removeViewImmediate(gaugeView);
+                com.kooo.evcam.overlay.OverlayAccess.removeImmediate(windowManager, gaugeView);
             } catch (Exception ignored) {
             }
             gaugeView = null;
@@ -485,10 +485,10 @@ public class DashPanelService extends Service implements Telemetry.Listener {
         }
         raiseWhenLifted = false;
         try {
-            windowManager.removeViewImmediate(view);
+            com.kooo.evcam.overlay.OverlayAccess.removeImmediate(windowManager, view);
             com.kooo.evcam.overlay.OverlayAccess.add(windowManager, view, params);
             if (gaugeView != null) {
-                windowManager.removeViewImmediate(gaugeView);
+                com.kooo.evcam.overlay.OverlayAccess.removeImmediate(windowManager, gaugeView);
                 com.kooo.evcam.overlay.OverlayAccess.add(windowManager, gaugeView, gaugeParams);
             }
         } catch (Exception e) {
@@ -615,7 +615,7 @@ public class DashPanelService extends Service implements Telemetry.Listener {
         removeGauges();
         if (view != null) {
             try {
-                windowManager.removeView(view);
+                com.kooo.evcam.overlay.OverlayAccess.remove(windowManager, view);
             } catch (Exception ignored) {
             }
             view = null;

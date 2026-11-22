@@ -12,6 +12,7 @@
     <string name="upd_none_release">No installable stable release found</string>
     <string name="set_section_recording">Recording</string>
     <string name="set_section_storage">Storage</string>
+    <string name="set_section_hud">HUD</string>
     <string name="set_section_rearview">Super mirror</string>
     <string name="set_section_floating">Floating windows</string>
     <string name="set_section_dim">Dim overlay</string>
@@ -201,6 +202,7 @@
     <string name="shortcut_action_mirror">Super mirror on/off</string>
     <string name="shortcut_action_mirror_hud">Super mirror on HUD on/off</string>
     <string name="msg_no_hud">No HUD found</string>
+    <string name="shortcut_action_both_mirrors_hud">Side mirrors on HUD on/off (both)</string>
     <string name="shortcut_action_both_mirrors">Side mirrors on/off (both)</string>
     <string name="shortcut_action_app">Open app</string>
     <string name="shortcut_action_app_bounce">Minimise and open the app 60 times</string>
@@ -342,12 +344,6 @@ Then reopen this app.</string>
     <string name="browser_show_for_passengers">Show for passengers</string>
     <string name="browser_show_hold_hint">Hold to show the picture while driving</string>
     <string name="set_browser_while_driving_title">Browser and Netflix: show the picture while driving</string>
-    <string name="drm_lab_title">DRM lab (experimental)</string>
-    <string name="drm_lab_summary">How Widevine works on this car: its security level (L1 or L3) and HD support, and each step of playing Google\'s protected test videos</string>
-    <string name="drm_lab_stop">Stop</string>
-    <string name="drm_lab_device">Device info</string>
-    <string name="stream_lab_title">Netflix and YouTube lab (beta)</string>
-    <string name="stream_lab_summary">Every way to play Netflix and YouTube on this car (apps, web, TV page, embedded) and how smoothly each plays: decoders, Widevine, web player checks and a frame-drop meter</string>
     <string name="browser_title">Browser</string>
     <string name="home_card_browser_sub">Beta · Desktop sites, such as YouTube. Hold for a floating window</string>
     <string name="browser_move">Move. Double-tap: small or large</string>
@@ -362,7 +358,7 @@ Then reopen this app.</string>
     <string name="browser_show_toolbar">Show the toolbar</string>
     <string name="browser_close">Close</string>
     <string name="browser_paused_driving">The picture is hidden while driving. Sound keeps playing.</string>
-    <string name="browser_need_overlay">Allow 7xDash to show over other apps, then try again</string>
+    <string name="browser_need_overlay">Allow 7xDash to show over other apps, or turn on its accessibility service, then try again</string>
     <string name="shortcut_action_browser">Floating browser on / off (beta)</string>
     <string name="stargate_lab_title">Stargate lab (experimental)</string>
     <string name="stargate_lab_summary">Find out whether 7xDash can draw on the Stargate light curtain: names, car API, light apps, Listen and capture</string>
@@ -762,7 +758,7 @@ Then reopen this app.</string>
     <string name="msg_adjust_reset">Image settings reset to defaults</string>
     <string name="info_mapping_manual">Camera mapping set manually</string>
     <string name="info_mapping_auto">Automatic. If a camera shows nothing, assign it here.</string>
-    <string name="msg_need_overlay">Grant the overlay permission first</string>
+    <string name="msg_need_overlay">Grant the overlay permission or turn on the 7xDash accessibility service first</string>
     <string name="dlg_language_title">Choose a language</string>
 
     <!-- Camera mapping and language hint -->
@@ -876,9 +872,9 @@ Then reopen this app.</string>
     <string name="msg_screen_off_background">Screen off for 15 seconds. Moved to the background.</string>
     <string name="msg_stats_on">Recording status readout on</string>
     <string name="msg_stats_off">Recording status readout off</string>
-    <string name="msg_need_overlay_adjust">The overlay permission is required to open the adjustment window</string>
+    <string name="msg_need_overlay_adjust">The adjustment window needs the overlay permission or the 7xDash accessibility service</string>
     <string name="msg_camera_not_ready_adjust">Camera not ready. Can\'t open the image adjustment window.</string>
-    <string name="msg_overlay_denied">Overlay permission not granted</string>
+    <string name="msg_overlay_denied">No overlay permission and the accessibility service is off</string>
     <string name="dlg_no_external_title">No USB drive found</string>
     <string name="dlg_no_external_msg">Recordings go to a USB drive only, to avoid wearing out the internal storage.\n\nInsert a USB drive and try again. If it isn\'t detected, try another port or select the drive again in Settings → Storage → Storage location.</string>
     <string name="dlg_will_use_internal_title">Recording to internal storage</string>
@@ -1393,6 +1389,23 @@ Then reopen this app.</string>
 
     <!-- Developer options section -->
     <string name="set_section_developer">Developer options</string>
+    <string name="dev_own_files_title">Files this app can see</string>
+    <string name="dev_own_files_summary">Lists this app\'s own folders, the ECARX loader line, and one file you pick. Other apps\' folders are not listed.</string>
+    <string name="own_files_banner">ECARX: %1$s</string>
+    <string name="own_files_private">App files</string>
+    <string name="own_files_external">External files</string>
+    <string name="own_files_up">Up</string>
+    <string name="own_files_empty">Empty</string>
+    <string name="own_files_unreadable">This folder cannot be listed</string>
+    <string name="own_files_dir">Folder · %1$s</string>
+    <string name="own_files_file">File · %1$s · %2$s</string>
+    <string name="own_files_tap_install">Tap to choose an installer</string>
+    <string name="own_files_install_title">Choose an installer</string>
+    <string name="own_files_outside">Outside this app</string>
+    <string name="own_files_pick">Pick a file</string>
+    <string name="own_files_pick_summary">Shows the name and size of one file you choose. The file stays where it is.</string>
+    <string name="own_files_picked">Picked %1$s · %2$s</string>
+    <string name="own_files_size_unknown">size unknown</string>
     <string name="dev_speaker_probe_title">Speaker probe</string>
     <string name="dev_speaker_probe_summary">Lists every output this process can address. Tap a row to play a short tone. This page does not label cabin or outside.</string>
     <string name="speaker_probe_banner">An Android device type is not the cabin speaker or the outside speaker. This page does not know which row is which.</string>
@@ -1415,6 +1428,21 @@ Then reopen this app.</string>
     <string name="speaker_probe_kind_zone">Zone usage</string>
     <string name="dev_permissions_title">Permissions</string>
     <string name="dev_permissions_summary">Manage the permissions the app needs</string>
+    <string name="dev_inventory_title">Permissions and libraries</string>
+    <string name="dev_inventory_summary">Every permission this app declares, and the shared libraries it can load</string>
+    <string name="inventory_count">%1$d permissions, %2$d granted</string>
+    <string name="inventory_ecarx">ECARX loader: %1$s</string>
+    <string name="inventory_permissions">Permissions</string>
+    <string name="inventory_granted">Granted</string>
+    <string name="inventory_not_granted">Not granted</string>
+    <string name="inventory_undefined">Not defined on this device</string>
+    <string name="inventory_libraries">Shared libraries</string>
+    <string name="inventory_lib_present">On this device</string>
+    <string name="inventory_lib_absent">Not on this device</string>
+    <string name="inventory_linked">Linked · %1$s</string>
+    <string name="inventory_linked_none">No shared library file is linked</string>
+    <string name="inventory_native">Native libraries</string>
+    <string name="inventory_none">None</string>
     <string name="dev_perm_group_basic">Basic permissions</string>
     <string name="dev_perm_group_advanced">Advanced permissions</string>
     <string name="dev_perm_camera">Camera</string>
@@ -1655,7 +1683,7 @@ Then reopen this app.</string>
     <string name="airplay_waiting">Waiting for the iPhone picture…</string>
     <string name="airplay_paused_driving">Picture hidden while driving. Sound keeps playing.</string>
     <string name="airplay_failed">AirPlay could not start.</string>
-    <string name="airplay_need_overlay">Allow 7xDash to draw over other apps to show the iPhone screen.</string>
+    <string name="airplay_need_overlay">Allow 7xDash to draw over other apps, or turn on its accessibility service, to show the iPhone screen.</string>
     <string name="airplay_started">iPhone screen mirroring started</string>
     <string name="airplay_state_waiting">Ready as “%1$s”</string>
     <string name="airplay_state_connected">iPhone connected</string>
@@ -1814,7 +1842,7 @@ Then reopen this app.</string>
     <string name="home_card_dash_panel">Dash panel</string>
     <string name="home_card_dash_panel_sub">Speed, gear and buttons over any app</string>
     <string name="set_dash_panel_summary">A small card that floats over maps, music or any other app: speed, gear, turn signals, the clock and whether 7xDash is recording, with buttons for a surround photo, an instant capture, Super mirror and opening 7xDash. On its right: minimize (to a small pill with speed and gear, these buttons in a row under it, or beside it when the Macro pad is on; tap the pill or expand to bring the panel back), record, dim (tap on or off, slide for how dark) and quit (tap twice). Drag to move, pinch to resize, push to a side to dock</string>
-    <string name="dash_panel_need_overlay">Allow 7xDash to display over other apps first</string>
+    <string name="dash_panel_need_overlay">Allow 7xDash to display over other apps, or turn on its accessibility service, first</string>
     <string name="dash_panel_minimize">Minimize</string>
     <string name="dash_panel_expand">Expand</string>
     <string name="shortcut_action_dash_panel">Dash panel on / off</string>
@@ -1928,7 +1956,7 @@ Then reopen this app.</string>
     <string name="nav_say_destination">you will reach your destination</string>
     <string name="nav_say_arrived">You have arrived at your destination</string>
     <string name="nav_float">Floating window</string>
-    <string name="nav_float_need_overlay">Allow 7xDash to show over other apps, then tap the floating window button again</string>
+    <string name="nav_float_need_overlay">Allow 7xDash to show over other apps, or turn on its accessibility service, then tap the floating window button again</string>
     <string name="nav_float_expand">Full screen</string>
     <string name="nav_float_close">Close the floating window</string>
     <string name="nav_float_resize">Drag to change the width and height</string>
@@ -2274,11 +2302,67 @@ Then reopen this app.</string>
     <string name="app_window_mode_split">This head unit has split screen: tap an app to open it beside 7xDash.</string>
     <string name="app_window_mode_full">This head unit reports no floating windows or split screen: apps open full screen. Tap one to try anyway.</string>
     <string name="app_window_opened_full">Opened full screen: the head unit doesn\'t allow floating windows or split screen</string>
-    <string name="home_card_netflix">Netflix</string>
-    <string name="home_card_netflix_sub">Opens in a floating window</string>
-    <string name="shortcut_action_netflix_window">Netflix in a floating window</string>
     <string name="netflix_not_installed">7xDash can\'t find Netflix on this head unit. An app installed inside a virtual-space app (a \"Box\") can\'t be opened from 7xDash. Diagnostics → Video apps shows what was found.</string>
-    <string name="home_card_youtube">YouTube</string>
-    <string name="shortcut_action_youtube_window">YouTube in a floating window</string>
     <string name="youtube_not_installed">7xDash can\'t find a YouTube app on this head unit. An app installed inside a virtual-space app (a \"Box\") can\'t be opened from 7xDash. Diagnostics → Video apps shows what was found.</string>
+    <string name="dev_perm_car">Car data</string>
+    <string name="dev_perm_car_why">Speed, energy and other data from the car</string>
+
+    <!-- HUD status card -->
+    <string name="hud_status_title">HUD status</string>
+    <string name="hud_status_summary">A small card on the HUD that shows recording and more while you drive. Works without the overlay permission.</string>
+    <string name="hud_status_place_title">Status card position</string>
+    <string name="hud_status_place_summary">Drag the card to move it, drag the orange corner to resize it. The HUD follows as you drag. Shaded edges can\'t be seen from the driver\'s seat.</string>
+    <string name="hud_status_reset">Reset</string>
+    <string name="hud_status_cat_items">What to show</string>
+    <string name="hud_status_item_recording">Recording</string>
+    <string name="hud_status_item_recording_summary">REC and how long, waiting for cameras, or stopped and why</string>
+    <string name="hud_status_item_cameras">Cameras</string>
+    <string name="hud_status_item_cameras_summary">How many cameras are recording, e.g. 4/4</string>
+    <string name="hud_status_item_usb">USB stick</string>
+    <string name="hud_status_item_usb_summary">Free space left, or a warning when the stick is missing</string>
+    <string name="hud_status_item_capture">Instant capture result</string>
+    <string name="hud_status_item_capture_summary">Saved or failed, for 30 seconds after a capture</string>
+    <string name="hud_status_item_announce">Announcement</string>
+    <string name="hud_status_item_announce_summary">What an announcement is saying while it plays, or that it failed. Handy when the announcement picker can\'t open</string>
+    <string name="hud_status_announce_failed">Announcement failed</string>
+    <string name="hud_status_item_clock">Clock</string>
+    <string name="hud_status_item_clock_summary">The time</string>
+    <string name="hud_status_rec">REC %1$s</string>
+    <string name="hud_status_starting">Starting…</string>
+    <string name="hud_status_waiting">Waiting for cameras</string>
+    <string name="hud_status_idle">Not recording</string>
+    <string name="hud_status_stopped_usb">Stopped: USB full</string>
+    <string name="hud_status_stopped_error">Stopped: error</string>
+    <string name="hud_status_cameras">Cameras %1$d/%2$d</string>
+    <string name="hud_status_no_usb">No USB stick</string>
+    <string name="hud_status_usb_free">USB %1$s free</string>
+    <string name="hud_status_capture_saved">Capture saved</string>
+    <string name="hud_status_capture_failed">Capture failed</string>
+    <string name="hud_status_no_hud">This car has no HUD.</string>
+
+    <!-- Screen probe: floating window test on the main screen -->
+    <string name="floating_probe_row">Main screen: floating window test</string>
+    <string name="floating_probe_row_summary">Tap, then within 5 seconds switch to another app (Maps, music). A small 7xDash window tries to open on top of it without the overlay permission. Taps outside it reach the app underneath; it closes after 10 seconds.</string>
+    <string name="floating_probe_waiting">Waiting 5 seconds: switch to another app now</string>
+    <string name="floating_probe_opened_background">Opened over another app ✓ (%1$s). The main screen can carry floating windows this way</string>
+    <string name="floating_probe_opened_foreground">Opened, but 7xDash was still in front (%1$s). Try again and switch apps within 5 seconds</string>
+    <string name="floating_probe_blocked">Blocked by Android (%1$s): no window opened</string>
+    <string name="floating_probe_failed">Could not start: %1$s</string>
+    <string name="floating_probe_title">7xDash floating window test</string>
+    <string name="floating_probe_body">Is the app underneath still working? Tap here to close; closes by itself in 10 seconds.</string>
+
+    <!-- Dim tests: other ways to dim -->
+    <string name="dim_routes_title">Other ways to dim (test)</string>
+    <string name="dim_routes_note">For cars where the dim shade above can\'t open (no overlay permission). Tap a way to dim the screen with it at the Opacity strength; tap it again to put the screen back. Each row then says what happened.</string>
+    <string name="dim_route_brightness">System brightness</string>
+    <string name="dim_route_brightness_summary">Lowers the screen\'s own brightness. Needs "Modify system settings" (or adb). Taps work normally</string>
+    <string name="dim_route_extra_dim">Android Extra dim</string>
+    <string name="dim_route_extra_dim_summary">Android 12\'s own dim layer, darker than the lowest brightness. Needs WRITE_SECURE_SETTINGS over adb</string>
+    <string name="dim_route_car">Car display brightness</string>
+    <string name="dim_route_car_summary">Looks for a display brightness function in the car\'s interface and lowers it. Lists what it found</string>
+    <string name="dim_route_floating">Dark floating window</string>
+    <string name="dim_route_floating_summary">A full-screen dark window over other apps, no permission needed. Android may stop taps reaching the app underneath, so it closes by itself after 15 seconds</string>
+    <string name="dim_route_state_on">● On: tap to put the screen back</string>
+    <string name="dim_route_state_off">Off</string>
+    <string name="dim_route_working">Working…</string>
 </resources>

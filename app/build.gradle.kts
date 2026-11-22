@@ -69,8 +69,8 @@ android {
         // versionName 会成为 Release 名称与 APK 文件名
         //
         // 7xDash 用自己的 applicationId，可以和 zeekr-shortcut-car 并排装。版本号从 1 重新起。
-        versionCode = 148
-        versionName = "1.9.7-beta"
+        versionCode = 151
+        versionName = "1.9.10-beta"
 
         buildConfigField("String", "DRIVE_CLIENT_ID", gradleStringLiteral(driveCredential("DRIVE_CLIENT_ID")))
         buildConfigField("String", "DRIVE_CLIENT_SECRET", gradleStringLiteral(driveCredential("DRIVE_CLIENT_SECRET")))
@@ -190,6 +190,9 @@ dependencies {
     implementation("org.maplibre.gl:android-sdk:13.6.1")
     // The Google map where Play services (or microG) is there; otherwise the MapLibre map above
     implementation("com.google.android.gms:play-services-maps:19.2.0")
+    // ECARX adaptapi on the 7X overseas build sits on the boot class path with every member
+    // hidden, so reflection sees an empty Car; EcarxLoader exempts only Lcom/ecarx/ with this
+    implementation("org.lsposed.hiddenapibypass:hiddenapibypass:4.3")
 
     testImplementation(libs.junit)
     // the real org.json for the JVM tests (android.jar's is a stub that returns nothing)

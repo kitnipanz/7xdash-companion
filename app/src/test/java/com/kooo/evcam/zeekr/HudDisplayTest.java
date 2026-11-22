@@ -35,6 +35,21 @@ public class HudDisplayTest {
     }
 
     @Test
+    public void sizeWinsWhenDisplayThreeIsAnotherScreen() {
+        assertEquals(6, HudDisplay.pick(Arrays.asList(
+                main(0, "built-in", 3200, 2000),
+                screen(HudDisplay.ZEEKR_7X_ID, "passenger", 1920, 720),
+                screen(6, "", HudDisplay.ZEEKR_7X_WIDTH, HudDisplay.ZEEKR_7X_HEIGHT))));
+    }
+
+    @Test
+    public void displayThreeStillCountsWhenNoScreenHasTheSize() {
+        assertEquals(HudDisplay.ZEEKR_7X_ID, HudDisplay.pick(Arrays.asList(
+                main(0, "built-in", 3200, 2000),
+                screen(HudDisplay.ZEEKR_7X_ID, "", 1280, 400))));
+    }
+
+    @Test
     public void displayFiveIsNotTheHud() {
         assertEquals(-1, HudDisplay.pick(Arrays.asList(
                 main(0, "built-in", 3200, 2000),

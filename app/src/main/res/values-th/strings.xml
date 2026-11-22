@@ -12,6 +12,7 @@
     <string name="upd_none_release">ไม่พบรุ่นเสถียรที่ติดตั้งได้</string>
     <string name="set_section_recording">การบันทึก</string>
     <string name="set_section_storage">ที่เก็บข้อมูล</string>
+    <string name="set_section_hud">HUD</string>
     <string name="set_section_rearview">กระจกมองหลังอัจฉริยะ</string>
     <string name="set_section_floating">หน้าต่างลอย</string>
     <string name="set_section_dim">หรี่หน้าจอ</string>
@@ -199,6 +200,7 @@
     <string name="shortcut_action_mirror">เปิด/ปิดกระจกมองหลังอัจฉริยะ</string>
     <string name="shortcut_action_mirror_hud">เปิด/ปิดกระจกมองหลังอัจฉริยะบน HUD</string>
     <string name="msg_no_hud">ไม่พบ HUD</string>
+    <string name="shortcut_action_both_mirrors_hud">เปิด/ปิดกระจกข้างทั้งสองด้านบน HUD</string>
     <string name="shortcut_action_both_mirrors">เปิด/ปิดกระจกข้างทั้งสองด้าน</string>
     <string name="shortcut_action_app">เปิดแอป</string>
     <string name="shortcut_action_app_bounce">ย่อและขยายแอป 60 ครั้ง</string>
@@ -340,12 +342,6 @@
     <string name="browser_show_for_passengers">แสดงให้ผู้โดยสาร</string>
     <string name="browser_show_hold_hint">กดค้างเพื่อแสดงภาพขณะขับขี่</string>
     <string name="set_browser_while_driving_title">เบราว์เซอร์และ Netflix: แสดงภาพขณะขับขี่</string>
-    <string name="drm_lab_title">ทดลอง DRM</string>
-    <string name="drm_lab_summary">ดูว่า Widevine ในรถทำงานอย่างไร: ระดับความปลอดภัย (L1 หรือ L3) รองรับ HD ไหม และแต่ละขั้นตอนตอนเล่นวิดีโอทดสอบที่ป้องกันไว้ของ Google</string>
-    <string name="drm_lab_stop">หยุด</string>
-    <string name="drm_lab_device">ข้อมูลเครื่อง</string>
-    <string name="stream_lab_title">ทดลอง Netflix และ YouTube (เบต้า)</string>
-    <string name="stream_lab_summary">ทุกวิธีที่จะเล่น Netflix และ YouTube บนรถ (แอป เว็บ หน้า TV ตัวเล่นฝัง) และเล่นลื่นแค่ไหน: ตัวถอดรหัสวิดีโอ Widevine การตรวจตัวเล่นบนเว็บ และมาตรวัดเฟรมตก</string>
     <string name="browser_title">เบราว์เซอร์</string>
     <string name="home_card_browser_sub">เบต้า · เว็บแบบเดสก์ท็อป เช่น YouTube กดค้างเพื่อเปิดหน้าต่างลอย</string>
     <string name="browser_move">ย้าย แตะสองครั้ง: เล็กหรือใหญ่</string>
@@ -360,7 +356,7 @@
     <string name="browser_show_toolbar">แสดงแถบเครื่องมือ</string>
     <string name="browser_close">ปิด</string>
     <string name="browser_paused_driving">ซ่อนภาพขณะขับรถ เสียงยังเล่นต่อ</string>
-    <string name="browser_need_overlay">อนุญาตให้ 7xDash แสดงทับแอปอื่นก่อน แล้วลองใหม่</string>
+    <string name="browser_need_overlay">อนุญาตให้ 7xDash แสดงทับแอปอื่น หรือเปิดบริการการช่วยเหลือพิเศษของ 7xDash ก่อน แล้วลองใหม่</string>
     <string name="shortcut_action_browser">เปิด/ปิดเบราว์เซอร์ลอย (เบต้า)</string>
     <string name="stargate_lab_title">ทดลองไฟ Stargate</string>
     <string name="stargate_lab_summary">หาว่า 7xDash วาดบนม่านไฟ Stargate ได้ไหม: ชื่อ คำสั่งของรถ แอปไฟ ฟังสัญญาณ และบันทึก</string>
@@ -758,7 +754,7 @@
     <string name="msg_adjust_reset">รีเซ็ตการตั้งค่าภาพเป็นค่าเริ่มต้นแล้ว</string>
     <string name="info_mapping_manual">ตั้งการจับคู่กล้องเอง</string>
     <string name="info_mapping_auto">อัตโนมัติ ถ้ากล้องใดไม่มีภาพ ให้กำหนดที่นี่</string>
-    <string name="msg_need_overlay">ให้สิทธิ์แสดงทับแอปอื่นก่อน</string>
+    <string name="msg_need_overlay">ให้สิทธิ์แสดงทับแอปอื่น หรือเปิดบริการการช่วยเหลือพิเศษของ 7xDash ก่อน</string>
     <string name="dlg_language_title">เลือกภาษา</string>
 
     <!-- Camera mapping and language hint -->
@@ -867,9 +863,9 @@
     <string name="msg_screen_off_background">จอดับ 15 วินาที ย้ายไปทำงานเบื้องหลังแล้ว</string>
     <string name="msg_stats_on">เปิดการแสดงสถานะการบันทึกแล้ว</string>
     <string name="msg_stats_off">ปิดการแสดงสถานะการบันทึกแล้ว</string>
-    <string name="msg_need_overlay_adjust">ต้องได้รับสิทธิ์แสดงทับแอปอื่นเพื่อเปิดหน้าต่างปรับภาพ</string>
+    <string name="msg_need_overlay_adjust">หน้าต่างปรับภาพต้องใช้สิทธิ์แสดงทับแอปอื่น หรือบริการการช่วยเหลือพิเศษของ 7xDash</string>
     <string name="msg_camera_not_ready_adjust">กล้องยังไม่พร้อม เปิดหน้าต่างปรับภาพไม่ได้</string>
-    <string name="msg_overlay_denied">ไม่ได้รับสิทธิ์แสดงทับแอปอื่น</string>
+    <string name="msg_overlay_denied">ไม่มีสิทธิ์แสดงทับแอปอื่น และบริการการช่วยเหลือพิเศษปิดอยู่</string>
     <string name="dlg_no_external_title">ไม่พบไดรฟ์ USB</string>
     <string name="dlg_no_external_msg">ไฟล์บันทึกไปที่ไดรฟ์ USB เท่านั้น เพื่อไม่ให้หน่วยความจำภายในเสื่อม\n\nเสียบไดรฟ์ USB แล้วลองอีกครั้ง ถ้าไม่พบ ให้ลองพอร์ตอื่น หรือเลือกไดรฟ์อีกครั้งที่ การตั้งค่า → ที่เก็บข้อมูล → ตำแหน่งจัดเก็บ</string>
     <string name="dlg_will_use_internal_title">กำลังบันทึกลงหน่วยความจำภายใน</string>
@@ -1371,6 +1367,23 @@
 
     <!-- Developer options section -->
     <string name="set_section_developer">ตัวเลือกนักพัฒนา</string>
+    <string name="dev_own_files_title">ไฟล์ที่แอปนี้เห็น</string>
+    <string name="dev_own_files_summary">แสดงโฟลเดอร์ของแอปนี้ บรรทัดตัวโหลด ECARX และไฟล์หนึ่งไฟล์ที่คุณเลือก ไม่แสดงโฟลเดอร์ของแอปอื่น</string>
+    <string name="own_files_banner">ECARX: %1$s</string>
+    <string name="own_files_private">ไฟล์ของแอป</string>
+    <string name="own_files_external">ไฟล์ภายนอก</string>
+    <string name="own_files_up">ขึ้น</string>
+    <string name="own_files_empty">ว่าง</string>
+    <string name="own_files_unreadable">เปิดรายการโฟลเดอร์นี้ไม่ได้</string>
+    <string name="own_files_dir">โฟลเดอร์ · %1$s</string>
+    <string name="own_files_file">ไฟล์ · %1$s · %2$s</string>
+    <string name="own_files_tap_install">แตะเพื่อเลือกตัวติดตั้ง</string>
+    <string name="own_files_install_title">เลือกตัวติดตั้ง</string>
+    <string name="own_files_outside">อยู่นอกแอปนี้</string>
+    <string name="own_files_pick">เลือกไฟล์</string>
+    <string name="own_files_pick_summary">แสดงชื่อและขนาดของไฟล์ที่คุณเลือก ไฟล์ยังอยู่ที่เดิม</string>
+    <string name="own_files_picked">เลือก %1$s · %2$s</string>
+    <string name="own_files_size_unknown">ไม่ทราบขนาด</string>
     <string name="dev_speaker_probe_title">ตรวจลำโพง</string>
     <string name="dev_speaker_probe_summary">แสดงทุกเอาต์พุตที่โปรเซสนี้ส่งเสียงได้ แตะแถวเพื่อเล่นเสียงสั้นๆ หน้านี้ไม่ได้ระบุว่าเป็นในรถหรือนอกรถ</string>
     <string name="speaker_probe_banner">ประเภทอุปกรณ์ของ Android ไม่ใช่ลำโพงในรถหรือลำโพงนอกรถ หน้านี้ไม่รู้ว่าแถวไหนคืออะไร</string>
@@ -1393,6 +1406,21 @@
     <string name="speaker_probe_kind_zone">การใช้โซน</string>
     <string name="dev_permissions_title">สิทธิ์</string>
     <string name="dev_permissions_summary">จัดการสิทธิ์ที่แอปต้องใช้</string>
+    <string name="dev_inventory_title">สิทธิ์และไลบรารี</string>
+    <string name="dev_inventory_summary">สิทธิ์ทุกอันที่แอปนี้ประกาศ และไลบรารีที่ใช้ร่วมกันที่โหลดได้</string>
+    <string name="inventory_count">สิทธิ์ %1$d รายการ ได้แล้ว %2$d</string>
+    <string name="inventory_ecarx">ตัวโหลด ECARX: %1$s</string>
+    <string name="inventory_permissions">สิทธิ์</string>
+    <string name="inventory_granted">ได้แล้ว</string>
+    <string name="inventory_not_granted">ยังไม่ได้</string>
+    <string name="inventory_undefined">อุปกรณ์นี้ไม่มีสิทธิ์นี้</string>
+    <string name="inventory_libraries">ไลบรารีที่ใช้ร่วมกัน</string>
+    <string name="inventory_lib_present">มีบนอุปกรณ์นี้</string>
+    <string name="inventory_lib_absent">ไม่มีบนอุปกรณ์นี้</string>
+    <string name="inventory_linked">ลิงก์แล้ว · %1$s</string>
+    <string name="inventory_linked_none">ไม่มีไฟล์ไลบรารีที่ใช้ร่วมกันถูกลิงก์</string>
+    <string name="inventory_native">ไลบรารีเนทีฟ</string>
+    <string name="inventory_none">ไม่มี</string>
     <string name="dev_perm_group_basic">สิทธิ์พื้นฐาน</string>
     <string name="dev_perm_group_advanced">สิทธิ์ขั้นสูง</string>
     <string name="dev_perm_camera">กล้อง</string>
@@ -1629,7 +1657,7 @@
     <string name="airplay_waiting">กำลังรอภาพจาก iPhone…</string>
     <string name="airplay_paused_driving">ซ่อนภาพขณะขับขี่ เสียงยังเล่นต่อ</string>
     <string name="airplay_failed">เปิด AirPlay ไม่สำเร็จ</string>
-    <string name="airplay_need_overlay">อนุญาตให้ 7xDash แสดงทับแอปอื่น เพื่อแสดงหน้าจอ iPhone</string>
+    <string name="airplay_need_overlay">อนุญาตให้ 7xDash แสดงทับแอปอื่น หรือเปิดบริการการช่วยเหลือพิเศษ เพื่อแสดงหน้าจอ iPhone</string>
     <string name="airplay_started">เริ่มสะท้อนหน้าจอ iPhone แล้ว</string>
     <string name="airplay_state_waiting">พร้อมแล้ว ในชื่อ “%1$s”</string>
     <string name="airplay_state_connected">เชื่อมต่อ iPhone แล้ว</string>
@@ -1790,7 +1818,7 @@
     <string name="home_card_dash_panel">หน้าปัดลอย</string>
     <string name="home_card_dash_panel_sub">ความเร็ว เกียร์ และปุ่ม ลอยเหนือทุกแอป</string>
     <string name="set_dash_panel_summary">การ์ดเล็กที่ลอยเหนือแผนที่ เพลง หรือแอปอื่น: ความเร็ว เกียร์ ไฟเลี้ยว นาฬิกา และสถานะการบันทึกของ 7xDash พร้อมปุ่มถ่ายรูปรอบคัน บันทึกคลิปทันที กระจกมองหลัง และเปิด 7xDash ด้านขวามีปุ่มย่อ (เหลือแถบเล็กแสดงความเร็วและเกียร์ พร้อมปุ่มด้านขวาเรียงใต้แถบ หรือข้างแถบเมื่อเปิดแผงปุ่มลัด แตะแถบหรือปุ่มขยายเพื่อขยายกลับ) ปุ่มบันทึก ปุ่มหรี่จอ (แตะเพื่อเปิดหรือปิด เลื่อนเพื่อปรับความมืด) และปุ่มปิดแอป (แตะสองครั้ง) ลากเพื่อย้าย บีบเพื่อปรับขนาด ดันไปขอบเพื่อเก็บ</string>
-    <string name="dash_panel_need_overlay">อนุญาตให้ 7xDash แสดงทับแอปอื่นก่อน</string>
+    <string name="dash_panel_need_overlay">อนุญาตให้ 7xDash แสดงทับแอปอื่น หรือเปิดบริการการช่วยเหลือพิเศษของ 7xDash ก่อน</string>
     <string name="dash_panel_minimize">ย่อ</string>
     <string name="dash_panel_expand">ขยาย</string>
     <string name="shortcut_action_dash_panel">เปิด / ปิดหน้าปัดลอย</string>
@@ -1898,7 +1926,7 @@
     <string name="nav_say_destination">จะถึงจุดหมาย</string>
     <string name="nav_say_arrived">ถึงจุดหมายแล้ว</string>
     <string name="nav_float">หน้าต่างลอย</string>
-    <string name="nav_float_need_overlay">อนุญาตให้ 7xDash แสดงทับแอปอื่นก่อน แล้วแตะปุ่มหน้าต่างลอยอีกครั้ง</string>
+    <string name="nav_float_need_overlay">อนุญาตให้ 7xDash แสดงทับแอปอื่น หรือเปิดบริการการช่วยเหลือพิเศษ แล้วแตะปุ่มหน้าต่างลอยอีกครั้ง</string>
     <string name="nav_float_expand">เต็มจอ</string>
     <string name="nav_float_close">ปิดหน้าต่างลอย</string>
     <string name="nav_float_resize">ลากเพื่อปรับความกว้างและความสูง</string>
@@ -2249,11 +2277,67 @@
     <string name="app_window_mode_split">เครื่องนี้รองรับแบ่งจอ: แตะแอปเพื่อเปิดข้าง 7xDash</string>
     <string name="app_window_mode_full">เครื่องนี้แจ้งว่าไม่รองรับหน้าต่างลอยหรือแบ่งจอ: แอปจะเปิดเต็มจอ แตะเพื่อลองได้</string>
     <string name="app_window_opened_full">เปิดเต็มจอแล้ว: เครื่องเสียงรถไม่อนุญาตหน้าต่างลอยหรือแบ่งจอ</string>
-    <string name="home_card_netflix">Netflix</string>
-    <string name="home_card_netflix_sub">เปิดในหน้าต่างลอย</string>
-    <string name="shortcut_action_netflix_window">Netflix ในหน้าต่างลอย</string>
     <string name="netflix_not_installed">7xDash หา Netflix ในเครื่องนี้ไม่เจอ แอปที่ติดตั้งไว้ในแอปพื้นที่เสมือน (เช่น Box) จะเปิดจาก 7xDash ไม่ได้ ดูสิ่งที่พบได้ที่ การวินิจฉัย → Video apps</string>
-    <string name="home_card_youtube">YouTube</string>
-    <string name="shortcut_action_youtube_window">YouTube ในหน้าต่างลอย</string>
     <string name="youtube_not_installed">7xDash หาแอป YouTube ในเครื่องนี้ไม่เจอ แอปที่ติดตั้งไว้ในแอปพื้นที่เสมือน (เช่น Box) จะเปิดจาก 7xDash ไม่ได้ ดูสิ่งที่พบได้ที่ การวินิจฉัย → Video apps</string>
+    <string name="dev_perm_car">ข้อมูลรถ</string>
+    <string name="dev_perm_car_why">ความเร็ว พลังงาน และข้อมูลอื่นจากตัวรถ</string>
+
+    <!-- HUD status card -->
+    <string name="hud_status_title">สถานะบน HUD</string>
+    <string name="hud_status_summary">การ์ดเล็กบน HUD แสดงสถานะการบันทึกและอื่นๆ ระหว่างขับ ใช้ได้แม้ไม่มีสิทธิ์แสดงทับแอปอื่น</string>
+    <string name="hud_status_place_title">ตำแหน่งการ์ดสถานะ</string>
+    <string name="hud_status_place_summary">ลากการ์ดเพื่อย้าย ลากมุมสีส้มเพื่อปรับขนาด HUD จะขยับตามขณะลาก ขอบที่แรเงามองไม่เห็นจากที่นั่งคนขับ</string>
+    <string name="hud_status_reset">รีเซ็ต</string>
+    <string name="hud_status_cat_items">สิ่งที่จะแสดง</string>
+    <string name="hud_status_item_recording">การบันทึก</string>
+    <string name="hud_status_item_recording_summary">REC และเวลาที่บันทึก, รอกล้อง หรือหยุดแล้วพร้อมสาเหตุ</string>
+    <string name="hud_status_item_cameras">กล้อง</string>
+    <string name="hud_status_item_cameras_summary">จำนวนกล้องที่กำลังบันทึก เช่น 4/4</string>
+    <string name="hud_status_item_usb">แฟลชไดรฟ์ USB</string>
+    <string name="hud_status_item_usb_summary">พื้นที่ว่างที่เหลือ หรือเตือนเมื่อไม่ได้เสียบ</string>
+    <string name="hud_status_item_capture">ผลการเก็บคลิปทันที</string>
+    <string name="hud_status_item_capture_summary">บันทึกแล้วหรือไม่สำเร็จ แสดง 30 วินาทีหลังเก็บคลิป</string>
+    <string name="hud_status_item_announce">ประกาศ</string>
+    <string name="hud_status_item_announce_summary">แสดงข้อความที่กำลังประกาศ หรือแจ้งเมื่อประกาศไม่สำเร็จ ใช้ได้แม้หน้าต่างเลือกประกาศเปิดไม่ได้</string>
+    <string name="hud_status_announce_failed">ประกาศไม่สำเร็จ</string>
+    <string name="hud_status_item_clock">นาฬิกา</string>
+    <string name="hud_status_item_clock_summary">เวลาปัจจุบัน</string>
+    <string name="hud_status_rec">REC %1$s</string>
+    <string name="hud_status_starting">กำลังเริ่ม…</string>
+    <string name="hud_status_waiting">รอกล้อง</string>
+    <string name="hud_status_idle">ไม่ได้บันทึก</string>
+    <string name="hud_status_stopped_usb">หยุด: USB เต็ม</string>
+    <string name="hud_status_stopped_error">หยุด: ผิดพลาด</string>
+    <string name="hud_status_cameras">กล้อง %1$d/%2$d</string>
+    <string name="hud_status_no_usb">ไม่มี USB</string>
+    <string name="hud_status_usb_free">USB ว่าง %1$s</string>
+    <string name="hud_status_capture_saved">เก็บคลิปแล้ว</string>
+    <string name="hud_status_capture_failed">เก็บคลิปไม่สำเร็จ</string>
+    <string name="hud_status_no_hud">รถคันนี้ไม่มี HUD</string>
+
+    <!-- Screen probe: floating window test on the main screen -->
+    <string name="floating_probe_row">จอหลัก: ทดสอบหน้าต่างลอย</string>
+    <string name="floating_probe_row_summary">แตะ แล้วสลับไปแอปอื่น (แผนที่ เพลง) ภายใน 5 วินาที หน้าต่างเล็กของ 7xDash จะลองเปิดทับโดยไม่ใช้สิทธิ์แสดงทับแอปอื่น แตะนอกหน้าต่างจะไปถึงแอปด้านล่าง ปิดเองใน 10 วินาที</string>
+    <string name="floating_probe_waiting">รอ 5 วินาที: สลับไปแอปอื่นตอนนี้</string>
+    <string name="floating_probe_opened_background">เปิดทับแอปอื่นได้ ✓ (%1$s) จอหลักแสดงหน้าต่างลอยด้วยวิธีนี้ได้</string>
+    <string name="floating_probe_opened_foreground">เปิดได้ แต่ 7xDash ยังอยู่หน้าจอ (%1$s) ลองใหม่และสลับแอปภายใน 5 วินาที</string>
+    <string name="floating_probe_blocked">Android บล็อก (%1$s): ไม่มีหน้าต่างเปิด</string>
+    <string name="floating_probe_failed">เริ่มไม่ได้: %1$s</string>
+    <string name="floating_probe_title">ทดสอบหน้าต่างลอย 7xDash</string>
+    <string name="floating_probe_body">แอปด้านล่างยังใช้งานได้ไหม? แตะที่นี่เพื่อปิด ปิดเองใน 10 วินาที</string>
+
+    <!-- Dim tests: other ways to dim -->
+    <string name="dim_routes_title">วิธีหรี่จออื่นๆ (ทดสอบ)</string>
+    <string name="dim_routes_note">สำหรับรถที่เปิดเลเยอร์หรี่จอด้านบนไม่ได้ (ไม่มีสิทธิ์แสดงทับแอปอื่น) แตะวิธีหนึ่งเพื่อหรี่จอด้วยความแรงตามค่าความทึบ แตะอีกครั้งเพื่อคืนค่าเดิม แต่ละแถวจะบอกผลที่เกิดขึ้น</string>
+    <string name="dim_route_brightness">ความสว่างระบบ</string>
+    <string name="dim_route_brightness_summary">ลดความสว่างของจอเอง ต้องใช้สิทธิ์ "แก้ไขการตั้งค่าระบบ" (หรือ adb) แตะจอได้ตามปกติ</string>
+    <string name="dim_route_extra_dim">หรี่แสงเพิ่มของ Android</string>
+    <string name="dim_route_extra_dim_summary">เลเยอร์หรี่จอของ Android 12 มืดกว่าความสว่างต่ำสุด ต้องใช้ WRITE_SECURE_SETTINGS ผ่าน adb</string>
+    <string name="dim_route_car">ความสว่างจอของรถ</string>
+    <string name="dim_route_car_summary">ค้นหาฟังก์ชันความสว่างจอในระบบรถแล้วลดลง แสดงรายการที่พบ</string>
+    <string name="dim_route_floating">หน้าต่างมืดแบบลอย</string>
+    <string name="dim_route_floating_summary">หน้าต่างมืดเต็มจอทับแอปอื่น ไม่ต้องใช้สิทธิ์ Android อาจทำให้แตะแอปด้านล่างไม่ได้ จึงปิดเองใน 15 วินาที</string>
+    <string name="dim_route_state_on">● เปิดอยู่: แตะเพื่อคืนค่าจอ</string>
+    <string name="dim_route_state_off">ปิด</string>
+    <string name="dim_route_working">กำลังทำงาน…</string>
 </resources>

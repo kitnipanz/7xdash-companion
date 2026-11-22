@@ -293,8 +293,9 @@ public class RearViewMirrorService extends Service {
             stopSelf();
             return START_NOT_STICKY;
         }
-        if (!WakeUpHelper.hasOverlayPermission(this)) {
-            AppLog.e(TAG, "没有悬浮窗权限，后视镜无法显示");
+        if (!wantsHud() && !com.kooo.evcam.overlay.OverlayAccess.canDraw(this)) {
+            // On the HUD it needs neither the overlay permission nor accessibility; the centre screen needs one
+            AppLog.e(TAG, "没有悬浮窗权限、无障碍也没开，后视镜无法显示（投抬头显示可以）");
             stopSelf();
             return START_NOT_STICKY;
         }

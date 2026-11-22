@@ -82,6 +82,9 @@ public final class ShortcutPerformer {
                     toast(context);
                 }
                 return;
+            case BOTH_MIRRORS_HUD:
+                toggleBothMirrorsOnHud(context);
+                return;
             case APP:
                 Intent open = new Intent(context, MainActivity.class);
                 open.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP
@@ -146,12 +149,6 @@ public final class ShortcutPerformer {
             case OUTSIDE_SPEAKER:
                 com.kooo.evcam.audio.OutsideSpeaker.toggle(context);
                 return;
-            case NETFLIX_WINDOW:
-                com.kooo.evcam.browser.NetflixApp.openInWindow(context);
-                return;
-            case YOUTUBE_WINDOW:
-                com.kooo.evcam.browser.YouTubeApp.openInWindow(context);
-                return;
             case DASH_PANEL:
                 AppConfig dash = new AppConfig(context);
                 boolean dashOn = !dash.isDashPanelEnabled();
@@ -175,7 +172,7 @@ public final class ShortcutPerformer {
                 if (floating.isShown()) {
                     floating.hide();
                     hud(context, R.string.nav_float, false);
-                } else if (!OverlayCoordinator.canShowOverlay(context)) {
+                } else if (!OverlayCoordinator.canShowFloating(context)) {
                     toast(context);
                 } else {
                     floating.show(context);
@@ -305,15 +302,39 @@ public final class ShortcutPerformer {
         }
     }
 
+    /** Like {@link #toggleMirrorOnHud}, for both side cameras: open on the HUD, or close when already there. */
+    private static void toggleBothMirrorsOnHud(Context context) {
+        if (com.kooo.evcam.zeekr.HudDisplay.find(context) == null) {
+            com.kooo.evcam.ui.Notice.makeText(context, R.string.msg_no_hud, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        AppConfig config = new AppConfig(context);
+        if (config.isBothMirrorsEnabled() && config.isBothMirrorsOnHud()) {
+            OverlayCoordinator.setBothMirrorsEnabled(context, false);
+            return;
+        }
+        boolean wasOpen = config.isBothMirrorsEnabled();
+        config.setBothMirrorsOnHud(true);
+        if (wasOpen) {
+            // Open on the centre screen: close it so it opens again on the HUD
+            OverlayCoordinator.setBothMirrorsEnabled(context, false);
+        }
+        if (!OverlayCoordinator.setBothMirrorsEnabled(context, true)) {
+            config.setBothMirrorsOnHud(false);
+            toast(context);
+        }
+    }
+
     private static void toggleHud(Context context) {
         AppConfig config = new AppConfig(context);
         boolean on = !config.isSidePopupOnHud();
+        config.setSidePopupOnHud(on);
         if (on && !config.isSidePopupEnabled()
                 && !OverlayCoordinator.setSidePopupEnabled(context, true)) {
+            config.setSidePopupOnHud(false);
             toast(context);
             return;
         }
-        config.setSidePopupOnHud(on);
         com.kooo.evcam.zeekr.SideViewPopupService.applyConfig();
         if (on) {
             com.kooo.evcam.zeekr.SideViewPopupService.start(context);

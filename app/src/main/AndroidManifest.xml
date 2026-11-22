@@ -11,6 +11,9 @@
         android:name="android.permission.QUERY_ALL_PACKAGES"
         tools:ignore="QueryAllPackagesPermission" />
     <!-- 车机没有无障碍设置页：adb 授权后应用自己打开无障碍服务，给快捷键用 -->
+    <!-- Dim test: the screen's own brightness, when the overlay shade can't open -->
+    <uses-permission android:name="android.permission.WRITE_SETTINGS"
+        tools:ignore="ProtectedPermissions" />
     <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS"
         tools:ignore="ProtectedPermissions" />
     <!-- 定位：行驶信息条里的经纬度和 GPS 车速（试验项目，1.68.0） -->
@@ -49,6 +52,28 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <!-- 悬浮窗权限（绕过后台启动Activity限制，需要用户手动授权） -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <!-- Car data (Android Automotive Car service). Normal ones are granted at install, dangerous
+         ones are asked for at start (car.CarPermissions reads each level from the head unit),
+         signature/privileged ones only a system app gets: declared anyway in case the car's ROM
+         sets them lower. -->
+    <uses-permission android:name="android.car.permission.CAR_INFO" />
+    <uses-permission android:name="android.car.permission.CAR_SPEED" />
+    <uses-permission android:name="android.car.permission.CAR_ENERGY" />
+    <uses-permission android:name="android.car.permission.CAR_ENERGY_PORTS" />
+    <uses-permission android:name="android.car.permission.CAR_POWERTRAIN" />
+    <uses-permission android:name="android.car.permission.CAR_EXTERIOR_ENVIRONMENT" />
+    <uses-permission android:name="android.car.permission.READ_CAR_DISPLAY_UNITS" />
+    <uses-permission android:name="android.car.permission.CAR_DRIVING_STATE" />
+    <uses-permission android:name="android.car.permission.CAR_EXTERIOR_LIGHTS" />
+    <uses-permission android:name="android.car.permission.READ_CAR_INTERIOR_LIGHTS" />
+    <uses-permission android:name="android.car.permission.READ_CAR_STEERING" />
+    <uses-permission android:name="android.car.permission.READ_CAR_POWER_POLICY" />
+    <uses-permission android:name="android.car.permission.CAR_POWER" />
+    <uses-permission android:name="android.car.permission.CAR_IDENTIFICATION" />
+    <uses-permission android:name="android.car.permission.CAR_MILEAGE" />
+    <uses-permission android:name="android.car.permission.CAR_TIRES" />
+    <uses-permission android:name="android.car.permission.CAR_ENGINE_DETAILED" />
+    <uses-permission android:name="android.car.permission.CAR_DYNAMICS_STATE" />
     <!-- 开机自启动权限 -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <!-- 请求电池优化白名单（阻止休眠的关键） -->
@@ -94,6 +119,10 @@
         <intent>
             <action android:name="android.intent.action.TTS_SERVICE" />
         </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:mimeType="application/vnd.android.package-archive" />
+        </intent>
     </queries>
 
     <application
@@ -114,12 +143,17 @@
             android:name="com.google.android.geo.API_KEY"
             android:value="${mapsApiKey}" />
 
-
         <!-- Car Android's own API (CarAudioManager) for the Volume lab; absent on phones and tablets -->
         <uses-library
             android:name="android.car"
             android:required="false" />
 
+        <!-- ECARX adaptapi (com.ecarx.xui.adaptapi.car.Car, read through reflection in EcarxSource).
+             Outside the container the class isn't on the app's class path unless the library is
+             declared; optional so other head units and phones still install. -->
+        <uses-library
+            android:name="com.ecarx.xui.adaptapi"
+            android:required="false" />
 
         <!-- 高优先级保活 Provider：在应用启动的最早阶段初始化服务 -->
         <!-- initOrder="2147483647" 确保最先执行（参考保活效果好的应用） -->
@@ -142,12 +176,12 @@
 
         <!-- 分辨率实测，只从开发者选项进 -->
 
-
         <!-- 主界面：启动先停在 7xDash 主页（HomeFragment），预览、录像、远程观看、设置都在这一个 Activity 里 -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
             android:launchMode="singleTask">
+            <meta-data android:name="distractionOptimized" android:value="true" />
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -246,89 +280,123 @@
             android:label="@string/nav_photo_playback"
             android:theme="@style/Theme.Cam"
             android:screenOrientation="landscape"
-            android:exported="false" />
+            android:exported="false">
+            <meta-data android:name="distractionOptimized" android:value="true" />
+        </activity>
 
         <activity
             android:name=".zeekr.TimelinePlayerActivity"
             android:label="@string/nav_video_playback"
             android:theme="@style/Theme.Cam"
             android:screenOrientation="landscape"
-            android:exported="false" />
+            android:exported="false">
+            <meta-data android:name="distractionOptimized" android:value="true" />
+        </activity>
+
+        <!-- Screen probe test: a small floating window on the main screen without the overlay
+             permission. Its own task, so opening it doesn't bring the 7xDash screen forward -->
+        <activity
+            android:name=".zeekr.FloatingProbeActivity"
+            android:theme="@style/Theme.FloatingProbe"
+            android:taskAffinity="${applicationId}.floatprobe"
+            android:launchMode="singleInstance"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:exported="false">
+            <meta-data android:name="distractionOptimized" android:value="true" />
+        </activity>
+
+        <!-- Dim test: a full-screen dark window over other apps, without the overlay permission -->
+        <activity
+            android:name=".overlay.DimFloatActivity"
+            android:theme="@style/Theme.FloatingProbe"
+            android:taskAffinity="${applicationId}.dimfloat"
+            android:launchMode="singleInstance"
+            android:excludeFromRecents="true"
+            android:exported="false">
+            <meta-data android:name="distractionOptimized" android:value="true" />
+        </activity>
+
+        <activity
+            android:name=".hud.HudStatusPlaceActivity"
+            android:label="@string/hud_status_place_title"
+            android:theme="@style/Theme.Cam"
+            android:screenOrientation="landscape"
+            android:exported="false">
+            <meta-data android:name="distractionOptimized" android:value="true" />
+        </activity>
 
         <activity
             android:name=".recording.InstantCapturesActivity"
             android:label="@string/instant_captures_title"
             android:theme="@style/Theme.Cam"
             android:screenOrientation="landscape"
-            android:exported="false" />
+            android:exported="false">
+            <meta-data android:name="distractionOptimized" android:value="true" />
+        </activity>
 
         <!-- 诊断信息：相机/屏幕/车辆信号/存储/日志，可导出 -->
         <activity
             android:name=".zeekr.DiagnosticsActivity"
             android:label="@string/set_diagnostics_title"
             android:theme="@style/Theme.Cam"
-            android:exported="false" />
+            android:exported="false">
+            <meta-data android:name="distractionOptimized" android:value="true" />
+        </activity>
 
         <activity
             android:name=".input.ControllerProbeActivity"
             android:label="@string/set_controller_title"
             android:theme="@style/Theme.Cam"
             android:screenOrientation="landscape"
-            android:exported="false" />
+            android:exported="false">
+            <meta-data android:name="distractionOptimized" android:value="true" />
+        </activity>
 
         <activity
             android:name=".input.StickerActivity"
             android:label="@string/set_sticker_title"
             android:theme="@style/Theme.Cam"
             android:screenOrientation="landscape"
-            android:exported="false" />
+            android:exported="false">
+            <meta-data android:name="distractionOptimized" android:value="true" />
+        </activity>
 
         <activity
             android:name=".light.MoodLightActivity"
             android:label="@string/set_mood_light_title"
             android:theme="@style/Theme.Cam"
             android:screenOrientation="landscape"
-            android:exported="false" />
+            android:exported="false">
+            <meta-data android:name="distractionOptimized" android:value="true" />
+        </activity>
 
         <activity
             android:name=".light.CarAmbientLabActivity"
             android:label="@string/car_ambient_title"
             android:theme="@style/Theme.Cam"
             android:screenOrientation="landscape"
-            android:exported="false" />
+            android:exported="false">
+            <meta-data android:name="distractionOptimized" android:value="true" />
+        </activity>
 
         <activity
             android:name=".audio.VolumeLabActivity"
             android:label="@string/volume_lab_title"
             android:theme="@style/Theme.Cam"
             android:screenOrientation="landscape"
-            android:exported="false" />
+            android:exported="false">
+            <meta-data android:name="distractionOptimized" android:value="true" />
+        </activity>
 
         <activity
             android:name=".zeekr.BlindSpotFinderActivity"
             android:label="@string/bsd_finder_title"
             android:theme="@style/Theme.Cam"
             android:screenOrientation="landscape"
-            android:exported="false" />
-
-        <activity
-            android:name=".drm.DrmLabActivity"
-            android:label="@string/drm_lab_title"
-            android:theme="@style/Theme.Cam"
-            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden"
-            android:screenOrientation="landscape"
-            android:exported="false" />
-
-        <activity
-            android:name=".browser.StreamLabActivity"
-            android:label="@string/stream_lab_title"
-            android:theme="@style/Theme.Cam"
-            android:screenOrientation="landscape"
-            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboard|keyboardHidden|navigation|uiMode|density"
-            android:hardwareAccelerated="true"
-            android:supportsPictureInPicture="true"
-            android:resizeableActivity="true"
-            android:exported="false" />
+            android:exported="false">
+            <meta-data android:name="distractionOptimized" android:value="true" />
+        </activity>
 
         <activity
             android:name=".browser.BrowserActivity"
@@ -337,21 +405,27 @@
             android:screenOrientation="landscape"
             android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboard|keyboardHidden|navigation|uiMode|density"
             android:windowSoftInputMode="adjustResize"
-            android:exported="false" />
+            android:exported="false">
+            <meta-data android:name="distractionOptimized" android:value="true" />
+        </activity>
 
         <activity
             android:name=".light.StargateLabActivity"
             android:label="@string/stargate_lab_title"
             android:theme="@style/Theme.Cam"
             android:screenOrientation="landscape"
-            android:exported="false" />
+            android:exported="false">
+            <meta-data android:name="distractionOptimized" android:value="true" />
+        </activity>
 
         <activity
             android:name=".input.ButtonLabActivity"
             android:label="@string/button_lab_title"
             android:theme="@style/Theme.Cam"
             android:screenOrientation="landscape"
-            android:exported="false" />
+            android:exported="false">
+            <meta-data android:name="distractionOptimized" android:value="true" />
+        </activity>
 
         <activity
             android:name=".nav.NavigationActivity"
@@ -360,84 +434,110 @@
             android:screenOrientation="landscape"
             android:launchMode="singleTask"
             android:windowSoftInputMode="adjustNothing"
-            android:exported="false" />
+            android:exported="false">
+            <meta-data android:name="distractionOptimized" android:value="true" />
+        </activity>
         <activity
             android:name=".obd.ObdActivity"
             android:label="@string/obd_title"
             android:theme="@style/Theme.Cam"
             android:screenOrientation="landscape"
-            android:exported="false" />
+            android:exported="false">
+            <meta-data android:name="distractionOptimized" android:value="true" />
+        </activity>
         <activity
             android:name=".input.BleSignalActivity"
             android:label="@string/ble_signal_title"
             android:theme="@style/Theme.Cam"
             android:screenOrientation="landscape"
-            android:exported="false" />
+            android:exported="false">
+            <meta-data android:name="distractionOptimized" android:value="true" />
+        </activity>
 
         <activity
             android:name=".announce.AnnouncementsActivity"
             android:label="@string/announce_title"
             android:theme="@style/Theme.Cam"
             android:screenOrientation="landscape"
-            android:exported="false" />
+            android:exported="false">
+            <meta-data android:name="distractionOptimized" android:value="true" />
+        </activity>
 
         <activity
             android:name=".input.ShortcutListActivity"
             android:label="@string/set_shortcuts_title"
             android:theme="@style/Theme.Cam"
             android:screenOrientation="landscape"
-            android:exported="false" />
+            android:exported="false">
+            <meta-data android:name="distractionOptimized" android:value="true" />
+        </activity>
 
         <activity
             android:name=".automation.AutomationActivity"
             android:label="@string/automation_title"
             android:theme="@style/Theme.Cam"
             android:screenOrientation="landscape"
-            android:exported="false" />
+            android:exported="false">
+            <meta-data android:name="distractionOptimized" android:value="true" />
+        </activity>
         <activity
             android:name=".automation.AutomationEditActivity"
             android:label="@string/automation_title"
             android:theme="@style/Theme.Cam"
             android:screenOrientation="landscape"
-            android:exported="false" />
+            android:exported="false">
+            <meta-data android:name="distractionOptimized" android:value="true" />
+        </activity>
         <activity
             android:name=".home.HomeEditActivity"
             android:label="@string/home_edit_title"
             android:theme="@style/Theme.Cam"
             android:screenOrientation="landscape"
-            android:exported="false" />
+            android:exported="false">
+            <meta-data android:name="distractionOptimized" android:value="true" />
+        </activity>
         <activity
             android:name=".input.MacroPadActivity"
             android:label="@string/macro_pad_title"
             android:theme="@style/Theme.Cam"
             android:screenOrientation="landscape"
-            android:exported="false" />
+            android:exported="false">
+            <meta-data android:name="distractionOptimized" android:value="true" />
+        </activity>
         <activity
             android:name=".screen.AppWindowActivity"
             android:label="@string/app_window_title"
             android:theme="@style/Theme.Cam"
             android:screenOrientation="landscape"
             android:resizeableActivity="true"
-            android:exported="false" />
+            android:exported="false">
+            <meta-data android:name="distractionOptimized" android:value="true" />
+        </activity>
         <activity
             android:name=".overlay.DashGaugesActivity"
             android:label="@string/gauges_title"
             android:theme="@style/Theme.Cam"
             android:screenOrientation="landscape"
-            android:exported="false" />
+            android:exported="false">
+            <meta-data android:name="distractionOptimized" android:value="true" />
+        </activity>
         <activity
             android:name=".input.ShortcutCaptureActivity"
             android:label="@string/shortcut_add"
             android:theme="@style/Theme.Cam"
             android:screenOrientation="landscape"
-            android:exported="false" />
+            android:exported="false">
+            <meta-data android:name="distractionOptimized" android:value="true" />
+        </activity>
 
         <!-- 关于与致谢：说明本应用两个功能来源及其许可证 -->
         <activity
             android:name=".zeekr.AboutActivity"
             android:label="@string/about_title"
             android:theme="@style/Theme.Cam"
-            android:exported="false" />
+            android:exported="false">
+            <meta-data android:name="distractionOptimized" android:value="true" />
+        </activity>
 
         <!-- 无障碍服务：保活手段之一。系统肯不肯让它跑还没在车上试过，它自己会把结果记进黑匣子 -->
         <service

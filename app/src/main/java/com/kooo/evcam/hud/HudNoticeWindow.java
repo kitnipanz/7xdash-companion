@@ -20,7 +20,6 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.kooo.evcam.AppLog;
-import com.kooo.evcam.overlay.OverlayCoordinator;
 import com.kooo.evcam.zeekr.HudDisplay;
 
 /**
@@ -37,6 +36,14 @@ public final class HudNoticeWindow {
     private static WindowManager shownIn;
     private static View shown;
     private static final Runnable HIDE = HudNoticeWindow::hide;
+    /** A notice held back while the blind spot is up on the HUD. */
+    private static Runnable waiting;
+    private static final Runnable RETRY = () -> {
+        Runnable r = waiting;
+        if (r != null) {
+            r.run();
+        }
+    };
 
     private HudNoticeWindow() {
     }
@@ -47,13 +54,21 @@ public final class HudNoticeWindow {
     }
 
     private static void showNow(Context context, String app, String title, String text) {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R || !OverlayCoordinator.canShowOverlay(context)) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R || !com.kooo.evcam.overlay.OverlayAccess.canDrawOnHud(context)) {
             return;
         }
         Display hud = HudDisplay.find(context);
         if (hud == null) {
             return;
         }
+        if (com.kooo.evcam.overlay.OverlayAccess.onTopShowingOn(hud.getDisplayId())) {
+            // the blind spot is up on the HUD and goes first: the newest notice waits until it closes
+            waiting = () -> showNow(context, app, title, text);
+            MAIN.removeCallbacks(RETRY);
+            MAIN.postDelayed(RETRY, 1000L);
+            return;
+        }
+        waiting = null;
         hide();
         try {
             Context window = com.kooo.evcam.overlay.OverlayAccess.windowContext(context, hud);

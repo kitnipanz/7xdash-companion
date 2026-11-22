@@ -139,6 +139,7 @@ public final class SettingZeekrWatch {
         Class<?> lifecycle;
         Method create;
         try {
+            EcarxLoader.exemptHiddenApi();
             carClass = Class.forName(CAR_CLASS, true, app.getClassLoader());
             lifecycle = Class.forName(LIFECYCLE_CLASS, true, carClass.getClassLoader());
             create = carClass.getMethod("createCar", Context.class, Handler.class, long.class, lifecycle);

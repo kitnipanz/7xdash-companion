@@ -195,6 +195,8 @@ public class SettingsHeadersFragment extends PreferenceFragmentCompat {
                 return R.drawable.ic_megaphone;
             case "screen_side_mirror":
                 return R.drawable.ic_blindspot;
+            case "screen_hud":
+                return R.drawable.ic_hud;
             case "screen_recording":
                 return R.drawable.ic_video;
             case "screen_storage":

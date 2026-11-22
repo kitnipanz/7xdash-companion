@@ -140,7 +140,7 @@ public class BothMirrorsView extends ViewGroup {
             return;
         }
         try {
-            windowManager.removeView(this);
+            com.kooo.evcam.overlay.OverlayAccess.remove(windowManager, this);
         } catch (Exception e) {
             AppLog.w(TAG, "左右侧视移除失败: " + e);
         }
@@ -173,7 +173,7 @@ public class BothMirrorsView extends ViewGroup {
 
     private void update() {
         try {
-            windowManager.updateViewLayout(this, params);
+            com.kooo.evcam.overlay.OverlayAccess.update(windowManager, this, params);
         } catch (Exception e) {
             AppLog.w(TAG, "左右侧视更新失败: " + e);
         }

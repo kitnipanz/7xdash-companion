@@ -12,8 +12,11 @@ import java.util.Locale;
 /**
  * 驾驶员挡风玻璃上的抬头显示是哪一块屏。
  *
- * <p>先认名字里带 hud 的非主屏。这台极氪 7X 上，屏幕（试验性）点出来的是编号 3、1440×480。
- * 编号对上就用它；编号变了、尺寸还是 1440×480，也认。主屏再叫这个编号也不认。</p>
+ * <p>Order: a non-main screen whose name has "hud"; then one sized 1440×480 (the 7X HUD);
+ * then display 3 only when no screen has that size. Both were read on a real Zeekr 7X with the
+ * app's Screens (experimental) tool (屏幕（试验性）): display 3, 1440×480. Display ids are handed out at runtime and
+ * change with how the app was installed (inside the z-emulator container or straight on the head
+ * unit), so the size is the surer sign. The main screen is never the HUD.</p>
  */
 public final class HudDisplay {
 
@@ -63,7 +66,9 @@ public final class HudDisplay {
                 bySize = screen.id;
             }
         }
-        return byId >= 0 ? byId : bySize;
+        // Size before id: display ids are handed out at runtime and differ with how the app was
+        // installed (inside a container app, straight on the head unit), so id 3 can be another screen
+        return bySize >= 0 ? bySize : byId;
     }
 
     /** The HUD's id from the last full look, so the next look is one call; -1 before or when none. */

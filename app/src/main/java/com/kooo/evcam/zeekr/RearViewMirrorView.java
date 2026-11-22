@@ -432,7 +432,7 @@ public class RearViewMirrorView extends ViewGroup {
             return;
         }
         try {
-            windowManager.removeViewImmediate(this);
+            com.kooo.evcam.overlay.OverlayAccess.removeImmediate(windowManager, this);
         } catch (Exception e) {
             AppLog.w(TAG, "后视镜窗口移除失败: " + e);
         }
@@ -1007,7 +1007,7 @@ public class RearViewMirrorView extends ViewGroup {
             return;
         }
         try {
-            windowManager.updateViewLayout(this, params);
+            com.kooo.evcam.overlay.OverlayAccess.update(windowManager, this, params);
         } catch (Exception e) {
             AppLog.w(TAG, "后视镜窗口更新失败: " + e);
         }

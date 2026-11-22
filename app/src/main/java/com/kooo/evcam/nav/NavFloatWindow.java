@@ -111,7 +111,7 @@ public final class NavFloatWindow implements Navigator.Listener {
 
     /** Opens the window (needs the overlay permission). */
     public void show(Context from) {
-        if (root != null || !OverlayCoordinator.canShowOverlay(from)) {
+        if (root != null || !com.kooo.evcam.overlay.OverlayAccess.canDraw(from)) {
             return;
         }
         context = new ContextThemeWrapper(from.getApplicationContext(), R.style.Theme_Cam);
@@ -242,7 +242,7 @@ public final class NavFloatWindow implements Navigator.Listener {
             mapHost.destroy();
         }
         try {
-            wm.removeView(root);
+            com.kooo.evcam.overlay.OverlayAccess.remove(wm, root);
         } catch (RuntimeException ignored) {
             // already gone with the display
         }
@@ -574,7 +574,7 @@ public final class NavFloatWindow implements Navigator.Listener {
             return;
         }
         try {
-            wm.updateViewLayout(root, lp);
+            com.kooo.evcam.overlay.OverlayAccess.update(wm, root, lp);
         } catch (RuntimeException ignored) {
             // window went away
         }

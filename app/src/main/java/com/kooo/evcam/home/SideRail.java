@@ -106,7 +106,14 @@ public class SideRail extends LinearLayout {
         });
     }
 
+    /** An activity that is not a page (a small floating window): no rail around it. */
+    public interface Bare {
+    }
+
     private static void wrap(Activity activity) {
+        if (activity instanceof Bare) {
+            return;
+        }
         if (!activity.getPackageName().equals(activity.getApplicationContext().getPackageName())
                 || !activity.getClass().getName().startsWith("com.kooo.evcam.")) {
             return;

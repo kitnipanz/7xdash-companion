@@ -55,7 +55,9 @@ public class DeveloperSettingsTest {
         ROWS.put("pref_camera_mapping", Arrays.asList("zeekr_camera_override_front",
                 "zeekr_camera_override_back", "zeekr_camera_override_left"));
         ROWS.put("pref_permissions", NONE);
+        ROWS.put("pref_inventory", NONE);
         ROWS.put("pref_speaker_probe", NONE);
+        ROWS.put("pref_own_files", NONE);
         ROWS.put("pref_raw_frame_dump", Arrays.asList("raw_frame_dump"));
         ROWS.put("pref_gpu_fisheye_preview", Arrays.asList("gpu_fisheye_preview"));
         ROWS.put("pref_gpu_fisheye_video", Arrays.asList("gpu_fisheye_video"));

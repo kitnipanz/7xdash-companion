@@ -56,6 +56,14 @@
 
     <style name="Theme.Cam" parent="Base.Theme.Cam" />
 
+    <!-- Screen probe floating test: see-through, no title, nothing dimmed behind -->
+    <style name="Theme.FloatingProbe" parent="@android:style/Theme.Translucent.NoTitleBar">
+        <item name="android:windowIsFloating">true</item>
+        <item name="android:backgroundDimEnabled">false</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowAnimationStyle">@null</item>
+    </style>
+
 
     <!-- ================= 动作栏控件（原生 MaterialButton，只定样式） ================= -->
 

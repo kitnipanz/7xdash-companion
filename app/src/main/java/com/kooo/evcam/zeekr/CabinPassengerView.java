@@ -234,7 +234,7 @@ public class CabinPassengerView extends ViewGroup {
             return;
         }
         try {
-            windowManager.removeView(this);
+            com.kooo.evcam.overlay.OverlayAccess.remove(windowManager, this);
         } catch (Exception e) {
             AppLog.w(TAG, "cabin window remove failed: " + e);
         }
@@ -317,7 +317,7 @@ public class CabinPassengerView extends ViewGroup {
             return;
         }
         try {
-            windowManager.updateViewLayout(this, params);
+            com.kooo.evcam.overlay.OverlayAccess.update(windowManager, this, params);
         } catch (Exception e) {
             AppLog.w(TAG, "cabin window layout failed: " + e);
         }

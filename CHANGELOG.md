@@ -1,5 +1,52 @@
 # Changelog
 
+## [1.9.10-beta] - 2026-11-22
+
+### HUD
+- **HUD status card**: an always-on card on the HUD with recording (REC and time, starting, waiting for cameras, stopped and why), cameras, USB stick, the last instant capture, announcements and the clock. Each line can be switched on or off; the card is dragged into place on a HUD preview. Needs no overlay permission.
+- **HUD menu**: HUD notifications and the status card have their own section in Settings.
+- **Blind spot on the HUD**: works without the overlay permission or accessibility. It stays above every other HUD window, and HUD notices wait while it shows. When the centre screen can't draw, the HUD gets the main window.
+- **Super mirror and Both mirrors on the HUD**: start without the overlay permission or accessibility.
+
+### Floating windows
+- **Picture-in-picture removed**: it didn't work on the car. Without the overlay permission, centre-screen windows use the accessibility service.
+- **No more settings pages at start**: 7xDash no longer opens the overlay or accessibility settings by itself when it starts.
+
+### Dim
+- **Other ways to dim (test)**: system brightness, Android Extra dim, the car's display brightness and a dark floating window, each switched on and off from the Dim settings, for cars where the dim shade can't open.
+
+### Screen probe
+- **Main screen floating window test**: checks whether a small window can open over other apps without the overlay permission.
+
+### Instant capture
+- **Copy to USB fixed**: clips were cut but never copied ("copy failed … .part (0 KB)"); the finished clip is now the one copied.
+
+### Removed
+- YouTube and Netflix buttons and shortcuts, DRM lab, Download apps to USB, Netflix and YouTube lab.
+
+### Other
+- All screens are marked safe to show while driving (`distractionOptimized`).
+
+## [1.9.9-beta] - 2026-11-22
+
+### Car library
+- **7X overseas head units**: the car library there is built into the system with every member hidden, so 7xDash saw an empty `Car` and vehicle signals, car lights and car automations never connected. 7xDash now lifts that block for the ECARX library only.
+- **Other ways to build the car object**: when the head unit has no `Car.create(Context)`, 7xDash tries the library's other factories and constructors.
+- **Diagnostics**: the black box records whether the block was lifted, where `Car` was loaded from, and each way of building the car object it tried. Car and vehicle-signal log lines are now in English.
+
+## [1.9.8-beta] - 2026-11-20
+
+### Car library
+- **ECARX on a Store install**: when the head unit's car library is not on the app's class path, 7xDash loads that jar from the head unit itself. Car lights and the new inventory show the loader line (`loaded …`, `no ecarx jar`, or `not readable`). A write the car refuses still says so. Nothing is downloaded.
+
+### Floating windows
+- **Centre screen**: overlay, then the accessibility service, then picture-in-picture. Dash panel, macro pad, dim, gauges, navigation float, AirPlay and the browser float follow that order. Picture-in-picture is one window; the app sets only the aspect ratio.
+- **HUD**: a HUD-only window no longer waits for the overlay permission. It uses a presentation on the HUD display.
+
+### Developer options
+- **Files this app can see**: this app's own folders, with each file's Unix mode and user and group ids. Pick a file to see its name and size. Tap an apk to choose an installer that already handles apks.
+- **Permissions and libraries**: every permission this app declares (granted or not, and the protection level) and the shared and native libraries it can load.
+
 ## [1.9.7-beta] - 2026-11-19
 
 ### Floating windows on the car

@@ -10,6 +10,8 @@ public enum ShortcutAction {
     /** Super mirror on the driver HUD: open there, or close it when it is already there. */
     MIRROR_HUD("toggle_mirror_hud", R.string.shortcut_action_mirror_hud, R.drawable.ic_mirror_hud),
     BOTH_MIRRORS("toggle_both_mirrors", R.string.shortcut_action_both_mirrors, R.drawable.ic_mirrors),
+    /** Both side cameras on the driver HUD, left at its left edge and right at its right: open there, or close when already there. */
+    BOTH_MIRRORS_HUD("toggle_both_mirrors_hud", R.string.shortcut_action_both_mirrors_hud, R.drawable.ic_mirror_hud),
     APP("open_app", R.string.shortcut_action_app, R.drawable.ic_home),
     /** Open the app and minimise it, 60 times half a second apart ({@link AppBounce}); again stops it. */
     APP_BOUNCE("app_bounce", R.string.shortcut_action_app_bounce, R.drawable.ic_refresh),
@@ -77,11 +79,7 @@ public enum ShortcutAction {
     STEERING_LIGHT("steering_light", R.string.shortcut_action_steering_light, R.drawable.ic_steering),
     STEERING_BALANCED("steering_balanced", R.string.shortcut_action_steering_balanced, R.drawable.ic_steering),
     STEERING_HEAVY("steering_heavy", R.string.shortcut_action_steering_heavy, R.drawable.ic_steering),
-    STEERING_CYCLE("steering_cycle", R.string.shortcut_action_steering_cycle, R.drawable.ic_steering),
-    /** Netflix in a floating window over what is on screen (browser.NetflixApp#openInWindow). */
-    NETFLIX_WINDOW("netflix_window", R.string.shortcut_action_netflix_window, R.drawable.ic_float_window),
-    /** YouTube (or the installed stand-in) in a floating window (browser.YouTubeApp#openInWindow). */
-    YOUTUBE_WINDOW("youtube_window", R.string.shortcut_action_youtube_window, R.drawable.ic_float_window);
+    STEERING_CYCLE("steering_cycle", R.string.shortcut_action_steering_cycle, R.drawable.ic_steering);
 
     /** The tabs actions are picked from, in tab order. */
     public enum Group {
@@ -121,6 +119,7 @@ public enum ShortcutAction {
             case MIRROR:
             case MIRROR_HUD:
             case BOTH_MIRRORS:
+            case BOTH_MIRRORS_HUD:
             case CABIN_PASSENGER:
             case PHOTO:
             case PHOTO_SURROUND:

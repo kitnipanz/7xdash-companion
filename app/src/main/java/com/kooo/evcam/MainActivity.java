@@ -86,6 +86,8 @@ public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "MainActivity";
     private static final int REQUEST_PERMISSIONS = 100;
+    private static final int REQUEST_CAR_PERMISSIONS = 101;
+    /** The overlay page is offered once per process, not on every return to the main screen. */
     
     // 静态实例引用（用于悬浮窗等外部组件访问）
     private static MainActivity instance;
@@ -370,6 +372,8 @@ public class MainActivity extends AppCompatActivity {
         // 等待TextureView准备好后再初始化
         if (!checkPermissions()) {
             requestPermissions();
+        } else {
+            askCarThenOverlay();
         }
 
 
@@ -2189,6 +2193,30 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
+    /**
+     * After the required permissions: the car's runtime permissions (only the ones this head unit
+     * has as runtime ones), then drawing over other apps. One system dialog at a time, so the
+     * overlay step waits for the car dialog's answer.
+     */
+    private void askCarThenOverlay() {
+        String[] car = com.kooo.evcam.car.CarPermissions.missing(this);
+        if (car.length > 0) {
+            AppLog.d(TAG, "Requesting car permissions: " + java.util.Arrays.toString(car));
+            ActivityCompat.requestPermissions(this, car, REQUEST_CAR_PERMISSIONS);
+            return;
+        }
+        askOverlay();
+    }
+
+    /**
+     * Drawing over other apps is not asked for at start any more: on head units where it can't be
+     * granted the system page only got in the way every time the app opened. The HUD needs no
+     * overlay; the centre-screen windows ask when they are switched on, and Settings → Permissions
+     * has the row.
+     */
+    private void askOverlay() {
+    }
+
     private boolean checkPermissions() {
         for (String permission : getRequiredPermissions()) {
             if (ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
@@ -2207,6 +2235,11 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQUEST_CAR_PERMISSIONS) {
+            // Car data is optional: a "deny" only means those readings stay empty
+            askOverlay();
+            return;
+        }
         if (requestCode == REQUEST_PERMISSIONS) {
             if (checkPermissions()) {
                 // 权限已授予，但需要等待TextureView准备好
@@ -2214,6 +2247,7 @@ public class MainActivity extends AppCompatActivity {
                 if (PreviewSlots.canStartCamera(textureReadyCount, configuredCameraCount)) {
                     initCamera();
                 }
+                askCarThenOverlay();
             } else {
                 com.kooo.evcam.ui.Notice.makeText(this, R.string.msg_need_camera_storage, Toast.LENGTH_SHORT).show();
                 finish();

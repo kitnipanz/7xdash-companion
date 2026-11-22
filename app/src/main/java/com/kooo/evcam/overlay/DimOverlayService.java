@@ -18,8 +18,6 @@ import androidx.annotation.Nullable;
 import com.kooo.evcam.AppConfig;
 import com.kooo.evcam.AppLog;
 import com.kooo.evcam.UserExit;
-import com.kooo.evcam.WakeUpHelper;
-
 /**
  * Full-screen dim that sits on top of other apps the same way Super mirror does:
  * a {@code TYPE_APPLICATION_OVERLAY} window. Touches pass through by default so
@@ -95,8 +93,8 @@ public class DimOverlayService extends Service {
             stopSelf();
             return;
         }
-        if (!WakeUpHelper.hasOverlayPermission(this)) {
-            AppLog.e(TAG, "没有悬浮窗权限，遮罩不开");
+        if (!com.kooo.evcam.overlay.OverlayAccess.canDraw(this)) {
+            AppLog.e(TAG, "没有悬浮窗、也没有无障碍服务，遮罩不开");
             stopSelf();
             return;
         }
@@ -150,7 +148,7 @@ public class DimOverlayService extends Service {
         layoutParams.height = real.y;
         applyLook(config);
         try {
-            windowManager.updateViewLayout(shade, layoutParams);
+            com.kooo.evcam.overlay.OverlayAccess.update(windowManager, shade, layoutParams);
             if (!DimShade.passTouches(config.isDimPassThrough(), config.getDimOpacity())) {
                 raiseDashPanel();
             }
@@ -162,7 +160,7 @@ public class DimOverlayService extends Service {
     private void detach() {
         if (shade != null && windowManager != null) {
             try {
-                windowManager.removeView(shade);
+                com.kooo.evcam.overlay.OverlayAccess.remove(windowManager, shade);
             } catch (Exception e) {
                 AppLog.e(TAG, "屏幕遮罩移除失败", e);
             }

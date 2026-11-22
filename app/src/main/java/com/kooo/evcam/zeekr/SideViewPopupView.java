@@ -9,6 +9,7 @@ import android.graphics.PixelFormat;
 import android.graphics.RectF;
 import android.os.Build;
 import android.util.Size;
+import android.view.Display;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -42,7 +43,7 @@ import com.kooo.evcam.overlay.DimOverlayService;
  * <p>位置：屏幕中线是两边的分界，左侧那一路的右边缘贴中线，右侧那一路的左边缘贴中线；
  * 大小和上下位置在设置里调。{@code FLAG_NOT_TOUCHABLE}：点击穿过去，不挡底下的导航。</p>
  */
-public class SideViewPopupView extends ViewGroup {
+public class SideViewPopupView extends ViewGroup implements com.kooo.evcam.overlay.OverlayAccess.OnTop {
 
     private static final String TAG = "SideViewPopup";
 
@@ -57,6 +58,8 @@ public class SideViewPopupView extends ViewGroup {
 
     private WindowManager.LayoutParams params;
     private boolean attached;
+    /** Other windows added on this screen when this one last went on top ({@link OverlayAccess#addedOn}). */
+    private long addedSeen;
     private boolean visible;
     private CompositeStreamGeometry.Plan plan;
     private int lane = LaneCycle.LEFT;
@@ -252,10 +255,11 @@ public class SideViewPopupView extends ViewGroup {
             return;
         }
         try {
-            windowManager.removeView(this);
+            com.kooo.evcam.overlay.OverlayAccess.remove(windowManager, this);
         } catch (Exception e) {
             AppLog.w(TAG, "侧视窗移除失败: " + e);
         }
+        com.kooo.evcam.overlay.OverlayAccess.release(this);
         attached = false;
         visible = false;
     }
@@ -300,7 +304,7 @@ public class SideViewPopupView extends ViewGroup {
                 invalidate();
             }
             if (show) {
-                liftAboveShade();
+                liftToTop();
                 if (visibilityChanged || sideChanged) {
                     slideIn();
                 }
@@ -321,8 +325,9 @@ public class SideViewPopupView extends ViewGroup {
             com.kooo.evcam.overlay.OverlayAccess.add(windowManager, this, params);
             attached = true;
             visible = show;
+            onTop();
             if (show) {
-                liftAboveShade();
+                liftToTop();
                 slideIn();
             }
         } catch (Exception e) {
@@ -334,18 +339,51 @@ public class SideViewPopupView extends ViewGroup {
      * 遮罩是全屏、先挂上的。后加的侧视小窗在这台车机上仍会被盖住，转向灯弹出的就是一块黑的。
      * 摘下再挂，窗口变成最后添加的，相机会重新接上。超级后视镜能修好，是因为它自己后加了一层。
      */
-    void liftAboveShade() {
-        if (!attached || !visible || !DimOverlayService.isShowing()) {
+    void liftToTop() {
+        boolean covered = DimOverlayService.isShowing()
+                || (onHud() && com.kooo.evcam.overlay.OverlayAccess.addedOn(displayId()) != addedSeen);
+        if (!attached || !visible || !covered) {
             return;
         }
         try {
-            windowManager.removeView(this);
+            com.kooo.evcam.overlay.OverlayAccess.remove(windowManager, this);
             com.kooo.evcam.overlay.OverlayAccess.add(windowManager, this, params);
-            AppLog.i(TAG, "侧视窗：提到遮罩上面");
+            onTop();
+            AppLog.i(TAG, "侧视窗：提到最上面");
         } catch (Exception e) {
             attached = false;
             AppLog.w(TAG, "侧视窗置顶失败: " + e);
         }
+    }
+
+    /**
+     * On the HUD the blind spot goes over everything else there (status card, turn card, map,
+     * notices): note how many windows were on that screen now, and listen for more.
+     */
+    private void onTop() {
+        if (!onHud()) {
+            return;
+        }
+        addedSeen = com.kooo.evcam.overlay.OverlayAccess.addedOn(displayId());
+        com.kooo.evcam.overlay.OverlayAccess.keepOnTop(this);
+    }
+
+    /** Something went onto the HUD after this window: showing, go back on top now; standing by, when it shows. */
+    @Override
+    public void onWindowAddedAfter(int displayId) {
+        if (onHud() && attached && visible && displayId == displayId()) {
+            liftToTop();
+        }
+    }
+
+    @Override
+    public int onDisplay() {
+        return attached ? displayId() : -1;
+    }
+
+    private int displayId() {
+        Display d = windowManager.getDefaultDisplay();
+        return d == null ? -1 : d.getDisplayId();
     }
 
     /**
@@ -374,7 +412,7 @@ public class SideViewPopupView extends ViewGroup {
 
     private void update() {
         try {
-            windowManager.updateViewLayout(this, params);
+            com.kooo.evcam.overlay.OverlayAccess.update(windowManager, this, params);
         } catch (Exception e) {
             AppLog.w(TAG, "侧视窗更新失败: " + e);
         }

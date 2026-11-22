@@ -7,6 +7,7 @@ import android.view.View;
 
 import com.kooo.evcam.AppLog;
 import com.kooo.evcam.blackbox.BlackBox;
+import com.kooo.evcam.telemetry.EcarxLoader;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -320,7 +321,7 @@ public final class VolumeLab {
         for (String name : names) {
             Class<?> c;
             try {
-                c = Class.forName(name, false, VolumeLab.class.getClassLoader());
+                c = EcarxLoader.load(name, false);
             } catch (Throwable t) {
                 continue;
             }

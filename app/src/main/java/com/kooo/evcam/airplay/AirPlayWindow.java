@@ -150,7 +150,7 @@ final class AirPlayWindow {
             return;
         }
         try {
-            wm.removeView(root);
+            com.kooo.evcam.overlay.OverlayAccess.remove(wm, root);
         } catch (RuntimeException ignored) {
             // already gone with the display
         }
@@ -258,7 +258,7 @@ final class AirPlayWindow {
             return;
         }
         try {
-            wm.updateViewLayout(root, lp);
+            com.kooo.evcam.overlay.OverlayAccess.update(wm, root, lp);
         } catch (RuntimeException ignored) {
             // window went away
         }

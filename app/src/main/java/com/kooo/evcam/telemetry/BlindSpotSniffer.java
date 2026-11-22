@@ -140,7 +140,7 @@ public final class BlindSpotSniffer {
                     all.append(i == 0 ? "" : ", ").append(watched.get(i).name).append('=').append(now[i]);
                 }
                 AppLog.i(TAG, "watching " + watched.size() + ": " + all);
-                BlackBox.note("盲区信号试验：开始看 " + watched.size() + " 个设置：" + all);
+                BlackBox.note("Blind-spot signal probe: watching " + watched.size() + " settings: " + all);
                 writeHeader(now);
             } else {
                 for (int i = 0; i < watched.size(); i++) {
@@ -216,7 +216,7 @@ public final class BlindSpotSniffer {
                 : s.turnSignal == VehicleState.TURN_RIGHT ? "R" : "-";
         String line = k.name + " " + k.hex() + ": " + was + " → " + now;
         AppLog.i(TAG, line + " (turn " + turn + ", " + s.speedKmh + " km/h)");
-        BlackBox.noteImportant("盲区信号试验：" + line + "（转向灯 " + turn + "，车速 " + s.speedKmh + "）");
+        BlackBox.noteImportant("Blind-spot signal probe: " + line + " (turn " + turn + ", " + s.speedKmh + " km/h)");
         if (log != null) {
             log.line(line + "  | " + BlindSpotLog.context(s));
         }

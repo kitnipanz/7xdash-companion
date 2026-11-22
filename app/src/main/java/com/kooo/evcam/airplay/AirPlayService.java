@@ -640,7 +640,7 @@ public class AirPlayService extends Service implements RaopCallbackHandler {
         mirroring = true;
         AirPlayLog.i("mirroring started");
         holdWifiAwake(true);
-        if (!OverlayCoordinator.canShowOverlay(this)) {
+        if (!com.kooo.evcam.overlay.OverlayAccess.canDraw(this)) {
             AirPlayLog.w("no permission to draw over other apps: no window");
             Notice.makeText(this, R.string.airplay_need_overlay, Toast.LENGTH_LONG).show();
             return;
@@ -677,7 +677,7 @@ public class AirPlayService extends Service implements RaopCallbackHandler {
         net.sessionEnded();
         net.sessionStarted("cast");
         cast.play(location, startSeconds);
-        if (!OverlayCoordinator.canShowOverlay(this)) {
+        if (!com.kooo.evcam.overlay.OverlayAccess.canDraw(this)) {
             AirPlayLog.w("no permission to draw over other apps: no window");
             Notice.makeText(this, R.string.airplay_need_overlay, Toast.LENGTH_LONG).show();
             return;

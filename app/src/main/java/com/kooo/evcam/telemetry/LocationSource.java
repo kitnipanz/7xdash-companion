@@ -83,7 +83,7 @@ final class LocationSource implements LocationListener {
                 // SecurityException（权限）、IllegalArgumentException（没有这个提供者）都算连不上
                 denied |= e instanceof SecurityException;
                 failed.append(provider).append('=').append(e.getClass().getSimpleName()).append(' ');
-                AppLog.w(TAG, "订阅 " + provider + " 失败: " + e);
+                AppLog.w(TAG, "subscribe to " + provider + " failed: " + e);
             }
         }
         status = subscribed.length() > 0 ? "subscribed " + subscribed.toString().trim()
@@ -103,7 +103,7 @@ final class LocationSource implements LocationListener {
             try {
                 m.removeUpdates(this);
             } catch (Exception e) {
-                AppLog.w(TAG, "取消定位订阅失败: " + e);
+                AppLog.w(TAG, "unsubscribe from location failed: " + e);
             }
         }
         HandlerThread t = thread;

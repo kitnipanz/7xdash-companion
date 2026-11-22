@@ -329,7 +329,7 @@ final class EcarxSource {
     private void connect(Context context) {
         long start = SystemClock.elapsedRealtime();
         try {
-            Class<?> carClass = Class.forName(CAR_CLASS);
+            Class<?> carClass = EcarxLoader.load(CAR_CLASS, true);
             Object car = cachedCar;
             String built = "";
             if (car == null) {
@@ -393,7 +393,7 @@ final class EcarxSource {
                 h.postDelayed(reconcile, RECONCILE_MS);
             }
         } catch (ClassNotFoundException e) {
-            status = "no " + CAR_CLASS + " on this head unit";
+            status = "no " + CAR_CLASS + " (" + EcarxLoader.note() + ")";
             report(Telemetry.CarLink.UNAVAILABLE);
         } catch (Throwable t) {
             status = "connect failed: " + describe(t);
@@ -773,7 +773,7 @@ final class EcarxSource {
         telemetry.publishReadings(this, snapshot);
         if (!firstRoundReported) {
             firstRoundReported = true;
-            com.kooo.evcam.blackbox.BlackBox.note("行驶信息 ecarx 第一轮读数：" + snapshot.describe());
+            com.kooo.evcam.blackbox.BlackBox.note("Drive info ecarx first read: " + snapshot.describe());
         }
     }
 
@@ -952,7 +952,7 @@ final class EcarxSource {
                 line.append(' ').append(DarkScreenProbes.key(s)).append('=').append(v);
             }
             probesStarted = true;
-            BlackBox.note("车辆信号起点：" + line);
+            BlackBox.note("Vehicle signals baseline: " + line);
         } catch (RuntimeException e) {
             probeFailed("start", e);
         }
@@ -1078,9 +1078,9 @@ final class EcarxSource {
                 line.append(change);
             }
             probeChanges.clear();
-            BlackBox.noteImportant("车辆信号：" + line
-                    + (pass == Pass.RECONCILE ? "（对账时读到，实际可能早到 " + (RECONCILE_MS / 1000) + " 秒）"
-                    : pass == Pass.WAKE ? "（醒来时读到）" : ""));
+            BlackBox.noteImportant("Vehicle signals: " + line
+                    + (pass == Pass.RECONCILE ? " (seen on reconcile; may have changed up to " + (RECONCILE_MS / 1000) + " s earlier)"
+                    : pass == Pass.WAKE ? " (seen on wake)" : ""));
         } catch (RuntimeException e) {
             probeChanges.clear();
             probeFailed("write", e);
@@ -1100,7 +1100,7 @@ final class EcarxSource {
             line.append(item.getKey()).append(' ').append(item.getValue());
         }
         if (line.length() > 0) {
-            BlackBox.note("车辆信号（限量后补记，时刻不是变化的时刻）：" + line);
+            BlackBox.note("Vehicle signals (written late after rate limit; time is not the change time): " + line);
         }
     }
 
@@ -1131,7 +1131,7 @@ final class EcarxSource {
             return car;
         }
         try {
-            CarFactory.Result made = buildCar(Class.forName(CAR_CLASS), context.getApplicationContext());
+            CarFactory.Result made = buildCar(EcarxLoader.load(CAR_CLASS, true), context.getApplicationContext());
             car = made.car;
             if (car == null) {
                 AppLog.w(TAG, "Car for the ambient lab: " + CarFactory.summary(made));
@@ -1163,15 +1163,37 @@ final class EcarxSource {
             } catch (Throwable t) {
                 api = carClass.getName() + " (listing failed: " + describe(t) + ")";
             }
-            BlackBox.noteImportant("车辆接口没有 Car.create(Context)，这台车机上的 Car：" + api);
+            api += "\n  " + loaderLine(carClass, context);
+            BlackBox.noteImportant("Car API: no Car.create(Context); Car on this head unit: " + api);
             AppLog.i(TAG, "no Car.create(Context); Car API: " + api);
         }
         CarFactory.Result made = CarFactory.create(carClass, CarFactory.env(context));
         if (made.car != null && !made.tries.isEmpty()) {
-            BlackBox.noteImportant("车辆对象换了建法：" + CarFactory.summary(made));
+            BlackBox.noteImportant("Car object built another way: " + CarFactory.summary(made));
         }
         AppLog.i(TAG, "build car: " + CarFactory.summary(made));
         return made;
+    }
+
+    /** Where {@code Car} came from and whether hidden members can be seen: loader, declared count, exemption, policy. */
+    static String loaderLine(Class<?> carClass, Context context) {
+        ClassLoader loader = carClass.getClassLoader();
+        String from = loader == null || loader.getClass().getName().endsWith("BootClassLoader")
+                ? "boot class path" : loader.getClass().getSimpleName();
+        int declared;
+        try {
+            declared = carClass.getDeclaredMethods().length;
+        } catch (Throwable t) {
+            declared = -1;
+        }
+        String policy;
+        try {
+            policy = android.provider.Settings.Global.getString(context.getContentResolver(), "hidden_api_policy");
+        } catch (Throwable t) {
+            policy = "?";
+        }
+        return "loader: " + from + "; declared methods: " + declared + "; hidden API: " + EcarxLoader.exemption()
+                + "; hidden_api_policy=" + policy;
     }
 
     // ================================================================= 反射小工具

@@ -57,6 +57,20 @@ public final class Announcer {
         return playing;
     }
 
+    /** What is being said now (the phrase, or the sound's name), for the HUD status card; null when quiet. */
+    private static volatile String speaking;
+    private static volatile int speakingFor;
+    /** When the last one failed (System.currentTimeMillis), 0 when never. */
+    private static volatile long failedAtMs;
+
+    public static String speaking() {
+        return speaking;
+    }
+
+    public static long failedAtMs() {
+        return failedAtMs;
+    }
+
     public static void stop() {
         generation++;
     }
@@ -82,8 +96,18 @@ public final class Announcer {
         int mine = ++generation;
         WORKER.execute(() -> {
             Process.setThreadPriority(Process.THREAD_PRIORITY_URGENT_AUDIO);
-            int failure = run(app, announcement, why, mine, cabin);
+            speaking = Labels.of(app, announcement);
+            speakingFor = mine;
+            int failure;
+            try {
+                failure = run(app, announcement, why, mine, cabin);
+            } finally {
+                if (speakingFor == mine) {
+                    speaking = null;
+                }
+            }
             if (failure != 0) {
+                failedAtMs = System.currentTimeMillis();
                 MAIN.post(() -> com.kooo.evcam.ui.Notice.makeText(app, failure, Toast.LENGTH_SHORT).show());
             }
         });

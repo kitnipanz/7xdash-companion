@@ -171,7 +171,7 @@ public class MacroPadService extends Service {
                 if (view != null && view.isAttachedToWindow()) {
                     // docked, a drag is undone here: the pad stays under the panel
                     snapToPanel();
-                    windowManager.updateViewLayout(view, params);
+                    com.kooo.evcam.overlay.OverlayAccess.update(windowManager, view, params);
                 }
             }
 
@@ -243,7 +243,7 @@ public class MacroPadService extends Service {
         }
         if (snapToPanel()) {
             try {
-                windowManager.updateViewLayout(view, params);
+                com.kooo.evcam.overlay.OverlayAccess.update(windowManager, view, params);
             } catch (Exception e) {
                 AppLog.w(TAG, "follow the Dash panel: " + e.getMessage());
             }
@@ -286,7 +286,7 @@ public class MacroPadService extends Service {
         main.removeCallbacksAndMessages(null);
         if (view != null) {
             try {
-                windowManager.removeView(view);
+                com.kooo.evcam.overlay.OverlayAccess.remove(windowManager, view);
             } catch (Exception ignored) {
             }
             view = null;

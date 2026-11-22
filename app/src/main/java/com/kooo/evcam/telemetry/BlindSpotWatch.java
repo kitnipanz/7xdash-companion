@@ -134,7 +134,7 @@ public final class BlindSpotWatch implements Telemetry.Listener {
             Telemetry.get().setBlindSpotWarning(sides);
             if (sides != null && !sides.equals(lastNoted)) {
                 if (sides != 0) {
-                    BlackBox.note("盲区报警：" + (sides == 3 ? "两侧" : sides == VehicleState.TURN_LEFT ? "左侧" : "右侧"));
+                    BlackBox.note("Blind-spot warning: " + (sides == 3 ? "both sides" : sides == VehicleState.TURN_LEFT ? "left" : "right"));
                 }
                 lastNoted = sides;
             }

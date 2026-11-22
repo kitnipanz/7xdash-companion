@@ -65,7 +65,7 @@ public class GaugesService extends Service implements Telemetry.Listener {
                     return;
                 }
                 try {
-                    svc.windowManager.removeViewImmediate(svc.view);
+                    com.kooo.evcam.overlay.OverlayAccess.removeImmediate(svc.windowManager, svc.view);
                     com.kooo.evcam.overlay.OverlayAccess.add(svc.windowManager, svc.view, svc.params);
                 } catch (Exception e) {
                     AppLog.w(TAG, "raise above the dim: " + e.getMessage());
@@ -203,7 +203,7 @@ public class GaugesService extends Service implements Telemetry.Listener {
                     // a pinch sets the height; the width follows
                     height = params.height;
                     params.width = widthFor(height);
-                    windowManager.updateViewLayout(view, params);
+                    com.kooo.evcam.overlay.OverlayAccess.update(windowManager, view, params);
                     OverlayCoordinator.dashPanelMoved();
                 }
             }
@@ -304,7 +304,7 @@ public class GaugesService extends Service implements Telemetry.Listener {
         params.width = widthFor(height);
         params.x = Math.max(0, Math.min(right - params.width, screenWidth() - params.width));
         try {
-            windowManager.updateViewLayout(view, params);
+            com.kooo.evcam.overlay.OverlayAccess.update(windowManager, view, params);
         } catch (Exception e) {
             AppLog.w(TAG, "resize: " + e.getMessage());
         }
@@ -347,7 +347,7 @@ public class GaugesService extends Service implements Telemetry.Listener {
         Telemetry.get().release(TELEMETRY_USER);
         if (view != null) {
             try {
-                windowManager.removeView(view);
+                com.kooo.evcam.overlay.OverlayAccess.remove(windowManager, view);
             } catch (Exception ignored) {
             }
             view = null;
